@@ -1,0 +1,5846 @@
+{
+  "games": [
+    {
+      "id": "1000xresist",
+      "title": "1000xResist",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1675830
+      },
+      "mods": [
+        {
+          "id": "1000xresist",
+          "title": "1000xResist",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-1000xresist.addon64",
+              "mod": "1000xresist",
+              "arch": "x64",
+              "size": 2207232,
+              "url": "./renodx-1000xresist.addon64",
+              "path": "./renodx-1000xresist.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1675830
+    },
+    {
+      "id": "a-plague-tale-innocence",
+      "title": "A Plague Tale: Innocence",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 752590
+      },
+      "mods": [
+        {
+          "id": "aptinnocence",
+          "title": "A Plague Tale: Innocence",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-aptinnocence.addon64",
+              "mod": "aptinnocence",
+              "arch": "x64",
+              "size": 11962368,
+              "url": "./renodx-aptinnocence.addon64",
+              "path": "./renodx-aptinnocence.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 752590
+    },
+    {
+      "id": "absolum",
+      "title": "Absolum",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1904480
+      },
+      "mods": [
+        {
+          "id": "absolum",
+          "title": "Absolum",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-absolum.addon64",
+              "mod": "absolum",
+              "arch": "x64",
+              "size": 2100224,
+              "url": "./renodx-absolum.addon64",
+              "path": "./renodx-absolum.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1904480
+    },
+    {
+      "id": "ace-combat-7",
+      "title": "Ace Combat 7",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 502500
+      },
+      "mods": [
+        {
+          "id": "acecombat7",
+          "title": "Ace Combat 7",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-acecombat7.addon64",
+              "mod": "acecombat7",
+              "arch": "x64",
+              "size": 2195968,
+              "url": "./renodx-acecombat7.addon64",
+              "path": "./renodx-acecombat7.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 502500
+    },
+    {
+      "id": "ai-the-somnium-files",
+      "title": "AI: The Somnium Files",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 948740
+      },
+      "mods": [
+        {
+          "id": "aisomniumfiles",
+          "title": "AI: The Somnium Files",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-aisomniumfiles.addon64",
+              "mod": "aisomniumfiles",
+              "arch": "x64",
+              "size": 2305536,
+              "url": "./renodx-aisomniumfiles.addon64",
+              "path": "./renodx-aisomniumfiles.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 948740
+    },
+    {
+      "id": "alice-madness-returns",
+      "title": "Alice: Madness Returns",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "alicemadnessreturns",
+          "title": "Alice: Madness Returns",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-alicemadnessreturns.addon64",
+              "mod": "alicemadnessreturns",
+              "arch": "x64",
+              "size": 2062336,
+              "url": "./renodx-alicemadnessreturns.addon64",
+              "path": "./renodx-alicemadnessreturns.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alien-isolation",
+      "title": "Alien: Isolation",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 214490,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "alienisolation",
+          "title": "Alien: Isolation",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-alienisolation.addon32",
+              "mod": "alienisolation",
+              "arch": "x86",
+              "size": 3511296,
+              "url": "./renodx-alienisolation.addon32",
+              "path": "./renodx-alienisolation.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 214490
+    },
+    {
+      "id": "anger-foot",
+      "title": "Anger Foot",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1978590
+      },
+      "mods": [
+        {
+          "id": "angerfoot",
+          "title": "Anger Foot",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-angerfoot.addon64",
+              "mod": "angerfoot",
+              "arch": "x64",
+              "size": 2340352,
+              "url": "./renodx-angerfoot.addon64",
+              "path": "./renodx-angerfoot.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1978590
+    },
+    {
+      "id": "animal-well",
+      "title": "Animal Well",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 813230
+      },
+      "mods": [
+        {
+          "id": "animalwell",
+          "title": "Animal Well",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-animalwell.addon64",
+              "mod": "animalwell",
+              "arch": "x64",
+              "size": 2086912,
+              "url": "./renodx-animalwell.addon64",
+              "path": "./renodx-animalwell.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 813230
+    },
+    {
+      "id": "arknights-endfield",
+      "title": "Arknights: Endfield",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "endfield",
+          "title": "Arknights: Endfield",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-endfield.addon64",
+              "mod": "endfield",
+              "arch": "x64",
+              "size": 2851328,
+              "url": "./renodx-endfield.addon64",
+              "path": "./renodx-endfield.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://cdn1.epicgames.com/spt-assets/3dc91103cd1b492c8ce095fea4e07c5f/arknightsendfield-47ajg.png?resize=1&w=415&h=215"
+    },
+    {
+      "id": "armored-core-vi-fires-of-rubicon",
+      "title": "Armored Core VI: Fires of Rubicon",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1888160
+      },
+      "mods": [
+        {
+          "id": "fromsoft_engine",
+          "title": "FromSoftware Engine",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-fromsoft_engine.addon64",
+              "mod": "fromsoft_engine",
+              "arch": "x64",
+              "size": 2385408,
+              "url": "./renodx-fromsoft_engine.addon64",
+              "path": "./renodx-fromsoft_engine.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1888160
+    },
+    {
+      "id": "art-of-rally",
+      "title": "art of rally",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 550320
+      },
+      "mods": [
+        {
+          "id": "artofrally",
+          "title": "art of rally",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-artofrally.addon64",
+              "mod": "artofrally",
+              "arch": "x64",
+              "size": 2280448,
+              "url": "./renodx-artofrally.addon64",
+              "path": "./renodx-artofrally.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 550320
+    },
+    {
+      "id": "assassin-s-creed-iv-black-flag",
+      "title": "Assassin's Creed IV Black Flag",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 242050,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "asscreedblackflag",
+          "title": "Assassin's Creed IV Black Flag",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-asscreedblackflag.addon32",
+              "mod": "asscreedblackflag",
+              "arch": "x86",
+              "size": 1996288,
+              "url": "./renodx-asscreedblackflag.addon32",
+              "path": "./renodx-asscreedblackflag.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 242050
+    },
+    {
+      "id": "assassin-s-creed-odyssey",
+      "title": "Assassin's Creed Odyssey",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 812140
+      },
+      "mods": [
+        {
+          "id": "asscreedorigins-odyssey",
+          "title": "Assassin's Creed® Origins & Odyssey",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-asscreedorigins-odyssey.addon64",
+              "mod": "asscreedorigins-odyssey",
+              "arch": "x64",
+              "size": 1815040,
+              "url": "./renodx-asscreedorigins-odyssey.addon64",
+              "path": "./renodx-asscreedorigins-odyssey.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 812140
+    },
+    {
+      "id": "assassin-s-creed-origins",
+      "title": "Assassin's Creed Origins",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 582160
+      },
+      "mods": [
+        {
+          "id": "asscreedorigins-odyssey",
+          "title": "Assassin's Creed® Origins & Odyssey",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-asscreedorigins-odyssey.addon64",
+              "mod": "asscreedorigins-odyssey",
+              "arch": "x64",
+              "size": 1815040,
+              "url": "./renodx-asscreedorigins-odyssey.addon64",
+              "path": "./renodx-asscreedorigins-odyssey.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 582160
+    },
+    {
+      "id": "assassin-s-creed-director-s-cut-edition-dx10",
+      "title": "Assassin's Creed: Director's Cut Edition (DX10)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 15100,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "asscreed1",
+          "title": "Assassin's Creed: Director's Cut Edition (DX10)",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-asscreed1.addon32",
+              "mod": "asscreed1",
+              "arch": "x86",
+              "size": 1778176,
+              "url": "./renodx-asscreed1.addon32",
+              "path": "./renodx-asscreed1.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 15100
+    },
+    {
+      "id": "assassin-s-creed-mirage",
+      "title": "Assassin's Creed: Mirage",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3035570
+      },
+      "mods": [
+        {
+          "id": "asscreedmirage",
+          "title": "Assassin's Creed: Mirage",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-asscreedmirage.addon64",
+              "mod": "asscreedmirage",
+              "arch": "x64",
+              "size": 1761280,
+              "url": "./renodx-asscreedmirage.addon64",
+              "path": "./renodx-asscreedmirage.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3035570
+    },
+    {
+      "id": "assassin-s-creed-shadows",
+      "title": "Assassin's Creed: Shadows",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3159330
+      },
+      "mods": [
+        {
+          "id": "asscreedshadows",
+          "title": "Assassin's Creed: Shadows",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-asscreedshadows.addon64",
+              "mod": "asscreedshadows",
+              "arch": "x64",
+              "size": 1763840,
+              "url": "./renodx-asscreedshadows.addon64",
+              "path": "./renodx-asscreedshadows.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3159330
+    },
+    {
+      "id": "assassin-s-creed-valhalla",
+      "title": "Assassin's Creed: Valhalla",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2208920
+      },
+      "mods": [
+        {
+          "id": "asscreedvalhalla",
+          "title": "Assassin's Creed: Valhalla",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-asscreedvalhalla.addon64",
+              "mod": "asscreedvalhalla",
+              "arch": "x64",
+              "size": 1679360,
+              "url": "./renodx-asscreedvalhalla.addon64",
+              "path": "./renodx-asscreedvalhalla.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2208920
+    },
+    {
+      "id": "atlas-fallen",
+      "title": "Atlas Fallen",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1230530
+      },
+      "mods": [
+        {
+          "id": "atlasfallen",
+          "title": "Atlas Fallen",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-atlasfallen.addon64",
+              "mod": "atlasfallen",
+              "arch": "x64",
+              "size": 2215936,
+              "url": "./renodx-atlasfallen.addon64",
+              "path": "./renodx-atlasfallen.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1230530
+    },
+    {
+      "id": "avatar-frontiers-of-pandora",
+      "title": "Avatar: Frontiers of Pandora",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2840770
+      },
+      "mods": [
+        {
+          "id": "avatarfop-swoutlaws",
+          "title": "Avatar: Frontiers of Pandora & Star Wars Outlaws",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-avatarfop-swoutlaws.addon64",
+              "mod": "avatarfop-swoutlaws",
+              "arch": "x64",
+              "size": 1913856,
+              "url": "./renodx-avatarfop-swoutlaws.addon64",
+              "path": "./renodx-avatarfop-swoutlaws.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2840770
+    },
+    {
+      "id": "avowed",
+      "title": "Avowed",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2457220
+      },
+      "mods": [
+        {
+          "id": "avowed",
+          "title": "Avowed",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-avowed.addon64",
+              "mod": "avowed",
+              "arch": "x64",
+              "size": 1960448,
+              "url": "./renodx-avowed.addon64",
+              "path": "./renodx-avowed.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2457220
+    },
+    {
+      "id": "awaken-astral-blade",
+      "title": "AWAKEN - Astral Blade",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1716310
+      },
+      "mods": [
+        {
+          "id": "awakenastralblade",
+          "title": "AWAKEN - Astral Blade",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-awakenastralblade.addon64",
+              "mod": "awakenastralblade",
+              "arch": "x64",
+              "size": 2212864,
+              "url": "./renodx-awakenastralblade.addon64",
+              "path": "./renodx-awakenastralblade.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1716310
+    },
+    {
+      "id": "baldur-s-gate-3",
+      "title": "Baldur's Gate 3",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1086940
+      },
+      "mods": [
+        {
+          "id": "baldursgate3",
+          "title": "Baldur's Gate 3",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-baldursgate3.addon64",
+              "mod": "baldursgate3",
+              "arch": "x64",
+              "size": 1811456,
+              "url": "./renodx-baldursgate3.addon64",
+              "path": "./renodx-baldursgate3.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1086940
+    },
+    {
+      "id": "batman-arkham-asylum",
+      "title": "Batman: Arkham Asylum",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 35140,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "batmanaa",
+          "title": "Batman: Arkham Asylum",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-batmanaa.addon32",
+              "mod": "batmanaa",
+              "arch": "x86",
+              "size": 1722880,
+              "url": "./renodx-batmanaa.addon32",
+              "path": "./renodx-batmanaa.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 35140
+    },
+    {
+      "id": "batman-arkham-knight",
+      "title": "Batman: Arkham Knight",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 208650
+      },
+      "mods": [
+        {
+          "id": "batmanak",
+          "title": "Batman: Arkham Knight",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-batmanak.addon64",
+              "mod": "batmanak",
+              "arch": "x64",
+              "size": 2438656,
+              "url": "./renodx-batmanak.addon64",
+              "path": "./renodx-batmanak.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 208650
+    },
+    {
+      "id": "beton-brutal",
+      "title": "BETON BRUTAL",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2330500
+      },
+      "mods": [
+        {
+          "id": "betonbrutal",
+          "title": "BETON BRUTAL",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-betonbrutal.addon64",
+              "mod": "betonbrutal",
+              "arch": "x64",
+              "size": 2221568,
+              "url": "./renodx-betonbrutal.addon64",
+              "path": "./renodx-betonbrutal.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2330500
+    },
+    {
+      "id": "beyond-blue",
+      "title": "Beyond Blue",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 883360
+      },
+      "mods": [
+        {
+          "id": "beyondblue",
+          "title": "Beyond Blue",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-beyondblue.addon64",
+              "mod": "beyondblue",
+              "arch": "x64",
+              "size": 2199552,
+              "url": "./renodx-beyondblue.addon64",
+              "path": "./renodx-beyondblue.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 883360
+    },
+    {
+      "id": "beyond-good-and-evil-20th-anniversary-edition",
+      "title": "Beyond Good and Evil - 20th Anniversary Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2556990
+      },
+      "mods": [
+        {
+          "id": "bge20",
+          "title": "Beyond Good and Evil - 20th Anniversary Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-bge20.addon64",
+              "mod": "bge20",
+              "arch": "x64",
+              "size": 2042880,
+              "url": "./renodx-bge20.addon64",
+              "path": "./renodx-bge20.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2556990
+    },
+    {
+      "id": "bioshock-remastered",
+      "title": "BioShock (Remastered)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 409710
+      },
+      "mods": [
+        {
+          "id": "bioshock-alt",
+          "title": "BioShock (Remastered)",
+          "variant": "Alternate",
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-bioshock-alt.addon64",
+              "mod": "bioshock-alt",
+              "arch": "x64",
+              "size": 2192384,
+              "url": "./renodx-bioshock-alt.addon64",
+              "path": "./renodx-bioshock-alt.addon64"
+            }
+          ]
+        },
+        {
+          "id": "bioshock",
+          "title": "BioShock (Remastered)",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-bioshock.addon64",
+              "mod": "bioshock",
+              "arch": "x64",
+              "size": 2069504,
+              "url": "./renodx-bioshock.addon64",
+              "path": "./renodx-bioshock.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 409710
+    },
+    {
+      "id": "black-myth-wukong",
+      "title": "Black Myth: Wukong",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2358720
+      },
+      "mods": [
+        {
+          "id": "bmw",
+          "title": "Black Myth: Wukong",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-bmw.addon64",
+              "mod": "bmw",
+              "arch": "x64",
+              "size": 1981952,
+              "url": "./renodx-bmw.addon64",
+              "path": "./renodx-bmw.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2358720
+    },
+    {
+      "id": "blades-of-fire",
+      "title": "Blades of Fire",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2091020
+      },
+      "mods": [
+        {
+          "id": "bladesoffire",
+          "title": "Blades of Fire",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-bladesoffire.addon64",
+              "mod": "bladesoffire",
+              "arch": "x64",
+              "size": 1867776,
+              "url": "./renodx-bladesoffire.addon64",
+              "path": "./renodx-bladesoffire.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2091020/93a6cdd9e770fcfbc50272de78c1e48f0cfe47e3/header.jpg",
+      "steam_appid": 2091020
+    },
+    {
+      "id": "borderlands-2",
+      "title": "Borderlands 2",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "borderlands2",
+          "title": "Borderlands 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-borderlands2.addon64",
+              "mod": "borderlands2",
+              "arch": "x64",
+              "size": 2056704,
+              "url": "./renodx-borderlands2.addon64",
+              "path": "./renodx-borderlands2.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "borderlands-4",
+      "title": "Borderlands 4",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1285190
+      },
+      "mods": [
+        {
+          "id": "borderlands4",
+          "title": "Borderlands 4",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-borderlands4.addon64",
+              "mod": "borderlands4",
+              "arch": "x64",
+              "size": 1875456,
+              "url": "./renodx-borderlands4.addon64",
+              "path": "./renodx-borderlands4.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1285190
+    },
+    {
+      "id": "borderlands-goty-enhanced",
+      "title": "Borderlands GOTY Enhanced",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "borderlandsgotyenhanced",
+          "title": "Borderlands GOTY Enhanced",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-borderlandsgotyenhanced.addon64",
+              "mod": "borderlandsgotyenhanced",
+              "arch": "x64",
+              "size": 2075648,
+              "url": "./renodx-borderlandsgotyenhanced.addon64",
+              "path": "./renodx-borderlandsgotyenhanced.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bulletstorm-full-clip-edition",
+      "title": "Bulletstorm: Full Clip Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 501590
+      },
+      "mods": [
+        {
+          "id": "bulletstormfullclip",
+          "title": "Bulletstorm: Full Clip Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-bulletstormfullclip.addon64",
+              "mod": "bulletstormfullclip",
+              "arch": "x64",
+              "size": 2173952,
+              "url": "./renodx-bulletstormfullclip.addon64",
+              "path": "./renodx-bulletstormfullclip.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 501590
+    },
+    {
+      "id": "call-of-duty-black-ops-3",
+      "title": "Call of Duty: Black Ops 3",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 311210
+      },
+      "mods": [
+        {
+          "id": "callofduty_t7_blackops3",
+          "title": "Call of Duty: Black Ops 3",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-callofduty_t7_blackops3.addon64",
+              "mod": "callofduty_t7_blackops3",
+              "arch": "x64",
+              "size": 2470400,
+              "url": "./renodx-callofduty_t7_blackops3.addon64",
+              "path": "./renodx-callofduty_t7_blackops3.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 311210
+    },
+    {
+      "id": "call-of-juarez-dx10",
+      "title": "Call of Juarez (DX10)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3020,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "callofjuarez",
+          "title": "Call of Juarez (DX10)",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-callofjuarez.addon32",
+              "mod": "callofjuarez",
+              "arch": "x86",
+              "size": 1978880,
+              "url": "./renodx-callofjuarez.addon32",
+              "path": "./renodx-callofjuarez.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3020
+    },
+    {
+      "id": "call-to-arms-gates-of-hell-ostfront",
+      "title": "Call to Arms - Gates of Hell: Ostfront",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 400750
+      },
+      "mods": [
+        {
+          "id": "gatesofhell",
+          "title": "Call to Arms - Gates of Hell: Ostfront",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-gatesofhell.addon64",
+              "mod": "gatesofhell",
+              "arch": "x64",
+              "size": 2494464,
+              "url": "./renodx-gatesofhell.addon64",
+              "path": "./renodx-gatesofhell.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 400750
+    },
+    {
+      "id": "castlevania-lords-of-shadow",
+      "title": "Castlevania: Lords of Shadow",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 234080,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "castlevanialos",
+          "title": "Castlevania Lords of Shadow 1 & 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-castlevanialos.addon32",
+              "mod": "castlevanialos",
+              "arch": "x86",
+              "size": 2228224,
+              "url": "./renodx-castlevanialos.addon32",
+              "path": "./renodx-castlevanialos.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 234080
+    },
+    {
+      "id": "castlevania-lords-of-shadow-2",
+      "title": "Castlevania: Lords of Shadow 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 239250,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "castlevanialos",
+          "title": "Castlevania Lords of Shadow 1 & 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-castlevanialos.addon32",
+              "mod": "castlevanialos",
+              "arch": "x86",
+              "size": 2228224,
+              "url": "./renodx-castlevanialos.addon32",
+              "path": "./renodx-castlevanialos.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 239250
+    },
+    {
+      "id": "child-of-light",
+      "title": "Child of Light",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "childoflight",
+          "title": "Child of Light",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-childoflight.addon64",
+              "mod": "childoflight",
+              "arch": "x64",
+              "size": 2056192,
+              "url": "./renodx-childoflight.addon64",
+              "path": "./renodx-childoflight.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "children-of-the-sun",
+      "title": "Children of the Sun",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1309950
+      },
+      "mods": [
+        {
+          "id": "childrenofthesun",
+          "title": "Children of the Sun",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-childrenofthesun.addon64",
+              "mod": "childrenofthesun",
+              "arch": "x64",
+              "size": 2171904,
+              "url": "./renodx-childrenofthesun.addon64",
+              "path": "./renodx-childrenofthesun.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1309950
+    },
+    {
+      "id": "citizen-sleeper-2",
+      "title": "Citizen Sleeper 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2442460
+      },
+      "mods": [
+        {
+          "id": "citizensleeper2",
+          "title": "Citizen Sleeper 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-citizensleeper2.addon64",
+              "mod": "citizensleeper2",
+              "arch": "x64",
+              "size": 2088960,
+              "url": "./renodx-citizensleeper2.addon64",
+              "path": "./renodx-citizensleeper2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2442460
+    },
+    {
+      "id": "clair-obscur-expedition-33",
+      "title": "Clair Obscur: Expedition 33",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1903340
+      },
+      "mods": [
+        {
+          "id": "clairobscur_expedition33",
+          "title": "Clair Obscur: Expedition 33",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-clairobscur_expedition33.addon64",
+              "mod": "clairobscur_expedition33",
+              "arch": "x64",
+              "size": 2530816,
+              "url": "./renodx-clairobscur_expedition33.addon64",
+              "path": "./renodx-clairobscur_expedition33.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1903340
+    },
+    {
+      "id": "clive-barker-s-jericho",
+      "title": "Clive Barker's Jericho",
+      "aliases": [],
+      "deploy": {
+        "architecture": [
+          "x86"
+        ],
+        "steam_appid": 11420
+      },
+      "mods": [
+        {
+          "id": "clivebarkersjericho",
+          "title": "Clive Barker's Jericho",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-clivebarkersjericho.addon32",
+              "mod": "clivebarkersjericho",
+              "arch": "x86",
+              "size": 1902592,
+              "url": "./renodx-clivebarkersjericho.addon32",
+              "path": "./renodx-clivebarkersjericho.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 11420
+    },
+    {
+      "id": "cronos-the-new-dawn",
+      "title": "Cronos: The New Dawn",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2101960
+      },
+      "mods": [
+        {
+          "id": "cronosthenewdawn",
+          "title": "Cronos: The New Dawn",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-cronosthenewdawn.addon64",
+              "mod": "cronosthenewdawn",
+              "arch": "x64",
+              "size": 2023936,
+              "url": "./renodx-cronosthenewdawn.addon64",
+              "path": "./renodx-cronosthenewdawn.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2101960
+    },
+    {
+      "id": "cyberpunk-2077",
+      "title": "Cyberpunk 2077",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1091500
+      },
+      "mods": [
+        {
+          "id": "cp2077",
+          "title": "Cyberpunk 2077",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-cp2077.addon64",
+              "mod": "cp2077",
+              "arch": "x64",
+              "size": 2259456,
+              "url": "./renodx-cp2077.addon64",
+              "path": "./renodx-cp2077.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1091500
+    },
+    {
+      "id": "dark-souls-remastered",
+      "title": "Dark Souls: Remastered",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 570940
+      },
+      "mods": [
+        {
+          "id": "darksouls",
+          "title": "Dark Souls: Remastered",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-darksouls.addon64",
+              "mod": "darksouls",
+              "arch": "x64",
+              "size": 2110464,
+              "url": "./renodx-darksouls.addon64",
+              "path": "./renodx-darksouls.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 570940
+    },
+    {
+      "id": "darksiders-warmastered",
+      "title": "Darksiders Warmastered",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 462780,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "darksiders-warmastered",
+          "title": "Darksiders Warmastered",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-darksiders-warmastered.addon32",
+              "mod": "darksiders-warmastered",
+              "arch": "x86",
+              "size": 1793024,
+              "url": "./renodx-darksiders-warmastered.addon32",
+              "path": "./renodx-darksiders-warmastered.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 462780
+    },
+    {
+      "id": "darktide",
+      "title": "Darktide",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1884610
+      },
+      "mods": [
+        {
+          "id": "darktide",
+          "title": "Darktide",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-darktide.addon64",
+              "mod": "darktide",
+              "arch": "x64",
+              "size": 2287104,
+              "url": "./renodx-darktide.addon64",
+              "path": "./renodx-darktide.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1884610
+    },
+    {
+      "id": "dead-island-2",
+      "title": "Dead Island 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 934700
+      },
+      "mods": [
+        {
+          "id": "deadisland2",
+          "title": "Dead Island 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-deadisland2.addon64",
+              "mod": "deadisland2",
+              "arch": "x64",
+              "size": 1853952,
+              "url": "./renodx-deadisland2.addon64",
+              "path": "./renodx-deadisland2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 934700
+    },
+    {
+      "id": "death-stranding-director-s-cut",
+      "title": "Death Stranding Director's Cut",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1850570
+      },
+      "mods": [
+        {
+          "id": "deathstrandingdc",
+          "title": "Death Stranding Director's Cut",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-deathstrandingdc.addon64",
+              "mod": "deathstrandingdc",
+              "arch": "x64",
+              "size": 2112000,
+              "url": "./renodx-deathstrandingdc.addon64",
+              "path": "./renodx-deathstrandingdc.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1850570
+    },
+    {
+      "id": "death-s-door",
+      "title": "Death's Door",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 894020
+      },
+      "mods": [
+        {
+          "id": "deathsdoor",
+          "title": "Death's Door",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-deathsdoor.addon64",
+              "mod": "deathsdoor",
+              "arch": "x64",
+              "size": 2159104,
+              "url": "./renodx-deathsdoor.addon64",
+              "path": "./renodx-deathsdoor.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 894020
+    },
+    {
+      "id": "descenders",
+      "title": "Descenders",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 681280
+      },
+      "mods": [
+        {
+          "id": "descenders",
+          "title": "Descenders",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-descenders.addon64",
+              "mod": "descenders",
+              "arch": "x64",
+              "size": 2304000,
+              "url": "./renodx-descenders.addon64",
+              "path": "./renodx-descenders.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 681280
+    },
+    {
+      "id": "deus-ex-mankind-divided",
+      "title": "Deus Ex: Mankind Divided",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 337000
+      },
+      "mods": [
+        {
+          "id": "dxmd",
+          "title": "Deus Ex: Mankind Divided",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dxmd.addon64",
+              "mod": "dxmd",
+              "arch": "x64",
+              "size": 2098688,
+              "url": "./renodx-dxmd.addon64",
+              "path": "./renodx-dxmd.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 337000
+    },
+    {
+      "id": "devil-may-cry-5",
+      "title": "Devil May Cry 5",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 601150
+      },
+      "mods": [
+        {
+          "id": "dmc5",
+          "title": "Devil May Cry 5",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dmc5.addon64",
+              "mod": "dmc5",
+              "arch": "x64",
+              "size": 1698816,
+              "url": "./renodx-dmc5.addon64",
+              "path": "./renodx-dmc5.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 601150
+    },
+    {
+      "id": "digimon-story-time-stranger",
+      "title": "Digimon Story: Time Stranger",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1984270
+      },
+      "mods": [
+        {
+          "id": "digimonstorytimestranger",
+          "title": "Digimon Story: Time Stranger",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-digimonstorytimestranger.addon64",
+              "mod": "digimonstorytimestranger",
+              "arch": "x64",
+              "size": 2183168,
+              "url": "./renodx-digimonstorytimestranger.addon64",
+              "path": "./renodx-digimonstorytimestranger.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1984270
+    },
+    {
+      "id": "dirt-rally-2-0",
+      "title": "DiRT Rally 2.0",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 690790
+      },
+      "mods": [
+        {
+          "id": "dirtrally2",
+          "title": "DiRT Rally 2.0",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dirtrally2.addon64",
+              "mod": "dirtrally2",
+              "arch": "x64",
+              "size": 2241024,
+              "url": "./renodx-dirtrally2.addon64",
+              "path": "./renodx-dirtrally2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 690790
+    },
+    {
+      "id": "dishonored",
+      "title": "Dishonored",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 205100,
+        "architecture": [
+          "x86",
+          "x64"
+        ]
+      },
+      "mods": [
+        {
+          "id": "dishonored",
+          "title": "Dishonored",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dishonored.addon32",
+              "mod": "dishonored",
+              "arch": "x86",
+              "size": 1780736,
+              "url": "./renodx-dishonored.addon32",
+              "path": "./renodx-dishonored.addon32"
+            },
+            {
+              "name": "renodx-dishonored.addon64",
+              "mod": "dishonored",
+              "arch": "x64",
+              "size": 2141696,
+              "url": "./renodx-dishonored.addon64",
+              "path": "./renodx-dishonored.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 205100
+    },
+    {
+      "id": "doom-eternal",
+      "title": "DOOM Eternal",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 782330
+      },
+      "mods": [
+        {
+          "id": "doom-eternal",
+          "title": "DOOM Eternal",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-doom-eternal.addon64",
+              "mod": "doom-eternal",
+              "arch": "x64",
+              "size": 2012672,
+              "url": "./renodx-doom-eternal.addon64",
+              "path": "./renodx-doom-eternal.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 782330
+    },
+    {
+      "id": "doom-the-dark-ages",
+      "title": "DOOM: The Dark Ages",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3017860
+      },
+      "mods": [
+        {
+          "id": "doom-tda",
+          "title": "DOOM: The Dark Ages",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-doom-tda.addon64",
+              "mod": "doom-tda",
+              "arch": "x64",
+              "size": 1731584,
+              "url": "./renodx-doom-tda.addon64",
+              "path": "./renodx-doom-tda.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3017860
+    },
+    {
+      "id": "dragon-age-inquisition",
+      "title": "Dragon Age: Inquisition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1222690
+      },
+      "mods": [
+        {
+          "id": "dai",
+          "title": "Dragon Age: Inquisition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dai.addon64",
+              "mod": "dai",
+              "arch": "x64",
+              "size": 3376640,
+              "url": "./renodx-dai.addon64",
+              "path": "./renodx-dai.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1222690
+    },
+    {
+      "id": "dragon-ball-sparking-zero",
+      "title": "DRAGON BALL: Sparking! ZERO",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1790600
+      },
+      "mods": [
+        {
+          "id": "dbzspark",
+          "title": "DRAGON BALL: Sparking! ZERO",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dbzspark.addon64",
+              "mod": "dbzspark",
+              "arch": "x64",
+              "size": 2390528,
+              "url": "./renodx-dbzspark.addon64",
+              "path": "./renodx-dbzspark.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1790600
+    },
+    {
+      "id": "dying-light",
+      "title": "Dying Light",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 239140
+      },
+      "mods": [
+        {
+          "id": "dyinglight",
+          "title": "Dying Light",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dyinglight.addon64",
+              "mod": "dyinglight",
+              "arch": "x64",
+              "size": 2224640,
+              "url": "./renodx-dyinglight.addon64",
+              "path": "./renodx-dyinglight.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 239140
+    },
+    {
+      "id": "dying-light-2",
+      "title": "Dying Light 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 534380
+      },
+      "mods": [
+        {
+          "id": "dyinglight2",
+          "title": "Dying Light 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-dyinglight2.addon64",
+              "mod": "dyinglight2",
+              "arch": "x64",
+              "size": 2166272,
+              "url": "./renodx-dyinglight2.addon64",
+              "path": "./renodx-dyinglight2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 534380
+    },
+    {
+      "id": "elden-ring",
+      "title": "Elden Ring",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1245620
+      },
+      "mods": [
+        {
+          "id": "fromsoft_engine",
+          "title": "FromSoftware Engine",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-fromsoft_engine.addon64",
+              "mod": "fromsoft_engine",
+              "arch": "x64",
+              "size": 2385408,
+              "url": "./renodx-fromsoft_engine.addon64",
+              "path": "./renodx-fromsoft_engine.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1245620
+    },
+    {
+      "id": "elden-ring-nightreign",
+      "title": "Elden Ring: Nightreign",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2622380
+      },
+      "mods": [
+        {
+          "id": "fromsoft_engine",
+          "title": "FromSoftware Engine",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-fromsoft_engine.addon64",
+              "mod": "fromsoft_engine",
+              "arch": "x64",
+              "size": 2385408,
+              "url": "./renodx-fromsoft_engine.addon64",
+              "path": "./renodx-fromsoft_engine.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2622380
+    },
+    {
+      "id": "elite-dangerous",
+      "title": "Elite Dangerous",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 359320
+      },
+      "mods": [
+        {
+          "id": "elitedangerous",
+          "title": "Elite Dangerous",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-elitedangerous.addon64",
+              "mod": "elitedangerous",
+              "arch": "x64",
+              "size": 2188800,
+              "url": "./renodx-elitedangerous.addon64",
+              "path": "./renodx-elitedangerous.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 359320
+    },
+    {
+      "id": "ereban-shadow-legacy",
+      "title": "Ereban: Shadow Legacy",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1671360
+      },
+      "mods": [
+        {
+          "id": "ereban",
+          "title": "Ereban: Shadow Legacy",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ereban.addon64",
+              "mod": "ereban",
+              "arch": "x64",
+              "size": 2382336,
+              "url": "./renodx-ereban.addon64",
+              "path": "./renodx-ereban.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1671360
+    },
+    {
+      "id": "eternights",
+      "title": "Eternights",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1402110
+      },
+      "mods": [
+        {
+          "id": "eternights",
+          "title": "Eternights",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-eternights.addon64",
+              "mod": "eternights",
+              "arch": "x64",
+              "size": 2337792,
+              "url": "./renodx-eternights.addon64",
+              "path": "./renodx-eternights.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1402110
+    },
+    {
+      "id": "fallout-4",
+      "title": "Fallout 4",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 377160
+      },
+      "mods": [
+        {
+          "id": "fallout4",
+          "title": "Fallout 4",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-fallout4.addon64",
+              "mod": "fallout4",
+              "arch": "x64",
+              "size": 2349056,
+              "url": "./renodx-fallout4.addon64",
+              "path": "./renodx-fallout4.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 377160
+    },
+    {
+      "id": "fallout-76",
+      "title": "Fallout 76",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1151340
+      },
+      "mods": [
+        {
+          "id": "fallout76",
+          "title": "Fallout 76",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-fallout76.addon64",
+              "mod": "fallout76",
+              "arch": "x64",
+              "size": 2272256,
+              "url": "./renodx-fallout76.addon64",
+              "path": "./renodx-fallout76.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1151340
+    },
+    {
+      "id": "far-cry-2-dx10",
+      "title": "Far Cry 2 (DX10)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 19900,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "duniaengine",
+          "title": "Dunia Engine",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-duniaengine.addon32",
+              "mod": "duniaengine",
+              "arch": "x86",
+              "size": 5121024,
+              "url": "./renodx-duniaengine.addon32",
+              "path": "./renodx-duniaengine.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 19900
+    },
+    {
+      "id": "far-cry-3-dx11",
+      "title": "Far Cry 3 (DX11)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 220240,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "duniaengine",
+          "title": "Dunia Engine",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-duniaengine.addon32",
+              "mod": "duniaengine",
+              "arch": "x86",
+              "size": 5121024,
+              "url": "./renodx-duniaengine.addon32",
+              "path": "./renodx-duniaengine.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 220240
+    },
+    {
+      "id": "far-cry-5",
+      "title": "Far Cry 5",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 552520
+      },
+      "mods": [
+        {
+          "id": "farcry5",
+          "title": "Far Cry 5",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-farcry5.addon64",
+              "mod": "farcry5",
+              "arch": "x64",
+              "size": 5443584,
+              "url": "./renodx-farcry5.addon64",
+              "path": "./renodx-farcry5.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 552520
+    },
+    {
+      "id": "far-cry-6",
+      "title": "Far Cry 6",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2369390
+      },
+      "mods": [
+        {
+          "id": "farcry6",
+          "title": "Far Cry 6",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-farcry6.addon64",
+              "mod": "farcry6",
+              "arch": "x64",
+              "size": 4769792,
+              "url": "./renodx-farcry6.addon64",
+              "path": "./renodx-farcry6.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2369390
+    },
+    {
+      "id": "fe",
+      "title": "Fe",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1225580
+      },
+      "mods": [
+        {
+          "id": "fe",
+          "title": "Fe",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-fe.addon64",
+              "mod": "fe",
+              "arch": "x64",
+              "size": 2256384,
+              "url": "./renodx-fe.addon64",
+              "path": "./renodx-fe.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1225580
+    },
+    {
+      "id": "final-fantasy-vii-rebirth",
+      "title": "Final Fantasy VII Rebirth",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2909400
+      },
+      "mods": [
+        {
+          "id": "ff7rebirth",
+          "title": "Final Fantasy VII Rebirth",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ff7rebirth.addon64",
+              "mod": "ff7rebirth",
+              "arch": "x64",
+              "size": 4201472,
+              "url": "./renodx-ff7rebirth.addon64",
+              "path": "./renodx-ff7rebirth.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2909400
+    },
+    {
+      "id": "final-fantasy-vii-remake-intergrade",
+      "title": "Final Fantasy VII Remake Intergrade",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1462040
+      },
+      "mods": [
+        {
+          "id": "ff7remake",
+          "title": "Final Fantasy VII Remake Intergrade",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ff7remake.addon64",
+              "mod": "ff7remake",
+              "arch": "x64",
+              "size": 2501120,
+              "url": "./renodx-ff7remake.addon64",
+              "path": "./renodx-ff7remake.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1462040
+    },
+    {
+      "id": "final-fantasy-x",
+      "title": "Final Fantasy X",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 359870,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "ffx",
+          "title": "Final Fantasy X",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ffx.addon32",
+              "mod": "ffx",
+              "arch": "x86",
+              "size": 1742336,
+              "url": "./renodx-ffx.addon32",
+              "path": "./renodx-ffx.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 359870
+    },
+    {
+      "id": "final-fantasy-xiv-online",
+      "title": "Final Fantasy XIV Online",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 39210
+      },
+      "mods": [
+        {
+          "id": "ffxiv",
+          "title": "Final Fantasy XIV Online",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ffxiv.addon64",
+              "mod": "ffxiv",
+              "arch": "x64",
+              "size": 2073088,
+              "url": "./renodx-ffxiv.addon64",
+              "path": "./renodx-ffxiv.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 39210
+    },
+    {
+      "id": "final-fantasy-xv",
+      "title": "Final Fantasy XV",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 637650
+      },
+      "mods": [
+        {
+          "id": "ffxv",
+          "title": "Final Fantasy XV",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ffxv.addon64",
+              "mod": "ffxv",
+              "arch": "x64",
+              "size": 2258944,
+              "url": "./renodx-ffxv.addon64",
+              "path": "./renodx-ffxv.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 637650
+    },
+    {
+      "id": "ghostwire-tokyo",
+      "title": "Ghostwire Tokyo",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1475810
+      },
+      "mods": [
+        {
+          "id": "ghostwiretokyo",
+          "title": "Ghostwire Tokyo",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ghostwiretokyo.addon64",
+              "mod": "ghostwiretokyo",
+              "arch": "x64",
+              "size": 1904128,
+              "url": "./renodx-ghostwiretokyo.addon64",
+              "path": "./renodx-ghostwiretokyo.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1475810
+    },
+    {
+      "id": "girls-frontline-2-exilium",
+      "title": "Girls Frontline 2: Exilium",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3347400
+      },
+      "mods": [
+        {
+          "id": "gfl2",
+          "title": "Girls Frontline 2: Exilium",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-gfl2.addon64",
+              "mod": "gfl2",
+              "arch": "x64",
+              "size": 2349056,
+              "url": "./renodx-gfl2.addon64",
+              "path": "./renodx-gfl2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3347400
+    },
+    {
+      "id": "go-mecha-ball",
+      "title": "Go Mecha Ball",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2008510
+      },
+      "mods": [
+        {
+          "id": "gomechaball",
+          "title": "Go Mecha Ball",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-gomechaball.addon64",
+              "mod": "gomechaball",
+              "arch": "x64",
+              "size": 2276352,
+              "url": "./renodx-gomechaball.addon64",
+              "path": "./renodx-gomechaball.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2008510
+    },
+    {
+      "id": "god-of-war-2018",
+      "title": "God of War (2018)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1593500
+      },
+      "mods": [
+        {
+          "id": "gow2018",
+          "title": "God of War (2018)",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-gow2018.addon64",
+              "mod": "gow2018",
+              "arch": "x64",
+              "size": 1731584,
+              "url": "./renodx-gow2018.addon64",
+              "path": "./renodx-gow2018.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1593500
+    },
+    {
+      "id": "god-of-war-ragnarok",
+      "title": "God of War: Ragnarok",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2322010
+      },
+      "mods": [
+        {
+          "id": "gowragnarok",
+          "title": "God of War: Ragnarok",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-gowragnarok.addon64",
+              "mod": "gowragnarok",
+              "arch": "x64",
+              "size": 1735168,
+              "url": "./renodx-gowragnarok.addon64",
+              "path": "./renodx-gowragnarok.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2322010
+    },
+    {
+      "id": "granblue-fantasy-relink",
+      "title": "Granblue Fantasy: Relink",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 881020
+      },
+      "mods": [
+        {
+          "id": "gbfrelink",
+          "title": "Granblue Fantasy: Relink",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-gbfrelink.addon64",
+              "mod": "gbfrelink",
+              "arch": "x64",
+              "size": 2281472,
+              "url": "./renodx-gbfrelink.addon64",
+              "path": "./renodx-gbfrelink.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 881020
+    },
+    {
+      "id": "grand-theft-auto-v-enhanced",
+      "title": "Grand Theft Auto V: Enhanced",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3240220
+      },
+      "mods": [
+        {
+          "id": "gtav-enhanced",
+          "title": "Grand Theft Auto V: Enhanced",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-gtav-enhanced.addon64",
+              "mod": "gtav-enhanced",
+              "arch": "x64",
+              "size": 2672128,
+              "url": "./renodx-gtav-enhanced.addon64",
+              "path": "./renodx-gtav-enhanced.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3240220
+    },
+    {
+      "id": "greedfall",
+      "title": "GreedFall",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 606880
+      },
+      "mods": [
+        {
+          "id": "greedfall",
+          "title": "GreedFall",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-greedfall.addon64",
+              "mod": "greedfall",
+              "arch": "x64",
+              "size": 2274816,
+              "url": "./renodx-greedfall.addon64",
+              "path": "./renodx-greedfall.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 606880
+    },
+    {
+      "id": "grim-dawn",
+      "title": "Grim Dawn",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 219990,
+        "architecture": [
+          "x64"
+        ]
+      },
+      "mods": [
+        {
+          "id": "grimdawn",
+          "title": "Grim Dawn and Titan Quest Anniversary Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-grimdawn.addon64",
+              "mod": "grimdawn",
+              "arch": "x64",
+              "size": 2160128,
+              "url": "./renodx-grimdawn.addon64",
+              "path": "./renodx-grimdawn.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 219990
+    },
+    {
+      "id": "hades",
+      "title": "Hades",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1145360
+      },
+      "mods": [
+        {
+          "id": "hades",
+          "title": "Hades",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-hades.addon64",
+              "mod": "hades",
+              "arch": "x64",
+              "size": 2234880,
+              "url": "./renodx-hades.addon64",
+              "path": "./renodx-hades.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1145360
+    },
+    {
+      "id": "hades-ii",
+      "title": "Hades II",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1145350
+      },
+      "mods": [
+        {
+          "id": "hades2",
+          "title": "Hades II",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-hades2.addon64",
+              "mod": "hades2",
+              "arch": "x64",
+              "size": 2241024,
+              "url": "./renodx-hades2.addon64",
+              "path": "./renodx-hades2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1145350
+    },
+    {
+      "id": "hard-reset-redux",
+      "title": "Hard Reset Redux",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 407810
+      },
+      "mods": [
+        {
+          "id": "roadhogengine",
+          "title": "Hard Reset Redux, Shadow Warrior (2013) & 2",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-roadhogengine.addon64",
+              "mod": "roadhogengine",
+              "arch": "x64",
+              "size": 12240896,
+              "url": "./renodx-roadhogengine.addon64",
+              "path": "./renodx-roadhogengine.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 407810
+    },
+    {
+      "id": "haste",
+      "title": "Haste",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1796470
+      },
+      "mods": [
+        {
+          "id": "haste",
+          "title": "Haste",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-haste.addon64",
+              "mod": "haste",
+              "arch": "x64",
+              "size": 2420736,
+              "url": "./renodx-haste.addon64",
+              "path": "./renodx-haste.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1796470
+    },
+    {
+      "id": "hat-in-time",
+      "title": "Hat in Time",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 253230
+      },
+      "mods": [
+        {
+          "id": "hatintime",
+          "title": "Hat in Time",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-hatintime.addon64",
+              "mod": "hatintime",
+              "arch": "x64",
+              "size": 2154496,
+              "url": "./renodx-hatintime.addon64",
+              "path": "./renodx-hatintime.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 253230
+    },
+    {
+      "id": "hatsune-miku-project-diva-mega-mix",
+      "title": "Hatsune Miku: Project DIVA Mega Mix+",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1761390
+      },
+      "mods": [
+        {
+          "id": "projectidiva_megamix",
+          "title": "Hatsune Miku: Project DIVA Mega Mix+",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-projectidiva_megamix.addon64",
+              "mod": "projectidiva_megamix",
+              "arch": "x64",
+              "size": 2363904,
+              "url": "./renodx-projectidiva_megamix.addon64",
+              "path": "./renodx-projectidiva_megamix.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1761390
+    },
+    {
+      "id": "hitman-world-of-assassination",
+      "title": "HITMAN World of Assassination",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1659040
+      },
+      "mods": [
+        {
+          "id": "hitmanwoa",
+          "title": "HITMAN World of Assassination",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-hitmanwoa.addon64",
+              "mod": "hitmanwoa",
+              "arch": "x64",
+              "size": 1929728,
+              "url": "./renodx-hitmanwoa.addon64",
+              "path": "./renodx-hitmanwoa.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1659040
+    },
+    {
+      "id": "hollow-cocoon",
+      "title": "Hollow Cocoon",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2414630
+      },
+      "mods": [
+        {
+          "id": "hollowcocoon",
+          "title": "Hollow Cocoon",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-hollowcocoon.addon64",
+              "mod": "hollowcocoon",
+              "arch": "x64",
+              "size": 2244096,
+              "url": "./renodx-hollowcocoon.addon64",
+              "path": "./renodx-hollowcocoon.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2414630
+    },
+    {
+      "id": "hollow-knight",
+      "title": "Hollow Knight",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 367520
+      },
+      "mods": [
+        {
+          "id": "hollowknight",
+          "title": "Hollow Knight",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-hollowknight.addon64",
+              "mod": "hollowknight",
+              "arch": "x64",
+              "size": 2270720,
+              "url": "./renodx-hollowknight.addon64",
+              "path": "./renodx-hollowknight.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 367520
+    },
+    {
+      "id": "hollow-knight-silksong",
+      "title": "Hollow Knight: Silksong",
+      "aliases": [],
+      "deploy": {
+        "game_exe": "Hollow Knight Silksong.exe",
+        "nexus_mods_game_id": 8136,
+        "steam_appid": 1030300
+      },
+      "mods": [
+        {
+          "id": "hollowknight-silksong",
+          "title": "Hollow Knight: Silksong",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-hollowknight-silksong.addon64",
+              "mod": "hollowknight-silksong",
+              "arch": "x64",
+              "size": 2382336,
+              "url": "./renodx-hollowknight-silksong.addon64",
+              "path": "./renodx-hollowknight-silksong.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1030300/header.jpg",
+      "steam_appid": 1030300
+    },
+    {
+      "id": "honkai-star-rail",
+      "title": "Honkai: Star Rail",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "honkai-starrail",
+          "title": "Honkai: Star Rail",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-honkai-starrail.addon64",
+              "mod": "honkai-starrail",
+              "arch": "x64",
+              "size": 2117120,
+              "url": "./renodx-honkai-starrail.addon64",
+              "path": "./renodx-honkai-starrail.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://cdn1.epicgames.com/spt-assets/6f3979ff608f42e286c83507a69b27f5/honkai-star-rail-19tfu.jpg?resize=1&w=460&h=215"
+    },
+    {
+      "id": "immortals-fenyx-rising",
+      "title": "Immortals Fenyx Rising",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2221920
+      },
+      "mods": [
+        {
+          "id": "immortals",
+          "title": "Immortals Fenyx Rising",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-immortalsfenyxrising.addon64",
+              "mod": "immortalsfenyxrising",
+              "arch": "x64",
+              "size": 1754112,
+              "url": "./renodx-immortalsfenyxrising.addon64",
+              "path": "./renodx-immortalsfenyxrising.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2221920
+    },
+    {
+      "id": "indiana-jones-and-the-great-circle",
+      "title": "Indiana Jones and the Great Circle",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2677660
+      },
+      "mods": [
+        {
+          "id": "indygreatcircle",
+          "title": "Indiana Jones and the Great Circle",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-indygreatcircle.addon64",
+              "mod": "indygreatcircle",
+              "arch": "x64",
+              "size": 1892864,
+              "url": "./renodx-indygreatcircle.addon64",
+              "path": "./renodx-indygreatcircle.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2677660
+    },
+    {
+      "id": "journey",
+      "title": "Journey",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "journey",
+          "title": "Journey",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-journey.addon64",
+              "mod": "journey",
+              "arch": "x64",
+              "size": 2056704,
+              "url": "./renodx-journey.addon64",
+              "path": "./renodx-journey.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "just-cause-4",
+      "title": "Just Cause 4",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 517630
+      },
+      "mods": [
+        {
+          "id": "justcause4",
+          "title": "Just Cause 4",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-justcause4.addon64",
+              "mod": "justcause4",
+              "arch": "x64",
+              "size": 2304000,
+              "url": "./renodx-justcause4.addon64",
+              "path": "./renodx-justcause4.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 517630
+    },
+    {
+      "id": "karma-the-dark-world",
+      "title": "Karma: The Dark World",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1376200
+      },
+      "mods": [
+        {
+          "id": "karmathedarkworld",
+          "title": "Karma: The Dark World",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-karmathedarkworld.addon64",
+              "mod": "karmathedarkworld",
+              "arch": "x64",
+              "size": 1947648,
+              "url": "./renodx-karmathedarkworld.addon64",
+              "path": "./renodx-karmathedarkworld.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1376200
+    },
+    {
+      "id": "kingdom-come-deliverance-2",
+      "title": "Kingdom Come Deliverance 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1771300
+      },
+      "mods": [
+        {
+          "id": "kingdomcome2",
+          "title": "Kingdom Come Deliverance 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-kingdomcome2.addon64",
+              "mod": "kingdomcome2",
+              "arch": "x64",
+              "size": 1968640,
+              "url": "./renodx-kingdomcome2.addon64",
+              "path": "./renodx-kingdomcome2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1771300
+    },
+    {
+      "id": "kingdoms-of-amalur-re-reckoning",
+      "title": "Kingdoms of Amalur: Re-Reckoning",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1041720,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "koarr",
+          "title": "Kingdoms of Amalur: Re-Reckoning",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-koarr.addon32",
+              "mod": "koarr",
+              "arch": "x86",
+              "size": 2135040,
+              "url": "./renodx-koarr.addon32",
+              "path": "./renodx-koarr.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1041720
+    },
+    {
+      "id": "kunitsu-gami",
+      "title": "Kunitsu-Gami",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2510710
+      },
+      "mods": [
+        {
+          "id": "kunitsugami",
+          "title": "Kunitsu-Gami",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-kunitsugami.addon64",
+              "mod": "kunitsugami",
+              "arch": "x64",
+              "size": 2199040,
+              "url": "./renodx-kunitsugami.addon64",
+              "path": "./renodx-kunitsugami.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2510710
+    },
+    {
+      "id": "l-a-noire",
+      "title": "L.A. Noire",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 110800,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "lanoire",
+          "title": "L.A. Noire",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-lanoire.addon32",
+              "mod": "lanoire",
+              "arch": "x86",
+              "size": 1783808,
+              "url": "./renodx-lanoire.addon32",
+              "path": "./renodx-lanoire.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 110800
+    },
+    {
+      "id": "last-epoch",
+      "title": "Last Epoch",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 899770
+      },
+      "mods": [
+        {
+          "id": "lastepoch",
+          "title": "Last Epoch",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-lastepoch.addon64",
+              "mod": "lastepoch",
+              "arch": "x64",
+              "size": 2252288,
+              "url": "./renodx-lastepoch.addon64",
+              "path": "./renodx-lastepoch.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 899770
+    },
+    {
+      "id": "lost-in-random",
+      "title": "Lost in Random",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1462570
+      },
+      "mods": [
+        {
+          "id": "lostinrandom",
+          "title": "Lost in Random / Lost in Random: The Eternal Die",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-lostinrandom.addon64",
+              "mod": "lostinrandom",
+              "arch": "x64",
+              "size": 2475520,
+              "url": "./renodx-lostinrandom.addon64",
+              "path": "./renodx-lostinrandom.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1462570
+    },
+    {
+      "id": "lost-in-random-the-eternal-die",
+      "title": "Lost in Random: The Eternal Die",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2564520
+      },
+      "mods": [
+        {
+          "id": "lostinrandom",
+          "title": "Lost in Random / Lost in Random: The Eternal Die",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-lostinrandom.addon64",
+              "mod": "lostinrandom",
+              "arch": "x64",
+              "size": 2475520,
+              "url": "./renodx-lostinrandom.addon64",
+              "path": "./renodx-lostinrandom.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2564520
+    },
+    {
+      "id": "lost-planet",
+      "title": "Lost Planet",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 45720,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "lostplanet",
+          "title": "Lost Planet",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-lostplanet.addon32",
+              "mod": "lostplanet",
+              "arch": "x86",
+              "size": 1707008,
+              "url": "./renodx-lostplanet.addon32",
+              "path": "./renodx-lostplanet.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 45720
+    },
+    {
+      "id": "lunacid",
+      "title": "Lunacid",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1745510
+      },
+      "mods": [
+        {
+          "id": "lunacid",
+          "title": "Lunacid",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-lunacid.addon64",
+              "mod": "lunacid",
+              "arch": "x64",
+              "size": 2174976,
+              "url": "./renodx-lunacid.addon64",
+              "path": "./renodx-lunacid.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1745510
+    },
+    {
+      "id": "lysfanga-the-time-shift-warrior",
+      "title": "Lysfanga: The Time Shift Warrior",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2161620
+      },
+      "mods": [
+        {
+          "id": "lysfanga",
+          "title": "Lysfanga: The Time Shift Warrior",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-lysfanga.addon64",
+              "mod": "lysfanga",
+              "arch": "x64",
+              "size": 2379264,
+              "url": "./renodx-lysfanga.addon64",
+              "path": "./renodx-lysfanga.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2161620
+    },
+    {
+      "id": "mad-max",
+      "title": "Mad Max",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "madmax",
+          "title": "Mad Max",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-madmax.addon64",
+              "mod": "madmax",
+              "arch": "x64",
+              "size": 2314240,
+              "url": "./renodx-madmax.addon64",
+              "path": "./renodx-madmax.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mafia-definitive-edition",
+      "title": "Mafia: Definitive Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1030840
+      },
+      "mods": [
+        {
+          "id": "mafiade",
+          "title": "Mafia: Definitive Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-mafiade.addon64",
+              "mod": "mafiade",
+              "arch": "x64",
+              "size": 2324480,
+              "url": "./renodx-mafiade.addon64",
+              "path": "./renodx-mafiade.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1030840
+    },
+    {
+      "id": "marvel-s-spider-man-miles-morales",
+      "title": "Marvel's Spider-Man Miles Morales",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1817190
+      },
+      "mods": [
+        {
+          "id": "spiderman_2018_miles",
+          "title": "Spider-Man: Remastered and Spider-Man: Miles Morales",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-spiderman_2018_miles.addon64",
+              "mod": "spiderman_2018_miles",
+              "arch": "x64",
+              "size": 1673216,
+              "url": "./renodx-spiderman_2018_miles.addon64",
+              "path": "./renodx-spiderman_2018_miles.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1817190
+    },
+    {
+      "id": "marvel-s-spider-man-remastered",
+      "title": "Marvel's Spider-Man Remastered",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1817070
+      },
+      "mods": [
+        {
+          "id": "spiderman_2018_miles",
+          "title": "Spider-Man: Remastered and Spider-Man: Miles Morales",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-spiderman_2018_miles.addon64",
+              "mod": "spiderman_2018_miles",
+              "arch": "x64",
+              "size": 1673216,
+              "url": "./renodx-spiderman_2018_miles.addon64",
+              "path": "./renodx-spiderman_2018_miles.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1817070
+    },
+    {
+      "id": "mass-effect-andromeda",
+      "title": "Mass Effect: Andromeda",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1238000
+      },
+      "mods": [
+        {
+          "id": "masseffectandromeda",
+          "title": "Mass Effect: Andromeda",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-masseffectandromeda.addon64",
+              "mod": "masseffectandromeda",
+              "arch": "x64",
+              "size": 2225152,
+              "url": "./renodx-masseffectandromeda.addon64",
+              "path": "./renodx-masseffectandromeda.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1238000
+    },
+    {
+      "id": "mass-effect-legendary-edition",
+      "title": "Mass Effect: Legendary Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1328670
+      },
+      "mods": [
+        {
+          "id": "masseffectle",
+          "title": "Mass Effect: Legendary Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-masseffectle.addon64",
+              "mod": "masseffectle",
+              "arch": "x64",
+              "size": 2467328,
+              "url": "./renodx-masseffectle.addon64",
+              "path": "./renodx-masseffectle.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1328670
+    },
+    {
+      "id": "max-payne-3",
+      "title": "Max Payne 3",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 204100,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "maxpayne3",
+          "title": "Max Payne 3",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-maxpayne3.addon32",
+              "mod": "maxpayne3",
+              "arch": "x86",
+              "size": 3612672,
+              "url": "./renodx-maxpayne3.addon32",
+              "path": "./renodx-maxpayne3.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 204100
+    },
+    {
+      "id": "metal-gear-solid-delta-snake-eater",
+      "title": "Metal Gear Solid Delta: Snake Eater",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2417610
+      },
+      "mods": [
+        {
+          "id": "mgsdelta",
+          "title": "Metal Gear Solid Delta: Snake Eater",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-mgsdelta.addon64",
+              "mod": "mgsdelta",
+              "arch": "x64",
+              "size": 1943040,
+              "url": "./renodx-mgsdelta.addon64",
+              "path": "./renodx-mgsdelta.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2417610
+    },
+    {
+      "id": "metaphor-refantazio",
+      "title": "Metaphor: ReFantazio",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2679460
+      },
+      "mods": [
+        {
+          "id": "metaphorrefantazio",
+          "title": "Metaphor: ReFantazio",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-metaphorrefantazio.addon64",
+              "mod": "metaphorrefantazio",
+              "arch": "x64",
+              "size": 2318848,
+              "url": "./renodx-metaphorrefantazio.addon64",
+              "path": "./renodx-metaphorrefantazio.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2679460
+    },
+    {
+      "id": "metro-2033-redux",
+      "title": "Metro 2033 Redux",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 286690
+      },
+      "mods": [
+        {
+          "id": "metro",
+          "title": "Metro 2033 and Last Light Redux",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-metro.addon64",
+              "mod": "metro",
+              "arch": "x64",
+              "size": 2337792,
+              "url": "./renodx-metro.addon64",
+              "path": "./renodx-metro.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 286690
+    },
+    {
+      "id": "metro-last-light-redux",
+      "title": "Metro: Last Light Redux",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 287390
+      },
+      "mods": [
+        {
+          "id": "metro",
+          "title": "Metro 2033 and Last Light Redux",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-metro.addon64",
+              "mod": "metro",
+              "arch": "x64",
+              "size": 2337792,
+              "url": "./renodx-metro.addon64",
+              "path": "./renodx-metro.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 287390
+    },
+    {
+      "id": "middle-earth-shadow-of-war",
+      "title": "Middle-earth™: Shadow of War™",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 356190
+      },
+      "mods": [
+        {
+          "id": "shadowofwar",
+          "title": "Middle-earth™: Shadow of War™",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-shadowofwar.addon64",
+              "mod": "shadowofwar",
+              "arch": "x64",
+              "size": 1777152,
+              "url": "./renodx-shadowofwar.addon64",
+              "path": "./renodx-shadowofwar.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 356190
+    },
+    {
+      "id": "monster-hunter-rise",
+      "title": "Monster Hunter Rise",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1446780
+      },
+      "mods": [
+        {
+          "id": "mhrise",
+          "title": "Monster Hunter Rise",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-mhrise.addon64",
+              "mod": "mhrise",
+              "arch": "x64",
+              "size": 1839616,
+              "url": "./renodx-mhrise.addon64",
+              "path": "./renodx-mhrise.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1446780
+    },
+    {
+      "id": "monster-hunter-world",
+      "title": "Monster Hunter World",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 582010
+      },
+      "mods": [
+        {
+          "id": "mhworld",
+          "title": "Monster Hunter World",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-mhworld.addon64",
+              "mod": "mhworld",
+              "arch": "x64",
+              "size": 1803776,
+              "url": "./renodx-mhworld.addon64",
+              "path": "./renodx-mhworld.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 582010
+    },
+    {
+      "id": "monster-hunter-wilds",
+      "title": "Monster Hunter: Wilds",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2246340
+      },
+      "mods": [
+        {
+          "id": "mhwilds",
+          "title": "Monster Hunter: Wilds",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-mhwilds.addon64",
+              "mod": "mhwilds",
+              "arch": "x64",
+              "size": 2510848,
+              "url": "./renodx-mhwilds.addon64",
+              "path": "./renodx-mhwilds.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2246340
+    },
+    {
+      "id": "need-for-speed-2016",
+      "title": "Need for Speed (2016)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1262540
+      },
+      "mods": [
+        {
+          "id": "nfs16",
+          "title": "Need for Speed (2016)",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-nfs16.addon64",
+              "mod": "nfs16",
+              "arch": "x64",
+              "size": 2745344,
+              "url": "./renodx-nfs16.addon64",
+              "path": "./renodx-nfs16.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1262540
+    },
+    {
+      "id": "need-for-speed-the-run",
+      "title": "Need for Speed: The Run",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": null
+      },
+      "mods": [
+        {
+          "id": "nfstr",
+          "title": "Need for Speed: The Run",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-nfstr.addon64",
+              "mod": "nfstr",
+              "arch": "x64",
+              "size": 3404288,
+              "url": "./renodx-nfstr.addon64",
+              "path": "./renodx-nfstr.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://images.igdb.com/igdb/image/upload/t_cover_big/co20a4.webp",
+      "steam_appid": null
+    },
+    {
+      "id": "ninja-gaiden-4",
+      "title": "Ninja Gaiden 4",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2627260
+      },
+      "mods": [
+        {
+          "id": "ninjagaiden4",
+          "title": "Ninja Gaiden 4",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ninjagaiden4.addon64",
+              "mod": "ninjagaiden4",
+              "arch": "x64",
+              "size": 1896960,
+              "url": "./renodx-ninjagaiden4.addon64",
+              "path": "./renodx-ninjagaiden4.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2627260
+    },
+    {
+      "id": "ninja-gaiden-sigma",
+      "title": "Ninja Gaiden Sigma",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1580780
+      },
+      "mods": [
+        {
+          "id": "ngsigma",
+          "title": "Ninja Gaiden Sigma",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ngsigma.addon64",
+              "mod": "ngsigma",
+              "arch": "x64",
+              "size": 2251264,
+              "url": "./renodx-ngsigma.addon64",
+              "path": "./renodx-ngsigma.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1580780
+    },
+    {
+      "id": "ninja-gaiden-sigma-2",
+      "title": "Ninja Gaiden Sigma 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1580790
+      },
+      "mods": [
+        {
+          "id": "ngsigma2",
+          "title": "Ninja Gaiden Sigma 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ngsigma2.addon64",
+              "mod": "ngsigma2",
+              "arch": "x64",
+              "size": 2249728,
+              "url": "./renodx-ngsigma2.addon64",
+              "path": "./renodx-ngsigma2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1580790
+    },
+    {
+      "id": "nioh-3",
+      "title": "Nioh 3",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3681010
+      },
+      "mods": [
+        {
+          "id": "nioh3",
+          "title": "Nioh 3",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-nioh3.addon64",
+              "mod": "nioh3",
+              "arch": "x64",
+              "size": 1987584,
+              "url": "./renodx-nioh3.addon64",
+              "path": "./renodx-nioh3.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/3681010/a21264e9fd476dcb2901c2432b598107d024c5a8/header.jpg",
+      "steam_appid": 3681010
+    },
+    {
+      "id": "opus-echo-of-starsong-full-bloom-edition",
+      "title": "OPUS: Echo of Starsong - Full Bloom Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1504500
+      },
+      "mods": [
+        {
+          "id": "opus-eos",
+          "title": "OPUS: Echo of Starsong - Full Bloom Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-opus-eos.addon64",
+              "mod": "opus-eos",
+              "arch": "x64",
+              "size": 2902016,
+              "url": "./renodx-opus-eos.addon64",
+              "path": "./renodx-opus-eos.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1504500
+    },
+    {
+      "id": "ori-and-the-blind-forest-definitive-edition",
+      "title": "Ori and the Blind Forest: Definitive Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 387290,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "ori1definitive",
+          "title": "Ori and the Blind Forest: Definitive Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ori1definitive.addon32",
+              "mod": "ori1definitive",
+              "arch": "x86",
+              "size": 1875456,
+              "url": "./renodx-ori1definitive.addon32",
+              "path": "./renodx-ori1definitive.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 387290
+    },
+    {
+      "id": "ori-and-the-will-of-the-wisps",
+      "title": "Ori and the Will of the Wisps",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1057090
+      },
+      "mods": [
+        {
+          "id": "ori2",
+          "title": "Ori and the Will of the Wisps",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-ori2.addon64",
+              "mod": "ori2",
+              "arch": "x64",
+              "size": 2424320,
+              "url": "./renodx-ori2.addon64",
+              "path": "./renodx-ori2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1057090
+    },
+    {
+      "id": "osiris-new-dawn",
+      "title": "Osiris: New Dawn",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 402710
+      },
+      "mods": [
+        {
+          "id": "osirisnewdawn",
+          "title": "Osiris: New Dawn",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-osirisnewdawn.addon64",
+              "mod": "osirisnewdawn",
+              "arch": "x64",
+              "size": 2244608,
+              "url": "./renodx-osirisnewdawn.addon64",
+              "path": "./renodx-osirisnewdawn.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 402710
+    },
+    {
+      "id": "outer-wilds",
+      "title": "Outer Wilds",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 753640
+      },
+      "mods": [
+        {
+          "id": "outerwilds",
+          "title": "Outer Wilds",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-outerwilds.addon64",
+              "mod": "outerwilds",
+              "arch": "x64",
+              "size": 2183168,
+              "url": "./renodx-outerwilds.addon64",
+              "path": "./renodx-outerwilds.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 753640
+    },
+    {
+      "id": "party-animals",
+      "title": "Party Animals",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1260320
+      },
+      "mods": [
+        {
+          "id": "partyanimals",
+          "title": "Party Animals",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-partyanimals.addon64",
+              "mod": "partyanimals",
+              "arch": "x64",
+              "size": 2402304,
+              "url": "./renodx-partyanimals.addon64",
+              "path": "./renodx-partyanimals.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1260320
+    },
+    {
+      "id": "penny-s-big-breakaway",
+      "title": "Penny's Big Breakaway",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1955230
+      },
+      "mods": [
+        {
+          "id": "penny",
+          "title": "Penny's Big Breakaway",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-penny.addon64",
+              "mod": "penny",
+              "arch": "x64",
+              "size": 1943040,
+              "url": "./renodx-penny.addon64",
+              "path": "./renodx-penny.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1955230
+    },
+    {
+      "id": "persona-4-golden",
+      "title": "Persona 4 Golden",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1113000
+      },
+      "mods": [
+        {
+          "id": "p4g",
+          "title": "Persona 4 Golden",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-p4g.addon64",
+              "mod": "p4g",
+              "arch": "x64",
+              "size": 2073088,
+              "url": "./renodx-p4g.addon64",
+              "path": "./renodx-p4g.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1113000
+    },
+    {
+      "id": "persona-5-royal",
+      "title": "Persona 5 Royal",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1687950,
+        "architecture": [
+          "x64"
+        ]
+      },
+      "mods": [
+        {
+          "id": "p5r",
+          "title": "Persona 5 Royal",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-p5r.addon64",
+              "mod": "p5r",
+              "arch": "x64",
+              "size": 2066944,
+              "url": "./renodx-p5r.addon64",
+              "path": "./renodx-p5r.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1687950
+    },
+    {
+      "id": "pragmata",
+      "title": "PRAGMATA",
+      "aliases": [],
+      "deploy": {
+        "game_exe": "PRAGMATA.exe",
+        "process_name": "PRAGMATA",
+        "api": "d3d12",
+        "steam_appid": 3357650,
+        "architecture": [
+          "x64"
+        ],
+        "platform": "steam"
+      },
+      "mods": [
+        {
+          "id": "pragmata",
+          "title": "PRAGMATA",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-pragmata.addon64",
+              "mod": "pragmata",
+              "arch": "x64",
+              "size": 2210304,
+              "url": "./renodx-pragmata.addon64",
+              "path": "./renodx-pragmata.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3357650
+    },
+    {
+      "id": "prince-of-persia-the-lost-crown",
+      "title": "Prince of Persia: The Lost Crown",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2751000
+      },
+      "mods": [
+        {
+          "id": "poptlc",
+          "title": "Prince of Persia: The Lost Crown",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-poptlc.addon64",
+              "mod": "poptlc",
+              "arch": "x64",
+              "size": 2073600,
+              "url": "./renodx-poptlc.addon64",
+              "path": "./renodx-poptlc.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2751000
+    },
+    {
+      "id": "red-dead-redemption",
+      "title": "Red Dead Redemption",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2668510
+      },
+      "mods": [
+        {
+          "id": "rdr1",
+          "title": "Red Dead Redemption",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-rdr1.addon64",
+              "mod": "rdr1",
+              "arch": "x64",
+              "size": 1774592,
+              "url": "./renodx-rdr1.addon64",
+              "path": "./renodx-rdr1.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2668510
+    },
+    {
+      "id": "reka",
+      "title": "REKA",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1737870
+      },
+      "mods": [
+        {
+          "id": "reka",
+          "title": "REKA",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-reka.addon64",
+              "mod": "reka",
+              "arch": "x64",
+              "size": 2171904,
+              "url": "./renodx-reka.addon64",
+              "path": "./renodx-reka.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1737870
+    },
+    {
+      "id": "remember-me",
+      "title": "Remember Me",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "rememberme",
+          "title": "Remember Me",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-rememberme.addon64",
+              "mod": "rememberme",
+              "arch": "x64",
+              "size": 2085888,
+              "url": "./renodx-rememberme.addon64",
+              "path": "./renodx-rememberme.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resident-evil-2-remake",
+      "title": "Resident Evil 2 Remake",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 883710
+      },
+      "mods": [
+        {
+          "id": "re7-2r-3r-village",
+          "title": "Resident Evil 7, 2 Remake, 3 Remake, and Village",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-re7-2r-3r-village.addon64",
+              "mod": "re7-2r-3r-village",
+              "arch": "x64",
+              "size": 2368000,
+              "url": "./renodx-re7-2r-3r-village.addon64",
+              "path": "./renodx-re7-2r-3r-village.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 883710
+    },
+    {
+      "id": "resident-evil-3-remake",
+      "title": "Resident Evil 3 Remake",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 952060
+      },
+      "mods": [
+        {
+          "id": "re7-2r-3r-village",
+          "title": "Resident Evil 7, 2 Remake, 3 Remake, and Village",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-re7-2r-3r-village.addon64",
+              "mod": "re7-2r-3r-village",
+              "arch": "x64",
+              "size": 2368000,
+              "url": "./renodx-re7-2r-3r-village.addon64",
+              "path": "./renodx-re7-2r-3r-village.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 952060
+    },
+    {
+      "id": "resident-evil-4-remake",
+      "title": "Resident Evil 4 Remake",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2050650
+      },
+      "mods": [
+        {
+          "id": "re4remake",
+          "title": "Resident Evil 4 Remake",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-re4remake.addon64",
+              "mod": "re4remake",
+              "arch": "x64",
+              "size": 2255872,
+              "url": "./renodx-re4remake.addon64",
+              "path": "./renodx-re4remake.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2050650
+    },
+    {
+      "id": "resident-evil-7",
+      "title": "Resident Evil 7",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 418370
+      },
+      "mods": [
+        {
+          "id": "re7-2r-3r-village",
+          "title": "Resident Evil 7, 2 Remake, 3 Remake, and Village",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-re7-2r-3r-village.addon64",
+              "mod": "re7-2r-3r-village",
+              "arch": "x64",
+              "size": 2368000,
+              "url": "./renodx-re7-2r-3r-village.addon64",
+              "path": "./renodx-re7-2r-3r-village.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 418370
+    },
+    {
+      "id": "resident-evil-village",
+      "title": "Resident Evil Village",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1196590
+      },
+      "mods": [
+        {
+          "id": "re7-2r-3r-village",
+          "title": "Resident Evil 7, 2 Remake, 3 Remake, and Village",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-re7-2r-3r-village.addon64",
+              "mod": "re7-2r-3r-village",
+              "arch": "x64",
+              "size": 2368000,
+              "url": "./renodx-re7-2r-3r-village.addon64",
+              "path": "./renodx-re7-2r-3r-village.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1196590
+    },
+    {
+      "id": "reveil",
+      "title": "REVEIL",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 809060
+      },
+      "mods": [
+        {
+          "id": "reveil",
+          "title": "REVEIL/Shift 87",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-reveil.addon64",
+              "mod": "reveil",
+              "arch": "x64",
+              "size": 2465280,
+              "url": "./renodx-reveil.addon64",
+              "path": "./renodx-reveil.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 809060
+    },
+    {
+      "id": "rise-of-the-tomb-raider",
+      "title": "Rise of the Tomb Raider",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 391220
+      },
+      "mods": [
+        {
+          "id": "risetombraider",
+          "title": "Rise of the Tomb Raider",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-risetombraider.addon64",
+              "mod": "risetombraider",
+              "arch": "x64",
+              "size": 2470912,
+              "url": "./renodx-risetombraider.addon64",
+              "path": "./renodx-risetombraider.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 391220
+    },
+    {
+      "id": "robocop-rogue-city",
+      "title": "RoboCop: Rogue City",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1681430
+      },
+      "mods": [
+        {
+          "id": "robocop",
+          "title": "RoboCop: Rogue City",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-robocop.addon64",
+              "mod": "robocop",
+              "arch": "x64",
+              "size": 2076672,
+              "url": "./renodx-robocop.addon64",
+              "path": "./renodx-robocop.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1681430
+    },
+    {
+      "id": "s-t-a-l-k-e-r-2-heart-of-chornobyl",
+      "title": "S.T.A.L.K.E.R. 2: Heart of Chornobyl",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1643320
+      },
+      "mods": [
+        {
+          "id": "stalker2",
+          "title": "S.T.A.L.K.E.R. 2: Heart of Chornobyl",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-stalker2.addon64",
+              "mod": "stalker2",
+              "arch": "x64",
+              "size": 1907712,
+              "url": "./renodx-stalker2.addon64",
+              "path": "./renodx-stalker2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1643320
+    },
+    {
+      "id": "sea-of-stars",
+      "title": "Sea of Stars",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1244090
+      },
+      "mods": [
+        {
+          "id": "seaofstars",
+          "title": "Sea of Stars",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-seaofstars.addon64",
+              "mod": "seaofstars",
+              "arch": "x64",
+              "size": 2291712,
+              "url": "./renodx-seaofstars.addon64",
+              "path": "./renodx-seaofstars.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1244090
+    },
+    {
+      "id": "sekiro-shadows-die-twice",
+      "title": "Sekiro: Shadows Die Twice",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 814380
+      },
+      "mods": [
+        {
+          "id": "fromsoft_engine",
+          "title": "FromSoftware Engine",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-fromsoft_engine.addon64",
+              "mod": "fromsoft_engine",
+              "arch": "x64",
+              "size": 2385408,
+              "url": "./renodx-fromsoft_engine.addon64",
+              "path": "./renodx-fromsoft_engine.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 814380
+    },
+    {
+      "id": "shadow-of-the-tomb-raider",
+      "title": "Shadow of the Tomb Raider",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 750920
+      },
+      "mods": [
+        {
+          "id": "shadowtombraider",
+          "title": "Shadow of the Tomb Raider",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-shadowtombraider.addon64",
+              "mod": "shadowtombraider",
+              "arch": "x64",
+              "size": 2005504,
+              "url": "./renodx-shadowtombraider.addon64",
+              "path": "./renodx-shadowtombraider.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 750920
+    },
+    {
+      "id": "shadow-warrior-2013",
+      "title": "Shadow Warrior (2013)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 233130
+      },
+      "mods": [
+        {
+          "id": "roadhogengine",
+          "title": "Hard Reset Redux, Shadow Warrior (2013) & 2",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-roadhogengine.addon64",
+              "mod": "roadhogengine",
+              "arch": "x64",
+              "size": 12240896,
+              "url": "./renodx-roadhogengine.addon64",
+              "path": "./renodx-roadhogengine.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 233130
+    },
+    {
+      "id": "shadow-warrior-2",
+      "title": "Shadow Warrior 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 324800
+      },
+      "mods": [
+        {
+          "id": "roadhogengine",
+          "title": "Hard Reset Redux, Shadow Warrior (2013) & 2",
+          "variant": null,
+          "support": "engine",
+          "artifacts": [
+            {
+              "name": "renodx-roadhogengine.addon64",
+              "mod": "roadhogengine",
+              "arch": "x64",
+              "size": 12240896,
+              "url": "./renodx-roadhogengine.addon64",
+              "path": "./renodx-roadhogengine.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 324800
+    },
+    {
+      "id": "shadows-awakening",
+      "title": "Shadows: Awakening",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 585450
+      },
+      "mods": [
+        {
+          "id": "shadowsawakening",
+          "title": "Shadows: Awakening",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-shadowsawakening.addon64",
+              "mod": "shadowsawakening",
+              "arch": "x64",
+              "size": 2252800,
+              "url": "./renodx-shadowsawakening.addon64",
+              "path": "./renodx-shadowsawakening.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 585450
+    },
+    {
+      "id": "shift-87",
+      "title": "Shift 87",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2981650
+      },
+      "mods": [
+        {
+          "id": "reveil",
+          "title": "REVEIL/Shift 87",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-reveil.addon64",
+              "mod": "reveil",
+              "arch": "x64",
+              "size": 2465280,
+              "url": "./renodx-reveil.addon64",
+              "path": "./renodx-reveil.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2981650
+    },
+    {
+      "id": "shinobi-art-of-vengeance",
+      "title": "SHINOBI: Art of Vengeance",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2361770
+      },
+      "mods": [
+        {
+          "id": "shinobiaov",
+          "title": "SHINOBI: Art of Vengeance",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-shinobiaov.addon64",
+              "mod": "shinobiaov",
+              "arch": "x64",
+              "size": 2688000,
+              "url": "./renodx-shinobiaov.addon64",
+              "path": "./renodx-shinobiaov.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2361770
+    },
+    {
+      "id": "silent-hill-2-remake",
+      "title": "Silent Hill 2 Remake",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2124490
+      },
+      "mods": [
+        {
+          "id": "silenthill2remake",
+          "title": "Silent Hill 2 Remake",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-silenthill2remake.addon64",
+              "mod": "silenthill2remake",
+              "arch": "x64",
+              "size": 2432512,
+              "url": "./renodx-silenthill2remake.addon64",
+              "path": "./renodx-silenthill2remake.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2124490
+    },
+    {
+      "id": "silent-hill-f",
+      "title": "Silent Hill F",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2947440
+      },
+      "mods": [
+        {
+          "id": "silenthillf",
+          "title": "Silent Hill F",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-silenthillf.addon64",
+              "mod": "silenthillf",
+              "arch": "x64",
+              "size": 2186752,
+              "url": "./renodx-silenthillf.addon64",
+              "path": "./renodx-silenthillf.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2947440/7e5d923ac622bd1775ebc9b5d4b5b0a24bf5ed40/header.jpg?t=1770169624",
+      "steam_appid": 2947440
+    },
+    {
+      "id": "sleeping-dogs",
+      "title": "Sleeping Dogs",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 202170
+      },
+      "mods": [
+        {
+          "id": "sleepingdogs",
+          "title": "Sleeping Dogs",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-sleepingdogs.addon64",
+              "mod": "sleepingdogs",
+              "arch": "x64",
+              "size": 2023936,
+              "url": "./renodx-sleepingdogs.addon64",
+              "path": "./renodx-sleepingdogs.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 202170
+    },
+    {
+      "id": "sleeping-dogs-definitive-edition",
+      "title": "Sleeping Dogs: Definitive Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 307690
+      },
+      "mods": [
+        {
+          "id": "sleepingdogsde",
+          "title": "Sleeping Dogs: Definitive Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-sleepingdogsde.addon64",
+              "mod": "sleepingdogsde",
+              "arch": "x64",
+              "size": 2072576,
+              "url": "./renodx-sleepingdogsde.addon64",
+              "path": "./renodx-sleepingdogsde.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 307690
+    },
+    {
+      "id": "slime-rancher-2",
+      "title": "Slime Rancher 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1657630
+      },
+      "mods": [
+        {
+          "id": "slimerancher2",
+          "title": "Slime Rancher 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-slimerancher2.addon64",
+              "mod": "slimerancher2",
+              "arch": "x64",
+              "size": 2066432,
+              "url": "./renodx-slimerancher2.addon64",
+              "path": "./renodx-slimerancher2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1657630
+    },
+    {
+      "id": "sniper-elite-4",
+      "title": "Sniper Elite 4",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 312660
+      },
+      "mods": [
+        {
+          "id": "sniperelite4",
+          "title": "Sniper Elite 4",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-sniperelite4.addon64",
+              "mod": "sniperelite4",
+              "arch": "x64",
+              "size": 2476544,
+              "url": "./renodx-sniperelite4.addon64",
+              "path": "./renodx-sniperelite4.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 312660
+    },
+    {
+      "id": "sonic-generations",
+      "title": "Sonic Generations",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 71340,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "sonicgenerations",
+          "title": "Sonic Generations",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-sonicgenerations.addon32",
+              "mod": "sonicgenerations",
+              "arch": "x86",
+              "size": 1738752,
+              "url": "./renodx-sonicgenerations.addon32",
+              "path": "./renodx-sonicgenerations.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 71340
+    },
+    {
+      "id": "spark-the-electric-jester-3",
+      "title": "Spark the Electric Jester 3",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1629530
+      },
+      "mods": [
+        {
+          "id": "spark3",
+          "title": "Spark the Electric Jester 3",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-spark3.addon64",
+              "mod": "spark3",
+              "arch": "x64",
+              "size": 2183680,
+              "url": "./renodx-spark3.addon64",
+              "path": "./renodx-spark3.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1629530
+    },
+    {
+      "id": "spec-ops-the-line",
+      "title": "Spec Ops: The Line",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "specopstheline",
+          "title": "Spec Ops: The Line",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-specopstheline.addon64",
+              "mod": "specopstheline",
+              "arch": "x64",
+              "size": 2061312,
+              "url": "./renodx-specopstheline.addon64",
+              "path": "./renodx-specopstheline.addon64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "splinter-cell-blacklist",
+      "title": "Splinter Cell: Blacklist",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 235600,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "scblacklist",
+          "title": "Splinter Cell: Blacklist",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-scblacklist.addon32",
+              "mod": "scblacklist",
+              "arch": "x86",
+              "size": 1714176,
+              "url": "./renodx-scblacklist.addon32",
+              "path": "./renodx-scblacklist.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 235600
+    },
+    {
+      "id": "star-wars-jedi-survivor",
+      "title": "STAR WARS Jedi: Survivor™",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1774580
+      },
+      "mods": [
+        {
+          "id": "jedisurvivor",
+          "title": "STAR WARS Jedi: Survivor™",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-jedisurvivor.addon64",
+              "mod": "jedisurvivor",
+              "arch": "x64",
+              "size": 1807872,
+              "url": "./renodx-jedisurvivor.addon64",
+              "path": "./renodx-jedisurvivor.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1774580
+    },
+    {
+      "id": "star-wars-outlaws",
+      "title": "Star Wars Outlaws",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2842040
+      },
+      "mods": [
+        {
+          "id": "avatarfop-swoutlaws",
+          "title": "Avatar: Frontiers of Pandora & Star Wars Outlaws",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-avatarfop-swoutlaws.addon64",
+              "mod": "avatarfop-swoutlaws",
+              "arch": "x64",
+              "size": 1913856,
+              "url": "./renodx-avatarfop-swoutlaws.addon64",
+              "path": "./renodx-avatarfop-swoutlaws.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2842040
+    },
+    {
+      "id": "starfield",
+      "title": "Starfield",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1716740
+      },
+      "mods": [
+        {
+          "id": "starfield",
+          "title": "Starfield",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-starfield.addon64",
+              "mod": "starfield",
+              "arch": "x64",
+              "size": 2896896,
+              "url": "./renodx-starfield.addon64",
+              "path": "./renodx-starfield.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1716740
+    },
+    {
+      "id": "street-fighter-6",
+      "title": "Street Fighter 6",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1364780
+      },
+      "mods": [
+        {
+          "id": "streetfighter6",
+          "title": "Street Fighter 6",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-streetfighter6.addon64",
+              "mod": "streetfighter6",
+              "arch": "x64",
+              "size": 2255872,
+              "url": "./renodx-streetfighter6.addon64",
+              "path": "./renodx-streetfighter6.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1364780
+    },
+    {
+      "id": "sunset-overdrive",
+      "title": "Sunset Overdrive",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 847370
+      },
+      "mods": [
+        {
+          "id": "sunsetoverdrive",
+          "title": "Sunset Overdrive",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-sunsetoverdrive.addon64",
+              "mod": "sunsetoverdrive",
+              "arch": "x64",
+              "size": 3566592,
+              "url": "./renodx-sunsetoverdrive.addon64",
+              "path": "./renodx-sunsetoverdrive.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 847370
+    },
+    {
+      "id": "tactical-breach-wizards",
+      "title": "Tactical Breach Wizards",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1043810
+      },
+      "mods": [
+        {
+          "id": "tacticalbreachwizards",
+          "title": "Tactical Breach Wizards",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-tacticalbreachwizards.addon64",
+              "mod": "tacticalbreachwizards",
+              "arch": "x64",
+              "size": 2102784,
+              "url": "./renodx-tacticalbreachwizards.addon64",
+              "path": "./renodx-tacticalbreachwizards.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1043810
+    },
+    {
+      "id": "tales-of-graces-f-remastered",
+      "title": "Tales of Graces f Remastered",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2530980
+      },
+      "mods": [
+        {
+          "id": "talesofgracesf",
+          "title": "Tales of Graces f Remastered",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-talesofgracesf.addon64",
+              "mod": "talesofgracesf",
+              "arch": "x64",
+              "size": 2096640,
+              "url": "./renodx-talesofgracesf.addon64",
+              "path": "./renodx-talesofgracesf.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2530980
+    },
+    {
+      "id": "tekken-8",
+      "title": "Tekken 8",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1778820
+      },
+      "mods": [
+        {
+          "id": "tekken8",
+          "title": "Tekken 8",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-tekken8.addon64",
+              "mod": "tekken8",
+              "arch": "x64",
+              "size": 2423808,
+              "url": "./renodx-tekken8.addon64",
+              "path": "./renodx-tekken8.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1778820
+    },
+    {
+      "id": "tempopo",
+      "title": "Tempopo",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 318840
+      },
+      "mods": [
+        {
+          "id": "tempopo",
+          "title": "Tempopo",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-tempopo.addon64",
+              "mod": "tempopo",
+              "arch": "x64",
+              "size": 2193920,
+              "url": "./renodx-tempopo.addon64",
+              "path": "./renodx-tempopo.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 318840
+    },
+    {
+      "id": "terraria",
+      "title": "Terraria",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 105600,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "terraria",
+          "title": "Terraria",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-terraria.addon32",
+              "mod": "terraria",
+              "arch": "x86",
+              "size": 1761280,
+              "url": "./renodx-terraria.addon32",
+              "path": "./renodx-terraria.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 105600
+    },
+    {
+      "id": "the-elder-scrolls-iv-oblivion-remastered",
+      "title": "The Elder Scrolls IV: Oblivion Remastered",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2623190
+      },
+      "mods": [
+        {
+          "id": "oblivionremastered",
+          "title": "The Elder Scrolls IV: Oblivion Remastered",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-oblivionremastered.addon64",
+              "mod": "oblivionremastered",
+              "arch": "x64",
+              "size": 3591168,
+              "url": "./renodx-oblivionremastered.addon64",
+              "path": "./renodx-oblivionremastered.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2623190/a7cee9165bb1bfc092c390c5cff215ce0e381dfc/header.jpg",
+      "steam_appid": 2623190
+    },
+    {
+      "id": "the-hundred-line-last-defense-academy",
+      "title": "The Hundred Line: Last Defense Academy",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3014080
+      },
+      "mods": [
+        {
+          "id": "thehundredline",
+          "title": "The Hundred Line: Last Defense Academy",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-thehundredline.addon64",
+              "mod": "thehundredline",
+              "arch": "x64",
+              "size": 2214400,
+              "url": "./renodx-thehundredline.addon64",
+              "path": "./renodx-thehundredline.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 3014080
+    },
+    {
+      "id": "the-outer-worlds-2",
+      "title": "The Outer Worlds 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1449110
+      },
+      "mods": [
+        {
+          "id": "outerworlds2",
+          "title": "The Outer Worlds 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-outerworlds2.addon64",
+              "mod": "outerworlds2",
+              "arch": "x64",
+              "size": 2097664,
+              "url": "./renodx-outerworlds2.addon64",
+              "path": "./renodx-outerworlds2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1449110
+    },
+    {
+      "id": "the-surge",
+      "title": "The Surge",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 378540
+      },
+      "mods": [
+        {
+          "id": "thesurge",
+          "title": "The Surge",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-thesurge.addon64",
+              "mod": "thesurge",
+              "arch": "x64",
+              "size": 2275840,
+              "url": "./renodx-thesurge.addon64",
+              "path": "./renodx-thesurge.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 378540
+    },
+    {
+      "id": "the-town-of-light",
+      "title": "The Town of Light",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 433100
+      },
+      "mods": [
+        {
+          "id": "thetownoflight",
+          "title": "The Town of Light",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-thetownoflight.addon64",
+              "mod": "thetownoflight",
+              "arch": "x64",
+              "size": 2072064,
+              "url": "./renodx-thetownoflight.addon64",
+              "path": "./renodx-thetownoflight.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 433100
+    },
+    {
+      "id": "the-witcher-3-wild-hunt",
+      "title": "The Witcher 3: Wild Hunt",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 292030
+      },
+      "mods": [
+        {
+          "id": "thewitcher3",
+          "title": "The Witcher 3: Wild Hunt",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-thewitcher3.addon64",
+              "mod": "thewitcher3",
+              "arch": "x64",
+              "size": 2095616,
+              "url": "./renodx-thewitcher3.addon64",
+              "path": "./renodx-thewitcher3.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 292030
+    },
+    {
+      "id": "the-witness",
+      "title": "The Witness",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 210970
+      },
+      "mods": [
+        {
+          "id": "thewitness",
+          "title": "The Witness",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-thewitness.addon64",
+              "mod": "thewitness",
+              "arch": "x64",
+              "size": 2226688,
+              "url": "./renodx-thewitness.addon64",
+              "path": "./renodx-thewitness.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 210970
+    },
+    {
+      "id": "titan-quest-anniversary-edition",
+      "title": "Titan Quest Anniversary Edition",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 475150,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "grimdawn",
+          "title": "Grim Dawn and Titan Quest Anniversary Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-grimdawn.addon32",
+              "mod": "grimdawn",
+              "arch": "x86",
+              "size": 1800704,
+              "url": "./renodx-grimdawn.addon32",
+              "path": "./renodx-grimdawn.addon32"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 475150
+    },
+    {
+      "id": "tomb-raider-2013",
+      "title": "Tomb Raider (2013)",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 203160,
+        "architecture": [
+          "x86"
+        ]
+      },
+      "mods": [
+        {
+          "id": "tombraider2013",
+          "title": "Tomb Raider (2013)",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-tombraider2013.addon32",
+              "mod": "tombraider2013",
+              "arch": "x86",
+              "size": 1943552,
+              "url": "./renodx-tombraider2013.addon32",
+              "path": "./renodx-tombraider2013.addon32"
+            }
+          ]
+        },
+        {
+          "id": "tombraider2013de",
+          "title": "Tomb Raider (2013) - Definitive Edition",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-tombraider2013de.addon64",
+              "mod": "tombraider2013de",
+              "arch": "x64",
+              "size": 2233856,
+              "url": "./renodx-tombraider2013de.addon64",
+              "path": "./renodx-tombraider2013de.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 203160
+    },
+    {
+      "id": "trackmania",
+      "title": "Trackmania",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2225070
+      },
+      "mods": [
+        {
+          "id": "trackmania",
+          "title": "Trackmania",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-trackmania.addon64",
+              "mod": "trackmania",
+              "arch": "x64",
+              "size": 2177536,
+              "url": "./renodx-trackmania.addon64",
+              "path": "./renodx-trackmania.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2225070
+    },
+    {
+      "id": "tunic",
+      "title": "Tunic",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 553420
+      },
+      "mods": [
+        {
+          "id": "tunic",
+          "title": "Tunic",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-tunic.addon64",
+              "mod": "tunic",
+              "arch": "x64",
+              "size": 2196992,
+              "url": "./renodx-tunic.addon64",
+              "path": "./renodx-tunic.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 553420
+    },
+    {
+      "id": "uncharted-legacy-of-thieves-collection",
+      "title": "Uncharted: Legacy of Thieves Collection",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1659420
+      },
+      "mods": [
+        {
+          "id": "unchartedlotc",
+          "title": "Uncharted: Legacy of Thieves Collection",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-unchartedlotc.addon64",
+              "mod": "unchartedlotc",
+              "arch": "x64",
+              "size": 1572864,
+              "url": "./renodx-unchartedlotc.addon64",
+              "path": "./renodx-unchartedlotc.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1659420
+    },
+    {
+      "id": "unreal-engine",
+      "title": "Unreal Engine",
+      "aliases": [],
+      "deploy": {},
+      "mods": [
+        {
+          "id": "unrealengine",
+          "title": "Unreal Engine",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-unrealengine.addon64",
+              "mod": "unrealengine",
+              "arch": "x64",
+              "size": 28605952,
+              "url": "./renodx-unrealengine.addon64",
+              "path": "./renodx-unrealengine.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://media.ffycdn.net/us/epicgames/ELXKWxqawLzu6dYT5SUA.webp?width=415"
+    },
+    {
+      "id": "v-rising",
+      "title": "V Rising",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1604030
+      },
+      "mods": [
+        {
+          "id": "vrising",
+          "title": "V Rising",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-vrising.addon64",
+              "mod": "vrising",
+              "arch": "x64",
+              "size": 2372096,
+              "url": "./renodx-vrising.addon64",
+              "path": "./renodx-vrising.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1604030
+    },
+    {
+      "id": "valheim",
+      "title": "Valheim",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 892970
+      },
+      "mods": [
+        {
+          "id": "valheim",
+          "title": "Valheim",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-valheim.addon64",
+              "mod": "valheim",
+              "arch": "x64",
+              "size": 2178048,
+              "url": "./renodx-valheim.addon64",
+              "path": "./renodx-valheim.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 892970
+    },
+    {
+      "id": "warhammer-40-000-space-marine-2",
+      "title": "Warhammer 40,000: Space Marine 2",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2183900
+      },
+      "mods": [
+        {
+          "id": "spacemarine2",
+          "title": "Warhammer 40,000: Space Marine 2",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-spacemarine2.addon64",
+              "mod": "spacemarine2",
+              "arch": "x64",
+              "size": 2185216,
+              "url": "./renodx-spacemarine2.addon64",
+              "path": "./renodx-spacemarine2.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2183900
+    },
+    {
+      "id": "watch-dogs",
+      "title": "Watch Dogs",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 243470
+      },
+      "mods": [
+        {
+          "id": "watchdogs",
+          "title": "Watch Dogs",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-watchdogs.addon64",
+              "mod": "watchdogs",
+              "arch": "x64",
+              "size": 3139072,
+              "url": "./renodx-watchdogs.addon64",
+              "path": "./renodx-watchdogs.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 243470
+    },
+    {
+      "id": "windblown",
+      "title": "Windblown",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1911610
+      },
+      "mods": [
+        {
+          "id": "windblown",
+          "title": "Windblown",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-windblown.addon64",
+              "mod": "windblown",
+              "arch": "x64",
+              "size": 2204160,
+              "url": "./renodx-windblown.addon64",
+              "path": "./renodx-windblown.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1911610
+    },
+    {
+      "id": "wobbly-life",
+      "title": "Wobbly Life",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 1211020
+      },
+      "mods": [
+        {
+          "id": "wobblylife",
+          "title": "Wobbly Life",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-wobblylife.addon64",
+              "mod": "wobblylife",
+              "arch": "x64",
+              "size": 2279424,
+              "url": "./renodx-wobblylife.addon64",
+              "path": "./renodx-wobblylife.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 1211020
+    },
+    {
+      "id": "wuchang-fallen-feathers",
+      "title": "Wuchang: Fallen Feathers",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2277560
+      },
+      "mods": [
+        {
+          "id": "wuchang",
+          "title": "Wuchang: Fallen Feathers",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-wuchang.addon64",
+              "mod": "wuchang",
+              "arch": "x64",
+              "size": 2578944,
+              "url": "./renodx-wuchang.addon64",
+              "path": "./renodx-wuchang.addon64"
+            }
+          ]
+        },
+        {
+          "id": "wuchangsdr",
+          "title": "Wuchang: Fallen Feathers",
+          "variant": "SDR",
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-wuchangsdr.addon64",
+              "mod": "wuchangsdr",
+              "arch": "x64",
+              "size": 1980928,
+              "url": "./renodx-wuchangsdr.addon64",
+              "path": "./renodx-wuchangsdr.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2277560
+    },
+    {
+      "id": "wuthering-waves",
+      "title": "Wuthering Waves",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 3513350
+      },
+      "mods": [
+        {
+          "id": "wutheringwaves",
+          "title": "Wuthering Waves",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-wutheringwaves.addon64",
+              "mod": "wutheringwaves",
+              "arch": "x64",
+              "size": 4772352,
+              "url": "./renodx-wutheringwaves.addon64",
+              "path": "./renodx-wutheringwaves.addon64"
+            }
+          ]
+        }
+      ],
+      "header": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/3513350/def229d7f1bf39fab1ccf752b49654017e13ef53/header.jpg",
+      "steam_appid": 3513350
+    },
+    {
+      "id": "xf-extreme-formula",
+      "title": "XF Extreme Formula",
+      "aliases": [],
+      "deploy": {
+        "steam_appid": 2539910
+      },
+      "mods": [
+        {
+          "id": "xfextremeformula",
+          "title": "XF Extreme Formula",
+          "variant": null,
+          "support": null,
+          "artifacts": [
+            {
+              "name": "renodx-xfextremeformula.addon64",
+              "mod": "xfextremeformula",
+              "arch": "x64",
+              "size": 2168320,
+              "url": "./renodx-xfextremeformula.addon64",
+              "path": "./renodx-xfextremeformula.addon64"
+            }
+          ]
+        }
+      ],
+      "steam_appid": 2539910
+    }
+  ]
+}

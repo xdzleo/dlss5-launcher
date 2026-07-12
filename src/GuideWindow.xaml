@@ -1,0 +1,41 @@
+<Window x:Class="RenoDXLauncher.GuideWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Guia HDR — checklist antes de jogar" Height="700" Width="640"
+        Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner">
+    <ScrollViewer Padding="18">
+        <StackPanel>
+            <TextBlock Text="Checklist HDR" FontSize="18" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,10,0,0" FontSize="13" LineHeight="22">
+                <Run FontWeight="Bold">1. Windows HDR LIGADO antes de abrir o jogo</Run><LineBreak/>
+                <Run>Atalho: Win+Alt+B. A troca automática não funciona com alguns mods (ex.: Black Myth Wukong).</Run><LineBreak/><LineBreak/>
+
+                <Run FontWeight="Bold">2. Desligue AutoHDR e RTX HDR</Run><LineBreak/>
+                <Run>Se a imagem ficar lavada/estourada é tonemapping duplo. AutoHDR: Configurações → Sistema → Vídeo → HDR. RTX HDR: NVIDIA App → Graphics.</Run><LineBreak/><LineBreak/>
+
+                <Run FontWeight="Bold">3. Rode o app "Calibração de HDR do Windows" uma vez</Run><LineBreak/>
+                <Run>O ponto onde o padrão desaparece = brilho máximo real do seu monitor. Use esse valor no perfil (botão "Meu monitor"). Em TVs: modo HGIG ligado, Dynamic Tone Mapping desligado.</Run><LineBreak/><LineBreak/>
+
+                <Run FontWeight="Bold">4. Valores recomendados</Run><LineBreak/>
+                <Run>• Brilho máximo (Peak): o valor real do monitor (OLED ~800–1000, miniLED 1000–1500).</Run><LineBreak/>
+                <Run>• Brilho do jogo (paper white): 203 nits (padrão BT.2408); 100–300 conforme a luz do ambiente.</Run><LineBreak/>
+                <Run>• Brilho da UI: 203 (igual ao do jogo).</Run><LineBreak/>
+                <Run>• Tone mapper e gamma: deixe no padrão do mod — foi calibrado por jogo.</Run><LineBreak/><LineBreak/>
+
+                <Run FontWeight="Bold">5. Dentro do jogo</Run><LineBreak/>
+                <Run>O overlay do ReShade abre com a tecla Home. As configurações do RenoDX ficam na aba Add-ons. Se editar aqui no launcher com o jogo aberto: mova o slider "Preset" para 2 e volte para 1 no overlay para recarregar (ou reinicie o jogo).</Run><LineBreak/><LineBreak/>
+
+                <Run FontWeight="Bold" Foreground="#E0A23C">⚠ 6. Anti-cheat (jogos online)</Run><LineBreak/>
+                <Run>O ReShade com suporte a addon é uma build NÃO assinada — em jogos com EAC/BattlEye (Elden Ring, GTA Online etc.) pode dar problema. Jogue offline ou use um toggler de anti-cheat nesses casos. Responsabilidade sua.</Run><LineBreak/><LineBreak/>
+
+                <Run FontWeight="Bold">7. Conflitos conhecidos</Run><LineBreak/>
+                <Run>• Special K não é suportado junto com RenoDX.</Run><LineBreak/>
+                <Run>• Outro dxgi.dll (ENB, dxvk, etc.) na pasta: o launcher detecta e não sobrescreve.</Run><LineBreak/>
+                <Run>• Mods genéricos (Unreal/Unity): evite fullscreen exclusivo; ajustes de "Upgrade" podem precisar de restart.</Run><LineBreak/><LineBreak/>
+
+                <Run FontWeight="Bold">Fontes</Run><LineBreak/>
+                <Run FontSize="11" Foreground="#9A9AA6">Wiki do RenoDX (github.com/clshortfuse/renodx/wiki/Mods) • hdrmods.com • dados de instalação por jogo do projeto RHI (github.com/RankFTW/RHI, GPL-3.0) • ITU-R BT.2408.</Run>
+            </TextBlock>
+        </StackPanel>
+    </ScrollViewer>
+</Window>
