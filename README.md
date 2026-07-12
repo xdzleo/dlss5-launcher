@@ -7,6 +7,11 @@ launcher, sem abrir o jogo.
 
 ![screenshot](docs/screenshot.png)
 
+## Download
+
+Baixe o zip da [última release](https://github.com/xdzleo/renodx-launcher/releases/latest), extraia
+em qualquer pasta e rode `RenoDXLauncher.exe`. Build self-contained — não precisa instalar .NET.
+
 ## O que ele faz
 
 - **Detecção de jogos** (algoritmos do DLSS Swapper reimplementados):
