@@ -177,7 +177,15 @@ public class MainViewModel : ObservableObject
             await rhiTask;
 
             StatusText = "Procurando jogos instalados...";
-            var games = await StoreScanners.ScanAllAsync();
+            // the folder scan only surfaces dirs whose NAME matches a catalog game,
+            // so standalone installs appear without polluting the grid with random folders
+            var knownNames = _catalogEntries
+                .SelectMany(e => e.NormalizedAliases)
+                .ToHashSet(StringComparer.Ordinal);
+            bool KnownGame(string folderName) =>
+                knownNames.Contains(MatchService.Normalize(folderName))
+                || knownNames.Contains(MatchService.Normalize(MatchService.StripEditionSuffix(folderName)));
+            var games = await StoreScanners.ScanAllAsync(KnownGame);
             foreach (var dir in Config.ManualGameDirs.Where(Directory.Exists))
                 games.Add(new GameInfo
                 {

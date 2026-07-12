@@ -29,6 +29,11 @@ public class GameItemVm : ObservableObject
         GameStore.Epic => "Epic",
         GameStore.Gog => "GOG",
         GameStore.Xbox => "Xbox",
+        GameStore.Ubisoft => "Ubisoft",
+        GameStore.EA => "EA",
+        GameStore.BattleNet => "Battle.net",
+        GameStore.Rockstar => "Rockstar",
+        GameStore.Folder => "Pasta",
         _ => "Manual",
     };
 

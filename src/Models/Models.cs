@@ -1,6 +1,6 @@
 namespace RenoDXLauncher.Models;
 
-public enum GameStore { Steam, Epic, Gog, Xbox, Manual }
+public enum GameStore { Steam, Epic, Gog, Xbox, Ubisoft, EA, BattleNet, Rockstar, Folder, Manual }
 
 /// <summary>An installed game found by one of the store scanners.</summary>
 public class GameInfo

@@ -14,18 +14,27 @@ namespace RenoDXLauncher.Services;
 /// </summary>
 public static partial class StoreScanners
 {
-    public static async Task<List<GameInfo>> ScanAllAsync()
+    /// <param name="knownGameName">Optional predicate: does this folder name match a catalog
+    /// game? Enables the generic disk scan (standalone installs outside any launcher).</param>
+    public static async Task<List<GameInfo>> ScanAllAsync(Func<string, bool>? knownGameName = null)
     {
-        var tasks = new[]
+        var tasks = new List<Task<List<GameInfo>>>
         {
             Task.Run(ScanSteam),
             Task.Run(ScanEpic),
             Task.Run(ScanGog),
             Task.Run(ScanXbox),
+            Task.Run(ScanUbisoft),
+            Task.Run(ScanEa),
+            Task.Run(ScanBattleNet),
+            Task.Run(ScanRockstar),
         };
+        if (knownGameName != null)
+            tasks.Add(Task.Run(() => ScanGameFolders(knownGameName)));
         var results = await Task.WhenAll(tasks);
         var games = results.SelectMany(r => r).ToList();
-        // de-dup by normalized install dir (a game can appear via more than one scanner)
+        // de-dup by normalized install dir (a game can appear via more than one scanner);
+        // store order = trust order, so the launcher-native entry wins over the folder scan
         return games
             .GroupBy(g => Path.GetFullPath(g.InstallDir).TrimEnd('\\', '/').ToLowerInvariant())
             .Select(g => g.OrderBy(x => x.Store).First())
@@ -220,6 +229,227 @@ public static partial class StoreScanners
                 }
             }
             catch (Exception ex) { Log.Warn($"Xbox drive {drive.Name}: {ex.Message}"); }
+        }
+        return games;
+    }
+
+    // ---------- Ubisoft Connect ----------
+
+    public static List<GameInfo> ScanUbisoft()
+    {
+        var games = new List<GameInfo>();
+        try
+        {
+            using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+            using var installs = baseKey.OpenSubKey(@"SOFTWARE\Ubisoft\Launcher\Installs");
+            if (installs is null) return games;
+            foreach (var sub in installs.GetSubKeyNames())
+            {
+                try
+                {
+                    if (!long.TryParse(sub, out _)) continue; // only numeric installIds are games
+                    using var k = installs.OpenSubKey(sub);
+                    var dir = (k?.GetValue("InstallDir") as string)?.Replace('/', '\\').TrimEnd('\\');
+                    if (dir is null || !Directory.Exists(dir)) continue;
+                    // launcher metadata blob is a heavy parse; the install folder name IS the title
+                    games.Add(new GameInfo
+                    {
+                        Name = Path.GetFileName(dir),
+                        InstallDir = dir,
+                        Store = GameStore.Ubisoft,
+                        AppId = sub,
+                    });
+                }
+                catch (Exception ex) { Log.Warn($"Ubisoft install {sub}: {ex.Message}"); }
+            }
+        }
+        catch (Exception ex) { Log.Warn($"Ubisoft scan: {ex.Message}"); }
+        return games;
+    }
+
+    // ---------- EA App ----------
+
+    public static List<GameInfo> ScanEa()
+    {
+        var games = new List<GameInfo>();
+        var roots = new (RegistryHive hive, RegistryView view)[]
+        {
+            (RegistryHive.LocalMachine, RegistryView.Registry32),
+            (RegistryHive.LocalMachine, RegistryView.Registry64),
+            (RegistryHive.CurrentUser, RegistryView.Registry32),
+            (RegistryHive.CurrentUser, RegistryView.Registry64),
+        };
+        foreach (var (hive, view) in roots)
+        {
+            try
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+                using var uninstall = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+                if (uninstall is null) continue;
+                foreach (var sub in uninstall.GetSubKeyNames())
+                {
+                    try
+                    {
+                        using var k = uninstall.OpenSubKey(sub);
+                        // an entry is an EA App game iff its uninstaller is EA's Cleanup.exe
+                        if (k?.GetValue("UninstallString") is not string us
+                            || !us.Contains("EAInstaller", StringComparison.OrdinalIgnoreCase)
+                            || !us.Contains("Cleanup.exe", StringComparison.OrdinalIgnoreCase)) continue;
+                        var name = k.GetValue("DisplayName") as string;
+                        var dir = (k.GetValue("InstallLocation") as string)?.TrimEnd('\\');
+                        if (name is null || dir is null || !Directory.Exists(dir)) continue;
+                        games.Add(new GameInfo
+                        {
+                            Name = name,
+                            InstallDir = dir,
+                            Store = GameStore.EA,
+                            AppId = sub,
+                        });
+                    }
+                    catch (Exception ex) { Log.Warn($"EA uninstall {sub}: {ex.Message}"); }
+                }
+            }
+            catch (Exception ex) { Log.Warn($"EA scan {hive}/{view}: {ex.Message}"); }
+        }
+        return games;
+    }
+
+    // ---------- Battle.net ----------
+
+    [GeneratedRegex(@"[A-Za-z]:[\\/][^\x00-\x1f""|?*<>]{2,150}")]
+    private static partial Regex WindowsPathRegex();
+
+    public static List<GameInfo> ScanBattleNet()
+    {
+        var games = new List<GameInfo>();
+        try
+        {
+            var db = Path.Combine(
+                Environment.ExpandEnvironmentVariables("%ProgramData%"), "Battle.net", "Agent", "product.db");
+            if (!File.Exists(db)) return games;
+            // product.db is protobuf; install paths are plain length-prefixed UTF-8 strings
+            // inside it, so a raw string sweep avoids a protobuf dependency
+            var temp = Path.Combine(Path.GetTempPath(), $"renodx_bnet_{Guid.NewGuid():N}.db");
+            File.Copy(db, temp, overwrite: true);
+            string raw;
+            try { raw = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(temp)); }
+            finally { File.Delete(temp); }
+            var skip = new[] { "battle.net", "agent", "\\bna\\", "programdata" };
+            foreach (var m in WindowsPathRegex().Matches(raw).Select(m => m.Value).Distinct())
+            {
+                var dir = m.Replace('/', '\\').TrimEnd('\\');
+                if (skip.Any(s => dir.Contains(s, StringComparison.OrdinalIgnoreCase))) continue;
+                if (!Directory.Exists(dir)) continue;
+                var name = Path.GetFileName(dir);
+                if (name.Length < 3) continue;
+                games.Add(new GameInfo
+                {
+                    Name = name,
+                    InstallDir = dir,
+                    Store = GameStore.BattleNet,
+                });
+            }
+        }
+        catch (Exception ex) { Log.Warn($"Battle.net scan: {ex.Message}"); }
+        return games;
+    }
+
+    // ---------- Rockstar Games ----------
+
+    public static List<GameInfo> ScanRockstar()
+    {
+        var games = new List<GameInfo>();
+        try
+        {
+            using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+            using var rockstar = baseKey.OpenSubKey(@"SOFTWARE\Rockstar Games");
+            if (rockstar is null) return games;
+            var skip = new[] { "Launcher", "Rockstar Games Launcher", "Social Club" };
+            foreach (var sub in rockstar.GetSubKeyNames())
+            {
+                try
+                {
+                    if (skip.Contains(sub, StringComparer.OrdinalIgnoreCase)) continue;
+                    using var k = rockstar.OpenSubKey(sub);
+                    var dir = (k?.GetValue("InstallFolder") as string)?.TrimEnd('\\');
+                    if (dir is null || !Directory.Exists(dir)) continue;
+                    games.Add(new GameInfo
+                    {
+                        Name = sub,
+                        InstallDir = dir,
+                        Store = GameStore.Rockstar,
+                        AppId = sub,
+                    });
+                }
+                catch (Exception ex) { Log.Warn($"Rockstar key {sub}: {ex.Message}"); }
+            }
+        }
+        catch (Exception ex) { Log.Warn($"Rockstar scan: {ex.Message}"); }
+        return games;
+    }
+
+    // ---------- Generic disk scan (standalone installs outside any launcher) ----------
+
+    private static readonly HashSet<string> SkipRootDirs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "windows", "program files", "program files (x86)", "programdata", "users", "onedrive",
+        "$recycle.bin", "system volume information", "recovery", "perflogs", "intel", "amd",
+        "nvidia", "temp", "tmp", "drivers", "msocache", "config.msi", "inetpub", "xboxgames",
+    };
+
+    private static readonly HashSet<string> GamesDirNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "games", "jogos", "game", "gaming", "my games", "meus jogos",
+    };
+
+    /// <summary>Walk every fixed drive's root folders (and one level inside "Games"-style
+    /// folders); a folder becomes a game when its NAME matches a catalog entry and it
+    /// contains an exe. Catches manual/standalone installs with zero configuration.</summary>
+    public static List<GameInfo> ScanGameFolders(Func<string, bool> knownGameName)
+    {
+        var games = new List<GameInfo>();
+        foreach (var drive in DriveInfo.GetDrives())
+        {
+            try
+            {
+                if (drive.DriveType != DriveType.Fixed || !drive.IsReady) continue;
+                var candidates = new List<string>();
+                foreach (var dir in Directory.GetDirectories(drive.RootDirectory.FullName))
+                {
+                    var name = Path.GetFileName(dir);
+                    if (SkipRootDirs.Contains(name)) continue;
+                    if (GamesDirNames.Contains(name))
+                    {
+                        try { candidates.AddRange(Directory.GetDirectories(dir)); }
+                        catch { }
+                    }
+                    else candidates.Add(dir);
+                }
+                foreach (var dir in candidates)
+                {
+                    try
+                    {
+                        var name = Path.GetFileName(dir);
+                        if (name.Length < 3 || !knownGameName(name)) continue;
+                        var options = new EnumerationOptions
+                        {
+                            IgnoreInaccessible = true,
+                            RecurseSubdirectories = true,
+                            MaxRecursionDepth = 3,
+                            AttributesToSkip = FileAttributes.ReparsePoint,
+                        };
+                        if (!Directory.EnumerateFiles(dir, "*.exe", options).Any()) continue;
+                        games.Add(new GameInfo
+                        {
+                            Name = name,
+                            InstallDir = dir,
+                            Store = GameStore.Folder,
+                        });
+                    }
+                    catch (Exception ex) { Log.Warn($"folder scan {dir}: {ex.Message}"); }
+                }
+            }
+            catch (Exception ex) { Log.Warn($"folder scan drive {drive.Name}: {ex.Message}"); }
         }
         return games;
     }
