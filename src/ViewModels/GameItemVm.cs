@@ -103,9 +103,23 @@ public class GameItemVm : ObservableObject
         State = AddonService.GetState(TargetDir, _chosenExe);
     }
 
-    /// <summary>Fallback: even without a chosen exe, find an installed addon anywhere in the game dir
-    /// (e.g. installed manually or by a previous run) so the grid badge is right.</summary>
-    public void DetectExistingInstall()
+    /// <summary>Apply pre-computed detection results (exe + state) from a background thread.
+    /// Must be called on the UI thread; does no disk I/O.</summary>
+    public void ApplyDetected(string? exe, ModState? state)
+    {
+        if (exe != null)
+        {
+            _chosenExe = exe;
+            OnPropertyChanged(nameof(ChosenExe));
+            OnPropertyChanged(nameof(TargetDir));
+        }
+        if (state != null) State = state;
+    }
+
+    /// <summary>Find an existing RenoDX install anywhere in the game dir (installed manually or by
+    /// a previous run) and the exe that lives beside it. Pure disk I/O — safe on any thread;
+    /// feed the result to ApplyDetected on the UI thread.</summary>
+    public (string? exe, ModState? state) DetectExistingInstall()
     {
         try
         {
@@ -117,13 +131,19 @@ public class GameItemVm : ObservableObject
                 AttributesToSkip = FileAttributes.ReparsePoint,
             };
             var addon = Directory.EnumerateFiles(Game.InstallDir, "renodx-*.addon*", options).FirstOrDefault();
-            if (addon != null && TargetDir is null)
-            {
-                // point the state at the folder where the addon actually lives
-                var dir = Path.GetDirectoryName(addon)!;
-                State = AddonService.GetState(dir, null);
-            }
+            if (addon is null) return (null, null);
+            // the addon's own folder is the deploy dir — pin the exe there so selection,
+            // toggle and settings all operate on the real install location
+            var dir = Path.GetDirectoryName(addon)!;
+            var exe = Directory.GetFiles(dir, "*.exe", SearchOption.TopDirectoryOnly)
+                .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
+                .FirstOrDefault();
+            return (exe, AddonService.GetState(dir, exe));
         }
-        catch (Exception ex) { Log.Warn($"detect existing {Name}: {ex.Message}"); }
+        catch (Exception ex)
+        {
+            Log.Warn($"detect existing {Name}: {ex.Message}");
+            return (null, null);
+        }
     }
 }

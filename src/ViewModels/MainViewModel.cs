@@ -17,6 +17,13 @@ public class MainViewModel : ObservableObject
     private ManifestService? _manifest;
     private List<CatalogEntry> _catalogEntries = new();
 
+    /// <summary>Bumped whenever the selection changes; async detail loads bail out when stale.</summary>
+    private int _detailToken;
+    /// <summary>The item the current Settings/ExeCandidates belong to — save operations target
+    /// THIS item, never the live Selected (which may have changed mid-flight).</summary>
+    private GameItemVm? _detailItem;
+    private CancellationTokenSource? _backgroundCts;
+
     public LauncherConfig Config { get; private set; } = new();
     public ObservableCollection<GameItemVm> Games { get; } = new();
     public ICollectionView GamesView { get; }
@@ -32,8 +39,9 @@ public class MainViewModel : ObservableObject
         SaveSettingsCommand = new AsyncRelayCommand(SaveSettingsAsync, () => Settings.Count > 0);
         ApplyProfileCommand = new AsyncRelayCommand(ApplyProfileAsync, () => Settings.Count > 0);
         ResetSettingsCommand = new AsyncRelayCommand(ResetSettingsAsync, () => Settings.Count > 0);
-        OpenFolderCommand = new RelayCommand(OpenFolder, () => Selected?.TargetDir != null || Selected != null);
-        OpenNexusCommand = new RelayCommand(OpenNexus, () => Selected?.Mod?.NexusUrl != null);
+        OpenFolderCommand = new RelayCommand(OpenFolder, () => Selected != null);
+        OpenNexusCommand = new RelayCommand(OpenNexus,
+            () => Selected?.Mod?.NexusUrl != null || Selected?.Mod?.InfoUrl != null);
         AddManualGameCommand = new AsyncRelayCommand(AddManualGameAsync);
     }
 
@@ -70,6 +78,14 @@ public class MainViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Re-run the view filter without losing the current selection.</summary>
+    private void RefreshViewKeepSelection()
+    {
+        var sel = Selected;
+        GamesView.Refresh();
+        if (sel != null && GamesView.Cast<object>().Contains(sel)) Selected = sel;
+    }
+
     // ---------- selection / detail ----------
 
     private GameItemVm? _selected;
@@ -81,7 +97,7 @@ public class MainViewModel : ObservableObject
             if (Set(ref _selected, value))
             {
                 OnPropertyChanged(nameof(HasSelection));
-                _ = LoadDetailAsync();
+                _ = LoadDetailSafeAsync();
                 RaiseCommands();
             }
         }
@@ -96,12 +112,16 @@ public class MainViewModel : ObservableObject
         get => _selectedExe;
         set
         {
-            if (Set(ref _selectedExe, value) && value != null && Selected != null)
+            if (Set(ref _selectedExe, value) && value != null && Selected != null && Selected == _detailItem)
             {
+                var previousState = Selected.State;
                 Selected.ChosenExe = value;
                 Config.PinnedExes[Selected.Key] = value;
                 Config.Save();
-                _ = LoadSettingsAsync();
+                if (previousState?.AddonPath != null && Selected.State?.AddonPath is null)
+                    DetailStatus = "Atenção: existe um mod instalado na pasta anterior " +
+                        $"({Path.GetDirectoryName(previousState.AddonPath)}) — remova-o de lá ou volte para aquele executável.";
+                _ = LoadSettingsSafeAsync(_detailToken);
                 RaiseCommands();
             }
         }
@@ -142,7 +162,10 @@ public class MainViewModel : ObservableObject
 
     public async Task LoadAsync(bool forceRefresh = false)
     {
+        if (Busy) return; // single flight: Loaded event, Refresh and AddManualGame can overlap
         Busy = true;
+        _backgroundCts?.Cancel();
+        var cts = _backgroundCts = new CancellationTokenSource();
         try
         {
             StatusText = "Carregando catálogo RenoDX...";
@@ -172,21 +195,7 @@ public class MainViewModel : ObservableObject
             var withMod = Games.Count(g => g.HasMod);
             StatusText = $"{Games.Count} jogos encontrados — {withMod} com mod RenoDX disponível.";
 
-            // background: covers + existing-install detection + exe pinning restore
-            _ = Task.Run(async () =>
-            {
-                foreach (var item in Games.ToList())
-                {
-                    if (Config.PinnedExes.TryGetValue(item.Key, out var pinned) && File.Exists(pinned))
-                        Application.Current.Dispatcher.Invoke(() => item.ChosenExe = pinned);
-                    else if (item.HasMod)
-                        Application.Current.Dispatcher.Invoke(item.DetectExistingInstall);
-
-                    var cover = await CoverService.GetCoverAsync(item.Game, item.Mod?.SteamAppId);
-                    if (cover != null)
-                        Application.Current.Dispatcher.Invoke(() => item.CoverPath = cover);
-                }
-            });
+            _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), cts.Token), cts.Token);
         }
         catch (Exception ex)
         {
@@ -196,13 +205,63 @@ public class MainViewModel : ObservableObject
         finally { Busy = false; }
     }
 
-    private async Task LoadDetailAsync()
+    /// <summary>Covers + existing-install detection + pinned-exe restore. All disk/network I/O
+    /// happens HERE (pool thread); only property assignments hop to the dispatcher.</summary>
+    private async Task BackgroundEnrichAsync(List<GameItemVm> items, CancellationToken ct)
+    {
+        var dispatcher = Application.Current.Dispatcher;
+        foreach (var item in items)
+        {
+            if (ct.IsCancellationRequested) return;
+            try
+            {
+                string? exe = null;
+                ModState? state = null;
+                if (Config.PinnedExes.TryGetValue(item.Key, out var pinned) && File.Exists(pinned))
+                {
+                    exe = pinned;
+                    state = AddonService.GetState(Path.GetDirectoryName(pinned)!, pinned);
+                }
+                else if (item.HasMod)
+                {
+                    (exe, state) = item.DetectExistingInstall();
+                }
+                if (exe != null || state != null)
+                    await dispatcher.InvokeAsync(() =>
+                    {
+                        item.ApplyDetected(exe, state);
+                        if (item == Selected) RaiseCommands();
+                    });
+
+                var cover = await CoverService.GetCoverAsync(item.Game, item.Mod?.SteamAppId);
+                if (cover != null && !ct.IsCancellationRequested)
+                    await dispatcher.InvokeAsync(() => item.CoverPath = cover);
+            }
+            catch (Exception ex) { Log.Warn($"enrich {item.Name}: {ex.Message}"); }
+        }
+        if (!ct.IsCancellationRequested)
+            await dispatcher.InvokeAsync(RefreshViewKeepSelection);
+    }
+
+    private async Task LoadDetailSafeAsync()
+    {
+        var token = ++_detailToken;
+        try { await LoadDetailAsync(token); }
+        catch (Exception ex)
+        {
+            Log.Warn($"detail: {ex}");
+            if (token == _detailToken) DetailStatus = $"Erro ao carregar detalhes: {ex.Message}";
+        }
+    }
+
+    private async Task LoadDetailAsync(int token)
     {
         ExeCandidates.Clear();
         Settings.Clear();
         Notes.Clear();
         DetailStatus = "";
         var item = Selected;
+        _detailItem = item;
         if (item is null) return;
 
         // notes
@@ -214,42 +273,54 @@ public class MainViewModel : ObservableObject
             Notes.Add("Mod GENÉRICO de Unreal Engine: depois de instalar, ajustes de \"Upgrade\" podem ser necessários no overlay (tecla Home) — veja a nota do jogo acima, se houver.");
         if (item.Mod?.Kind == ModKind.UnityEngine)
             Notes.Add("Mod GENÉRICO de Unity: evite fullscreen exclusivo; se faltar cor, ative Upgrade R11G11B10_FLOAT no overlay (Home).");
+        if (item.Mod != null && !item.Mod.Working)
+            Notes.Add("Status na wiki: EM CONSTRUÇÃO/instável — pode ter problemas.");
 
         // exe candidates in background (recursive dir scan)
         var subdir = _rhi.InstallSubdir(item.Name);
         var candidates = await Task.Run(() => ExeLocator.FindCandidates(item.Game, subdir));
+        if (token != _detailToken) return; // selection changed while scanning — drop stale results
+
+        // an exe already chosen (pin or existing-install detection) always wins and leads the list
+        if (item.ChosenExe != null && !candidates.Contains(item.ChosenExe, StringComparer.OrdinalIgnoreCase))
+            candidates.Insert(0, item.ChosenExe);
         foreach (var c in candidates) ExeCandidates.Add(c);
-        var exe = Config.PinnedExes.TryGetValue(item.Key, out var pinned) && File.Exists(pinned)
-            ? pinned
-            : candidates.FirstOrDefault();
+        var exe = item.ChosenExe ?? candidates.FirstOrDefault();
         _selectedExe = exe; // set field directly: avoid re-pinning on auto-select
         OnPropertyChanged(nameof(SelectedExe));
-        if (exe != null) item.ChosenExe = exe;
+        if (exe != null && item.ChosenExe is null) item.ChosenExe = exe;
 
-        await LoadSettingsAsync();
+        await LoadSettingsSafeAsync(token);
         RaiseCommands();
     }
 
-    private async Task LoadSettingsAsync()
+    private async Task LoadSettingsSafeAsync(int token)
     {
-        Settings.Clear();
-        var item = Selected;
-        if (item?.Mod?.Slug is null) return;
-        var defs = _manifest?.GetSettings(item.Mod.Slug);
-        if (defs is null || item.State is null) return;
-        var iniPath = item.State.IniPath;
-        var values = await Task.Run(() => SettingsService.Read(iniPath, defs));
-        foreach (var v in values)
-            Settings.Add(new SettingVm(v));
-        OnPropertyChanged(nameof(Settings));
-        RaiseCommands();
+        try
+        {
+            Settings.Clear();
+            var item = _detailItem;
+            if (item?.Mod?.Slug is null) return;
+            var defs = _manifest?.GetSettings(item.Mod.Slug);
+            if (defs is null || item.State is null) return;
+            var iniPath = item.State.IniPath;
+            var values = await Task.Run(() => SettingsService.Read(iniPath, defs));
+            if (token != _detailToken) return;
+            foreach (var v in values)
+                Settings.Add(new SettingVm(v));
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"settings load: {ex}");
+        }
+        finally { RaiseCommands(); }
     }
 
     // ---------- actions ----------
 
     private async Task InstallAsync()
     {
-        var item = Selected;
+        var item = _detailItem;
         if (item?.Mod is null) return;
         if (item.ChosenExe is null || item.TargetDir is null)
         {
@@ -260,30 +331,47 @@ public class MainViewModel : ObservableObject
         var progress = new Progress<string>(s => DetailStatus = s);
         try
         {
-            // bitness sanity: .addon32 mod + 64-bit exe (or vice versa) means wrong exe picked
-            var pe = PeUtils.Inspect(item.ChosenExe, readImports: false);
+            // bitness must match: a 64-bit ReShade never loads .addon32 — installing a
+            // mismatched pair silently does nothing, so block and ask for the right exe
+            var pe = await Task.Run(() => PeUtils.Inspect(item.ChosenExe, readImports: false));
             if (pe != null && item.Mod.AddonBits != 0 && (pe.Is64Bit ? 64 : 32) != item.Mod.AddonBits)
             {
-                DetailStatus = $"Atenção: o mod é {item.Mod.AddonBits}-bit mas o exe escolhido é {(pe.Is64Bit ? 64 : 32)}-bit. Confira o executável.";
+                DetailStatus = $"Instalação bloqueada: o mod é {item.Mod.AddonBits}-bit mas o executável escolhido é " +
+                    $"{(pe.Is64Bit ? 64 : 32)}-bit. Selecione o executável certo do jogo na lista acima.";
+                return;
             }
 
-            var deploy = await _reshade.DeployAsync(item.TargetDir, item.ChosenExe,
-                _rhi.GraphicsApi(item.Name), _rhi.DllNameOverride(item.Name), progress);
+            var api = _rhi.GraphicsApi(item.Name);
+            var dllOverride = _rhi.DllNameOverride(item.Name);
+            var deploy = await Task.Run(() => _reshade.DeployAsync(item.TargetDir, item.ChosenExe, api, dllOverride, progress));
             if (!deploy.Success)
             {
                 DetailStatus = deploy.Message;
                 return;
             }
-            await AddonService.DownloadAddonAsync(item.Mod, item.TargetDir, progress);
+            await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod, item.TargetDir!, progress));
             item.RefreshState();
 
+            var profileMsg = "";
             if (Config.ApplyProfileOnInstall && item.Mod.Slug != null
                 && _manifest?.GetSettings(item.Mod.Slug) is { } defs)
             {
-                SettingsService.ApplyDisplayProfile(item.State!.IniPath, defs, Config);
+                try
+                {
+                    var applied = await Task.Run(() => SettingsService.ApplyDisplayProfile(item.State!.IniPath, defs, Config));
+                    profileMsg = applied > 0
+                        ? $" Perfil do monitor aplicado ({Config.PeakNits:0} nits)."
+                        : " (Este mod não tem ajustes de nits — HDR nativo.)";
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"profile-on-install: {ex.Message}");
+                    profileMsg = " O mod instalou, mas o perfil de nits não foi aplicado — use 'Usar meu perfil' depois.";
+                }
             }
-            await LoadSettingsAsync();
-            DetailStatus = $"Mod instalado e ativado. {deploy.Message} Abra o jogo e pressione Home para ver o overlay.";
+            if (item == _detailItem) await LoadSettingsSafeAsync(_detailToken);
+            DetailStatus = $"Mod instalado e ativado. {deploy.Message}{profileMsg} Abra o jogo e pressione Home para ver o overlay.";
+            RefreshViewKeepSelection();
         }
         catch (Exception ex)
         {
@@ -295,7 +383,7 @@ public class MainViewModel : ObservableObject
 
     private async Task ToggleAsync()
     {
-        var item = Selected;
+        var item = _detailItem;
         if (item?.State?.AddonPath is null) return;
         try
         {
@@ -303,6 +391,7 @@ public class MainViewModel : ObservableObject
             await Task.Run(() => AddonService.SetEnabled(item.State, enable));
             item.RefreshState();
             DetailStatus = enable ? "Mod ATIVADO." : "Mod DESATIVADO (arquivo renomeado para .disabled).";
+            RefreshViewKeepSelection();
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
         RaiseCommands();
@@ -310,7 +399,7 @@ public class MainViewModel : ObservableObject
 
     private async Task RemoveAsync()
     {
-        var item = Selected;
+        var item = _detailItem;
         if (item?.State?.AddonPath is null) return;
         var answer = MessageBox.Show(
             $"Remover o mod RenoDX de \"{item.Name}\"?\n\nSim = remove o addon e o ReShade (se não houver outros addons).\nNão = remove só o addon RenoDX.",
@@ -322,6 +411,7 @@ public class MainViewModel : ObservableObject
             item.RefreshState();
             Settings.Clear();
             DetailStatus = "Mod removido. As configurações ficaram salvas no ReShade.ini.";
+            RefreshViewKeepSelection();
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
         RaiseCommands();
@@ -329,16 +419,17 @@ public class MainViewModel : ObservableObject
 
     private async Task SaveSettingsAsync()
     {
-        var item = Selected;
+        var item = _detailItem;
         if (item?.State is null) return;
         try
         {
-            var dirty = Settings.Where(s => s.IsDirty || s.WasSetInIni)
-                .Select(s => (s.Def, s.Value)).ToList();
+            // only values the user actually changed — untouched ini keys keep their exact text
+            var dirty = Settings.Where(s => s.IsDirty).Select(s => (s.Def, s.Value)).ToList();
             if (dirty.Count == 0) { DetailStatus = "Nada para salvar."; return; }
-            await Task.Run(() => SettingsService.Write(item.State.IniPath, dirty));
-            await LoadSettingsAsync();
-            DetailStatus = $"{dirty.Count} configurações salvas em {item.State.IniPath}. " +
+            var iniPath = item.State.IniPath;
+            await Task.Run(() => SettingsService.Write(iniPath, dirty));
+            await LoadSettingsSafeAsync(_detailToken);
+            DetailStatus = $"{dirty.Count} configurações salvas em {iniPath}. " +
                 "Com o jogo aberto: mova o slider Preset para 2 e volte para 1 no overlay (Home) para aplicar sem reiniciar.";
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
@@ -346,27 +437,32 @@ public class MainViewModel : ObservableObject
 
     private async Task ApplyProfileAsync()
     {
-        var item = Selected;
+        var item = _detailItem;
         if (item?.State is null || item.Mod?.Slug is null) return;
         try
         {
             var defs = _manifest?.GetSettings(item.Mod.Slug);
             if (defs is null) return;
-            await Task.Run(() => SettingsService.ApplyDisplayProfile(item.State.IniPath, defs, Config));
-            await LoadSettingsAsync();
-            DetailStatus = $"Perfil aplicado: pico {Config.PeakNits:0} / jogo {Config.GameNits:0} / UI {Config.UiNits:0} nits.";
+            var iniPath = item.State.IniPath;
+            var applied = await Task.Run(() => SettingsService.ApplyDisplayProfile(iniPath, defs, Config));
+            await LoadSettingsSafeAsync(_detailToken);
+            DetailStatus = applied > 0
+                ? $"Perfil aplicado: pico {Config.PeakNits:0} / jogo {Config.GameNits:0} / UI {Config.UiNits:0} nits."
+                : "Este mod não expõe ajustes de nits (HDR nativo) — nada foi alterado.";
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
     }
 
     private async Task ResetSettingsAsync()
     {
-        var item = Selected;
+        var item = _detailItem;
         if (item?.State is null) return;
         try
         {
-            await Task.Run(() => SettingsService.Reset(item.State.IniPath, Settings.Select(s => s.Def)));
-            await LoadSettingsAsync();
+            var iniPath = item.State.IniPath;
+            var defs = Settings.Select(s => s.Def).ToList();
+            await Task.Run(() => SettingsService.Reset(iniPath, defs));
+            await LoadSettingsSafeAsync(_detailToken);
             DetailStatus = "Configurações resetadas para o padrão do mod (chaves removidas do ini).";
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
@@ -381,7 +477,8 @@ public class MainViewModel : ObservableObject
 
     private void OpenNexus()
     {
-        if (Selected?.Mod?.NexusUrl is { } url)
+        var url = Selected?.Mod?.NexusUrl ?? Selected?.Mod?.InfoUrl;
+        if (url != null)
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 

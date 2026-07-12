@@ -35,14 +35,19 @@ public static partial class StoreScanners
 
     // ---------- Steam ----------
 
-    [GeneratedRegex("\"(?<key>[^\"]+)\"\\s+\"(?<value>[^\"]*)\"")]
+    // VDF strings use backslash escapes (\" \\), so the value must consume escaped pairs
+    // as units — a title containing quotes would otherwise corrupt every following pair.
+    [GeneratedRegex("\"(?<key>(?:[^\"\\\\]|\\\\.)+)\"\\s+\"(?<value>(?:[^\"\\\\]|\\\\.)*)\"")]
     private static partial Regex VdfPairRegex();
+
+    private static string VdfUnescape(string s) =>
+        s.Replace("\\\\", "\\").Replace("\\\"", "\"");
 
     private static Dictionary<string, string> VdfPairs(string text)
     {
         var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (Match m in VdfPairRegex().Matches(text))
-            dict.TryAdd(m.Groups["key"].Value, m.Groups["value"].Value.Replace(@"\\", @"\"));
+            dict.TryAdd(VdfUnescape(m.Groups["key"].Value), VdfUnescape(m.Groups["value"].Value));
         return dict;
     }
 
@@ -62,7 +67,7 @@ public static partial class StoreScanners
             {
                 foreach (Match m in VdfPairRegex().Matches(File.ReadAllText(libVdf)))
                     if (m.Groups["key"].Value.Equals("path", StringComparison.OrdinalIgnoreCase))
-                        libraries.Add(m.Groups["value"].Value.Replace(@"\\", @"\"));
+                        libraries.Add(VdfUnescape(m.Groups["value"].Value));
             }
 
             foreach (var lib in libraries.Distinct(StringComparer.OrdinalIgnoreCase))

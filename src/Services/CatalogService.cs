@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
@@ -13,7 +14,8 @@ namespace RenoDXLauncher.Services;
 ///     main-repo mods only, includes steam_appid for exact matching).
 ///  2. AUGMENTER: the wiki Mods.md (complete human catalog — fork-hosted mods, Nexus-only
 ///     mods, the Unreal/Unity generic-mod game lists, status and notes).
-/// Merged by slug; games-index wins for download URLs, Mods.md fills status/notes/nexus.
+/// Merged per slug by matching titles; wiki "Deprecated" section becomes a deny-list so
+/// games-index can't resurrect dead mods as working.
 /// </summary>
 public partial class CatalogService
 {
@@ -29,11 +31,28 @@ public partial class CatalogService
     {
         var mdTask = FetchCachedAsync("Mods.md", ModsMdUrl, "Mods.fallback.md", forceRefresh);
         var idxTask = FetchCachedAsync("games-index.json", GamesIndexUrl, "games-index.fallback.json", forceRefresh);
-        var entries = ParseModsMd(await mdTask);
-        MergeGamesIndex(entries, await idxTask);
+        var md = await mdTask;
+        var deprecatedSlugs = ExtractDeprecatedSlugs(md);
+        var entries = ParseModsMd(md);
         foreach (var e in entries)
-            e.NormalizedName = MatchService.Normalize(e.GameName);
+            SeedAliases(e);
+        MergeGamesIndex(entries, await idxTask, deprecatedSlugs);
         return entries;
+    }
+
+    private static void SeedAliases(CatalogEntry e)
+    {
+        e.NormalizedName = MatchService.Normalize(e.GameName);
+        e.NormalizedAliases.Add(e.NormalizedName);
+        // combined rows ("Shadow Warrior (2013) · Shadow Warrior 2", "A & B") answer to each part
+        foreach (var part in e.GameName.Split('·'))
+        {
+            var p = MatchService.Normalize(part);
+            if (p.Length >= 4) e.NormalizedAliases.Add(p);
+        }
+        var strippedEdition = MatchService.Normalize(MatchService.StripEditionSuffix(e.GameName));
+        if (strippedEdition.Length >= 4) e.NormalizedAliases.Add(strippedEdition);
+        e.NormalizedAliases.Remove("");
     }
 
     /// <summary>Download with a disk cache (TTL 12h) and an embedded-resource fallback.</summary>
@@ -44,7 +63,7 @@ public partial class CatalogService
         if (!force && fresh) return await File.ReadAllTextAsync(cachePath);
         try
         {
-            using var http = new HttpClient();
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
             var text = await http.GetStringAsync(url);
             Directory.CreateDirectory(AppPaths.DataDir);
@@ -70,7 +89,7 @@ public partial class CatalogService
 
     // ---------- games-index.json ----------
 
-    private static void MergeGamesIndex(List<CatalogEntry> entries, string json)
+    private static void MergeGamesIndex(List<CatalogEntry> entries, string json, HashSet<string> deprecatedSlugs)
     {
         try
         {
@@ -78,7 +97,7 @@ public partial class CatalogService
             var bySlug = entries
                 .Where(e => e.Slug != null && e.Kind == ModKind.Dedicated)
                 .GroupBy(e => e.Slug!, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+                .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var game in doc.RootElement.GetProperty("games").EnumerateArray())
             {
@@ -86,15 +105,24 @@ public partial class CatalogService
                 if (title is null) continue;
                 int? steamAppId = game.TryGetProperty("steam_appid", out var sa) && sa.ValueKind == JsonValueKind.Number
                     ? sa.GetInt32() : null;
+                var aliases = new List<string>();
+                if (game.TryGetProperty("aliases", out var al) && al.ValueKind == JsonValueKind.Array)
+                    foreach (var a in al.EnumerateArray())
+                        if (a.GetString() is { Length: > 0 } s) aliases.Add(s);
+
                 if (!game.TryGetProperty("mods", out var mods) || mods.GetArrayLength() == 0) continue;
-                var mod = mods[0];
+                // prefer the primary (non-"Alternate") variant
+                JsonElement mod = mods[0];
+                foreach (var m in mods.EnumerateArray())
+                    if (!m.TryGetProperty("variant", out var v) || v.ValueKind == JsonValueKind.Null)
+                    { mod = m; break; }
                 var slug = mod.GetProperty("id").GetString();
                 if (slug is null) continue;
+
                 string? url = null;
                 int bits = 0;
                 if (mod.TryGetProperty("artifacts", out var arts) && arts.GetArrayLength() > 0)
                 {
-                    // prefer x64 artifact when both exist
                     JsonElement best = arts[0];
                     foreach (var a in arts.EnumerateArray())
                         if (a.TryGetProperty("arch", out var arch) && arch.GetString() == "x64") best = a;
@@ -105,18 +133,27 @@ public partial class CatalogService
                         bits = name.EndsWith(".addon32", StringComparison.OrdinalIgnoreCase) ? 32 : 64;
                     }
                 }
-                if (bySlug.TryGetValue(slug, out var existing))
+
+                var normTitle = MatchService.Normalize(title);
+                var wikiSiblings = bySlug.GetValueOrDefault(slug);
+                var target = wikiSiblings?.FirstOrDefault(e => e.NormalizedAliases.Contains(normTitle));
+                if (target != null)
                 {
-                    existing.SteamAppId ??= steamAppId;
-                    if (url != null && existing.DownloadUrl is null)
+                    // enrich the wiki entry whose NAME matches this games-index game
+                    target.SteamAppId ??= steamAppId;
+                    if (url != null && target.DownloadUrl is null)
                     {
-                        existing.DownloadUrl = url;
-                        existing.AddonBits = bits;
+                        target.DownloadUrl = url;
+                        target.AddonBits = bits;
                     }
+                    foreach (var a in aliases) target.NormalizedAliases.Add(MatchService.Normalize(a));
+                    target.NormalizedAliases.Remove("");
                 }
                 else if (url != null)
                 {
-                    entries.Add(new CatalogEntry
+                    // index title unknown to the wiki (or shares a slug under another name):
+                    // add it as its own entry so the game stays matchable
+                    var entry = new CatalogEntry
                     {
                         GameName = title,
                         Kind = ModKind.Dedicated,
@@ -124,8 +161,17 @@ public partial class CatalogService
                         DownloadUrl = url,
                         AddonBits = bits,
                         SteamAppId = steamAppId,
-                        Working = true,
-                    });
+                        Working = !deprecatedSlugs.Contains(slug),
+                        Note = deprecatedSlugs.Contains(slug)
+                            ? "Marcado como DESCONTINUADO na wiki do RenoDX — pode não funcionar mais."
+                            : null,
+                        Maintainer = wikiSiblings?.FirstOrDefault()?.Maintainer,
+                        NexusUrl = wikiSiblings?.FirstOrDefault()?.NexusUrl,
+                    };
+                    SeedAliases(entry);
+                    foreach (var a in aliases) entry.NormalizedAliases.Add(MatchService.Normalize(a));
+                    entry.NormalizedAliases.Remove("");
+                    entries.Add(entry);
                 }
             }
         }
@@ -145,6 +191,23 @@ public partial class CatalogService
 
     [GeneratedRegex(@"\(#\s+""([^""]+)""\)")]
     private static partial Regex HoverNoteRegex();
+
+    [GeneratedRegex(@"\b32[\s-]?bits?\b", RegexOptions.IgnoreCase)]
+    private static partial Regex ThirtyTwoBitRegex();
+
+    private static bool IsWorkingStatus(string status) =>
+        status.Contains("white_check_mark") || status.Contains('✅');
+
+    /// <summary>Slugs listed under the wiki's "# Deprecated mods" tail section.</summary>
+    public static HashSet<string> ExtractDeprecatedSlugs(string md)
+    {
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        int start = md.IndexOf("# Deprecated", StringComparison.OrdinalIgnoreCase);
+        if (start < 0) return result;
+        foreach (Match m in AddonFileRegex().Matches(md[start..]))
+            result.Add(m.Groups[1].Value);
+        return result;
+    }
 
     public static List<CatalogEntry> ParseModsMd(string md)
     {
@@ -175,9 +238,9 @@ public partial class CatalogService
         string? download = null;
         string? slug = null;
         int bits = 0;
-        foreach (Match m in LinkTargetRegex().Matches(links))
+        var allUrls = LinkTargetRegex().Matches(links).Select(m => m.Groups[1].Value).ToList();
+        foreach (var url in allUrls)
         {
-            var url = m.Groups[1].Value;
             var fm = AddonFileRegex().Match(url);
             if (fm.Success && url.EndsWith(".addon" + fm.Groups[2].Value, StringComparison.OrdinalIgnoreCase))
             {
@@ -187,10 +250,11 @@ public partial class CatalogService
                 break;
             }
         }
-        string? nexus = LinkTargetRegex().Matches(links)
-            .Select(m => m.Groups[1].Value)
-            .FirstOrDefault(u => u.Contains("nexusmods.com", StringComparison.OrdinalIgnoreCase));
-        if (download is null && nexus is null) return;
+        string? nexus = allUrls.FirstOrDefault(u => u.Contains("nexusmods.com", StringComparison.OrdinalIgnoreCase));
+        // rows with neither a direct download nor a Nexus page (Discord/discussion-only mods)
+        // are kept — the InfoUrl gives the user somewhere to go
+        string? info = allUrls.FirstOrDefault(u =>
+            !u.Contains("img.shields.io") && u != download && u != nexus);
         var status = cells[3];
         entries.Add(new CatalogEntry
         {
@@ -201,7 +265,8 @@ public partial class CatalogService
             Slug = slug,
             AddonBits = bits,
             NexusUrl = nexus,
-            Working = status.Contains("white_check_mark"),
+            InfoUrl = info,
+            Working = IsWorkingStatus(status),
             Note = HoverNoteRegex().Match(status) is { Success: true } h ? h.Groups[1].Value : null,
         });
     }
@@ -212,7 +277,7 @@ public partial class CatalogService
         if (name.Length == 0) return;
         var status = cells.Length > 1 ? cells[1] : "";
         var note = cells.Length > 2 ? CleanNote(cells[2]) : null;
-        bool is32 = note != null && note.Contains("32-bit", StringComparison.OrdinalIgnoreCase);
+        bool is32 = note != null && ThirtyTwoBitRegex().IsMatch(note);
         entries.Add(new CatalogEntry
         {
             GameName = name,
@@ -221,7 +286,7 @@ public partial class CatalogService
             DownloadUrl = kind == ModKind.UnrealEngine ? UnrealAddonUrl : (is32 ? UnityAddon32Url : UnityAddon64Url),
             Slug = kind == ModKind.UnrealEngine ? "unrealengine" : "unityengine",
             AddonBits = kind == ModKind.UnrealEngine ? 64 : (is32 ? 32 : 64),
-            Working = status.Contains("white_check_mark"),
+            Working = IsWorkingStatus(status),
             Note = note,
         });
     }
@@ -245,6 +310,7 @@ public partial class CatalogService
         var s = MdLinkRegex().Replace(cell, m => m.Groups[1].Value);
         s = Regex.Replace(s, @"!\[[^\]]*\]", "");
         s = Regex.Replace(s, @":[a-z_0-9]+:", "");
+        s = WebUtility.HtmlDecode(s);
         return s.Trim();
     }
 
@@ -252,7 +318,8 @@ public partial class CatalogService
     {
         var s = cell.Replace("<br>", "\n").Replace("</details>", "");
         s = MdLinkRegex().Replace(s, m => m.Groups[1].Value);
-        s = Regex.Replace(s, @":[a-z_0-9]+:", "").Trim();
+        s = Regex.Replace(s, @":[a-z_0-9]+:", "");
+        s = WebUtility.HtmlDecode(s).Trim();
         return s.Length == 0 ? null : s;
     }
 }

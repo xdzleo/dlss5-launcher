@@ -46,25 +46,30 @@ public class AddonService
     {
         if (entry.DownloadUrl is null)
             throw new InvalidOperationException("Este mod não tem download direto (só página no Nexus).");
+        if (IsGameRunning(targetDir))
+            throw new InvalidOperationException("O jogo está aberto — feche-o antes de instalar/atualizar o mod.");
         var fileName = Path.GetFileName(new Uri(entry.DownloadUrl).LocalPath);
         progress?.Report($"Baixando {fileName}...");
 
         Directory.CreateDirectory(AppPaths.DownloadsDir);
         var cached = Path.Combine(AppPaths.DownloadsDir, fileName);
-        using (var http = new HttpClient())
+        using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) })
         {
             http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
             var bytes = await http.GetByteArrayAsync(entry.DownloadUrl);
-            if (bytes.Length < 1024)
-                throw new InvalidOperationException($"Download de {fileName} veio vazio/corrompido.");
+            // addons are PE DLLs — reject HTML error pages and truncated downloads
+            if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
+                throw new InvalidOperationException($"Download de {fileName} veio corrompido (não é um addon válido).");
             await File.WriteAllBytesAsync(cached, bytes);
         }
 
-        // exactly one renodx addon per deploy dir: remove other slugs' files first
+        // exactly one renodx addon per deploy dir: remove every other addon file first.
+        // Match on "<base>." so renodx-hades doesn't spare renodx-hades2, and same-slug
+        // files of the other bitness are cleaned too.
+        var keep = new[] { fileName, fileName + DisabledSuffix };
         foreach (var other in Directory.GetFiles(targetDir, "renodx-*.addon*"))
         {
-            if (!Path.GetFileName(other).StartsWith(Path.GetFileNameWithoutExtension(fileName),
-                    StringComparison.OrdinalIgnoreCase))
+            if (!keep.Contains(Path.GetFileName(other), StringComparer.OrdinalIgnoreCase))
             {
                 Log.Info($"removendo addon conflitante {other}");
                 File.Delete(other);
@@ -123,19 +128,32 @@ public class AddonService
         }
     }
 
-    /// <summary>True if any running process' main module lives under the deploy dir.</summary>
+    /// <summary>True if any running process' main module lives under the deploy dir.
+    /// Elevated processes hide their module path, so process NAMES are also compared
+    /// against the exe files present in the dir.</summary>
     public static bool IsGameRunning(string targetDir)
     {
         var prefix = Path.GetFullPath(targetDir).TrimEnd('\\') + "\\";
+        HashSet<string> exeNames;
+        try
+        {
+            exeNames = Directory.GetFiles(targetDir, "*.exe", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(n => n != null)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)!;
+        }
+        catch { exeNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase); }
+
         foreach (var p in Process.GetProcesses())
         {
             try
             {
+                if (exeNames.Contains(p.ProcessName)) return true;
                 var path = p.MainModule?.FileName;
                 if (path != null && path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     return true;
             }
-            catch { /* access denied on system processes — irrelevant */ }
+            catch { /* access denied (elevated/system) — covered by the name check above */ }
             finally { p.Dispose(); }
         }
         return false;

@@ -12,7 +12,9 @@ void Check(bool ok, string what)
     if (!ok) failures++;
 }
 
-var fakeDir = Path.Combine(Path.GetTempPath(), "RenoDXLauncherSmoke", "Cyberpunk 2077", "bin", "x64");
+var fakeRoot = Path.Combine(Path.GetTempPath(), "RenoDXLauncherSmoke");
+if (Directory.Exists(fakeRoot)) Directory.Delete(fakeRoot, recursive: true); // no state leaks between runs
+var fakeDir = Path.Combine(fakeRoot, "Cyberpunk 2077", "bin", "x64");
 Directory.CreateDirectory(fakeDir);
 var fakeExe = Path.Combine(fakeDir, "Cyberpunk2077.exe");
 File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), fakeExe, overwrite: true);
@@ -32,6 +34,18 @@ var er = MatchService.FindMatch(new GameInfo { Name = "ELDEN RING", InstallDir =
 Check(er != null, $"match ELDEN RING → {er?.Slug} ({er?.GameName})");
 var sekiro = MatchService.FindMatch(new GameInfo { Name = "Sekiro™: Shadows Die Twice", InstallDir = ".", Store = GameStore.Manual }, catalog);
 Check(sekiro != null, $"match Sekiro™ → {sekiro?.Slug}");
+
+// regressões de matching: sequência NUNCA pode casar com o jogo anterior
+var dis2 = MatchService.FindMatch(new GameInfo { Name = "Dishonored 2", InstallDir = ".", Store = GameStore.Manual }, catalog);
+Check(dis2 is null || dis2.NormalizedAliases.Contains("dishonored2"), $"Dishonored 2 não herda o mod do Dishonored 1 (→ {dis2?.GameName ?? "sem match"})");
+var rdr2 = MatchService.FindMatch(new GameInfo { Name = "Red Dead Redemption 2", InstallDir = ".", Store = GameStore.Manual }, catalog);
+Check(rdr2 is null || rdr2.GameName.Contains('2'), $"RDR2 não herda o mod do RDR1 (→ {rdr2?.GameName ?? "sem match"})");
+var tr2013 = MatchService.FindMatch(new GameInfo { Name = "Tomb Raider", InstallDir = ".", Store = GameStore.Manual }, catalog);
+Check(tr2013 != null, $"'Tomb Raider' casa com 'Tomb Raider (2013)' via strip de parêntese (→ {tr2013?.GameName})");
+var witcher = MatchService.FindMatch(new GameInfo { Name = "The Witcher 3: Wild Hunt", InstallDir = ".", Store = GameStore.Manual }, catalog);
+Check(witcher != null, $"The Witcher 3 matchável (→ {witcher?.GameName}, slug {witcher?.Slug})");
+var goty = MatchService.FindMatch(new GameInfo { Name = "Batman: Arkham Knight Game of the Year Edition", InstallDir = ".", Store = GameStore.Manual }, catalog);
+Check(goty?.Slug == "batmanak", $"sufixo de edição removido só no lado instalado (→ {goty?.Slug})");
 
 // 3. PE utils
 var pe = PeUtils.Inspect(fakeExe);

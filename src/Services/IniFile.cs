@@ -122,8 +122,12 @@ public class IniFile
 
     public void Save()
     {
-        // ReShade writes plain UTF-8 without BOM.
-        File.WriteAllText(Path, string.Join(Environment.NewLine, _lines) + Environment.NewLine,
-            new UTF8Encoding(false));
+        // ReShade writes plain UTF-8 without BOM. Write to a temp file and swap so a
+        // crash mid-write can never leave a truncated ReShade.ini behind.
+        var content = string.Join(Environment.NewLine, _lines) + Environment.NewLine;
+        var temp = Path + ".tmp";
+        File.WriteAllText(temp, content, new UTF8Encoding(false));
+        if (File.Exists(Path)) File.Replace(temp, Path, null);
+        else File.Move(temp, Path);
     }
 }

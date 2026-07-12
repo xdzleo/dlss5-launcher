@@ -79,8 +79,10 @@ public class SettingsService
         ini.Save();
     }
 
-    /// <summary>Apply the user's display profile (peak/game/UI nits) using the mod's real keys.</summary>
-    public static void ApplyDisplayProfile(string iniPath, IReadOnlyList<SettingDef> defs, LauncherConfig cfg)
+    /// <summary>Apply the user's display profile (peak/game/UI nits) using the mod's real keys.
+    /// Returns how many keys were written — 0 means the mod exposes no nits settings
+    /// (native-HDR mods), which the caller must surface instead of claiming success.</summary>
+    public static int ApplyDisplayProfile(string iniPath, IReadOnlyList<SettingDef> defs, LauncherConfig cfg)
     {
         var changes = new List<(SettingDef, double)>();
         foreach (var def in defs)
@@ -91,5 +93,6 @@ public class SettingsService
             else if (k == "tonemapuinits") changes.Add((def, cfg.UiNits));
         }
         if (changes.Count > 0) Write(iniPath, changes);
+        return changes.Count;
     }
 }

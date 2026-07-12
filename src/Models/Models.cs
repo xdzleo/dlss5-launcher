@@ -23,6 +23,9 @@ public class CatalogEntry
 {
     public required string GameName { get; init; }
     public string NormalizedName { get; set; } = "";
+    /// <summary>All normalized names this entry answers to (title variants, games-index aliases,
+    /// parenthetical-stripped forms, combined-row splits).</summary>
+    public HashSet<string> NormalizedAliases { get; } = new(StringComparer.Ordinal);
     public ModKind Kind { get; init; }
     public string? Maintainer { get; set; }
     /// <summary>Direct .addon64/.addon32 download URL (snapshot build), if available.</summary>
@@ -33,6 +36,8 @@ public class CatalogEntry
     public string? Slug { get; init; }
     public int? SteamAppId { get; set; }
     public string? NexusUrl { get; set; }
+    /// <summary>Fallback link (discussion/Discord) for rows without direct download or Nexus page.</summary>
+    public string? InfoUrl { get; set; }
     /// <summary>true = marked working; false = in progress / unknown.</summary>
     public bool Working { get; set; }
     /// <summary>Notes from the wiki (hover note or UE/Unity Notes column).</summary>
