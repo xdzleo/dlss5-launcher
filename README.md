@@ -14,14 +14,19 @@ em qualquer pasta e rode `RenoDXLauncher.exe`. Build self-contained — não pre
 
 ### Antivírus acusando (falso-positivo)
 
-O executável **não é assinado** (não tenho certificado de code-signing pago), então alguns antivírus
-agressivos — em especial o **360 Total Security** — podem acusar como suspeito. É **falso-positivo**:
-todo o código-fonte está aqui neste repo e o app baixa o ReShade e escreve DLLs em pastas de jogos
-(comportamento legítimo do que ele faz, mas que heurísticas confundem com malware). Opções:
+Até a assinatura digital entrar em vigor, os releases são **não assinados**, e o SmartScreen/Chrome
+e alguns antivírus (em especial o **360 Total Security**) podem acusar como suspeito. É
+**falso-positivo**: todo o código-fonte está aqui neste repo. O app baixa o ReShade e escreve DLLs
+em pastas de jogos (comportamento legítimo do que ele faz, mas que heurísticas confundem com malware).
+Opções enquanto isso:
 
 - Libere/whitelist o `RenoDXLauncher.exe` no seu antivírus, ou
-- Use o **Windows Defender** (tem bem menos falso-positivo nesse tipo de app), ou
 - Compile você mesmo: `dotnet publish -c Release -r win-x64 --self-contained -o app` na pasta `src`.
+
+**Assinatura de código:** os releases estão sendo migrados para assinatura via
+[SignPath Foundation](https://signpath.org/) (grátis para open-source). Detalhes em
+[docs/code-signing-policy.md](docs/code-signing-policy.md); setup em
+[docs/SIGNING-SETUP.md](docs/SIGNING-SETUP.md).
 
 ## O que ele faz
 

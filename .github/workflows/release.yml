@@ -1,0 +1,73 @@
+name: Release
+
+# Cuts a signed release: build in CI (SignPath requires a trusted build system),
+# submit the artifact to SignPath Foundation for Authenticode signing, then attach
+# the SIGNED zip to the GitHub Release. Trigger by pushing a tag like v1.1.0.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Resolve version from tag
+        id: ver
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish (self-contained, folder — no self-extraction)
+        run: >
+          dotnet publish src/RenoDXLauncher.csproj -c Release -r win-x64
+          --self-contained true -p:PublishSingleFile=false -o publish --nologo
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath "RenoDXLauncher-${{ steps.ver.outputs.version }}-win-x64.zip"
+
+      - name: Upload unsigned build artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: renodx-launcher-unsigned
+          path: RenoDXLauncher-*.zip
+          if-no-files-found: error
+
+  sign-and-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Submit signing request to SignPath
+        id: sign
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: renodx-launcher
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ needs.build.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+          # keep the result as the original .zip (SignPath signs the exe inside it)
+          skip-decompress: true
+
+      - name: Publish GitHub Release with the SIGNED zip
+        uses: softprops/action-gh-release@v2
+        with:
+          files: signed/*.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
