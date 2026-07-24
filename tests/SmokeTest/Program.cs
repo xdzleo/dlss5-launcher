@@ -60,6 +60,31 @@ var ueDefs = manifest.GetSettings("unrealengine");
 Check(ueDefs!.Any(d => d.Key == "ToneMapPeakNits" && d.Default == 1000 && d.Max == 4000),
     "manifest unrealengine: ToneMapPeakNits default 1000 range até 4000");
 
+// 4b. advice extractor (in-game HDR on/off from real note phrasing)
+Check(AdviceService.DetectHdr("Disable in-game HDR. B8G8R8A8_TYPELESS Output Size") == InGameHdr.Disable,
+    "detecta 'Disable in-game HDR' → DESLIGAR");
+Check(AdviceService.DetectHdr("Must be using native res output and 100% res scale! HDR On in-game.") == InGameHdr.Enable,
+    "detecta 'HDR On in-game' → LIGAR");
+Check(AdviceService.DetectHdr("If the game has an in-game HDR option, enable that too.") == InGameHdr.Enable,
+    "detecta 'enable that too' → LIGAR");
+Check(AdviceService.DetectHdr("If you have a washed out image, disable AUTOHDR and RTX HDR to avoid double tonemapping") == InGameHdr.Unknown,
+    "NÃO confunde 'disable AutoHDR/RTX HDR' (Windows) com HDR do jogo");
+Check(AdviceService.DetectHdr("Great mod, no notes.") == InGameHdr.Unknown,
+    "nota sem menção de HDR → desconhecido");
+var advDep = AdviceService.Build("The RenoDX mod for Dying Light 2 has been abandoned and is no longer maintained.", false);
+Check(advDep.Any(a => a.Kind == AdviceKind.Deprecated), "detecta mod abandonado/descontinuado");
+var advAc = AdviceService.Build("Disable in-game HDR and Easy Anti-Cheat.", false);
+Check(advAc.Any(a => a.Kind == AdviceKind.HdrOff) && advAc.Any(a => a.Kind == AdviceKind.AntiCheat),
+    "extrai HDR-off + aviso de anti-cheat da mesma nota");
+var advDx = AdviceService.Build("Far Cry 3 must run in DX11 for RenoDX to work.", false);
+Check(advDx.Any(a => a.Kind == AdviceKind.Renderer), "detecta renderizador exigido (DX11)");
+Check(AdviceService.DetectHdr(null, "ELDEN RING") == InGameHdr.Enable,
+    "fallback curado: ELDEN RING (sem nota) → LIGAR HDR");
+Check(AdviceService.DetectHdr(null, "Stellar Blade") == InGameHdr.Disable,
+    "fallback curado: Stellar Blade → DESLIGAR HDR");
+Check(AdviceService.DetectHdr("Disable in-game HDR", "Cyberpunk 2077") == InGameHdr.Disable,
+    "nota real ganha do fallback curado quando ambos existem");
+
 // 5. ReShade provision + deploy (real download)
 var reshade = new ReShadeService();
 var deploy = await reshade.DeployAsync(fakeDir, fakeExe, null, null, new Progress<string>(Console.WriteLine));

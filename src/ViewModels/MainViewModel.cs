@@ -128,6 +128,7 @@ public class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<SettingVm> Settings { get; } = new();
+    public ObservableCollection<Advice> Advice { get; } = new();
     public ObservableCollection<string> Notes { get; } = new();
 
     private string _detailStatus = "";
@@ -266,16 +267,27 @@ public class MainViewModel : ObservableObject
     {
         ExeCandidates.Clear();
         Settings.Clear();
+        Advice.Clear();
         Notes.Clear();
         DetailStatus = "";
         var item = Selected;
         _detailItem = item;
         if (item is null) return;
 
-        // notes
+        // structured recommendations (parsed from every note source) shown as prominent cards
+        var rhiNote = _rhi.GameNote(item.Name);
+        var nativeHdr = item.Mod != null && _rhi.IsNativeHdr(item.Name);
+        if (item.Mod != null)
+        {
+            var noteText = string.Join(" . ", new[] { item.Mod.Note, rhiNote }.Where(s => s != null));
+            foreach (var a in AdviceService.Build(noteText, nativeHdr, item.Name))
+                Advice.Add(a);
+        }
+
+        // full free-text notes below the cards
         if (item.Mod?.Note is { } n1) Notes.Add(n1);
-        if (_rhi.GameNote(item.Name) is { } n2) Notes.Add(n2);
-        if (item.Mod != null && _rhi.IsNativeHdr(item.Name))
+        if (rhiNote is { } n2) Notes.Add(n2);
+        if (nativeHdr && Advice.All(a => a.Kind is not (AdviceKind.HdrOn or AdviceKind.HdrOff)))
             Notes.Add("Este jogo tem HDR nativo — o mod corrige/melhora o HDR do próprio jogo. Normalmente o HDR precisa estar LIGADO dentro do jogo.");
         if (item.Mod?.Kind == ModKind.UnrealEngine)
             Notes.Add("Mod GENÉRICO de Unreal Engine: depois de instalar, ajustes de \"Upgrade\" podem ser necessários no overlay (tecla Home) — veja a nota do jogo acima, se houver.");
