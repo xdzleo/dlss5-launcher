@@ -12,6 +12,17 @@ launcher, sem abrir o jogo.
 Baixe o zip da [última release](https://github.com/xdzleo/renodx-launcher/releases/latest), extraia
 em qualquer pasta e rode `RenoDXLauncher.exe`. Build self-contained — não precisa instalar .NET.
 
+### Antivírus acusando (falso-positivo)
+
+O executável **não é assinado** (não tenho certificado de code-signing pago), então alguns antivírus
+agressivos — em especial o **360 Total Security** — podem acusar como suspeito. É **falso-positivo**:
+todo o código-fonte está aqui neste repo e o app baixa o ReShade e escreve DLLs em pastas de jogos
+(comportamento legítimo do que ele faz, mas que heurísticas confundem com malware). Opções:
+
+- Libere/whitelist o `RenoDXLauncher.exe` no seu antivírus, ou
+- Use o **Windows Defender** (tem bem menos falso-positivo nesse tipo de app), ou
+- Compile você mesmo: `dotnet publish -c Release -r win-x64 --self-contained -o app` na pasta `src`.
+
 ## O que ele faz
 
 - **Detecção de jogos** (algoritmos do DLSS Swapper reimplementados):
