@@ -51,8 +51,22 @@ jobs:
     permissions:
       contents: write
     steps:
+      # SignPath is only wired up once the Foundation approves the project (see
+      # docs/SIGNING-SETUP.md). Until the secret exists, still ship — unsigned —
+      # instead of failing the release.
+      - name: Is signing configured?
+        id: cfg
+        run: |
+          if [ -n "${{ secrets.SIGNPATH_API_TOKEN }}" ] && [ -n "${{ vars.SIGNPATH_ORGANIZATION_ID }}" ]; then
+            echo "signing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signing=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SignPath não configurado — publicando release NÃO ASSINADA."
+          fi
+
       - name: Submit signing request to SignPath
         id: sign
+        if: steps.cfg.outputs.signing == 'true'
         uses: signpath/github-action-submit-signing-request@v1
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -61,13 +75,20 @@ jobs:
           signing-policy-slug: release-signing
           github-artifact-id: ${{ needs.build.outputs.artifact-id }}
           wait-for-completion: true
-          output-artifact-directory: signed
+          output-artifact-directory: dist
           # keep the result as the original .zip (SignPath signs the exe inside it)
           skip-decompress: true
 
-      - name: Publish GitHub Release with the SIGNED zip
+      - name: Download unsigned build (when signing is not configured yet)
+        if: steps.cfg.outputs.signing != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: renodx-launcher-unsigned
+          path: dist
+
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: signed/*.zip
+          files: dist/*.zip
           fail_on_unmatched_files: true
           generate_release_notes: true

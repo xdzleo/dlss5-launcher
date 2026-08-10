@@ -9,7 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- Full PE version metadata: blank/generic fields raise AV heuristic suspicion. -->
     <Product>RenoDX Launcher</Product>
