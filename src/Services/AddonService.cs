@@ -59,12 +59,19 @@ public class AddonService
             using var resp = await http.SendAsync(req);
             if (!resp.IsSuccessStatusCode) return null;
 
-            var local = new FileInfo(state.AddonPath);
+            var remoteEtag = resp.Headers.ETag?.Tag;
             var remoteLen = resp.Content.Headers.ContentLength;
-            if (remoteLen is > 0 && remoteLen != local.Length) return true;
-
             var remoteMod = resp.Content.Headers.LastModified?.UtcDateTime;
-            // allow a minute of slack: our copy's mtime is the download time, not the build time
+
+            // preferred: compare against the ETag of the exact build we installed
+            var record = InstalledModRegistry.Get(state.AddonPath);
+            if (record?.ETag is { Length: > 0 } localEtag && remoteEtag is { Length: > 0 })
+                return !string.Equals(localEtag, remoteEtag, StringComparison.Ordinal);
+
+            // fallback for addons installed before this tracking existed (or by hand)
+            var local = new FileInfo(state.AddonPath);
+            if (remoteLen is > 0 && remoteLen != local.Length) return true;
+            // slack of a minute: our copy's mtime is the download time, not the build time
             if (remoteMod is { } rm && rm > local.LastWriteTimeUtc.AddMinutes(1)) return true;
 
             return remoteLen is > 0 || remoteMod is not null ? false : null;
@@ -88,14 +95,20 @@ public class AddonService
 
         Directory.CreateDirectory(AppPaths.DownloadsDir);
         var cached = Path.Combine(AppPaths.DownloadsDir, fileName);
+        string? etag = null;
+        long size;
         using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) })
         {
             http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-            var bytes = await http.GetByteArrayAsync(entry.DownloadUrl);
+            using var resp = await http.GetAsync(entry.DownloadUrl);
+            resp.EnsureSuccessStatusCode();
+            etag = resp.Headers.ETag?.Tag;           // build identity, for future update checks
+            var bytes = await resp.Content.ReadAsByteArrayAsync();
             // addons are PE DLLs — reject HTML error pages and truncated downloads
             if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
                 throw new InvalidOperationException($"Download de {fileName} veio corrompido (não é um addon válido).");
             await File.WriteAllBytesAsync(cached, bytes);
+            size = bytes.LongLength;
         }
 
         // exactly one renodx addon per deploy dir: remove every other addon file first.
@@ -116,6 +129,15 @@ public class AddonService
         var disabled = target + DisabledSuffix;
         if (File.Exists(disabled)) File.Delete(disabled);
         File.Copy(cached, target, overwrite: true);
+        InstalledModRegistry.Set(target, new InstalledModRecord
+        {
+            Slug = entry.Slug,
+            FileName = fileName,
+            Url = entry.DownloadUrl,
+            ETag = etag,
+            Size = size,
+            DownloadedUtc = DateTime.UtcNow,
+        });
         progress?.Report($"{fileName} instalado.");
         return target;
     }

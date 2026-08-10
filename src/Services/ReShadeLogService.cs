@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace RenoDXLauncher.Services;
 
-public enum LoadResult { NoLog, NotLoaded, Loaded, Failed, LimitedBuild }
+public enum LoadResult { NoLog, NotLoaded, Loaded, Failed, LimitedBuild, NoAddonSupport }
 
 /// <summary>What ReShade.log says about the last time the game ran.</summary>
 public record LoadReport(
@@ -18,7 +18,9 @@ public record LoadReport(
     {
         LoadResult.Loaded => $"✅ Confirmado: o mod carregou no jogo{(AddonName is null ? "" : $" ({AddonName}{(AddonVersion is null ? "" : " v" + AddonVersion)})")}.",
         LoadResult.Failed => $"❌ O ReShade tentou carregar o mod e FALHOU: {Detail}",
-        LoadResult.LimitedBuild => "❌ Este ReShade é a build SEM suporte a add-ons — reinstale pelo launcher (ele baixa a versão certa).",
+        LoadResult.LimitedBuild => "❌ Este ReShade é a build SEM suporte a add-ons — clique em \"Instalar / Atualizar mod\" que eu troco pela versão certa.",
+        LoadResult.NoAddonSupport => "❌ O ReShade instalado aqui NÃO tem suporte a add-ons (o jogo rodou e ele nem procurou por mods). "
+            + "Clique em \"Instalar / Atualizar mod\" que eu substituo pela build com suporte a add-ons.",
         LoadResult.NotLoaded => "⚠️ O jogo rodou com ReShade, mas o mod RenoDX não foi carregado. Confira se o addon está ativado e na pasta certa.",
         _ => "ℹ️ Ainda não há registro: abra o jogo uma vez para eu verificar se o mod carregou.",
     };
@@ -43,6 +45,9 @@ public static partial class ReShadeLogService
 
     [GeneratedRegex(@"Loading add-on from '([^']*renodx[^']*)'", RegexOptions.IgnoreCase)]
     private static partial Regex LoadingRegex();
+
+    [GeneratedRegex(@"Searching for add-ons", RegexOptions.IgnoreCase)]
+    private static partial Regex SearchingRegex();
 
     public static LoadReport Check(string targetDir)
     {
@@ -74,6 +79,11 @@ public static partial class ReShadeLogService
                     || LoadingRegex().IsMatch(text))
                     return new LoadReport(LoadResult.Loaded, name, m.Groups[2].Value, null, lastRun);
             }
+
+            // ReShade rodou (log tem conteúdo) mas NUNCA procurou add-ons: é a build normal
+            // (sem suporte a add-on), na qual o .addon64 fica inerte para sempre
+            if (!SearchingRegex().IsMatch(text) && text.Length > 512)
+                return new LoadReport(LoadResult.NoAddonSupport, null, null, null, lastRun);
 
             return new LoadReport(LoadResult.NotLoaded, null, null, null, lastRun);
         }

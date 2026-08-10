@@ -4,7 +4,7 @@ using RenoDXLauncher.Services;
 
 namespace RenoDXLauncher.ViewModels;
 
-public enum ModBadge { None, Available, NexusOnly, Disabled, Enabled }
+public enum ModBadge { None, Available, NexusOnly, Disabled, Enabled, UpdateAvailable }
 
 /// <summary>One tile in the game grid.</summary>
 public class GameItemVm : ObservableObject
@@ -86,7 +86,23 @@ public class GameItemVm : ObservableObject
     public bool IsInstalled => _state?.AddonPath != null;
     public bool IsEnabled => _state?.AddonEnabled == true;
 
+    private bool _hasUpdate;
+    /// <summary>Uma build mais nova deste mod está disponível no servidor.</summary>
+    public bool HasUpdate
+    {
+        get => _hasUpdate;
+        set
+        {
+            if (Set(ref _hasUpdate, value))
+            {
+                OnPropertyChanged(nameof(Badge));
+                OnPropertyChanged(nameof(BadgeText));
+            }
+        }
+    }
+
     public ModBadge Badge =>
+        _hasUpdate && _state?.AddonPath != null ? ModBadge.UpdateAvailable :
         _state?.AddonPath != null
             ? (_state.AddonEnabled ? ModBadge.Enabled : ModBadge.Disabled)
             : Mod is null ? ModBadge.None
@@ -95,6 +111,7 @@ public class GameItemVm : ObservableObject
 
     public string BadgeText => Badge switch
     {
+        ModBadge.UpdateAvailable => "ATUALIZAÇÃO",
         ModBadge.Enabled => "ATIVADO",
         ModBadge.Disabled => "DESATIVADO",
         ModBadge.Available => "MOD DISPONÍVEL",

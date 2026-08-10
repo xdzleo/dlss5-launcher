@@ -44,6 +44,9 @@
                                     <DataTrigger Binding="{Binding Badge}" Value="Enabled">
                                         <Setter Property="Background" Value="{StaticResource GreenBrush}"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Badge}" Value="UpdateAvailable">
+                                        <Setter Property="Background" Value="#7FD1FF"/>
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding Badge}" Value="Disabled">
                                         <Setter Property="Background" Value="{StaticResource OrangeBrush}"/>
                                     </DataTrigger>
@@ -101,7 +104,14 @@
                              ToolTip="Pesquisar jogo"/>
                     <ComboBox Width="170" Margin="0,0,8,0" VerticalContentAlignment="Center"
                               ItemsSource="{Binding FilterOptions}" SelectedIndex="{Binding FilterIndex}"/>
-                    <Button Content="🔄 Atualizar" Margin="0,0,8,0" Command="{Binding RefreshCommand}"/>
+                    <Button Content="🔄 Atualizar" Margin="0,0,8,0" Command="{Binding RefreshCommand}"
+                            ToolTip="Reler o catálogo e reescanear os jogos instalados"/>
+                    <Button Content="🔎 Ver atualizações" Margin="0,0,8,0" Command="{Binding CheckUpdatesCommand}"
+                            ToolTip="Checa em todos os mods instalados se há build mais nova no servidor"/>
+                    <Button Content="{Binding UpdateAllText}" Margin="0,0,8,0" Command="{Binding UpdateAllCommand}"
+                            Style="{StaticResource AccentButton}"
+                            Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Baixa a versão mais nova de todos os mods marcados (configurações preservadas)"/>
                     <Button Content="➕ Adicionar jogo" Margin="0,0,8,0" Command="{Binding AddManualGameCommand}"/>
                     <Button Content="🖥️ Meu monitor" Margin="0,0,8,0" Click="OnProfileClick"/>
                     <Button Content="📖 Guia HDR" Click="OnGuideClick"/>

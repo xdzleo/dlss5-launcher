@@ -43,6 +43,8 @@ public class MainViewModel : ObservableObject
         OpenNexusCommand = new RelayCommand(OpenNexus,
             () => Selected?.Mod?.NexusUrl != null || Selected?.Mod?.InfoUrl != null);
         AddManualGameCommand = new AsyncRelayCommand(AddManualGameAsync, () => !Busy);
+        CheckUpdatesCommand = new AsyncRelayCommand(CheckUpdatesAsync, () => !Busy);
+        UpdateAllCommand = new AsyncRelayCommand(UpdateAllAsync, () => !Busy && UpdateCount > 0);
     }
 
     // ---------- top-level state ----------
@@ -182,11 +184,33 @@ public class MainViewModel : ObservableObject
     public RelayCommand OpenFolderCommand { get; }
     public RelayCommand OpenNexusCommand { get; }
     public AsyncRelayCommand AddManualGameCommand { get; }
+    public AsyncRelayCommand CheckUpdatesCommand { get; }
+    public AsyncRelayCommand UpdateAllCommand { get; }
+
+    /// <summary>Quantos mods instalados têm build mais nova disponível.</summary>
+    private int _updateCount;
+    public int UpdateCount
+    {
+        get => _updateCount;
+        set
+        {
+            if (Set(ref _updateCount, value))
+            {
+                OnPropertyChanged(nameof(HasUpdates));
+                OnPropertyChanged(nameof(UpdateAllText));
+                RaiseCommands();
+            }
+        }
+    }
+    public bool HasUpdates => _updateCount > 0;
+    public string UpdateAllText => $"⬆ Atualizar todos ({_updateCount})";
 
     private void RaiseCommands()
     {
         RefreshCommand.RaiseCanExecuteChanged();
         AddManualGameCommand.RaiseCanExecuteChanged();
+        CheckUpdatesCommand.RaiseCanExecuteChanged();
+        UpdateAllCommand.RaiseCanExecuteChanged();
         InstallCommand.RaiseCanExecuteChanged();
         ToggleCommand.RaiseCanExecuteChanged();
         RemoveCommand.RaiseCanExecuteChanged();
@@ -637,6 +661,95 @@ public class MainViewModel : ObservableObject
             DetailStatus = "Configurações resetadas para o padrão do mod (chaves removidas do ini).";
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
+    }
+
+    /// <summary>Checa TODOS os mods instalados de uma vez (HEAD em paralelo, comparando ETag)
+    /// e marca na grade quais têm build nova.</summary>
+    private async Task CheckUpdatesAsync()
+    {
+        ActionBusy = true;
+        try
+        {
+            var installed = Games.Where(g => g.IsInstalled && g.Mod?.DownloadUrl != null && g.State != null).ToList();
+            if (installed.Count == 0)
+            {
+                StatusText = "Nenhum mod instalado para verificar.";
+                UpdateCount = 0;
+                return;
+            }
+            StatusText = $"Verificando atualizações de {installed.Count} mod(s)...";
+
+            // limita a concorrência para não estourar conexões nem irritar os servidores
+            using var gate = new SemaphoreSlim(6);
+            var checks = installed.Select(async item =>
+            {
+                await gate.WaitAsync();
+                try { return (item, newer: await AddonService.IsUpdateAvailableAsync(item.Mod!, item.State!)); }
+                finally { gate.Release(); }
+            });
+            var results = await Task.WhenAll(checks);
+
+            int count = 0, unknown = 0;
+            foreach (var (item, newer) in results)
+            {
+                item.HasUpdate = newer == true;
+                if (newer == true) count++;
+                else if (newer is null) unknown++;
+            }
+            UpdateCount = count;
+            RefreshViewKeepSelection();
+            StatusText = count > 0
+                ? $"{count} mod(s) com atualização disponível." + (unknown > 0 ? $" ({unknown} não verificável)" : "")
+                : "Todos os mods instalados estão atualizados." + (unknown > 0 ? $" ({unknown} não verificável)" : "");
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"check updates: {ex}");
+            StatusText = $"Erro ao verificar atualizações: {ex.Message}";
+        }
+        finally { ActionBusy = false; }
+    }
+
+    /// <summary>Baixa a build nova de cada mod marcado, preservando as configurações
+    /// (só o arquivo do addon é trocado; o ReShade.ini fica intacto).</summary>
+    private async Task UpdateAllAsync()
+    {
+        var pending = Games.Where(g => g.HasUpdate && g.Mod?.DownloadUrl != null && g.TargetDir != null).ToList();
+        if (pending.Count == 0) return;
+        if (MessageBox.Show(
+                $"Atualizar {pending.Count} mod(s) para a versão mais nova?\n\n" +
+                "Suas configurações (nits, tone mapper...) são preservadas — só o arquivo do mod é trocado.",
+                "Atualizar mods", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return;
+
+        ActionBusy = true;
+        int ok = 0;
+        var failed = new List<string>();
+        try
+        {
+            foreach (var item in pending)
+            {
+                try
+                {
+                    StatusText = $"Atualizando {item.Name}...";
+                    await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod!, item.TargetDir!));
+                    item.RefreshState();
+                    item.HasUpdate = false;
+                    ok++;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"update {item.Name}: {ex.Message}");
+                    failed.Add($"{item.Name} ({ex.Message})");
+                }
+            }
+            UpdateCount = Games.Count(g => g.HasUpdate);
+            RefreshViewKeepSelection();
+            StatusText = failed.Count == 0
+                ? $"{ok} mod(s) atualizados."
+                : $"{ok} atualizados, {failed.Count} falharam: {string.Join("; ", failed.Take(3))}";
+        }
+        finally { ActionBusy = false; }
     }
 
     private void OpenFolder()

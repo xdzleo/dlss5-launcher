@@ -113,6 +113,14 @@ INFO | Loading built-in add-ons ...");
 Check(ReShadeLogService.Check(logDir).Result == LoadResult.NotLoaded,
     "ReShade rodou mas sem addon renodx → NotLoaded");
 
+// caso real (DOOM The Dark Ages do usuário): ReShade normal, sem suporte a add-ons —
+// o log tem conteúdo mas NUNCA procura addons, e o .addon64 fica inerte para sempre
+WriteLog(string.Join("\n", Enumerable.Repeat(
+    "18:23:10:043 [13616] | INFO  | Redirecting IDXGIFactory6::EnumAdapterByGpuPreference(...) ...", 12)));
+var noSup = ReShadeLogService.Check(logDir);
+Check(noSup.Result == LoadResult.NoAddonSupport,
+    $"ReShade SEM suporte a add-ons detectado (log sem 'Searching for add-ons') → {noSup.Result}");
+
 // log aberto pelo jogo (lock) deve ser legível mesmo assim
 using (var held = new FileStream(Path.Combine(logDir, "ReShade.log"), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
 {
@@ -211,6 +219,27 @@ if (match != null)
     // 10. unknown sections preserved
     Check(ini3.Get("ADDON", "DisabledAddons", ignoreCase: true) == "Generic Depth,Effect Runtime Sync",
         "template [ADDON] preservado após edições");
+
+    // 10b. verificação de atualização (contra o servidor REAL)
+    var freshState = AddonService.GetState(fakeDir, fakeExe);
+    var rec = InstalledModRegistry.Get(freshState.AddonPath!);
+    Check(rec?.ETag is { Length: > 0 }, $"ETag do build instalado foi registrado ({rec?.ETag})");
+    var upToDate = await AddonService.IsUpdateAvailableAsync(match, freshState);
+    Check(upToDate == false, $"acabou de instalar → sem atualização pendente (retorno={upToDate})");
+
+    // simula um build antigo instalado: ETag diferente do servidor
+    InstalledModRegistry.Set(freshState.AddonPath!, new InstalledModRecord
+    {
+        Slug = match.Slug, FileName = Path.GetFileName(freshState.AddonPath!), Url = match.DownloadUrl,
+        ETag = "\"build-antigo-fake\"", Size = 1, DownloadedUtc = DateTime.UtcNow.AddDays(-30),
+    });
+    var stale = await AddonService.IsUpdateAvailableAsync(match, freshState);
+    Check(stale == true, $"ETag diferente do servidor → atualização detectada (retorno={stale})");
+
+    // mod sem download direto (Nexus) não pode ser reportado como desatualizado
+    var nexusOnly = new CatalogEntry { GameName = "X", Kind = ModKind.Dedicated, NexusUrl = "https://nexusmods.com/x" };
+    Check(await AddonService.IsUpdateAvailableAsync(nexusOnly, freshState) is null,
+        "mod só no Nexus → verificação retorna 'desconhecido', não falso positivo");
 
     // 11. remove
     AddonService.Remove(state, alsoReShade: true);

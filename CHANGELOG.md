@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.2.0
+
+### ✨ Atualização de mods
+
+Os mods RenoDX são atualizados continuamente pelos autores. Agora o launcher acompanha isso:
+
+- **"Ver atualizações"** checa **todos** os mods instalados de uma vez (em paralelo) e marca na
+  grade quem tem build nova, com o selo ciano **ATUALIZAÇÃO**.
+- **"Atualizar todos (N)"** baixa as versões novas em lote. **Suas configurações são preservadas** —
+  só o arquivo do mod é trocado; o `ReShade.ini` fica intacto.
+- A detecção compara o **ETag** da build exata que você instalou com a do servidor (registrado em
+  `installed.json`), em vez de adivinhar por tamanho/data. Para mods instalados à mão, cai no
+  método antigo automaticamente.
+
+### 🔍 Diagnóstico melhor
+
+- Novo veredito **"ReShade sem suporte a add-ons"**: quando o jogo roda com um ReShade da build
+  normal (sem add-on), o mod fica inerte para sempre e nada indicava isso. Agora o launcher detecta
+  pelo log e explica que basta clicar em *Instalar / Atualizar mod* para trocar pela build certa.
+
 ## v1.1.0
 
 Auditoria adversarial multi-agente (49 achados verificados). Correções críticas de segurança
