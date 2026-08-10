@@ -11,6 +11,11 @@ public partial class ProfileWindow : Window
     {
         _vm = vm;
         InitializeComponent();
+        MouseLeftButtonDown += (_, e) =>
+        {
+            if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed) DragMove();
+        };
+        KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) Close(); };
         PeakSlider.Value = vm.Config.PeakNits;
         GameSlider.Value = vm.Config.GameNits;
         UiSlider.Value = vm.Config.UiNits;

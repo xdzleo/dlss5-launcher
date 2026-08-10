@@ -1,0 +1,36 @@
+<Window x:Class="RenoDXLauncher.DialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RenoDX Launcher" SizeToContent="Height" Width="520"
+        Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" ShowInTaskbar="False" WindowStyle="None"
+        AllowsTransparency="True">
+    <Border Background="{StaticResource PanelBrush}" CornerRadius="12" BorderThickness="1"
+            BorderBrush="{StaticResource BorderStrongBrush}" Margin="12">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="26" ShadowDepth="5" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+        <StackPanel Margin="24,22,24,20">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <Border x:Name="IconBadge" Width="36" Height="36" CornerRadius="10" Background="#2A2415"
+                        VerticalAlignment="Top">
+                    <Path x:Name="IconGlyph" Data="{StaticResource IconWarning}" Fill="#F0B429"
+                          Stretch="Uniform" Width="19" Height="19"/>
+                </Border>
+                <TextBlock x:Name="TitleText" Style="{StaticResource H1}" FontSize="17" TextWrapping="Wrap"
+                           Margin="13,0,0,0" VerticalAlignment="Center" MaxWidth="400"/>
+            </StackPanel>
+
+            <TextBlock x:Name="BodyText" TextWrapping="Wrap" FontSize="12.5" LineHeight="19"
+                       Foreground="{StaticResource TextDimBrush}"/>
+
+            <StackPanel x:Name="ButtonRow" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+                <Button x:Name="ThirdButton" MinWidth="96" Margin="0,0,8,0" Click="OnThird"
+                        Visibility="Collapsed"/>
+                <Button x:Name="SecondButton" MinWidth="96" Margin="0,0,8,0" Click="OnSecond"/>
+                <Button x:Name="PrimaryButton" MinWidth="112" Style="{StaticResource AccentButton}"
+                        Click="OnPrimary"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

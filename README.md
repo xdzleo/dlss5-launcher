@@ -83,6 +83,27 @@ cd tests\SmokeTest
 dotnet run
 ```
 
+## Linha de comando
+
+Tudo que a interface faz também roda pelo terminal — útil para automatizar, diagnosticar e
+reportar bugs sem abrir a janela:
+
+```bash
+RenoDXLauncher.exe list                       # jogos detectados + estado do mod
+RenoDXLauncher.exe check                      # quais mods têm versão nova
+RenoDXLauncher.exe verify                     # o mod carregou mesmo? (lê o ReShade.log)
+RenoDXLauncher.exe settings "dying light"     # configurações atuais do mod
+RenoDXLauncher.exe set "dying light" ToneMapPeakNits=1300 --dry-run
+RenoDXLauncher.exe profile --peak 1300        # perfil de nits do monitor
+RenoDXLauncher.exe install "elden ring"       # instala ReShade + addon
+RenoDXLauncher.exe enable/disable "sekiro"    # liga/desliga o mod
+RenoDXLauncher.exe doctor                     # diagnóstico completo
+```
+
+`list` e `check` aceitam `--json`. `set` sempre mostra o arquivo-alvo e o antes→depois;
+com `--dry-run` não grava nada. Instalar por CLI **aborta** se detectar anti-cheat (a confirmação
+consciente de risco só existe na interface).
+
 ## Diagnóstico: "meu jogo não aparece"
 
 `tests\ScanProbe` roda cada detector isoladamente e mostra quantos jogos cada um achou (e em

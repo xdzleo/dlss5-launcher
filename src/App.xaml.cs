@@ -5,15 +5,30 @@ namespace RenoDXLauncher;
 
 public partial class App : Application
 {
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // headless mode: any argument means "run a command and exit" — no window.
+        if (e.Args.Length > 0)
+        {
+            // OnStartup is async void: without this, WPF sees zero windows at the first await
+            // and shuts the app down mid-command (OnLastWindowClose is the default).
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            var code = await Cli.RunAsync(e.Args);
+            Shutdown(code);
+            return;
+        }
+
         DispatcherUnhandledException += (_, args) =>
         {
             Log.Warn($"unhandled: {args.Exception}");
-            MessageBox.Show(args.Exception.Message, "RenoDX Launcher — erro inesperado",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogWindow.Show(Current?.MainWindow, "Erro inesperado", args.Exception.Message,
+                DialogKind.Danger);
             args.Handled = true;
         };
+
+        MainWindow = new MainWindow();
+        MainWindow.Show();
     }
 }

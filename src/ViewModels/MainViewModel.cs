@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Data;
+using RenoDXLauncher;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
@@ -203,7 +204,7 @@ public class MainViewModel : ObservableObject
         }
     }
     public bool HasUpdates => _updateCount > 0;
-    public string UpdateAllText => $"⬆ Atualizar todos ({_updateCount})";
+    public string UpdateAllText => $"Atualizar todos ({_updateCount})";
 
     private void RaiseCommands()
     {
@@ -352,7 +353,7 @@ public class MainViewModel : ObservableObject
             var ac = await Task.Run(() => AntiCheatScanner.Detect(installDir, targetDir));
             if (token != _detailToken) return;
             if (ac != null && Advice.All(a => a.Kind != AdviceKind.AntiCheat))
-                Advice.Insert(0, new Advice("⛔",
+                Advice.Insert(0, new Advice("",
                     $"{ac} detectado neste jogo — usar o mod ONLINE pode BANIR sua conta. Jogue offline.",
                     AdviceKind.AntiCheat));
         }
@@ -408,7 +409,7 @@ public class MainViewModel : ObservableObject
             var newer = await AddonService.IsUpdateAvailableAsync(item.Mod, item.State);
             if (token != _detailToken) return;
             if (newer == true)
-                LoadVerdict += "\n\n🔄 Há uma versão MAIS NOVA deste mod disponível — clique em \"Instalar / Atualizar mod\".";
+                LoadVerdict += "\n\nHá uma versão MAIS NOVA deste mod disponível — clique em \"Instalar / Atualizar mod\".";
         }
     }
 
@@ -490,15 +491,15 @@ public class MainViewModel : ObservableObject
             var ac = await Task.Run(() => AntiCheatScanner.Detect(item.Game.InstallDir, item.TargetDir));
             if (ac != null)
             {
-                var answer = MessageBox.Show(
-                    $"⚠️ ATENÇÃO: este jogo usa {ac}.\n\n" +
+                var confirmed = DialogWindow.Confirm(
+                    Application.Current?.MainWindow,
+                    $"{ac} detectado — risco de banimento",
+                    $"Este jogo usa {ac}.\n\n" +
                     "O ReShade com suporte a add-ons NÃO é assinado. Em jogos ONLINE protegidos por " +
                     "anti-cheat, isso pode resultar em BANIMENTO PERMANENTE da sua conta.\n\n" +
-                    "Só continue se você for jogar OFFLINE (ou se souber exatamente o que está fazendo).\n\n" +
-                    "Instalar mesmo assim?",
-                    $"{ac} detectado — risco de banimento", MessageBoxButton.YesNo, MessageBoxImage.Warning,
-                    MessageBoxResult.No);
-                if (answer != MessageBoxResult.Yes)
+                    "Só continue se você for jogar OFFLINE (ou se souber exatamente o que está fazendo).",
+                    "Instalar mesmo assim", DialogKind.Danger);
+                if (!confirmed)
                 {
                     DetailStatus = $"Instalação cancelada ({ac} detectado).";
                     return;
@@ -591,9 +592,13 @@ public class MainViewModel : ObservableObject
     {
         var item = _detailItem;
         if (item?.State?.AddonPath is null) return;
-        var answer = MessageBox.Show(
-            $"Remover o mod RenoDX de \"{item.Name}\"?\n\nSim = remove o addon e o ReShade (se não houver outros addons).\nNão = remove só o addon RenoDX.",
-            "Remover mod", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        var answer = DialogWindow.Choose(
+            Application.Current?.MainWindow,
+            "Remover mod",
+            $"Remover o mod RenoDX de \"{item.Name}\"?\n\n" +
+            "Remover tudo: apaga o addon e também o ReShade (se nenhum outro addon usar).\n" +
+            "Só o mod: mantém o ReShade instalado.",
+            "Remover tudo", "Só o mod");
         if (answer == MessageBoxResult.Cancel) return;
         try
         {
@@ -716,10 +721,12 @@ public class MainViewModel : ObservableObject
     {
         var pending = Games.Where(g => g.HasUpdate && g.Mod?.DownloadUrl != null && g.TargetDir != null).ToList();
         if (pending.Count == 0) return;
-        if (MessageBox.Show(
+        if (!DialogWindow.Confirm(
+                Application.Current?.MainWindow,
+                "Atualizar mods",
                 $"Atualizar {pending.Count} mod(s) para a versão mais nova?\n\n" +
                 "Suas configurações (nits, tone mapper...) são preservadas — só o arquivo do mod é trocado.",
-                "Atualizar mods", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+                "Atualizar"))
             return;
 
         ActionBusy = true;

@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.3.0
+
+### Visual refeito
+
+- **Ícones vetoriais em tudo.** Os emojis viravam quadrados/glifos errados dependendo da fonte
+  do Windows. Agora são vetores: as marcas oficiais das lojas (Steam, Epic, GOG, Xbox, EA,
+  Battle.net, Rockstar, Ubisoft) vêm do [simple-icons](https://simple-icons.org) (CC0) e os
+  glifos de interface são paths estilo Material Symbols.
+- **Tipografia e espaçamento** revistos: hierarquia de títulos, rótulos de seção, entrelinha
+  legível, cantos e cores consistentes.
+- **Controles próprios**: slider com trilho/alça desenhados, combo com sombra, campo de busca
+  com ícone e placeholder, barra de rolagem fina, tooltip no tema.
+- **Diálogos no tema do app** (antes eram os do Windows, brancos e destoando), com ícone e cor
+  por tipo — aviso, perigo, pergunta.
+- Selo de estado do jogo agora tem ponto colorido e contraste correto em cada situação.
+
+### Linha de comando
+
+O launcher agora roda **headless**: `list`, `check`, `verify`, `settings`, `set`, `profile`,
+`install`, `enable`, `disable` e `doctor`. Serve para automatizar, diagnosticar e reportar bugs
+sem abrir a janela. `set` mostra sempre o arquivo-alvo e o antes→depois, e aceita `--dry-run`;
+instalar por CLI aborta se houver anti-cheat.
+
 ## v1.2.0
 
 ### ✨ Atualização de mods

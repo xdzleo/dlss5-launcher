@@ -7,6 +7,30 @@ using RenoDXLauncher.Services;
 
 namespace RenoDXLauncher;
 
+/// <summary>GameStore → the store's official brand mark (vector geometry from Icons.xaml).</summary>
+public class StoreIconConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var key = value is RenoDXLauncher.Models.GameStore s ? s switch
+        {
+            RenoDXLauncher.Models.GameStore.Steam => "IconSteam",
+            RenoDXLauncher.Models.GameStore.Epic => "IconEpic",
+            RenoDXLauncher.Models.GameStore.Gog => "IconGog",
+            RenoDXLauncher.Models.GameStore.Xbox => "IconXbox",
+            RenoDXLauncher.Models.GameStore.EA => "IconEA",
+            RenoDXLauncher.Models.GameStore.BattleNet => "IconBattleNet",
+            RenoDXLauncher.Models.GameStore.Rockstar => "IconRockstar",
+            RenoDXLauncher.Models.GameStore.Ubisoft => "IconUbisoft",
+            _ => "IconFolder",
+        } : "IconFolder";
+        return System.Windows.Application.Current?.TryFindResource(key);
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>int count → Visible when &gt; 0, else Collapsed.</summary>
 public class CountToVisConverter : IValueConverter
 {

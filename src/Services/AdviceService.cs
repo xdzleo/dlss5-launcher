@@ -101,20 +101,20 @@ public static partial class AdviceService
         if (hdr == InGameHdr.Unknown && isNativeHdr) hdr = InGameHdr.Enable;
 
         if (hdr == InGameHdr.Disable)
-            result.Add(new Advice("🎮", "HDR do jogo: DESLIGAR (o mod faz o HDR; ligar os dois estoura a imagem)", AdviceKind.HdrOff));
+            result.Add(new Advice("", "HDR do jogo: DESLIGAR (o mod faz o HDR; ligar os dois estoura a imagem)", AdviceKind.HdrOff));
         else if (hdr == InGameHdr.Enable)
-            result.Add(new Advice("🎮", "HDR do jogo: LIGAR (o mod corrige o HDR nativo — precisa dele ligado)", AdviceKind.HdrOn));
+            result.Add(new Advice("", "HDR do jogo: LIGAR (o mod corrige o HDR nativo — precisa dele ligado)", AdviceKind.HdrOn));
 
         if (DeprecatedRegex().IsMatch(text))
-            result.Add(new Advice("⛔", "Mod descontinuado/abandonado — pode não funcionar com o jogo/ReShade atuais", AdviceKind.Deprecated));
+            result.Add(new Advice("", "Mod descontinuado/abandonado — pode não funcionar com o jogo/ReShade atuais", AdviceKind.Deprecated));
 
         if (AntiCheatRegex().IsMatch(text))
-            result.Add(new Advice("⚠️", "Anti-cheat: risco em online — jogue offline ou desative o anti-cheat", AdviceKind.AntiCheat));
+            result.Add(new Advice("", "Anti-cheat: risco em online — jogue offline ou desative o anti-cheat", AdviceKind.AntiCheat));
 
         // surface a required renderer only when the note says it "must"/"requires"/"only" run in one
         var rm = RendererRegex().Match(text);
         if (rm.Success && Regex.IsMatch(text, @"\b(must|requires?|only|needs? to)\b", RegexOptions.IgnoreCase))
-            result.Add(new Advice("🔧", $"Rode o jogo em {rm.Value.ToUpperInvariant().Replace(" ", "")} (exigido pelo mod)", AdviceKind.Renderer));
+            result.Add(new Advice("", $"Rode o jogo em {rm.Value.ToUpperInvariant().Replace(" ", "")} (exigido pelo mod)", AdviceKind.Renderer));
 
         return result;
     }
