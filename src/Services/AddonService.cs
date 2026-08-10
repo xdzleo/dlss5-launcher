@@ -41,6 +41,41 @@ public class AddonService
         return state;
     }
 
+    /// <summary>
+    /// Is a newer build of this addon available upstream? RenoDX mods update continuously and
+    /// the snapshot URLs are stable, so we compare the installed file's size + last-modified
+    /// against the server's HEAD response (no full download, no hashing the whole catalog).
+    /// Returns null when it cannot be determined (offline, no direct URL, etc.).
+    /// </summary>
+    public static async Task<bool?> IsUpdateAvailableAsync(CatalogEntry entry, ModState state)
+    {
+        try
+        {
+            if (entry.DownloadUrl is null || state.AddonPath is null || !File.Exists(state.AddonPath))
+                return null;
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
+            using var req = new HttpRequestMessage(HttpMethod.Head, entry.DownloadUrl);
+            using var resp = await http.SendAsync(req);
+            if (!resp.IsSuccessStatusCode) return null;
+
+            var local = new FileInfo(state.AddonPath);
+            var remoteLen = resp.Content.Headers.ContentLength;
+            if (remoteLen is > 0 && remoteLen != local.Length) return true;
+
+            var remoteMod = resp.Content.Headers.LastModified?.UtcDateTime;
+            // allow a minute of slack: our copy's mtime is the download time, not the build time
+            if (remoteMod is { } rm && rm > local.LastWriteTimeUtc.AddMinutes(1)) return true;
+
+            return remoteLen is > 0 || remoteMod is not null ? false : null;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"update check {entry.Slug}: {ex.Message}");
+            return null;
+        }
+    }
+
     public static async Task<string> DownloadAddonAsync(CatalogEntry entry, string targetDir,
         IProgress<string>? progress = null)
     {
@@ -109,6 +144,22 @@ public class AddonService
         return path;
     }
 
+    /// <summary>Undo a ReShade deploy after a failed install: removes the proxy DLL we just
+    /// copied (only if it really is ReShade and no addon is left behind), so a half-finished
+    /// install never leaves an unrequested DLL injected into the user's game.</summary>
+    public static void RollbackReShade(string targetDir, string dllName)
+    {
+        var dllPath = Path.Combine(targetDir, dllName);
+        if (!File.Exists(dllPath)) return;
+        if (Directory.GetFiles(targetDir, "*.addon*").Length > 0) return; // outro addon usa o ReShade
+        var pe = PeUtils.Inspect(dllPath, readImports: false);
+        if (pe?.ProductName?.Contains("ReShade", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            File.Delete(dllPath);
+            Log.Info($"rollback: {dllPath} removido após falha de instalação");
+        }
+    }
+
     public static void Remove(ModState state, bool alsoReShade)
     {
         if (IsGameRunning(state.TargetDir))
@@ -146,14 +197,26 @@ public class AddonService
 
         foreach (var p in Process.GetProcesses())
         {
+            bool pathKnown = false;
             try
             {
-                if (exeNames.Contains(p.ProcessName)) return true;
                 var path = p.MainModule?.FileName;
-                if (path != null && path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                    return true;
+                if (path != null)
+                {
+                    pathKnown = true;
+                    // caminho real disponível: veredito definitivo, sem falso positivo por nome
+                    if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return true;
+                }
             }
-            catch { /* access denied (elevated/system) — covered by the name check above */ }
+            catch { /* elevado/sistema: sem caminho, cai no fallback por nome */ }
+
+            try
+            {
+                // só quando o caminho é inacessível o nome vale — um homônimo de outra pasta
+                // pode dar falso positivo, o que é preferível a escrever no ini com o jogo aberto
+                if (!pathKnown && exeNames.Contains(p.ProcessName)) return true;
+            }
+            catch { }
             finally { p.Dispose(); }
         }
         return false;

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using RenoDXLauncher.Models;
 
 namespace RenoDXLauncher.Services;
@@ -121,17 +122,23 @@ public static class ExeLocator
                     results.AddRange(SafeGetExes(dir).Where(e => !IsStub(e)));
             }
 
-            // 2. store metadata hint
+            // 2. store metadata hint. A hint whose name is a launcher stub (Xbox's hardcoded
+            //    gamelaunchhelper.exe, Epic's *Launcher.exe...) must NEVER lead: the render exe
+            //    usually lives in a subdir (...\Content\<Proj>\Binaries\WinGDK\Game.exe) and the
+            //    deploy dir would end up outside the game process's DLL search path — ReShade
+            //    would be installed where nothing loads it.
+            string? stubHint = null;
             if (game.ExeHint != null)
             {
                 var hint = Path.Combine(game.InstallDir, game.ExeHint);
-                if (File.Exists(hint)) results.Add(hint);
-                else
-                {
-                    var found = SafeEnumerate(game.InstallDir)
+                if (!File.Exists(hint))
+                    hint = SafeEnumerate(game.InstallDir)
                         .FirstOrDefault(f => Path.GetFileName(f).Equals(
-                            Path.GetFileName(game.ExeHint), StringComparison.OrdinalIgnoreCase));
-                    if (found != null) results.Add(found);
+                            Path.GetFileName(game.ExeHint), StringComparison.OrdinalIgnoreCase)) ?? "";
+                if (File.Exists(hint))
+                {
+                    if (IsStub(hint)) stubHint = hint;  // stays selectable, but last
+                    else results.Add(hint);
                 }
             }
 
@@ -146,6 +153,9 @@ public static class ExeLocator
             results.AddRange(all
                 .Where(f => !IsStub(f))
                 .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } }));
+
+            // 5. the stub hint last — still reachable in the combo if the heuristic was wrong
+            if (stubHint != null) results.Add(stubHint);
         }
         catch (Exception ex) { Log.Warn($"ExeLocator {game.Name}: {ex.Message}"); }
 
@@ -156,10 +166,28 @@ public static class ExeLocator
             .ToList();
     }
 
+    /// <summary>Stub detection on WORD boundaries: "eac" must not condemn "Peaceful.exe"
+    /// and "crash" must not condemn "CrashBandicoot.exe".</summary>
     private static bool IsStub(string path)
     {
         var name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
-        return StubNames.Any(name.Contains);
+        // split camelCase/underscore/dash/space/digits into words
+        var words = Regex.Split(name, @"(?<!^)(?=[A-Z])|[^a-z0-9]+|(?<=[a-z])(?=[0-9])",
+            RegexOptions.IgnoreCase).Where(w => w.Length > 0).ToArray();
+        foreach (var stub in StubNames)
+        {
+            // whole-word match, or the whole name is exactly the stub
+            if (words.Contains(stub, StringComparer.OrdinalIgnoreCase)) return true;
+            if (name.Equals(stub, StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        // glued compound stubs that survive the word split — these are unambiguous launcher
+        // shims, never a render exe ("gamelaunchhelper" is Xbox's hardcoded stub)
+        string[] glued =
+        {
+            "gamelaunchhelper", "easyanticheat", "vc_redist", "vcredist", "dxsetup",
+            "unins000", "crashreporter", "crashhandler", "crashpad", "errorreporter",
+        };
+        return glued.Any(g => name.Contains(g, StringComparison.OrdinalIgnoreCase));
     }
 
     private static IEnumerable<string> SafeGetExes(string dir)

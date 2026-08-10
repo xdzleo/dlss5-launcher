@@ -32,17 +32,17 @@ public class MainViewModel : ObservableObject
     {
         GamesView = CollectionViewSource.GetDefaultView(Games);
         GamesView.Filter = FilterGame;
-        RefreshCommand = new AsyncRelayCommand(() => LoadAsync(forceRefresh: true));
-        InstallCommand = new AsyncRelayCommand(InstallAsync, () => Selected?.Mod?.DownloadUrl != null);
-        ToggleCommand = new AsyncRelayCommand(ToggleAsync, () => Selected?.IsInstalled == true);
-        RemoveCommand = new AsyncRelayCommand(RemoveAsync, () => Selected?.IsInstalled == true);
-        SaveSettingsCommand = new AsyncRelayCommand(SaveSettingsAsync, () => Settings.Count > 0);
-        ApplyProfileCommand = new AsyncRelayCommand(ApplyProfileAsync, () => Settings.Count > 0);
-        ResetSettingsCommand = new AsyncRelayCommand(ResetSettingsAsync, () => Settings.Count > 0);
+        RefreshCommand = new AsyncRelayCommand(() => LoadAsync(forceRefresh: true), () => !Busy);
+        InstallCommand = new AsyncRelayCommand(InstallAsync, () => !Busy && Selected?.Mod?.DownloadUrl != null);
+        ToggleCommand = new AsyncRelayCommand(ToggleAsync, () => !Busy && Selected?.IsInstalled == true);
+        RemoveCommand = new AsyncRelayCommand(RemoveAsync, () => !Busy && Selected?.IsInstalled == true);
+        SaveSettingsCommand = new AsyncRelayCommand(SaveSettingsAsync, () => !Busy && Settings.Count > 0);
+        ApplyProfileCommand = new AsyncRelayCommand(ApplyProfileAsync, () => !Busy && Settings.Count > 0);
+        ResetSettingsCommand = new AsyncRelayCommand(ResetSettingsAsync, () => !Busy && Settings.Count > 0);
         OpenFolderCommand = new RelayCommand(OpenFolder, () => Selected != null);
         OpenNexusCommand = new RelayCommand(OpenNexus,
             () => Selected?.Mod?.NexusUrl != null || Selected?.Mod?.InfoUrl != null);
-        AddManualGameCommand = new AsyncRelayCommand(AddManualGameAsync);
+        AddManualGameCommand = new AsyncRelayCommand(AddManualGameAsync, () => !Busy);
     }
 
     // ---------- top-level state ----------
@@ -50,8 +50,38 @@ public class MainViewModel : ObservableObject
     private string _statusText = "Pronto.";
     public string StatusText { get => _statusText; set => Set(ref _statusText, value); }
 
-    private bool _busy;
-    public bool Busy { get => _busy; set => Set(ref _busy, value); }
+    // Flags SEPARADAS: o finally de uma ação (Install) não pode zerar o single-flight do
+    // LoadAsync — isso deixava duas cargas concorrentes cancelarem o enriquecimento da grade
+    // (badges e capas sumiam até reiniciar o app).
+    private bool _loading;
+    private bool _actionBusy;
+
+    private bool Loading
+    {
+        get => _loading;
+        set
+        {
+            if (_loading == value) return;
+            _loading = value;
+            OnPropertyChanged(nameof(Busy));
+            RaiseCommands();
+        }
+    }
+
+    private bool ActionBusy
+    {
+        get => _actionBusy;
+        set
+        {
+            if (_actionBusy == value) return;
+            _actionBusy = value;
+            OnPropertyChanged(nameof(Busy));
+            RaiseCommands();
+        }
+    }
+
+    /// <summary>Qualquer operação longa em andamento (liga a ProgressBar e trava os comandos).</summary>
+    public bool Busy => _loading || _actionBusy;
 
     private string _search = "";
     public string Search
@@ -131,6 +161,12 @@ public class MainViewModel : ObservableObject
     public ObservableCollection<Advice> Advice { get; } = new();
     public ObservableCollection<string> Notes { get; } = new();
 
+    /// <summary>Verdict from ReShade.log: did the mod actually load last time the game ran?</summary>
+    private string _loadVerdict = "";
+    public string LoadVerdict { get => _loadVerdict; set => Set(ref _loadVerdict, value); }
+    private bool _hasLoadVerdict;
+    public bool HasLoadVerdict { get => _hasLoadVerdict; set => Set(ref _hasLoadVerdict, value); }
+
     private string _detailStatus = "";
     public string DetailStatus { get => _detailStatus; set => Set(ref _detailStatus, value); }
 
@@ -149,6 +185,8 @@ public class MainViewModel : ObservableObject
 
     private void RaiseCommands()
     {
+        RefreshCommand.RaiseCanExecuteChanged();
+        AddManualGameCommand.RaiseCanExecuteChanged();
         InstallCommand.RaiseCanExecuteChanged();
         ToggleCommand.RaiseCanExecuteChanged();
         RemoveCommand.RaiseCanExecuteChanged();
@@ -163,8 +201,8 @@ public class MainViewModel : ObservableObject
 
     public async Task LoadAsync(bool forceRefresh = false)
     {
-        if (Busy) return; // single flight: Loaded event, Refresh and AddManualGame can overlap
-        Busy = true;
+        if (_loading) return; // single flight: Loaded event, Refresh and AddManualGame can overlap
+        Loading = true;
         _backgroundCts?.Cancel();
         var cts = _backgroundCts = new CancellationTokenSource();
         try
@@ -204,14 +242,15 @@ public class MainViewModel : ObservableObject
             var withMod = Games.Count(g => g.HasMod);
             StatusText = $"{Games.Count} jogos encontrados — {withMod} com mod RenoDX disponível.";
 
-            _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), cts.Token), cts.Token);
+            var ct = cts.Token;
+            _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), ct));
         }
         catch (Exception ex)
         {
             Log.Warn($"load: {ex}");
             StatusText = $"Erro ao carregar: {ex.Message}";
         }
-        finally { Busy = false; }
+        finally { Loading = false; }
     }
 
     /// <summary>Covers + existing-install detection + pinned-exe restore. All disk/network I/O
@@ -282,6 +321,16 @@ public class MainViewModel : ObservableObject
             var noteText = string.Join(" . ", new[] { item.Mod.Note, rhiNote }.Where(s => s != null));
             foreach (var a in AdviceService.Build(noteText, nativeHdr, item.Name))
                 Advice.Add(a);
+
+            // anti-cheat detectado no disco: aviso sempre visível, mesmo sem nota na wiki
+            var installDir = item.Game.InstallDir;
+            var targetDir = item.TargetDir;
+            var ac = await Task.Run(() => AntiCheatScanner.Detect(installDir, targetDir));
+            if (token != _detailToken) return;
+            if (ac != null && Advice.All(a => a.Kind != AdviceKind.AntiCheat))
+                Advice.Insert(0, new Advice("⛔",
+                    $"{ac} detectado neste jogo — usar o mod ONLINE pode BANIR sua conta. Jogue offline.",
+                    AdviceKind.AntiCheat));
         }
 
         // full free-text notes below the cards
@@ -311,7 +360,44 @@ public class MainViewModel : ObservableObject
         if (exe != null && item.ChosenExe is null) item.ChosenExe = exe;
 
         await LoadSettingsSafeAsync(token);
+        await CheckLoadVerdictAsync(token);
         RaiseCommands();
+    }
+
+    /// <summary>Ask ReShade.log whether the mod really loaded — the only ground truth
+    /// available from outside the game.</summary>
+    private async Task CheckLoadVerdictAsync(int token)
+    {
+        LoadVerdict = "";
+        HasLoadVerdict = false;
+        var item = _detailItem;
+        if (item?.State is null || item.State.AddonPath is null) return;
+        var dir = item.State.TargetDir;
+        var report = await Task.Run(() => ReShadeLogService.Check(dir));
+        if (token != _detailToken) return;
+        LoadVerdict = report.Message;
+        HasLoadVerdict = true;
+
+        // mods RenoDX atualizam direto — avisa quando há build nova no servidor
+        if (item.Mod != null)
+        {
+            var newer = await AddonService.IsUpdateAvailableAsync(item.Mod, item.State);
+            if (token != _detailToken) return;
+            if (newer == true)
+                LoadVerdict += "\n\n🔄 Há uma versão MAIS NOVA deste mod disponível — clique em \"Instalar / Atualizar mod\".";
+        }
+    }
+
+    /// <summary>Por que o painel de configurações está vazio (null = há settings).</summary>
+    private string _noSettingsReason = "";
+    public string NoSettingsReason { get => _noSettingsReason; set => Set(ref _noSettingsReason, value); }
+    private bool _hasNoSettingsReason;
+    public bool HasNoSettingsReason { get => _hasNoSettingsReason; set => Set(ref _hasNoSettingsReason, value); }
+
+    private void SetNoSettings(string reason)
+    {
+        NoSettingsReason = reason;
+        HasNoSettingsReason = reason.Length > 0;
     }
 
     private async Task LoadSettingsSafeAsync(int token)
@@ -319,10 +405,24 @@ public class MainViewModel : ObservableObject
         try
         {
             Settings.Clear();
+            SetNoSettings("");
             var item = _detailItem;
-            if (item?.Mod?.Slug is null) return;
+            if (item?.Mod is null) return;
+            if (item.Mod.Slug is null)
+            {
+                SetNoSettings("Este mod é distribuído só pelo Nexus/Discord — o launcher não conhece as " +
+                    "configurações dele. Ajuste pelo overlay do ReShade no jogo (tecla Home).");
+                return;
+            }
             var defs = _manifest?.GetSettings(item.Mod.Slug);
-            if (defs is null || item.State is null) return;
+            if (defs is null)
+            {
+                SetNoSettings($"Ainda não tenho a lista de configurações deste mod ({item.Mod.Slug}) — " +
+                    "ele é mais novo que o catálogo embutido. Instalar funciona normalmente; ajuste " +
+                    "pelo overlay do ReShade no jogo (tecla Home).");
+                return;
+            }
+            if (item.State is null) return;
             var iniPath = item.State.IniPath;
             var values = await Task.Run(() => SettingsService.Read(iniPath, defs));
             if (token != _detailToken) return;
@@ -347,7 +447,7 @@ public class MainViewModel : ObservableObject
             DetailStatus = "Escolha o executável do jogo primeiro (lista acima).";
             return;
         }
-        Busy = true;
+        ActionBusy = true;
         var progress = new Progress<string>(s => DetailStatus = s);
         try
         {
@@ -361,6 +461,26 @@ public class MainViewModel : ObservableObject
                 return;
             }
 
+            // anti-cheat: o único dano IRREVERSÍVEL que o app pode causar (ban de conta).
+            // Detecta pelos arquivos no disco — não depende da nota da wiki citar o assunto.
+            var ac = await Task.Run(() => AntiCheatScanner.Detect(item.Game.InstallDir, item.TargetDir));
+            if (ac != null)
+            {
+                var answer = MessageBox.Show(
+                    $"⚠️ ATENÇÃO: este jogo usa {ac}.\n\n" +
+                    "O ReShade com suporte a add-ons NÃO é assinado. Em jogos ONLINE protegidos por " +
+                    "anti-cheat, isso pode resultar em BANIMENTO PERMANENTE da sua conta.\n\n" +
+                    "Só continue se você for jogar OFFLINE (ou se souber exatamente o que está fazendo).\n\n" +
+                    "Instalar mesmo assim?",
+                    $"{ac} detectado — risco de banimento", MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                    MessageBoxResult.No);
+                if (answer != MessageBoxResult.Yes)
+                {
+                    DetailStatus = $"Instalação cancelada ({ac} detectado).";
+                    return;
+                }
+            }
+
             var api = _rhi.GraphicsApi(item.Name);
             var dllOverride = _rhi.DllNameOverride(item.Name);
             var deploy = await Task.Run(() => _reshade.DeployAsync(item.TargetDir, item.ChosenExe, api, dllOverride, progress));
@@ -369,7 +489,26 @@ public class MainViewModel : ObservableObject
                 DetailStatus = deploy.Message;
                 return;
             }
-            await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod, item.TargetDir!, progress));
+            try
+            {
+                await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod, item.TargetDir!, progress));
+            }
+            catch
+            {
+                // o addon falhou DEPOIS do ReShade entrar: sem rollback o jogo fica com um
+                // dxgi.dll injetado que o usuário não pediu e não sabe remover
+                if (deploy.DllName != null)
+                {
+                    try
+                    {
+                        AddonService.RollbackReShade(item.TargetDir!, deploy.DllName);
+                        DetailStatus = "Falha ao baixar o mod — o ReShade que eu tinha acabado de instalar foi removido " +
+                            "(o jogo ficou como estava). Tente de novo.";
+                    }
+                    catch (Exception rex) { Log.Warn($"rollback: {rex.Message}"); }
+                }
+                throw;
+            }
             item.RefreshState();
 
             var profileMsg = "";
@@ -398,7 +537,7 @@ public class MainViewModel : ObservableObject
             Log.Warn($"install {item.Name}: {ex}");
             DetailStatus = $"Erro: {ex.Message}";
         }
-        finally { Busy = false; RaiseCommands(); }
+        finally { ActionBusy = false; RaiseCommands(); }
     }
 
     private async Task ToggleAsync()
@@ -413,7 +552,14 @@ public class MainViewModel : ObservableObject
             DetailStatus = enable ? "Mod ATIVADO." : "Mod DESATIVADO (arquivo renomeado para .disabled).";
             RefreshViewKeepSelection();
         }
-        catch (Exception ex) { DetailStatus = ex.Message; }
+        catch (Exception ex)
+        {
+            // o disco pode ter mudado por fora (addon apagado à mão): re-sincroniza o estado
+            // em vez de deixar o badge mentindo "ATIVADO"
+            DetailStatus = ex.Message;
+            item.RefreshState();
+            RefreshViewKeepSelection();
+        }
         RaiseCommands();
     }
 
@@ -433,7 +579,12 @@ public class MainViewModel : ObservableObject
             DetailStatus = "Mod removido. As configurações ficaram salvas no ReShade.ini.";
             RefreshViewKeepSelection();
         }
-        catch (Exception ex) { DetailStatus = ex.Message; }
+        catch (Exception ex)
+        {
+            DetailStatus = ex.Message;
+            item.RefreshState();
+            RefreshViewKeepSelection();
+        }
         RaiseCommands();
     }
 

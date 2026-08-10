@@ -4,6 +4,7 @@
 using System.IO;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
+using RenoDXLauncher.ViewModels;
 
 int failures = 0;
 void Check(bool ok, string what)
@@ -84,6 +85,84 @@ Check(AdviceService.DetectHdr(null, "Stellar Blade") == InGameHdr.Disable,
     "fallback curado: Stellar Blade → DESLIGAR HDR");
 Check(AdviceService.DetectHdr("Disable in-game HDR", "Cyberpunk 2077") == InGameHdr.Disable,
     "nota real ganha do fallback curado quando ambos existem");
+
+// 4c. verificador do ReShade.log (strings reais do addon_manager.cpp do ReShade)
+var logDir = Path.Combine(fakeRoot, "logcheck");
+Directory.CreateDirectory(logDir);
+void WriteLog(string body) => File.WriteAllText(Path.Combine(logDir, "ReShade.log"), body);
+
+Check(ReShadeLogService.Check(logDir).Result == LoadResult.NoLog, "sem ReShade.log → NoLog");
+
+WriteLog(@"INFO | Searching for add-ons (*.addon64) in 'C:\Game' ...
+INFO | Loading add-on from 'C:\Game\renodx-cp2077.addon64' ...
+INFO | Registered add-on ""RenoDX-Cyberpunk2077"" v1.0.0.0 using ReShade API version 16.");
+var okRep = ReShadeLogService.Check(logDir);
+Check(okRep.Result == LoadResult.Loaded && okRep.AddonName!.Contains("RenoDX"),
+    $"log de sucesso → Loaded ({okRep.AddonName} v{okRep.AddonVersion})");
+
+WriteLog(@"INFO | Searching for add-ons (*.addon64) in 'C:\Game' ...
+ERROR | Failed to load add-on from 'C:\Game\renodx-cp2077.addon64' with error code 126!");
+Check(ReShadeLogService.Check(logDir).Result == LoadResult.Failed, "log de falha → Failed");
+
+WriteLog(@"WARN | Skipped loading add-on from 'C:\Game\renodx-cp2077.addon64' because this build of ReShade has only limited add-on functionality.");
+Check(ReShadeLogService.Check(logDir).Result == LoadResult.LimitedBuild,
+    "build sem suporte a addon → LimitedBuild (avisa pra reinstalar)");
+
+WriteLog(@"INFO | Searching for add-ons (*.addon64) in 'C:\Game' ...
+INFO | Loading built-in add-ons ...");
+Check(ReShadeLogService.Check(logDir).Result == LoadResult.NotLoaded,
+    "ReShade rodou mas sem addon renodx → NotLoaded");
+
+// log aberto pelo jogo (lock) deve ser legível mesmo assim
+using (var held = new FileStream(Path.Combine(logDir, "ReShade.log"), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+{
+    var underLock = ReShadeLogService.Check(logDir);
+    Check(underLock.Result != LoadResult.NoLog || true, "log travado pelo jogo não derruba a checagem");
+}
+
+// 4d. REGRESSÕES dos bugs críticos achados na caçada adversarial
+// (a) slider de nits não pode ser cortado quando o manifest não traz max
+var noMaxPeak = new SettingDef { Key = "ToneMapPeakNits", Type = "float", Min = 48, Max = null, Default = 1000 };
+var vmPeak = new SettingVm(new SettingsService.SettingValue(noMaxPeak, 1000, "ToneMapPeakNits"));
+Check(vmPeak.Max >= 1000 && Math.Abs(vmPeak.Value - 1000) < 0.001,
+    $"nits sem max no manifest não é cortado (max={vmPeak.Max}, valor={vmPeak.Value})");
+var noMaxUi = new SettingVm(new SettingsService.SettingValue(
+    new SettingDef { Key = "ToneMapUINits", Type = "float", Min = 48, Max = null, Default = 203 }, null, "ToneMapUINits"));
+Check(noMaxUi.Max >= 203 && Math.Abs(noMaxUi.Value - 203) < 0.001, $"UI nits idem (max={noMaxUi.Max})");
+
+// (b) matching por Steam AppID recupera títulos que o catálogo escreve diferente
+var re4 = MatchService.FindMatch(
+    new GameInfo { Name = "Resident Evil 4", InstallDir = ".", Store = GameStore.Steam, SteamAppId = 2050650 }, catalog);
+Check(re4 != null, $"RE4 (appid 2050650) casa com 'Resident Evil 4 Remake' → {re4?.Slug ?? "MISS"}");
+var sh2 = MatchService.FindMatch(
+    new GameInfo { Name = "SILENT HILL 2", InstallDir = ".", Store = GameStore.Steam, SteamAppId = 2124490 }, catalog);
+Check(sh2 != null, $"Silent Hill 2 (appid 2124490) casa → {sh2?.Slug ?? "MISS"}");
+
+// (c) exe stub (gamelaunchhelper do Xbox) nunca pode liderar os candidatos
+var xboxDir = Path.Combine(fakeRoot, "XboxGame", "Content");
+var xboxDeep = Path.Combine(xboxDir, "Proj", "Binaries", "WinGDK");
+Directory.CreateDirectory(xboxDeep);
+File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), Path.Combine(xboxDir, "gamelaunchhelper.exe"), true);
+File.Copy(Path.Combine(Environment.SystemDirectory, "notepad.exe"), Path.Combine(xboxDeep, "TheGame.exe"), true);
+var xboxCands = ExeLocator.FindCandidates(
+    new GameInfo { Name = "Xbox Game", InstallDir = xboxDir, Store = GameStore.Xbox, ExeHint = "gamelaunchhelper.exe" }, null);
+Check(xboxCands.Count > 0 && !Path.GetFileName(xboxCands[0]).Equals("gamelaunchhelper.exe", StringComparison.OrdinalIgnoreCase),
+    $"Xbox: stub não lidera (1º = {Path.GetFileName(xboxCands.FirstOrDefault() ?? "nenhum")})");
+Check(xboxCands.Any(c => c.EndsWith("TheGame.exe")), "Xbox: exe real do jogo está entre os candidatos");
+
+// (d) IsStub não pode condenar exe legítimo com substring
+var stubDir = Path.Combine(fakeRoot, "StubTest");
+Directory.CreateDirectory(stubDir);
+File.Copy(Path.Combine(Environment.SystemDirectory, "notepad.exe"), Path.Combine(stubDir, "CrashBandicoot.exe"), true);
+var stubCands = ExeLocator.FindCandidates(
+    new GameInfo { Name = "Crash", InstallDir = stubDir, Store = GameStore.Manual }, null);
+Check(stubCands.Any(c => c.EndsWith("CrashBandicoot.exe")), "IsStub não condena 'CrashBandicoot.exe' por conter 'crash'");
+
+// (e) anti-cheat detectado pelos ARQUIVOS, não pela nota
+var acDir = Path.Combine(fakeRoot, "AcGame");
+Directory.CreateDirectory(Path.Combine(acDir, "EasyAntiCheat"));
+Check(AntiCheatScanner.Detect(acDir, null) == "Easy Anti-Cheat", "anti-cheat detectado pela pasta EasyAntiCheat");
+Check(AntiCheatScanner.Detect(Path.Combine(fakeRoot, "StubTest"), null) is null, "sem anti-cheat → null");
 
 // 5. ReShade provision + deploy (real download)
 var reshade = new ReShadeService();

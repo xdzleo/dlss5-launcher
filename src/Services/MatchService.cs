@@ -56,6 +56,17 @@ public static partial class MatchService
     /// from the installed side) — no prefix matching: "Dishonored 2" must never match "Dishonored".</summary>
     public static CatalogEntry? FindMatch(GameInfo game, IReadOnlyList<CatalogEntry> catalog)
     {
+        // O appid da Steam é autoritativo e sobrevive a títulos que o catálogo escreve
+        // diferente ("Resident Evil 4" vs "Resident Evil 4 Remake", "SILENT HILL 2" vs
+        // "Silent Hill 2 Remake"). Também é mais SEGURO que afrouxar a regra de nome:
+        // o RE4 de 2005 tem outro appid, então continua sem match em vez de herdar o
+        // addon do remake.
+        if (game.SteamAppId is int appId)
+        {
+            var byAppId = catalog.Where(e => e.SteamAppId == appId).ToList();
+            if (byAppId.Count > 0) return PickBest(byAppId);
+        }
+
         var n = Normalize(game.Name);
         if (n.Length == 0) return null;
 

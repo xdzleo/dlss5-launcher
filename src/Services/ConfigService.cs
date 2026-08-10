@@ -27,16 +27,34 @@ public class LauncherConfig
             if (File.Exists(AppPaths.ConfigPath))
                 return JsonSerializer.Deserialize<LauncherConfig>(File.ReadAllText(AppPaths.ConfigPath)) ?? new();
         }
-        catch (Exception ex) { Log.Warn($"config load: {ex.Message}"); }
+        catch (Exception ex)
+        {
+            // corrupt config: keep a copy instead of silently discarding the user's settings
+            Log.Warn($"config load FALHOU (mantendo backup): {ex.Message}");
+            try { File.Copy(AppPaths.ConfigPath, AppPaths.ConfigPath + ".corrupt", overwrite: true); }
+            catch { }
+        }
         return new LauncherConfig();
     }
 
+    private static readonly object SaveGate = new();
+
+    /// <summary>Atomic save: write to a temp file then swap, so a crash/full disk mid-write
+    /// can never leave a truncated config.json (which Load would silently reset to defaults,
+    /// losing the user's nits profile and pinned exes).</summary>
     public void Save()
     {
         try
         {
-            Directory.CreateDirectory(AppPaths.DataDir);
-            File.WriteAllText(AppPaths.ConfigPath, JsonSerializer.Serialize(this, JsonOpts));
+            lock (SaveGate)
+            {
+                Directory.CreateDirectory(AppPaths.DataDir);
+                var json = JsonSerializer.Serialize(this, JsonOpts);
+                var temp = AppPaths.ConfigPath + ".tmp";
+                File.WriteAllText(temp, json);
+                if (File.Exists(AppPaths.ConfigPath)) File.Replace(temp, AppPaths.ConfigPath, null);
+                else File.Move(temp, AppPaths.ConfigPath);
+            }
         }
         catch (Exception ex) { Log.Warn($"config save: {ex.Message}"); }
     }

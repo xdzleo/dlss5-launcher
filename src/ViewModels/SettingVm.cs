@@ -9,13 +9,32 @@ public class SettingVm : ObservableObject
     public SettingDef Def { get; }
     private readonly double? _originalValue;
     private double _value;
+    private readonly double _min, _max, _step;
 
     public SettingVm(SettingsService.SettingValue sv)
     {
         Def = sv.Def;
         _originalValue = sv.Current;
         _value = sv.Current ?? sv.Def.Default ?? sv.Def.Min ?? 0;
+
+        // A faixa TEM que conter o default, o valor do ini e o valor atual. Um slider cujo
+        // teto exclui o próprio default faz o WPF coagir o valor (1000 nits -> 100) e o app
+        // grava esse lixo no ReShade.ini — o oposto do propósito do programa.
+        var mustFit = new[] { _value, Def.Default ?? _value, _originalValue ?? _value };
+        _min = Math.Min(Def.Min ?? 0, mustFit.Min());
+        _max = Def.Max ?? FallbackMax(mustFit.Max());
+        if (_max <= _min) _max = _min + 1;
+        _step = Def.Type == "float" && _max <= 2 ? 0.01 : 1;
     }
+
+    /// <summary>Teto quando o manifesto não traz max: convenção dos mods que TÊM max
+    /// (peak 4000, game/UI 500), sempre esticada para caber o maior valor conhecido.</summary>
+    private double FallbackMax(double floor) => Def.Key.ToLowerInvariant() switch
+    {
+        "tonemappeaknits" => Math.Max(4000, floor),
+        "tonemapgamenits" or "tonemapuinits" => Math.Max(500, floor),
+        _ => Def.Type == "float" && floor <= 2 ? Math.Max(2, floor) : Math.Max(100, floor),
+    };
 
     public string Label => Translate(Def.Label ?? Def.Key);
     public string? Tooltip => TooltipFor(Def);
@@ -27,9 +46,9 @@ public class SettingVm : ObservableObject
 
     public IReadOnlyList<string>? ComboLabels => Def.Labels;
 
-    public double Min => Def.Min ?? 0;
-    public double Max => Def.Max ?? (Def.Type == "float" && (Def.Default ?? 0) <= 2 ? 2 : 100);
-    public double Step => Def.Type == "float" && Max <= 2 ? 0.01 : 1;
+    public double Min => _min;
+    public double Max => _max;
+    public double Step => _step;
 
     public double Value
     {
