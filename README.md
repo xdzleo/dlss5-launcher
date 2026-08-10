@@ -83,6 +83,15 @@ cd tests\SmokeTest
 dotnet run
 ```
 
+## Diagnóstico: "meu jogo não aparece"
+
+`tests\ScanProbe` roda cada detector isoladamente e mostra quantos jogos cada um achou (e em
+quantos ms), mais o total após dedupe e quantos casaram com o catálogo:
+
+```bash
+cd tests\ScanProbe && dotnet run
+```
+
 ## Ferramentas
 
 - `tools\extract_settings_manifest.py` — regenera `src\Assets\settings_manifest.json` a partir de clones do
