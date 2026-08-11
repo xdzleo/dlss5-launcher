@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.6.0
+
+### Fonte própria
+
+O app agora **embute a [Inter](https://rsms.me/inter/)** (SIL OFL 1.1) em vez de depender de qual
+variante da Segoe cada Windows tem instalada. Resultado: a interface fica igual em qualquer
+máquina, com letras mais legíveis e espaçamento consistente.
+
+### Ícone do app
+
+Ícone próprio (`tools/gen_icon.py`, gerado por código): uma **faixa de luminância** que vai da
+sombra profunda ao estouro de branco, com um ponto de brilho no extremo claro — que é exatamente
+o que um tone mapper HDR controla — sob o "R" do RenoDX. Sai em 7 tamanhos (16 a 256 px), aparece
+no executável, na janela e na barra de tarefas.
+
+### Os dois botões principais
+
+- **Instalar / Atualizar mod**: gradiente quente, brilho suave por trás e resposta ao clique.
+- **Ativar/Desativar** virou um **cartão de estado**: mostra um ícone de energia que fica verde
+  quando o mod está ativo, com o rótulo dizendo em que estado ele está e o que o clique vai fazer —
+  em vez de um botão que só dizia "Desativar".
+
 ## v1.5.0
 
 ### Modal do jogo

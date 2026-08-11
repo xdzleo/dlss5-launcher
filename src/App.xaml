@@ -29,7 +29,8 @@
             <SolidColorBrush x:Key="RedBrush" Color="#F2686B"/>
             <SolidColorBrush x:Key="GrayBrush" Color="#4A515D"/>
 
-            <FontFamily x:Key="UiFont">Segoe UI Variable Display, Segoe UI, Inter, sans-serif</FontFamily>
+            <FontFamily x:Key="UiFont">pack://application:,,,/Assets/Fonts/#Inter, Segoe UI Variable Text, Segoe UI</FontFamily>
+            <FontFamily x:Key="UiFontSemiBold">pack://application:,,,/Assets/Fonts/#Inter SemiBold, Segoe UI Semibold, Segoe UI</FontFamily>
 
             <!-- ========== typography ========== -->
             <Style TargetType="TextBlock">
@@ -129,6 +130,81 @@
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="#E5762F"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.38"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+
+            <!-- botao primario: gradiente + brilho quente, para a acao principal do modal -->
+            <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Padding" Value="16,13"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <Border x:Name="Glow" CornerRadius="10" Margin="0,3,0,0" Opacity="0.55">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="#FF8A3D"/>
+                                    </Border.Background>
+                                    <Border.Effect>
+                                        <BlurEffect Radius="16"/>
+                                    </Border.Effect>
+                                </Border>
+                                <Border x:Name="Bd" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#FFA155" Offset="0"/>
+                                            <GradientStop Color="#FF8A3D" Offset="0.5"/>
+                                            <GradientStop Color="#EE7328" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Glow" Property="Opacity" Value="0.85"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.985" ScaleY="0.96" CenterX="0.5" CenterY="0.5"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.35"/>
+                                    <Setter TargetName="Glow" Property="Opacity" Value="0"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- card clicavel: mostra o estado do mod em vez de so um rotulo -->
+            <Style x:Key="ToggleCard" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Padding" Value="12,11"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" CornerRadius="10" Padding="{TemplateBinding Padding}"
+                                    Background="{StaticResource CardBrush}" BorderThickness="1"
+                                    BorderBrush="{StaticResource BorderBrush2}">
+                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardHoverBrush}"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Opacity" Value="0.38"/>

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RenoDXLauncher.ViewModels"
         xmlns:local="clr-namespace:RenoDXLauncher"
+        Icon="Assets/app.png"
         Title="RenoDX Launcher" Height="920" Width="1560" MinWidth="1100" MinHeight="660"
         Background="{StaticResource BgBrush}"
         TextOptions.TextFormattingMode="Ideal"
@@ -488,37 +489,78 @@
                                       FontSize="11.5"/>
 
                             <!-- primary action (hidden while the update card owns the CTA) -->
-                            <Button Style="{StaticResource AccentButton}" Margin="0,14,0,0" Padding="13,11"
-                                    AutomationProperties.Name="Instalar ou atualizar mod" Command="{Binding InstallCommand}"
+                            <Button Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Instalar ou atualizar mod"
+                                    Margin="0,14,0,0" Command="{Binding InstallCommand}"
                                     Visibility="{Binding Selected.HasUpdate, Converter={StaticResource NotToVis}}">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconDownload}"
-                                          Fill="#14100A" Width="16" Height="16"/>
-                                    <TextBlock Text="Instalar / Atualizar mod" Margin="8,0,0,0" FontSize="13"
-                                               FontWeight="SemiBold" Foreground="#14100A" VerticalAlignment="Center"/>
+                                    <Path Data="{StaticResource IconDownload}" Fill="#1A1206" Stretch="Uniform"
+                                          Width="17" Height="17" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Instalar / Atualizar mod" Margin="10,0,0,0" FontSize="13.5"
+                                               FontWeight="SemiBold" Foreground="#1A1206" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
 
-                            <Grid Margin="0,8,0,0">
-                                <Button AutomationProperties.Name="Ativar ou desativar mod" Command="{Binding ToggleCommand}">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPower}"
-                                              Width="14" Height="14"/>
-                                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="Ativar"/>
+                            <Button Style="{StaticResource ToggleCard}" Margin="0,9,0,0"
+                                    AutomationProperties.Name="Ativar ou desativar mod"
+                                    Command="{Binding ToggleCommand}">
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Left" Width="30" Height="30" CornerRadius="9"
+                                            VerticalAlignment="Center">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#2A3040"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
+                                                        <Setter Property="Background" Value="#1B4535"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Path Data="{StaticResource IconPower}" Stretch="Uniform"
+                                              Width="15" Height="15">
+                                            <Path.Style>
+                                                <Style TargetType="Path">
+                                                    <Setter Property="Fill" Value="{StaticResource TextDimBrush}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
-                                                            <Setter Property="Text" Value="Desativar"/>
+                                                            <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Path.Style>
+                                        </Path>
+                                    </Border>
+                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock FontSize="12.5" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="Mod desativado"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
+                                                            <Setter Property="Text" Value="Mod ativado"/>
+                                                            <Setter Property="Foreground" Value="#8FE9C4"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock FontSize="11" Foreground="{StaticResource TextFaintBrush}"
+                                                   Margin="0,2,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="Clique para ativar no jogo"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
+                                                            <Setter Property="Text" Value="Clique para desativar"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
                                     </StackPanel>
-                                </Button>
-                            </Grid>
+                                </DockPanel>
+                            </Button>
 
                             <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0" Background="#2A2415"
                                     BorderBrush="#5E4E1E" BorderThickness="1"

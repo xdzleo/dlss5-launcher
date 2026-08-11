@@ -1,5 +1,7 @@
 # RenoDX Launcher
 
+<img src="docs/icon.png" width="96" align="right" alt="">
+
 Launcher de mods **[RenoDX](https://github.com/clshortfuse/renodx)** (HDR de verdade por jogo), inspirado no
 [DLSS Swapper](https://github.com/beeradmoore/dlss-swapper): detecta seus jogos instalados, mostra quais têm
 mod RenoDX disponível e deixa você **instalar, ativar/desativar e configurar** o mod de cada jogo — tudo pelo
