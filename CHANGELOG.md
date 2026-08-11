@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.7.0
+
+### Crédito do autor do mod em destaque
+
+Quem faz o mod agora tem lugar de honra no topo do diálogo: um cartão com a inicial em
+destaque, o rótulo **CRIADO POR** e o nome do maintainer — em vez da linha apagada
+"Mod por X" que passava despercebida.
+
+### Histórico de versões do mod
+
+Botão **Histórico** ao lado do autor: abre a lista de **todas as versões daquele mod, com data
+e autor de cada alteração**.
+
+Cada mod do RenoDX é uma pasta no repositório do maintainer (`src/games/<slug>`), então os
+commits que tocam aquela pasta *são* o changelog do mod — não existe outra lista publicada. O
+launcher descobre o repositório certo pela URL do addon (o mod pode ser mantido num fork) e
+consulta a API do GitHub, guardando o resultado em cache por 12 horas porque consultas anônimas
+são limitadas a 60 por hora. Há também **Ver no GitHub** para o histórico completo.
+
 ## v1.6.0
 
 ### Fonte própria
