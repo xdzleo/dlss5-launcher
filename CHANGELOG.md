@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.5.0
+
+### Modal do jogo
+
+Clicar num jogo agora abre um **diálogo centralizado** (no lugar do painel lateral), no espírito
+do DLSS Swapper mas com as opções do RenoDX:
+
+- **Capa grande** à esquerda, com a marca da loja, botão **Jogar** e a pasta de instalação.
+- À direita: executável, instalar/atualizar, ativar/desativar, veredito do ReShade.log,
+  recomendações, notas — e as **configurações do mod em duas colunas**, aproveitando a largura.
+- Barra inferior com abrir pasta, página do mod e remover; **Fechar**, **Esc** ou clique fora
+  fecham o diálogo.
+- **Jogar** abre pela loja quando ela é conhecida (`steam://rungameid/...`), preservando overlay
+  e saves na nuvem; senão executa o exe escolhido.
+
 ## v1.4.0
 
 ### Aviso de atualização

@@ -155,7 +155,7 @@
 
         <!-- ===== setting row ===== -->
         <DataTemplate x:Key="SettingRow" DataType="{x:Type vm:SettingVm}">
-            <Border Margin="0,4" Padding="13,11" CornerRadius="9" Background="{StaticResource CardBrush}"
+            <Border Width="248" Margin="0,0,8,8" Padding="13,11" CornerRadius="9" Background="{StaticResource CardBrush}"
                     BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
                     ToolTip="{Binding Tooltip}" ToolTipService.ShowDuration="40000"
                     ToolTipService.InitialShowDelay="350">
@@ -182,6 +182,7 @@
         </DataTemplate>
     </Window.Resources>
 
+    <Grid>
     <DockPanel>
         <!-- ===== top bar ===== -->
         <Border DockPanel.Dock="Top" Padding="20,13"
@@ -310,98 +311,137 @@
         </Border>
 
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+            <ListBox ItemsSource="{Binding GamesView}" SelectedItem="{Binding Selected}"
+                     Background="Transparent" BorderThickness="0" Margin="10"
+                     ItemTemplate="{StaticResource GameTile}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     VirtualizingPanel.IsVirtualizing="False">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="Bd" CornerRadius="14" BorderThickness="2"
+                                            BorderBrush="Transparent" Margin="3">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="BorderBrush"
+                                                    Value="{StaticResource AccentBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
 
-            <Grid Grid.Column="0">
-                <ListBox ItemsSource="{Binding GamesView}" SelectedItem="{Binding Selected}"
-                         Background="Transparent" BorderThickness="0" Margin="10,10,4,10"
-                         ItemTemplate="{StaticResource GameTile}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         VirtualizingPanel.IsVirtualizing="False">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel/>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="0"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="Bd" CornerRadius="14" BorderThickness="2"
-                                                BorderBrush="Transparent" Margin="3">
-                                            <ContentPresenter/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Bd" Property="BorderBrush"
-                                                        Value="{StaticResource AccentBrush}"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                </ListBox>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                        Visibility="{Binding GamesView.IsEmpty, Converter={StaticResource BoolToVis}}">
+                <Path Data="{StaticResource IconSearch}" Fill="#39404E" Stretch="Uniform"
+                      Width="44" Height="44" HorizontalAlignment="Center"/>
+                <TextBlock Text="Nenhum jogo aqui" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"
+                           Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
+                <TextBlock Text="Mude a busca ou o filtro — ou use “Adicionar” para apontar a pasta."
+                           Style="{StaticResource Caption}" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
 
-                <!-- empty state -->
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
-                            Visibility="{Binding GamesView.IsEmpty, Converter={StaticResource BoolToVis}}">
-                    <Path Data="{StaticResource IconSearch}" Fill="#39404E" Stretch="Uniform"
-                          Width="44" Height="44" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Nenhum jogo aqui" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"
-                               Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Mude a busca ou o filtro — ou use “Adicionar” para apontar a pasta."
-                               Style="{StaticResource Caption}" Margin="0,5,0,0" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
+        <!-- ===== modal do jogo: capa + opcoes do RenoDX ===== -->
+        <Grid Panel.ZIndex="10" Visibility="{Binding IsDialogOpen, Converter={StaticResource BoolToVis}}">
+            <Border Background="#B3070810">
+                <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding CloseDialogCommand}"/>
+                </Border.InputBindings>
+            </Border>
 
-            <!-- ===== detail panel ===== -->
-            <Border Grid.Column="1" Width="440" Background="{StaticResource PanelBrush}"
-                    BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1,0,0,0"
-                    Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- hero -->
-                        <Grid Height="132">
-                            <Border Visibility="{Binding Selected.HasCover, Converter={StaticResource BoolToVis}}">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="{Binding Selected.CoverPath, Converter={StaticResource CoverImage}}"
-                                                Stretch="UniformToFill" Opacity="0.5"/>
-                                </Border.Background>
-                            </Border>
-                            <Border>
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#8016181D" Offset="0"/>
-                                        <GradientStop Color="#E016181D" Offset="0.55"/>
-                                        <GradientStop Color="#FF16181D" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
-                            <StackPanel VerticalAlignment="Bottom" Margin="20,0,18,14">
-                                <TextBlock Text="{Binding Selected.Name}" Style="{StaticResource H1}"
-                                           TextWrapping="Wrap" MaxHeight="58" TextTrimming="CharacterEllipsis"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+            <Border MaxWidth="1020" MaxHeight="820" Margin="40" CornerRadius="16"
+                    Background="{StaticResource PanelBrush}" BorderThickness="1"
+                    BorderBrush="{StaticResource BorderStrongBrush}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" ShadowDepth="10" Opacity="0.65" Color="Black"/>
+                </Border.Effect>
+
+                <Grid Margin="26,24,26,20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- coluna da capa -->
+                    <StackPanel Grid.Row="0" Grid.Column="0" Width="216" Margin="0,0,24,0">
+                        <Border Height="324" CornerRadius="12" ClipToBounds="True"
+                                Background="#14161B" BorderThickness="1"
+                                BorderBrush="{StaticResource BorderBrush2}">
+                            <Grid>
+                                <TextBlock Text="{Binding Selected.Initials}" FontSize="52" FontWeight="Bold"
+                                           Foreground="#3A414E" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                                <Border Visibility="{Binding Selected.HasCover, Converter={StaticResource BoolToVis}}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{Binding Selected.CoverPath, Converter={StaticResource CoverImage}}"
+                                                    Stretch="UniformToFill"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9"
+                                        CornerRadius="7" Width="27" Height="27" Background="#B3080A0E"
+                                        ToolTip="{Binding Selected.StoreLabel}">
                                     <Path Data="{Binding Selected.Game.Store, Converter={StaticResource StoreIcon}}"
-                                          Fill="{StaticResource TextDimBrush}" Stretch="Uniform" Width="12" Height="12"
-                                          VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding Selected.StoreLabel}" FontSize="11.5" Margin="6,0,0,0"
-                                               Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
-                                    <Border Width="1" Height="11" Background="{StaticResource BorderStrongBrush}"
-                                            Margin="10,0"/>
-                                    <TextBlock Text="{Binding Selected.BadgeText}" FontSize="11.5" FontWeight="SemiBold"
-                                               Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
+                                          Fill="#E8EDF5" Stretch="Uniform" Width="14" Height="14"/>
+                                </Border>
+                            </Grid>
+                        </Border>
 
-                        <StackPanel Margin="20,4,18,20">
+                        <Button Margin="0,12,0,0" Padding="12,10" Command="{Binding LaunchGameCommand}"
+                                AutomationProperties.Name="Jogar">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Path Data="{StaticResource IconPlay}" Fill="{StaticResource TextBrush}"
+                                      Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="Jogar" Margin="8,0,0,0" FontSize="12.5" FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <TextBlock Text="PASTA DE INSTALACAO" Style="{StaticResource SectionLabel}" Margin="0,16,0,5"/>
+                        <TextBlock Text="{Binding Selected.Game.InstallDir}" Style="{StaticResource Caption}"
+                                   FontSize="10.5" TextTrimming="CharacterEllipsis" MaxHeight="46"
+                                   ToolTip="{Binding Selected.Game.InstallDir}"/>
+                    </StackPanel>
+
+                    <!-- coluna das opcoes -->
+                    <Grid Grid.Row="0" Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding Selected.Name}" Style="{StaticResource H1}" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                <TextBlock Text="{Binding Selected.StoreLabel}" FontSize="11.5"
+                                           Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                <Border Width="1" Height="11" Background="{StaticResource BorderStrongBrush}" Margin="10,0"/>
+                                <TextBlock Text="{Binding Selected.BadgeText}" FontSize="11.5" FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+<StackPanel>
                             <TextBlock Text="{Binding Selected.Mod.Maintainer, StringFormat='Mod por {0}'}"
                                        Style="{StaticResource Caption}"
                                        Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}"/>
@@ -459,8 +499,8 @@
                                 </StackPanel>
                             </Button>
 
-                            <UniformGrid Columns="3" Margin="0,8,0,0">
-                                <Button Margin="0,0,4,0" AutomationProperties.Name="Ativar ou desativar mod" Command="{Binding ToggleCommand}">
+                            <Grid Margin="0,8,0,0">
+                                <Button AutomationProperties.Name="Ativar ou desativar mod" Command="{Binding ToggleCommand}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPower}"
                                               Width="14" Height="14"/>
@@ -478,31 +518,7 @@
                                         </TextBlock>
                                     </StackPanel>
                                 </Button>
-                                <Button Margin="2,0" AutomationProperties.Name="Remover mod" Command="{Binding RemoveCommand}">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconTrash}"
-                                              Width="14" Height="14"/>
-                                        <TextBlock Text="Remover" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button Margin="4,0,0,0" AutomationProperties.Name="Abrir pasta" Command="{Binding OpenFolderCommand}">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconFolder}"
-                                              Width="14" Height="14"/>
-                                        <TextBlock Text="Pasta" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12"/>
-                                    </StackPanel>
-                                </Button>
-                            </UniformGrid>
-
-                            <Button Margin="0,8,0,0" AutomationProperties.Name="Pagina do mod" Command="{Binding OpenNexusCommand}"
-                                    Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconGlobe}"
-                                          Width="14" Height="14"/>
-                                    <TextBlock Text="Página do mod na internet" Margin="7,0,0,0"
-                                               VerticalAlignment="Center" FontSize="12"/>
-                                </StackPanel>
-                            </Button>
+                            </Grid>
 
                             <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0" Background="#2A2415"
                                     BorderBrush="#5E4E1E" BorderThickness="1"
@@ -567,7 +583,13 @@
                                 </Border>
 
                                 <ItemsControl ItemsSource="{Binding Settings}" ItemTemplate="{StaticResource SettingRow}"
-                                              Margin="0,8,0,0"/>
+                                              Margin="0,8,0,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
 
                                 <UniformGrid Columns="3" Margin="0,12,0,0"
                                              Visibility="{Binding Settings.Count, Converter={StaticResource CountToVis}}">
@@ -600,9 +622,36 @@
                                 </UniformGrid>
                             </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- barra de acoes -->
+                    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,18,0,0" Padding="0,16,0,0"
+                            BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,1,0,0">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Fechar" MinWidth="104" Padding="14,8"
+                                    Command="{Binding CloseDialogCommand}" AutomationProperties.Name="Fechar"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding OpenFolderCommand}"
+                                        ToolTip="Abrir a pasta do jogo" AutomationProperties.Name="Abrir pasta do jogo">
+                                    <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextBrush}"
+                                          Stretch="Uniform" Width="15" Height="15"/>
+                                </Button>
+                                <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding OpenNexusCommand}"
+                                        ToolTip="Pagina do mod na internet" AutomationProperties.Name="Pagina do mod na internet">
+                                    <Path Data="{StaticResource IconGlobe}" Fill="{StaticResource TextBrush}"
+                                          Stretch="Uniform" Width="15" Height="15"/>
+                                </Button>
+                                <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding RemoveCommand}"
+                                        ToolTip="Remover o mod" AutomationProperties.Name="Remover o mod">
+                                    <Path Data="{StaticResource IconTrash}" Fill="{StaticResource TextBrush}"
+                                          Stretch="Uniform" Width="15" Height="15"/>
+                                </Button>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
-    </DockPanel>
+    </Grid>
 </Window>

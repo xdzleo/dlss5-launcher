@@ -12,6 +12,15 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
         Loaded += async (_, _) => await _vm.LoadAsync();
+        // Esc fecha o modal do jogo (comportamento esperado de qualquer diálogo)
+        PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key == System.Windows.Input.Key.Escape && _vm.IsDialogOpen)
+            {
+                _vm.IsDialogOpen = false;
+                e.Handled = true;
+            }
+        };
     }
 
     private void OnProfileClick(object sender, RoutedEventArgs e)

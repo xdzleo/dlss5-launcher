@@ -45,6 +45,8 @@ public class MainViewModel : ObservableObject
             () => Selected?.Mod?.NexusUrl != null || Selected?.Mod?.InfoUrl != null);
         AddManualGameCommand = new AsyncRelayCommand(AddManualGameAsync, () => !Busy);
         CheckUpdatesCommand = new AsyncRelayCommand(CheckUpdatesAsync, () => !Busy);
+        CloseDialogCommand = new RelayCommand(() => IsDialogOpen = false);
+        LaunchGameCommand = new RelayCommand(LaunchGame, () => Selected != null);
         UpdateAllCommand = new AsyncRelayCommand(UpdateAllAsync, () => !Busy && UpdateCount > 0);
     }
 
@@ -130,6 +132,7 @@ public class MainViewModel : ObservableObject
             if (Set(ref _selected, value))
             {
                 OnPropertyChanged(nameof(HasSelection));
+                if (value != null) IsDialogOpen = true;
                 _ = LoadDetailSafeAsync();
                 RaiseCommands();
             }
@@ -137,6 +140,18 @@ public class MainViewModel : ObservableObject
     }
 
     public bool HasSelection => _selected != null;
+
+    /// <summary>The game modal (cover + options) is showing. Opened by picking a tile.</summary>
+    private bool _isDialogOpen;
+    public bool IsDialogOpen
+    {
+        get => _isDialogOpen;
+        set
+        {
+            if (!Set(ref _isDialogOpen, value)) return;
+            if (!value) Selected = null;   // closing clears the selection highlight
+        }
+    }
 
     public ObservableCollection<string> ExeCandidates { get; } = new();
     private string? _selectedExe;
@@ -186,6 +201,8 @@ public class MainViewModel : ObservableObject
     public RelayCommand OpenNexusCommand { get; }
     public AsyncRelayCommand AddManualGameCommand { get; }
     public AsyncRelayCommand CheckUpdatesCommand { get; }
+    public RelayCommand CloseDialogCommand { get; }
+    public RelayCommand LaunchGameCommand { get; }
     public AsyncRelayCommand UpdateAllCommand { get; }
 
     /// <summary>Quantos mods instalados têm build mais nova disponível.</summary>
@@ -219,6 +236,7 @@ public class MainViewModel : ObservableObject
         ApplyProfileCommand.RaiseCanExecuteChanged();
         ResetSettingsCommand.RaiseCanExecuteChanged();
         OpenFolderCommand.RaiseCanExecuteChanged();
+        LaunchGameCommand.RaiseCanExecuteChanged();
         OpenNexusCommand.RaiseCanExecuteChanged();
     }
 
@@ -757,6 +775,45 @@ public class MainViewModel : ObservableObject
                 : $"{ok} atualizados, {failed.Count} falharam: {string.Join("; ", failed.Take(3))}";
         }
         finally { ActionBusy = false; }
+    }
+
+    /// <summary>Launch through the store when we know it (keeps the store's overlay and
+    /// cloud saves working); fall back to running the chosen exe directly.</summary>
+    private void LaunchGame()
+    {
+        var item = _detailItem ?? Selected;
+        if (item is null) return;
+        try
+        {
+            string? uri = item.Game.Store switch
+            {
+                GameStore.Steam when item.Game.AppId != null => $"steam://rungameid/{item.Game.AppId}",
+                GameStore.Gog when item.Game.AppId != null => $"goggalaxy://openGameView/{item.Game.AppId}",
+                _ => null,
+            };
+            if (uri != null)
+            {
+                Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
+                DetailStatus = "Abrindo pela loja...";
+                return;
+            }
+            var exe = item.ChosenExe;
+            if (exe != null && File.Exists(exe))
+            {
+                Process.Start(new ProcessStartInfo(exe)
+                {
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(exe)!,
+                });
+                DetailStatus = "Jogo iniciado.";
+            }
+            else DetailStatus = "Não sei qual executável iniciar — escolha um na lista acima.";
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"launch {item.Name}: {ex.Message}");
+            DetailStatus = $"Não consegui iniciar: {ex.Message}";
+        }
     }
 
     private void OpenFolder()
