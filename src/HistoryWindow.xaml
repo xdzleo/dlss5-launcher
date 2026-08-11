@@ -1,0 +1,73 @@
+<Window x:Class="RenoDXLauncher.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:svc="clr-namespace:RenoDXLauncher.Services"
+        Title="Histórico do mod" Height="640" Width="720" MinWidth="520" MinHeight="420"
+        Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
+        Icon="Assets/app.png">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{StaticResource PanelBrush}" Padding="22,16"
+                BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Padding="12,8" Click="OnOpenWeb" VerticalAlignment="Center"
+                        ToolTip="Abrir o histórico completo no GitHub"
+                        AutomationProperties.Name="Abrir no GitHub">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource IconGlobe}" Fill="{StaticResource TextBrush}"
+                              Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
+                        <TextBlock Text="Ver no GitHub" Margin="7,0,0,0" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <StackPanel>
+                    <TextBlock x:Name="TitleText" Style="{StaticResource H1}" FontSize="17"/>
+                    <TextBlock x:Name="SubtitleText" Style="{StaticResource Caption}" Margin="0,3,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource PanelBrush}" Padding="22,12"
+                BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,1,0,0">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Fechar" MinWidth="100" Padding="14,8"
+                        Click="OnClose" AutomationProperties.Name="Fechar historico"/>
+                <TextBlock x:Name="FooterText" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <Grid>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,14">
+                <ItemsControl x:Name="List">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type svc:ModRevision}">
+                            <Border Background="{StaticResource CardBrush}" BorderThickness="1"
+                                    BorderBrush="{StaticResource BorderBrush2}" CornerRadius="9"
+                                    Padding="14,12" Margin="0,0,0,8">
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Left" Width="86" VerticalAlignment="Top">
+                                        <TextBlock Text="{Binding DateText}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource AccentBrush}"/>
+                                    </Border>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding CleanSummary}" TextWrapping="Wrap"
+                                                   FontSize="12.5" LineHeight="18"/>
+                                        <TextBlock Text="{Binding Author}" FontSize="11" Margin="0,4,0,0"
+                                                   Foreground="{StaticResource TextFaintBrush}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="Collapsed">
+                <Path Data="{StaticResource IconUpdate}" Fill="#39404E" Stretch="Uniform"
+                      Width="40" Height="40" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="EmptyText" Style="{StaticResource Caption}" Margin="0,14,0,0"
+                           HorizontalAlignment="Center" MaxWidth="420" TextAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>

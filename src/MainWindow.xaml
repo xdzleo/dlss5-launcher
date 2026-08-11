@@ -430,7 +430,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                        <StackPanel Grid.Row="0" Margin="0,0,0,14">
                             <TextBlock Text="{Binding Selected.Name}" Style="{StaticResource H1}" TextWrapping="Wrap"/>
                             <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
                                 <TextBlock Text="{Binding Selected.StoreLabel}" FontSize="11.5"
@@ -439,13 +439,48 @@
                                 <TextBlock Text="{Binding Selected.BadgeText}" FontSize="11.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
+
+                            <!-- credito do autor do mod: quem mantem, com atalho pro historico -->
+                            <Border Margin="0,12,0,0" CornerRadius="10" Padding="12,10"
+                                    Background="{StaticResource CardBrush}" BorderThickness="1"
+                                    BorderBrush="{StaticResource BorderBrush2}"
+                                    Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Padding="11,7" VerticalAlignment="Center"
+                                            Click="OnHistoryClick" AutomationProperties.Name="Historico do mod"
+                                            ToolTip="Todas as versões deste mod, com data">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconUpdate}" Fill="{StaticResource TextBrush}"
+                                                  Stretch="Uniform" Width="13" Height="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Histórico" Margin="7,0,0,0" FontSize="12"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Border Width="34" Height="34" CornerRadius="17" DockPanel.Dock="Left"
+                                            VerticalAlignment="Center">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FF8A3D" Offset="0"/>
+                                                <GradientStop Color="#E5622F" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <TextBlock Text="{Binding Selected.MaintainerInitial}" FontSize="15"
+                                                   FontWeight="Bold" Foreground="#1A1206"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Margin="12,0,10,0" VerticalAlignment="Center">
+                                        <TextBlock Text="CRIADO POR" FontSize="9.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextFaintBrush}"/>
+                                        <TextBlock Text="{Binding Selected.MaintainerName}" FontSize="13.5"
+                                                   FontWeight="SemiBold" Margin="0,2,0,0"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
                         </StackPanel>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
 <StackPanel>
-                            <TextBlock Text="{Binding Selected.Mod.Maintainer, StringFormat='Mod por {0}'}"
-                                       Style="{StaticResource Caption}"
-                                       Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}"/>
 
                             <!-- UPDATE WARNING: the reason the user asked for this -->
                             <Border CornerRadius="10" Padding="13,12" Margin="0,14,0,0" Background="#332612"

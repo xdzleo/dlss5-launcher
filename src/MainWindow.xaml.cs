@@ -29,6 +29,13 @@ public partial class MainWindow : Window
         win.ShowDialog();
     }
 
+    private void OnHistoryClick(object sender, RoutedEventArgs e)
+    {
+        var item = _vm.Selected;
+        if (item?.Mod is null) return;
+        new HistoryWindow(item.Mod, item.Name) { Owner = this }.ShowDialog();
+    }
+
     private void OnGuideClick(object sender, RoutedEventArgs e)
     {
         var win = new GuideWindow { Owner = this };

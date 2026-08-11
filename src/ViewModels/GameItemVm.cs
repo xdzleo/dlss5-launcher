@@ -40,6 +40,19 @@ public class GameItemVm : ObservableObject
     public string Key => $"{Game.Store}_{Game.AppId ?? Game.InstallDir}";
 
     public bool HasMod => Mod != null;
+
+    /// <summary>Quem mantém o mod deste jogo (crédito em destaque no modal).</summary>
+    public string MaintainerName => string.IsNullOrWhiteSpace(Mod?.Maintainer)
+        ? "Comunidade RenoDX" : Mod!.Maintainer!;
+
+    public string MaintainerInitial
+    {
+        get
+        {
+            var n = MaintainerName.TrimStart('(', '[', ' ');
+            return n.Length > 0 ? char.ToUpperInvariant(n[0]).ToString() : "?";
+        }
+    }
     public bool HasDirectDownload => Mod?.DownloadUrl != null;
 
     public string? CoverPath { get => _coverPath; set { if (Set(ref _coverPath, value)) OnPropertyChanged(nameof(HasCover)); } }
