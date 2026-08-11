@@ -41,4 +41,28 @@ public partial class MainWindow : Window
         var win = new GuideWindow { Owner = this };
         win.Show();
     }
+
+    /// <summary>Open a link that came from a mod note in the default browser. The URLs come from
+    /// the RenoDX wiki and the curated index, so they are opened as-is — but only http(s), so a
+    /// malformed entry can never turn into a local command.</summary>
+    private void OnNoteLinkNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+    {
+        e.Handled = true;
+        var url = e.Uri?.ToString();
+        if (url is null) return;
+        if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            && !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            Services.Log.Warn($"link de nota ignorado (esquema inesperado): {url}");
+            return;
+        }
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+            {
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex) { Services.Log.Warn($"abrir link da nota: {ex.Message}"); }
+    }
 }

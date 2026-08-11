@@ -85,7 +85,11 @@ public static partial class SettingsFetcher
         foreach (var block in SettingBlocks(source))
         {
             var def = ParseSetting(block);
-            if (def != null && seen.Add(def.Key)) result.Add(def);
+            if (def is null) continue;
+            // instruction blocks share the empty key on purpose — deduping them by key would
+            // keep only the first paragraph of the author's explanation
+            if (def.IsInstruction) result.Add(def);
+            else if (seen.Add(def.Key)) result.Add(def);
         }
         return result;
     }
@@ -153,10 +157,29 @@ public static partial class SettingsFetcher
             }
         }
 
-        // no key = not persisted (headers, buttons); buttons/labels are not user settings
-        if (string.IsNullOrEmpty(key)) return null;
         type ??= "float";
-        if (type is "button" or "label") return null;
+
+        // TEXT / LABEL / BULLET / BUTTON blocks carry no key because they are not knobs — they are
+        // what the mod's author WROTE FOR THE PLAYER inside the overlay. Dropping them is why
+        // games like DOOM: The Dark Ages showed up as "the author left the values fixed" when the
+        // author had in fact written the whole configuration procedure in there.
+        if (type is "button" or "label")
+        {
+            var text = label ?? tooltip;
+            if (text is null || IsBoilerplate(text, tooltip, section)) return null;
+            return new SettingDef
+            {
+                Key = "",
+                Type = type,
+                Label = label,
+                Section = section,
+                Tooltip = tooltip,
+                IsInstruction = true,
+                PresetValues = type == "button" ? PresetValues(block) : null,
+            };
+        }
+
+        if (string.IsNullOrEmpty(key)) return null;
 
         return new SettingDef
         {
@@ -173,10 +196,57 @@ public static partial class SettingsFetcher
         };
     }
 
+    /// <summary>Social links and build stamps are not guidance — without this filter every game
+    /// would gain five lines of "Author's Ko-Fi" and "This build was compiled on ...".</summary>
+    private static bool IsBoilerplate(string label, string? tooltip, string? section)
+    {
+        // authors park their social buttons in a "Links" section — none of it is guidance
+        if (section is not null && section.Equals("Links", StringComparison.OrdinalIgnoreCase))
+            return true;
+        // "Reset"/"Reset All" restore the mod's own defaults and "Version:" is a build stamp —
+        // both are overlay furniture, not something the player is being told to do
+        if (Regex.IsMatch(label, @"^\s*(reset(\s+all)?|version:?|credits?|github|more mods)\s*$",
+                RegexOptions.IgnoreCase))
+            return true;
+        // credits paragraphs: "Game mod by X, RenoDX Framework by Y", "Special thanks to Z"
+        if (Regex.IsMatch(label, @"special thanks|framework by|^mod by ", RegexOptions.IgnoreCase))
+            return true;
+        var all = (label + " " + tooltip).ToLowerInvariant().Trim();
+        return all is "github" or "more mods" or "discord" or "ko-fi"
+            || all.Contains("ko-fi") || all.Contains("kofi") || all.Contains("patreon")
+            || all.Contains("discord") || all.Contains("paypal") || all.Contains("github.com")
+            || all.Contains("buymeacoffee") || all.Contains("twitter") || all.Contains("donate")
+            || label.StartsWith("Build:", StringComparison.OrdinalIgnoreCase)
+            || label.Contains("was compiled on", StringComparison.OrdinalIgnoreCase);
+    }
+
+    [GeneratedRegex(@"\{\s*""(\w+)""\s*,\s*(-?[\d.]+)f?\s*\}")]
+    private static partial Regex PresetPairRegex();
+
+    [GeneratedRegex(@"UpdateSetting\(\s*""(\w+)""\s*,\s*(-?[\d.]+)f?\s*\)")]
+    private static partial Regex UpdateSettingRegex();
+
+    /// <summary>Values a BUTTON applies at once — the look the author calibrated. Both spellings
+    /// occur in the wild: a brace-initialized list and explicit UpdateSetting calls.</summary>
+    private static IReadOnlyDictionary<string, double>? PresetValues(string block)
+    {
+        var values = new Dictionary<string, double>(StringComparer.Ordinal);
+        foreach (Match m in PresetPairRegex().Matches(block).Concat(UpdateSettingRegex().Matches(block)))
+            if (double.TryParse(m.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
+                values[m.Groups[1].Value] = v;
+        return values.Count > 0 ? values : null;
+    }
+
+    /// <summary>C++ concatenates adjacent string literals, and mod authors use that to write
+    /// multi-line instructions. Reading only the first literal truncated them mid-sentence.</summary>
     private static string? AsString(string raw)
     {
-        var m = StringRegex().Match(raw);
-        return m.Success ? m.Groups[1].Value : null;
+        var literals = QuotedRegex().Matches(raw)
+            .Select(m => m.Groups[1].Value.Replace("\\n", "\n").Replace("\\\"", "\"").Replace("\\\\", "\\"))
+            .ToList();
+        if (literals.Count == 0) return null;
+        var joined = string.Concat(literals).Trim();
+        return joined.Length == 0 ? null : joined;
     }
 
     private static double? AsNumber(string raw)

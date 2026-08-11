@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -180,7 +181,13 @@ public class MainViewModel : ObservableObject
 
     public ObservableCollection<SettingVm> Settings { get; } = new();
     public ObservableCollection<Advice> Advice { get; } = new();
-    public ObservableCollection<string> Notes { get; } = new();
+    /// <summary>Everything known about how to configure THIS game, from every source.</summary>
+    public ObservableCollection<ModNote> Notes { get; } = new();
+
+    /// <summary>Rules that apply to every game of this engine (the wiki's callout blocks). Kept
+    /// apart because they are long and identical for hundreds of games — they belong behind a
+    /// disclosure, not on top of the game's own instructions.</summary>
+    public ObservableCollection<ModNote> EngineNotes { get; } = new();
 
     /// <summary>Verdict from ReShade.log: did the mod actually load last time the game ran?</summary>
     private string _loadVerdict = "";
@@ -390,6 +397,7 @@ public class MainViewModel : ObservableObject
         Settings.Clear();
         Advice.Clear();
         Notes.Clear();
+        EngineNotes.Clear();
         DetailStatus = "";
         var item = Selected;
         _detailItem = item;
@@ -415,17 +423,9 @@ public class MainViewModel : ObservableObject
                     AdviceKind.AntiCheat));
         }
 
-        // full free-text notes below the cards
-        if (item.Mod?.Note is { } n1) Notes.Add(AdviceService.StripSymbols(n1));
-        if (rhiNote is { } n2) Notes.Add(AdviceService.StripSymbols(n2));
-        if (nativeHdr && Advice.All(a => a.Kind is not (AdviceKind.HdrOn or AdviceKind.HdrOff)))
-            Notes.Add("Este jogo tem HDR nativo — o mod corrige/melhora o HDR do próprio jogo. Normalmente o HDR precisa estar LIGADO dentro do jogo.");
-        if (item.Mod?.Kind == ModKind.UnrealEngine)
-            Notes.Add("Mod GENÉRICO de Unreal Engine: depois de instalar, ajustes de \"Upgrade\" podem ser necessários no overlay (tecla Home) — veja a nota do jogo acima, se houver.");
-        if (item.Mod?.Kind == ModKind.UnityEngine)
-            Notes.Add("Mod GENÉRICO de Unity: evite fullscreen exclusivo; se faltar cor, ative Upgrade R11G11B10_FLOAT no overlay (Home).");
-        if (item.Mod != null && !item.Mod.Working)
-            Notes.Add("Status na wiki: EM CONSTRUÇÃO/instável — pode ter problemas.");
+        // Every source of guidance, most game-specific first. The hand-written one-liners that
+        // used to stand in for all of this are gone: the real text is better than a summary of it.
+        BuildNotes(item, nativeHdr);
 
         // exe candidates in background (recursive dir scan)
         var subdir = _rhi.InstallSubdir(item.Name);
@@ -499,6 +499,64 @@ public class MainViewModel : ObservableObject
         catch (Exception ex) { DetailStatus = ex.Message; }
         finally { ActionBusy = false; RaiseCommands(); }
     }
+
+    /// <summary>
+    /// Collect the game's guidance from every source, in the order someone configuring the game
+    /// needs it: what the mod's own author wrote, then the wiki row, then the curated index, then
+    /// the engine-wide rules (which go behind a disclosure because they repeat for hundreds of
+    /// games). Duplicates across sources are dropped — the wiki and the index often say the same
+    /// thing in the same words.
+    /// </summary>
+    private void BuildNotes(GameItemVm item, bool nativeHdr)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        void Add(ModNote n, ObservableCollection<ModNote> into)
+        {
+            if (n.Text.Length == 0 && n.Preformatted is null) return;
+            if (n.DedupKey.Length > 0 && !seen.Add(n.DedupKey)) return;
+            into.Add(n);
+        }
+
+        if (item.Mod is null) return;
+
+        // 1. the mod author's own words, written inside the overlay
+        foreach (var ins in _manifest?.GetInstructions(item.Mod.Slug) ?? Array.Empty<SettingDef>())
+        {
+            var text = AdviceService.StripSymbols(ins.Label ?? ins.Tooltip ?? "");
+            if (text.Length == 0) continue;
+            Add(new ModNote(NoteSource.ModSource, NoteKind.Step,
+                ins.PresetValues != null ? $"Preset do autor: {ins.Label}" : "Instrução do autor",
+                ins.PresetValues != null ? (ins.Tooltip ?? text) : text,
+                null, null, AdviceService.GuessLocation(text, ins.Section)), Notes);
+        }
+
+        // 2. the game's row in the wiki, plus the status/Nexus/discussion pointers
+        foreach (var n in item.Mod.Notes) Add(n, Notes);
+
+        // 3. the curated index (install warnings, required ReShade version, external download)
+        foreach (var n in _rhi.GameNotes(item.Name)) Add(n, Notes);
+
+        if (nativeHdr && Advice.All(a => a.Kind is not (AdviceKind.HdrOn or AdviceKind.HdrOff)))
+            Add(new ModNote(NoteSource.Launcher, NoteKind.Info, "HDR nativo",
+                "Este jogo tem HDR próprio e o mod corrige/melhora ele — normalmente o HDR precisa estar LIGADO dentro do jogo.",
+                null, null, "NO JOGO"), Notes);
+
+        // 4. engine-wide rules: the only place that explains how to apply an upgrade at all
+        var callouts = item.Mod.Kind switch
+        {
+            ModKind.UnrealEngine => CatalogService.UnrealCallouts,
+            ModKind.UnityEngine => CatalogService.UnityCallouts,
+            _ => new List<ModNote>(),
+        };
+        foreach (var n in callouts) Add(n, EngineNotes);
+        if (EngineNotes.Count > 0)
+            foreach (var n in CatalogService.GlobalCallouts) Add(n, EngineNotes);
+        OnPropertyChanged(nameof(EngineNotesHeader));
+    }
+
+
+    public string EngineNotesHeader => EngineNotes.Count == 0 ? ""
+        : $"REGRAS DO MOD GENÉRICO ({(Selected?.Mod?.Kind == ModKind.UnityEngine ? "UNITY" : "UNREAL")}) — {EngineNotes.Count}";
 
     /// <summary>Ask ReShade.log whether the mod really loaded — the only ground truth
     /// available from outside the game.</summary>
@@ -574,8 +632,14 @@ public class MainViewModel : ObservableObject
             }
             if (defs.Count == 0)
             {
-                SetNoSettings("Este mod não tem opções ajustáveis — o autor deixou os valores fixos. " +
-                    "Instalar e ativar é tudo que ele precisa.");
+                // "no knobs" does not mean "nothing to do": several of these mods are configured
+                // entirely from the game's own menu, and the author says how in the notes above.
+                bool hasInstructions = Notes.Any(n => n.Source == NoteSource.ModSource);
+                SetNoSettings(hasInstructions
+                    ? "Este mod não tem sliders — o ajuste é feito dentro do jogo, do jeito que o autor "
+                      + "descreveu em COMO AJUSTAR ESTE JOGO, aqui em cima."
+                    : "Este mod não tem opções ajustáveis — o autor deixou os valores fixos. "
+                      + "Instalar e ativar é tudo que ele precisa.");
                 return;
             }
             if (item.State is null) return;

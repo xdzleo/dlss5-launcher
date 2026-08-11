@@ -16,8 +16,47 @@ public enum AdviceKind { HdrOff, HdrOn, Renderer, AntiCheat, Deprecated, Action 
 /// </summary>
 public static partial class AdviceService
 {
+    /// <summary>WHERE the user has to act. An instruction that does not say whether it happens in
+    /// the game's own menu or in the RenoDX overlay is half an instruction — and guessing wrong is
+    /// worse than saying nothing, so anything ambiguous returns null.</summary>
+    public static string? GuessLocation(string? text, string? section = null)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        if (System.Text.RegularExpressions.Regex.IsMatch(text,
+                @"in[\s-]?game|ingame|game'?s (own |native )?(hdr|brightness|contrast|gamma)"
+                + @"|game brightness|no jogo|dentro do jogo|fullscreen",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return "NO JOGO";
+        if (System.Text.RegularExpressions.Regex.IsMatch(text,
+                @"upgrade|overlay|slider|settings mode|shader toggle|tone ?map|renodx",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+            || section is "Resource Upgrades" or "Options" or "Color Grading Templates")
+            return "OVERLAY RENODX (Home)";
+        return null;
+    }
+
+    /// <summary>Characters that carry MEANING in a configuration instruction and must survive.
+    /// "Settings Mode: Simple → Advanced" without the arrow is not an instruction any more.</summary>
+    private static readonly Dictionary<int, string> Meaningful = new()
+    {
+        [0x2192] = "->", [0x2190] = "<-", [0x2194] = "<->", [0x21D2] = "=>",
+        [0x2264] = "<=", [0x2265] = ">=", [0x2260] = "!=", [0x00D7] = "x",
+        [0x2022] = "-",  [0x2013] = "-",  [0x2014] = "—",
+        [0x26D4] = "NÃO:", [0x1F6AB] = "NÃO:",
+        [0x2705] = "[OK]", [0x2714] = "[OK]", [0x274C] = "[X]", [0x2716] = "[X]",
+        // ⚠ and ℹ are decoration next to a note that ALREADY says "Atenção"/"Nota" — translating
+        // them produced "ATENÇÃO: ATENÇÃO: UNREAL ENGINE MOD WARNINGS ATENÇÃO: ATENÇÃO:".
+        [0x26A0] = "", [0x2139] = "",
+        // arrows used as list decoration rather than as an operator
+        [0x21A9] = "", [0x21AA] = "", [0x21B0] = "", [0x21B5] = "", [0x27A1] = "",
+    };
+
     /// <summary>Remove pictographic characters that come from external note data (wiki/RHI):
-    /// WPF renders them as boxes or wrong glyphs depending on which font resolves them.</summary>
+    /// WPF renders them as boxes or wrong glyphs depending on which font resolves them.
+    ///
+    /// Order matters. The old version blanked everything from U+2190 to U+2BFF, which swallowed
+    /// the arrows the wiki uses as the configuration operator. Meaning is translated FIRST, then
+    /// what is left of the purely decorative ranges is dropped.</summary>
     public static string StripSymbols(string? text)
     {
         if (string.IsNullOrEmpty(text)) return "";
@@ -25,14 +64,21 @@ public static partial class AdviceService
         foreach (var rune in text.EnumerateRunes())
         {
             int v = rune.Value;
-            bool pictographic =
-                (v >= 0x2190 && v <= 0x2BFF) ||   // arrows, symbols, dingbats
+            if (Meaningful.TryGetValue(v, out var replacement))
+            {
+                sb.Append(replacement);
+                continue;
+            }
+            bool decorative =
+                (v >= 0x2600 && v <= 0x27BF) ||   // dingbats, weather, misc symbols
+                (v >= 0x2B00 && v <= 0x2BFF) ||   // arrows-supplement block used as bullets
                 (v >= 0xFE00 && v <= 0xFE0F) ||   // variation selectors
                 (v >= 0x1F000 && v <= 0x1FAFF) || // emoji planes
+                v == 0x200D ||                    // zero-width joiner (emoji sequences)
                 v == 0x00A0;                      // nbsp: breaks wrapping
-            sb.Append(pictographic ? ' ' : rune.ToString());
+            sb.Append(decorative ? " " : rune.ToString());
         }
-        return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"[ 	]{2,}", " ").Trim();
+        return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"[ \t]{2,}", " ").Trim();
     }
 
     // "disable in-game HDR", "disable the game's native HDR", "in-game HDR ... off"

@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.11.0
+
+### As notas do mod estavam quase todas sendo perdidas
+
+Voce reclamou que nem todas as notas carregavam e que as que carregavam vinham cortadas. Medindo,
+o buraco era maior do que parecia:
+
+- **241 dos 269 mods dedicados (89,6%) nao tinham nota nenhuma.** A nota so nascia do *tooltip* de
+  um link na wiki, e so 28 linhas tem esse tooltip. Nos outros a secao "NOTAS DO MOD" nem era
+  desenhada.
+- **68 linhas de instrucao da wiki nunca eram lidas.** Sao blocos de aviso que ficam FORA das
+  tabelas, e o parser so olhava linhas de tabela. E justamente ali que esta a unica explicacao de
+  como aplicar um Upgrade: *o slider fica escondido ate voce trocar Settings Mode de Simple para
+  Advanced, e depois o jogo precisa reiniciar.* Isso vale para ~570 jogos.
+- **O texto que o proprio autor do mod escreveu era jogado fora.** Cada mod declara blocos de
+  texto/botao no codigo com as instrucoes para o jogador. O app descartava todos. Por isso o
+  **DOOM: The Dark Ages** aparecia como "o autor deixou os valores fixos" quando o autor tinha
+  escrito o procedimento inteiro: *HDR ligado no jogo, Game Brightness 1.0, contraste 0.50, Paper
+  White = HDR Mid Point x 10.*
+- **O manifesto do indice lia 5 de 64 chaves.** O seu **Max Payne 3** exige **ReShade 6.4.1** e um
+  mod separado do Nexus — o app instalava a 6.7.3 e nao dizia nada.
+- **Links eram apagados.** Nota que dizia "veja aqui" chegava sem o destino.
+- **A seta sumia.** O filtro de simbolos apagava tudo entre U+2190 e U+2BFF, incluindo o `->`, que
+  e o operador das instrucoes de menu.
+
+### O que aparece agora
+
+A secao virou **COMO AJUSTAR ESTE JOGO**, e cada instrucao diz **onde** se mexe — uma etiqueta
+`NO JOGO`, `OVERLAY RENODX (Home)` ou `ANTES DE INSTALAR`. Instrucao sem lugar e meia instrucao.
+
+Reunidas, em ordem: o que o autor do mod escreveu, a linha do jogo na wiki, o indice curado
+(avisos de instalacao, versao de ReShade exigida, download externo) e, recolhidas num bloco a
+parte, as **regras do motor** (Unreal/Unity) — que sao longas e iguais em centenas de jogos.
+
+Blocos de configuracao (`.ini`, argumentos de linha de comando) aparecem em fonte monoespacada e
+dao para copiar. Links viraram links de verdade.
+
+Numeros: **228 dos 344 mods** agora trazem instrucao escrita pelo autor (eram zero), **147
+presets** calibrados por eles ficaram visiveis, e **nenhum** mod dedicado fica mais com o painel
+vazio.
+
 ## v1.10.2
 
 ### O tModLoader tinha ficado sem alvo (regressão da v1.10.1)

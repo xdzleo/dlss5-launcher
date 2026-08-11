@@ -56,8 +56,26 @@ STRING_RE = re.compile(r'^"(.*)"$', re.DOTALL)
 NUM_RE = re.compile(r'^-?(?:[0-9]+\.?[0-9]*|\.[0-9]+)f?$')
 
 
+BOILERPLATE_RE = re.compile(
+    r"ko-?fi|patreon|discord|paypal|github\.com|buymeacoffee|twitter|donate"
+    r"|was compiled on|^build:|^version:?$|^reset( all)?$|^credits?$"
+    r"|^github$|^more mods$|special thanks|framework by|^mod by ", re.IGNORECASE)
+
+PRESET_PAIR_RE = re.compile(r'\{\s*"(\w+)"\s*,\s*(-?[\d.]+)f?\s*\}')
+UPDATE_SETTING_RE = re.compile(r'UpdateSetting\(\s*"(\w+)"\s*,\s*(-?[\d.]+)f?\s*\)')
+LITERAL_RE = re.compile(r'"((?:[^"\\]|\\.)*)"')
+
+
 def parse_value(raw: str):
     raw = raw.strip()
+    # C++ concatenates adjacent string literals, and mod authors write multi-line
+    # instructions that way. Reading only the first literal truncated them mid-sentence.
+    if raw.startswith('"') or raw.startswith('std::string'):
+        lits = LITERAL_RE.findall(raw)
+        if lits:
+            joined = ''.join(lits)
+            joined = joined.replace('\\n', '\n').replace('\\"', '"')
+            return joined if joined.strip() else None
     m = STRING_RE.match(raw)
     if m:
         return m.group(1)
@@ -114,10 +132,25 @@ def parse_setting(block: str):
                 s['is_global'] = v
         elif name == 'binding':
             s['_has_binding'] = True
-    if 'key' not in s:
-        return None
     s.setdefault('type', 'float')
+    # TEXT/LABEL/BULLET/BUTTON blocks carry no key because they are not knobs: they are what the
+    # mod's author wrote for the PLAYER inside the overlay. Dropping them is why games whose
+    # author documented the whole procedure showed up in the launcher as "no adjustable settings".
     if s['type'] in ('button', 'label'):
+        text = (s.get('label') or s.get('tooltip') or '').strip()
+        section = (s.get('section') or '').strip()
+        if not text or section.lower() == 'links' or BOILERPLATE_RE.search(text):
+            return None
+        s['instruction'] = True
+        s['key'] = ''
+        if s['type'] == 'button':
+            values = {k: float(v) for k, v in PRESET_PAIR_RE.findall(block)}
+            values.update({k: float(v) for k, v in UPDATE_SETTING_RE.findall(block)})
+            if values:
+                s['values'] = values
+        s.pop('_has_binding', None)
+        return s
+    if 'key' not in s:
         return None
     s.pop('_has_binding', None)
     return s
@@ -133,7 +166,13 @@ def extract_game(game_dir: Path):
             continue
         for block in find_setting_blocks(text):
             s = parse_setting(block)
-            if s and s['key'] not in seen:
+            if not s:
+                continue
+            # instruction blocks share the empty key on purpose — deduping them by key
+            # would keep only the first paragraph of the author's explanation
+            if s.get('instruction'):
+                settings.append(s)
+            elif s['key'] not in seen:
                 seen.add(s['key'])
                 settings.append(s)
     return settings

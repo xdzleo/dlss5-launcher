@@ -16,6 +16,59 @@
         <local:CountToVisConverter x:Key="CountToVis"/>
         <local:StoreIconConverter x:Key="StoreIcon"/>
         <local:InverseBoolToVisConverter x:Key="NotToVis"/>
+        <local:TextToVisConverter x:Key="TextToVis"/>
+        <local:NoteColorConverter x:Key="NoteBg"/>
+        <local:NoteColorConverter x:Key="NoteBorder" Border="True"/>
+
+        <!-- ===== one piece of guidance: where to do it, who said it, and the exact text ===== -->
+        <DataTemplate x:Key="NoteCard">
+            <Border Background="{Binding Kind, Converter={StaticResource NoteBg}}"
+                    BorderBrush="{Binding Kind, Converter={StaticResource NoteBorder}}"
+                    BorderThickness="1" CornerRadius="9" Padding="12,10" Margin="0,0,0,7">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <!-- WHERE the user has to act: an instruction that does not say whether it
+                             happens in the game or in the overlay is half an instruction -->
+                        <Border CornerRadius="4" Padding="6,2" Margin="0,0,7,0" Background="#22000000"
+                                Visibility="{Binding Location, Converter={StaticResource TextToVis}}">
+                            <TextBlock Text="{Binding Location}" FontSize="9.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextBrush}"/>
+                        </Border>
+                        <TextBlock Text="{Binding Title}" FontSize="11.5" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Foreground="{StaticResource TextBrush}"
+                                   Visibility="{Binding Title, Converter={StaticResource TextToVis}}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12" LineHeight="18"
+                               Foreground="{StaticResource TextBrush}"
+                               Visibility="{Binding Text, Converter={StaticResource TextToVis}}"/>
+                    <!-- verbatim block (ini snippet, launch argument): monospaced, never wrapped -->
+                    <Border CornerRadius="6" Padding="9,7" Margin="0,7,0,0" Background="#1A1D24"
+                            BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
+                            Visibility="{Binding Preformatted, Converter={StaticResource TextToVis}}">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <TextBox Text="{Binding Preformatted, Mode=OneWay}" IsReadOnly="True"
+                                     FontFamily="Consolas" FontSize="11" Background="Transparent"
+                                     BorderThickness="0" Foreground="#C9D4E4" TextWrapping="NoWrap"
+                                     Padding="0" ToolTip="Selecione para copiar"/>
+                        </ScrollViewer>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Links}" Margin="0,7,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Margin="0,2,0,0" FontSize="11.5">
+                                    <Hyperlink NavigateUri="{Binding Url}"
+                                               RequestNavigate="OnNoteLinkNavigate"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               ToolTip="{Binding Url}">
+                                        <TextBlock Text="{Binding Label}"/>
+                                    </Hyperlink>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
 
         <!-- ===== game tile: cover fills the card, text sits on a scrim ===== -->
         <DataTemplate x:Key="GameTile" DataType="{x:Type vm:GameItemVm}">
@@ -708,20 +761,27 @@
 
                             <StackPanel Margin="0,8,0,0"
                                         Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
-                                <TextBlock Text="NOTAS DO MOD" Style="{StaticResource SectionLabel}"/>
-                                <ItemsControl ItemsSource="{Binding Notes}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{StaticResource CardBrush}"
-                                                    BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
-                                                    CornerRadius="9" Padding="12,10" Margin="0,0,0,6">
-                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="11.5"
-                                                           LineHeight="17" Foreground="{StaticResource TextDimBrush}"/>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <TextBlock Text="COMO AJUSTAR ESTE JOGO" Style="{StaticResource SectionLabel}"/>
+                                <ItemsControl ItemsSource="{Binding Notes}"
+                                              ItemTemplate="{StaticResource NoteCard}"/>
                             </StackPanel>
+
+                            <!-- Regras que valem para TODOS os jogos do motor: longas e iguais em
+                                 centenas de jogos, entao ficam recolhidas para nao enterrar a
+                                 instrucao especifica deste jogo. -->
+                            <Expander Margin="0,10,0,0" Padding="0"
+                                      Visibility="{Binding EngineNotes.Count, Converter={StaticResource CountToVis}}">
+                                <Expander.Header>
+                                    <TextBlock Text="{Binding EngineNotesHeader}" FontSize="10.5"
+                                               FontWeight="SemiBold" Foreground="{StaticResource TextFaintBrush}"/>
+                                </Expander.Header>
+                                <StackPanel Margin="0,8,0,0">
+                                    <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                               Text="Estas regras vêm da wiki do RenoDX e valem para todo jogo deste motor — inclusive quando a nota do jogo não repete."/>
+                                    <ItemsControl ItemsSource="{Binding EngineNotes}"
+                                                  ItemTemplate="{StaticResource NoteCard}"/>
+                                </StackPanel>
+                            </Expander>
 
                             <StackPanel Visibility="{Binding Selected.IsInstalled, Converter={StaticResource BoolToVis}}">
                                 <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,20,0,16"/>

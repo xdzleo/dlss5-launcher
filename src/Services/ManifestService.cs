@@ -21,6 +21,7 @@ public static class AppPaths
 public class ManifestService
 {
     private readonly Dictionary<string, List<SettingDef>> _bySlug = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, List<SettingDef>> _instructionsBySlug = new(StringComparer.OrdinalIgnoreCase);
 
     public ManifestService()
     {
@@ -31,11 +32,15 @@ public class ManifestService
         foreach (var game in doc.RootElement.EnumerateObject())
         {
             var list = new List<SettingDef>();
+            var instructions = new List<SettingDef>();
             foreach (var s in game.Value.EnumerateArray())
             {
-                var key = s.GetProperty("key").GetString();
-                if (string.IsNullOrEmpty(key)) continue;
-                list.Add(new SettingDef
+                var key = s.GetProperty("key").GetString() ?? "";
+                bool isInstruction = s.TryGetProperty("instruction", out var ins)
+                    && ins.ValueKind == JsonValueKind.True;
+                // an instruction block has no key by design — that is what makes it text
+                if (!isInstruction && string.IsNullOrEmpty(key)) continue;
+                var def = new SettingDef
                 {
                     Key = key,
                     Type = GetString(s, "type") ?? "float",
@@ -49,9 +54,15 @@ public class ManifestService
                         ? l.EnumerateArray().Select(x => x.GetString() ?? "").ToList()
                         : null,
                     IsGlobal = s.TryGetProperty("is_global", out var g) && g.ValueKind == JsonValueKind.True,
-                });
+                    IsInstruction = isInstruction,
+                    PresetValues = s.TryGetProperty("values", out var pv) && pv.ValueKind == JsonValueKind.Object
+                        ? pv.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.GetDouble())
+                        : null,
+                };
+                if (isInstruction) instructions.Add(def); else list.Add(def);
             }
             _bySlug[game.Name] = list;
+            _instructionsBySlug[game.Name] = instructions;
         }
     }
 
@@ -70,6 +81,17 @@ public class ManifestService
     /// "mod newer than the embedded catalog".</summary>
     public bool KnowsSlug(string? slug) => slug != null && _bySlug.ContainsKey(slug);
 
+    /// <summary>Instruction/preset blocks the mod's author wrote for the player. These are not
+    /// knobs, so they are kept apart from GetSettings — but they are exactly the text that tells
+    /// someone how to configure the game, and the app used to throw all of it away.</summary>
+    public IReadOnlyList<SettingDef> GetInstructions(string? slug) =>
+        slug != null && _instructionsBySlug.TryGetValue(slug, out var list)
+            ? list : Array.Empty<SettingDef>();
+
     /// <summary>Add settings discovered at runtime (fetched from the maintainer's repo).</summary>
-    public void Merge(string slug, IReadOnlyList<SettingDef> settings) => _bySlug[slug] = settings.ToList();
+    public void Merge(string slug, IReadOnlyList<SettingDef> settings)
+    {
+        _bySlug[slug] = settings.Where(s => !s.IsInstruction).ToList();
+        _instructionsBySlug[slug] = settings.Where(s => s.IsInstruction).ToList();
+    }
 }

@@ -1,8 +1,10 @@
 using System.Globalization;
 using System.IO;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
 namespace RenoDXLauncher;
@@ -95,6 +97,40 @@ public class CoverImageConverter : IValueConverter
             return img;
         }
         catch { return null; }
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Collapse a UI element when its bound string is null or blank — several note fields
+/// (location, title, code block) are optional and an empty chip is worse than no chip.</summary>
+public class TextToVisConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Card colours per note kind: a warning has to look different from a fact, otherwise
+/// the wall of guidance reads as uniformly ignorable.</summary>
+public class NoteColorConverter : IValueConverter
+{
+    public bool Border { get; set; }
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var (bg, border) = value is NoteKind k ? k switch
+        {
+            NoteKind.Warning => ("#33261200", "#8A6A1E"),
+            NoteKind.Step => ("#331B2B22", "#2F5E45"),
+            NoteKind.Preset => ("#33232B3A", "#3A4A66"),
+            _ => ("#3322262E", "#2E3440"),
+        } : ("#3322262E", "#2E3440");
+        var hex = Border ? border : bg;
+        return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

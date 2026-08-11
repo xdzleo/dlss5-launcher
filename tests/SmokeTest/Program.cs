@@ -303,7 +303,9 @@ var cppSample = """
   },
 """;
 var parsed = SettingsFetcher.Parse(cppSample);
-Check(parsed.Count == 2, $"parser C#: ignora BUTTON e le 2 settings (leu {parsed.Count})");
+var knobs = parsed.Where(d => !d.IsInstruction).ToList();
+Check(knobs.Count == 2, $"parser C#: le 2 ajustes (leu {knobs.Count})");
+Check(parsed.All(d => !d.IsInstruction), "parser C#: botao 'Github' e descartado como boilerplate");
 var pk = parsed.FirstOrDefault(d => d.Key == "ToneMapPeakNits");
 Check(pk != null && pk.Default == 1000 && pk.Min == 48 && pk.Max == 4000,
     $"parser C#: peak default/min/max corretos ({pk?.Default}/{pk?.Min}/{pk?.Max})");
@@ -315,6 +317,73 @@ Check(tm != null && tm.Type == "int" && tm.Labels?.Count == 2,
 Check(manifest.KnowsSlug("doom-tda") && manifest.GetSettings("doom-tda")!.Count == 0,
     "manifest: doom-tda conhecido e SEM opcoes ajustaveis");
 Check(!manifest.KnowsSlug("slug-que-nao-existe"), "manifest: slug inexistente = desconhecido");
+
+// 4e-bis. NOTAS: o autor do mod escreve instrucoes DENTRO do addon como blocos TEXT/LABEL/BUTTON.
+// O parser antigo jogava tudo fora, e por isso um jogo documentado do inicio ao fim aparecia
+// como "o autor deixou os valores fixos".
+var cppInstructions = """
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::TEXT,
+      .label = std::string("- Requires HDR on in game\n")
+             + "- Set Game Brightness to 1.0\n"
+             + "- Set contrast to 0.50",
+      .section = "About",
+  },
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+      .label = "HDR Look",
+      .section = "Color Grading Templates",
+      .tooltip = "O look calibrado pelo autor",
+      .on_change = []() {
+        for (const auto& [key, value] : {
+          {"toneMapType", 4.f},
+          {"colorGradeSaturation", 80.f},
+        }) UpdateSetting(key, value);
+      },
+  },
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+      .label = "Special thanks to Musa for the support!",
+      .section = "About",
+  },
+""";
+var ins = SettingsFetcher.Parse(cppInstructions).Where(d => d.IsInstruction).ToList();
+Check(ins.Count == 2, $"instrucoes: le TEXT e BUTTON, descarta agradecimento (leu {ins.Count})");
+var multi = ins.FirstOrDefault(d => d.Label?.Contains("Requires HDR") == true);
+Check(multi != null && multi.Label!.Contains("Set contrast to 0.50"),
+    "instrucoes: literais C++ concatenados nao sao truncados no meio da frase");
+var preset = ins.FirstOrDefault(d => d.Label == "HDR Look");
+Check(preset?.PresetValues != null && preset.PresetValues.Count == 2
+      && preset.PresetValues["colorGradeSaturation"] == 80,
+    $"instrucoes: preset do autor traz os valores ({preset?.PresetValues?.Count})");
+
+// setas sao o OPERADOR das instrucoes de configuracao: "Simple -> Advanced" sem a seta
+// deixa de ser instrucao. O filtro antigo apagava tudo entre U+2190 e U+2BFF.
+Check(AdviceService.StripSymbols("Settings Mode: Simple → Advanced") == "Settings Mode: Simple -> Advanced",
+    $"StripSymbols preserva a seta ({AdviceService.StripSymbols("Simple → Advanced")})");
+Check(!AdviceService.StripSymbols("\U0001F5A5️ Black Screen").Contains('️'),
+    "StripSymbols continua removendo emoji");
+Check(AdviceService.GuessLocation("Disable in-game HDR.") == "NO JOGO",
+    "local: 'in-game HDR' e ajuste DENTRO do jogo");
+Check(AdviceService.GuessLocation("Upgrade R11G11B10_FLOAT") == "OVERLAY RENODX (Home)",
+    "local: 'Upgrade' e ajuste no overlay");
+
+// os blocos de aviso da wiki vivem FORA de qualquer tabela e nunca eram lidos — sao o unico
+// lugar que explica como aplicar um upgrade
+var callouts = CatalogService.UnrealCallouts.Concat(CatalogService.UnityCallouts).ToList();
+Check(callouts.Count >= 5, $"callouts da wiki lidos ({callouts.Count} blocos de motor)");
+Check(callouts.Any(c => c.Text.Contains("Settings Mode", StringComparison.OrdinalIgnoreCase)
+                        && c.Text.Contains("Advanced", StringComparison.OrdinalIgnoreCase)),
+    "callouts: a regra de destravar os sliders (Simple -> Advanced) chega ao app");
+Check(callouts.All(c => !c.Text.Contains("ATENÇÃO: ATENÇÃO:")),
+    "callouts: emoji repetido nao vira 'ATENÇÃO: ATENÇÃO:'");
+Check(callouts.All(c => c.Links is null || c.Links.All(l => !l.Url.Contains("img.shields.io"))),
+    "callouts: badge de imagem nao vira link");
+
+// todo mod dedicado agora tem pelo menos uma nota (antes: 89% ficavam com a secao vazia)
+var dedicatedEntries = catalog.Where(e => e.Kind == ModKind.Dedicated).ToList();
+var semNota = dedicatedEntries.Count(e => e.Notes.Count == 0);
+Check(semNota == 0, $"todo mod dedicado tem nota ({semNota} sem nota de {dedicatedEntries.Count})");
 
 // 4f. correcao de DLSS FG (aplica/remove no ini, em jogo FALSO)
 var fgDir = Path.Combine(fakeRoot, "FgGame");

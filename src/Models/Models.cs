@@ -42,6 +42,39 @@ public class CatalogEntry
     public bool Working { get; set; }
     /// <summary>Notes from the wiki (hover note or UE/Unity Notes column).</summary>
     public string? Note { get; set; }
+    /// <summary>Every piece of per-game guidance found, with provenance. <see cref="Note"/> is the
+    /// raw wiki text kept for the advice extractor; this is what the user actually reads.</summary>
+    public List<ModNote> Notes { get; } = new();
+    /// <summary>GitHub discussion linked from the game's NAME cell — for several games this is the
+    /// only place the prerequisites are written down.</summary>
+    public string? DiscussionUrl { get; set; }
+}
+
+/// <summary>Where a piece of guidance came from. Shown to the user, because "the wiki says" and
+/// "the mod's author wrote in the code" carry different weight.</summary>
+public enum NoteSource { Wiki, WikiEngine, WikiLegend, Rhi, ModSource, Launcher }
+
+public enum NoteKind { Info, Warning, Step, Preset }
+
+/// <summary>A link kept WITH its destination — the old note pipeline threw URLs away and left
+/// text like "see here" pointing nowhere.</summary>
+public record NoteLink(string Label, string Url);
+
+/// <summary>One piece of guidance about a game.</summary>
+public record ModNote(
+    NoteSource Source,
+    NoteKind Kind,
+    string? Title,
+    string Text,
+    IReadOnlyList<NoteLink>? Links = null,
+    /// <summary>Verbatim block (an .ini snippet, a launch argument) rendered monospaced.</summary>
+    string? Preformatted = null,
+    /// <summary>WHERE the user has to act: "NO JOGO", "OVERLAY RENODX (Home)", "PASTA DO JOGO".
+    /// Without this every instruction reads as if it happened in the same place.</summary>
+    string? Location = null)
+{
+    /// <summary>Text with markup collapsed, for dedup against other sources.</summary>
+    public string DedupKey => new string(Text.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 }
 
 /// <summary>State of ReShade + RenoDX inside one game's deploy directory.</summary>
@@ -74,4 +107,10 @@ public class SettingDef
     /// <summary>Combo labels for int settings (index = value).</summary>
     public IReadOnlyList<string>? Labels { get; init; }
     public bool IsGlobal { get; init; }
+    /// <summary>TEXT/LABEL/BULLET block: not a knob, but instructions the mod's author wrote for
+    /// the player. These used to be dropped, which is why games whose author explained everything
+    /// in the overlay showed up in the launcher as "no adjustable settings".</summary>
+    public bool IsInstruction { get; init; }
+    /// <summary>BUTTON block: values the author applies at once (a calibrated look).</summary>
+    public IReadOnlyDictionary<string, double>? PresetValues { get; init; }
 }

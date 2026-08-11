@@ -168,6 +168,19 @@ public partial class CatalogService
                         Maintainer = wikiSiblings?.FirstOrDefault()?.Maintainer,
                         NexusUrl = wikiSiblings?.FirstOrDefault()?.NexusUrl,
                     };
+                    // these come from the machine index, not from a wiki row, so they would
+                    // otherwise reach the user with an empty guidance panel
+                    if (deprecatedSlugs.Contains(slug))
+                        entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Warning, "Descontinuado",
+                            "Marcado como DESCONTINUADO na wiki do RenoDX — pode não funcionar mais."));
+                    else
+                        entry.Notes.Add(new ModNote(NoteSource.WikiLegend, NoteKind.Info, "Status na wiki",
+                            "Publicado no índice oficial do RenoDX."));
+                    if (entry.NexusUrl is { Length: > 0 } nx)
+                        entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Instruções do autor",
+                            "A wiki avisa que instruções de instalação específicas deste jogo podem estar na página do NexusMods.",
+                            new[] { new NoteLink("Abrir a página no NexusMods", nx) }, null, "ANTES DE INSTALAR"));
+
                     SeedAliases(entry);
                     foreach (var a in aliases) entry.NormalizedAliases.Add(MatchService.Normalize(a));
                     entry.NormalizedAliases.Remove("");
@@ -192,6 +205,12 @@ public partial class CatalogService
     [GeneratedRegex(@"\(#\s+""([^""]+)""\)")]
     private static partial Regex HoverNoteRegex();
 
+    [GeneratedRegex(@"^\[!(NOTE|WARNING|TIP|IMPORTANT|CAUTION)\]", RegexOptions.IgnoreCase)]
+    private static partial Regex QuoteTagRegex();
+
+    [GeneratedRegex(@"white_check_mark|construction|no_entry|✅|🚧|⛔")]
+    private static partial Regex StatusTokenRegex();
+
     [GeneratedRegex(@"\b32[\s-]?bits?\b", RegexOptions.IgnoreCase)]
     private static partial Regex ThirtyTwoBitRegex();
 
@@ -209,6 +228,14 @@ public partial class CatalogService
         return result;
     }
 
+    /// <summary>The wiki's callout blocks, by scope. These live OUTSIDE every table, so the row
+    /// parser never saw them — and they are the only place that explains how to actually apply an
+    /// upgrade (the slider is hidden until Settings Mode goes Simple -> Advanced, then the game
+    /// has to restart). 68 lines of instructions governing ~570 games.</summary>
+    public static List<ModNote> GlobalCallouts { get; private set; } = new();
+    public static List<ModNote> UnrealCallouts { get; private set; } = new();
+    public static List<ModNote> UnityCallouts { get; private set; } = new();
+
     public static List<CatalogEntry> ParseModsMd(string md)
     {
         var entries = new List<CatalogEntry>();
@@ -221,6 +248,10 @@ public partial class CatalogService
         string uePart = ueStart > 0 ? md[ueStart..(unityStart > ueStart ? unityStart : md.Length)] : "";
         string unityPart = unityStart > 0 ? md[unityStart..] : "";
 
+        GlobalCallouts = CalloutBlocks(mainPart);
+        UnrealCallouts = CalloutBlocks(uePart);
+        UnityCallouts = CalloutBlocks(unityPart);
+
         foreach (var cells in TableRows(mainPart, minCells: 4))
             AddDedicated(entries, cells);
         foreach (var cells in TableRows(uePart, minCells: 2))
@@ -228,6 +259,83 @@ public partial class CatalogService
         foreach (var cells in TableRows(unityPart, minCells: 2))
             AddGeneric(entries, cells, ModKind.UnityEngine);
         return entries;
+    }
+
+    /// <summary>Parse GitHub-flavoured callouts (<c>&gt; [!WARNING]</c> and friends) into notes,
+    /// keeping fenced code blocks verbatim and links with their destination.</summary>
+    private static List<ModNote> CalloutBlocks(string part)
+    {
+        var result = new List<ModNote>();
+        var lines = part.Replace("\r\n", "\n").Split('\n');
+        var block = new List<string>();
+
+        void Flush()
+        {
+            if (block.Count == 0) return;
+            var body = block.Select(l => Regex.Replace(l, @"^\s*>\s?", "")).ToList();
+            block.Clear();
+
+            var kind = NoteKind.Info;
+            string? title = null;
+            var head = QuoteTagRegex().Match(body.Count > 0 ? body[0] : "");
+            if (head.Success)
+            {
+                var tag = head.Groups[1].Value.ToUpperInvariant();
+                kind = tag is "WARNING" or "CAUTION" or "IMPORTANT" ? NoteKind.Warning : NoteKind.Info;
+                title = tag switch
+                {
+                    "WARNING" or "CAUTION" => "Atenção",
+                    "IMPORTANT" => "Importante",
+                    "TIP" => "Dica",
+                    _ => "Nota",
+                };
+                body.RemoveAt(0);
+            }
+
+            // fenced block: an .ini snippet or launch argument the user has to copy verbatim
+            string? pre = null;
+            int open = body.FindIndex(l => l.TrimStart().StartsWith("```"));
+            if (open >= 0)
+            {
+                int close = body.FindIndex(open + 1, l => l.TrimStart().StartsWith("```"));
+                if (close > open)
+                {
+                    pre = string.Join("\n", body.GetRange(open + 1, close - open - 1)).Trim();
+                    body.RemoveRange(open, close - open + 1);
+                }
+            }
+
+            var links = new List<NoteLink>();
+            var text = string.Join("\n", body);
+            // image badges first: ![Snapshot](shields.io/...) is decoration, and left in place it
+            // turns into a link labelled "![Snapshot" pointing at a badge generator
+            text = Regex.Replace(text, @"!\[[^\]]*\]\([^)]*\)", "");
+            text = MdLinkRegex().Replace(text, m =>
+            {
+                var url = LinkTargetRegex().Match(m.Value);
+                var label = m.Groups[1].Value.Trim();
+                if (url.Success && label.Length > 0 && !url.Groups[1].Value.Contains("img.shields.io"))
+                    links.Add(new NoteLink(label, url.Groups[1].Value));
+                return label;
+            });
+            text = Regex.Replace(text, @"\*\*|\*(?!\*)|__", "");   // markdown emphasis
+            text = Regex.Replace(text, @":[a-z_0-9]+:", "");       // GitHub emoji shortcodes
+            text = AdviceService.StripSymbols(WebUtility.HtmlDecode(text));
+            text = Regex.Replace(text, @"[ \t]*\n[ \t]*", "\n");
+            text = Regex.Replace(text, @"\n{2,}", "\n").Trim();
+            if (text.Length == 0 && pre == null) return;
+
+            result.Add(new ModNote(NoteSource.WikiEngine, kind, title, text,
+                links.Count > 0 ? links : null, pre));
+        }
+
+        foreach (var raw in lines)
+        {
+            if (raw.TrimStart().StartsWith('>')) block.Add(raw);
+            else Flush();
+        }
+        Flush();
+        return result;
     }
 
     private static void AddDedicated(List<CatalogEntry> entries, string[] cells)
@@ -255,20 +363,57 @@ public partial class CatalogService
         // are kept — the InfoUrl gives the user somewhere to go
         string? info = allUrls.FirstOrDefault(u =>
             !u.Contains("img.shields.io") && u != download && u != nexus);
-        var status = cells[3];
-        entries.Add(new CatalogEntry
+        // The status is normally the 4th cell, but a handful of rows carry extra columns and the
+        // real marker sits further right — reading cells[3] blindly announced "Ori and the Will of
+        // the Wisps" as working while the wiki says "Currently broken".
+        var status = cells.Skip(3).LastOrDefault(c => StatusTokenRegex().IsMatch(c)) ?? cells[3];
+        // The hover note is a link title and can hang off ANY cell, not just the status one.
+        var hoverText = HoverNoteRegex().Match(string.Join(" ", cells)) is { Success: true } h
+            ? h.Groups[1].Value : null;
+        // The game NAME is sometimes a link to the GitHub discussion where the prerequisites are
+        // written down. That URL was being erased by CleanName and never reached the user.
+        string? discussion = LinkTargetRegex().Match(cells[0]) is { Success: true } d
+            ? d.Groups[1].Value : null;
+
+        var maintainer = CleanName(cells[1]);
+        var entry = new CatalogEntry
         {
             GameName = name,
             Kind = ModKind.Dedicated,
-            Maintainer = CleanName(cells[1]),
+            Maintainer = maintainer,
             DownloadUrl = download,
             Slug = slug,
             AddonBits = bits,
             NexusUrl = nexus,
-            InfoUrl = info,
+            InfoUrl = info ?? discussion,
+            DiscussionUrl = discussion,
             Working = IsWorkingStatus(status),
-            Note = HoverNoteRegex().Match(status) is { Success: true } h ? h.Groups[1].Value : null,
-        });
+            Note = hoverText,
+        };
+
+        // 9 of every 10 dedicated mods have no hover note, and the panel used to collapse to
+        // nothing for them. Everything below already exists in the row — it was just discarded.
+        if (hoverText is { Length: > 0 })
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Info, "Nota da wiki",
+                AdviceService.StripSymbols(hoverText)));
+
+        entry.Notes.Add(new ModNote(NoteSource.WikiLegend,
+            entry.Working ? NoteKind.Info : NoteKind.Warning, "Status na wiki",
+            entry.Working
+                ? "Marcado como FUNCIONANDO pela wiki do RenoDX."
+                : "Marcado como EM CONSTRUÇÃO: o mod ainda está sendo trabalhado e pode ter problemas."));
+
+        if (nexus != null)
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Instruções do autor",
+                "A wiki avisa que instruções de instalação específicas deste jogo podem estar na página do NexusMods.",
+                new[] { new NoteLink("Abrir a página no NexusMods", nexus) }, null, "ANTES DE INSTALAR"));
+
+        if (discussion != null)
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Discussão deste mod",
+                "O autor documentou este mod numa discussão no GitHub — é onde ficam os pré-requisitos.",
+                new[] { new NoteLink("Abrir a discussão no GitHub", discussion) }, null, "ANTES DE INSTALAR"));
+
+        entries.Add(entry);
     }
 
     private static void AddGeneric(List<CatalogEntry> entries, string[] cells, ModKind kind)
@@ -276,9 +421,9 @@ public partial class CatalogService
         var name = CleanName(cells[0]);
         if (name.Length == 0) return;
         var status = cells.Length > 1 ? cells[1] : "";
-        var note = cells.Length > 2 ? CleanNote(cells[2]) : null;
+        var (note, noteLinks) = cells.Length > 2 ? CleanNote(cells[2]) : (null, null);
         bool is32 = note != null && ThirtyTwoBitRegex().IsMatch(note);
-        entries.Add(new CatalogEntry
+        var entry = new CatalogEntry
         {
             GameName = name,
             Kind = kind,
@@ -288,7 +433,19 @@ public partial class CatalogService
             AddonBits = kind == ModKind.UnrealEngine ? 64 : (is32 ? 32 : 64),
             Working = IsWorkingStatus(status),
             Note = note,
-        });
+        };
+        if (note is { Length: > 0 })
+        {
+            var clean = AdviceService.StripSymbols(note);
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Ajuste deste jogo",
+                clean, noteLinks, null, AdviceService.GuessLocation(clean)));
+        }
+        entry.Notes.Add(new ModNote(NoteSource.WikiLegend,
+            entry.Working ? NoteKind.Info : NoteKind.Warning, "Status na wiki",
+            entry.Working
+                ? "Marcado como FUNCIONANDO pela wiki do RenoDX."
+                : "Marcado como EM CONSTRUÇÃO: o mod ainda está sendo trabalhado e pode ter problemas."));
+        entries.Add(entry);
     }
 
     private static IEnumerable<string[]> TableRows(string part, int minCells)
@@ -314,12 +471,23 @@ public partial class CatalogService
         return s.Trim();
     }
 
-    private static string? CleanNote(string cell)
+    /// <summary>Clean a wiki note cell, KEEPING the link destinations. The old version replaced
+    /// [text](url) with just the text, so notes reading "see here" pointed at nothing.</summary>
+    private static (string? Text, List<NoteLink>? Links) CleanNote(string cell)
     {
-        var s = cell.Replace("<br>", "\n").Replace("</details>", "");
-        s = MdLinkRegex().Replace(s, m => m.Groups[1].Value);
+        var s = Regex.Replace(cell, @"<br\s*/?>", "\n");
+        s = Regex.Replace(s, @"</?(details|summary)>", "");
+        var links = new List<NoteLink>();
+        s = MdLinkRegex().Replace(s, m =>
+        {
+            var url = LinkTargetRegex().Match(m.Value);
+            var label = m.Groups[1].Value.Trim();
+            if (url.Success && label.Length > 0 && !url.Groups[1].Value.Contains("img.shields.io"))
+                links.Add(new NoteLink(label, url.Groups[1].Value));
+            return label;
+        });
         s = Regex.Replace(s, @":[a-z_0-9]+:", "");
         s = WebUtility.HtmlDecode(s).Trim();
-        return s.Length == 0 ? null : s;
+        return (s.Length == 0 ? null : s, links.Count > 0 ? links : null);
     }
 }
