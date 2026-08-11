@@ -52,6 +52,83 @@ Check(goty?.Slug == "batmanak", $"sufixo de edição removido só no lado instal
 var pe = PeUtils.Inspect(fakeExe);
 Check(pe is { Is64Bit: true }, $"PE bitness do exe fake = {(pe?.Is64Bit == true ? 64 : 32)}");
 
+// 3b. ExeLocator — real layouts that already fooled it once. Fixtures are copies of cmd.exe
+// (never executed); the "renders" ones get their ntdll.dll import renamed to d3d11.dll, same
+// length, so the headers stay valid and PeUtils sees a graphics import.
+string MakeExe(string path, bool bits64, bool renders, long padTo = 0)
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+    var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+    var bytes = File.ReadAllBytes(Path.Combine(windows, bits64 ? "System32" : "SysWOW64", "cmd.exe"));
+    if (renders)
+    {
+        var from = System.Text.Encoding.ASCII.GetBytes("ntdll.dll\0");
+        var to = System.Text.Encoding.ASCII.GetBytes("d3d11.dll\0");
+        for (int i = 0; ; )
+        {
+            int at = bytes.AsSpan(i).IndexOf(from);
+            if (at < 0) break;
+            to.CopyTo(bytes, i + at);
+            i += at + to.Length;
+        }
+    }
+    File.WriteAllBytes(path, bytes);
+    if (padTo > bytes.Length)
+    {
+        using var fs = new FileStream(path, FileMode.Open, FileAccess.Write);
+        fs.SetLength(padTo);   // sparse tail: the fixture just has to LOOK big
+    }
+    return path;
+}
+
+// Space Marine 2: a 126 MB 32-bit Epic installer and a 2.9 MB 32-bit shim that carries the
+// game's exact name, next to the real 81 MB 64-bit binary buried four levels down.
+var smRoot = Path.Combine(fakeRoot, "Space Marine 2");
+var smBin = Path.Combine(smRoot, "client_pc", "root", "bin", "pc");
+var smReal = MakeExe(Path.Combine(smBin, "Warhammer 40000 Space Marine 2 - Retail.exe"), true, true);
+var smShim = MakeExe(Path.Combine(smRoot, "Warhammer 40000 Space Marine 2.exe"), false, false);
+var smInstaller = MakeExe(Path.Combine(smBin, "EpicOnlineServices", "EpicOnlineServicesInstaller.exe"),
+    false, false, padTo: 128L * 1024 * 1024);
+var smCrash = MakeExe(Path.Combine(smBin, "crash_reporter.exe"), true, false);
+var smCands = ExeLocator.FindCandidates(
+    new GameInfo { Name = "Warhammer 40,000: Space Marine 2", InstallDir = smRoot, Store = GameStore.Steam }, null);
+Check(smCands.FirstOrDefault() == smReal,
+    $"Space Marine 2 → o exe que renderiza, não o shim ({Path.GetFileName(smCands.FirstOrDefault() ?? "-")})");
+Check(!smCands.Contains(smInstaller), "instalador de terceiro (Epic, 128 MB) fora dos candidatos");
+Check(!smCands.Contains(smCrash), "crash_reporter.exe fora dos candidatos");
+
+// Max Payne 3: o jogo REAL é 32-bit e o shim é 64-bit — preferir 64-bit não pode virar regra dura.
+var mpRoot = Path.Combine(fakeRoot, "Max Payne 3");
+var mpReal = MakeExe(Path.Combine(mpRoot, "Max Payne 3", "MaxPayne3.exe"), false, true);
+MakeExe(Path.Combine(mpRoot, "Max Payne 3", "PlayMaxPayne3.exe"), true, false);
+var mpCands = ExeLocator.FindCandidates(new GameInfo
+{
+    Name = "Max Payne 3", InstallDir = mpRoot, Store = GameStore.Steam,
+    ExeHint = Path.Combine("Max Payne 3", "PlayMaxPayne3.exe"),
+}, null);
+Check(mpCands.FirstOrDefault() == mpReal,
+    $"Max Payne 3 → jogo 32-bit vence o shim 64-bit apontado pela loja ({Path.GetFileName(mpCands.FirstOrDefault() ?? "-")})");
+
+// "crash" é palavra de jogo, não só de stub
+var cbRoot = Path.Combine(fakeRoot, "Crash Bandicoot");
+var cbReal = MakeExe(Path.Combine(cbRoot, "CrashBandicootNSaneTrilogy.exe"), true, true);
+var cbCands = ExeLocator.FindCandidates(
+    new GameInfo { Name = "Crash Bandicoot N. Sane Trilogy", InstallDir = cbRoot, Store = GameStore.Steam }, null);
+Check(cbCands.FirstOrDefault() == cbReal, "'crash' não condena CrashBandicootNSaneTrilogy.exe");
+
+// Unreal: o shipping exe ganha de qualquer coisa, mesmo com um handler no mesmo diretório
+var sbRoot = Path.Combine(fakeRoot, "StellarBlade");
+var sbBin = Path.Combine(sbRoot, "SB", "Binaries", "Win64");
+var sbReal = MakeExe(Path.Combine(sbBin, "SB-Win64-Shipping.exe"), true, true);
+MakeExe(Path.Combine(sbBin, "crs-handler.exe"), true, false);
+var sbCands = ExeLocator.FindCandidates(new GameInfo
+{
+    Name = "Stellar Blade", InstallDir = sbRoot, Store = GameStore.Steam,
+    ExeHint = Path.Combine("SB", "Binaries", "Win64", "crs-handler.exe"),
+}, null);
+Check(sbCands.FirstOrDefault() == sbReal,
+    $"Stellar Blade → -Win64-Shipping.exe apesar do ExeHint da loja ({Path.GetFileName(sbCands.FirstOrDefault() ?? "-")})");
+
 // 4. manifest
 var manifest = new ManifestService();
 var defs = manifest.GetSettings("cp2077");

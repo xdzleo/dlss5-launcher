@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.10.1
+
+### Escolha do .exe do jogo reescrita
+
+Space Marine 2 aparecia como "32 bits" e travava a instalação. O culpado era o app: ele
+ordenava os `.exe` por tamanho, e o jogo traz um **instalador do Epic Online Services de
+126 MB (32-bit)** ao lado do binário real de 81 MB. Puxando esse fio saíram mais três defeitos
+do mesmo lugar:
+
+- **A lista de nomes de stub nunca funcionou.** O `RegexOptions.IgnoreCase` fazia `[A-Z]`
+  casar com minúsculas, então o nome era quebrado letra por letra e nenhuma palavra da lista
+  batia. `crash_reporter.exe` passava como candidato havia meses.
+- **O atalho da loja entrava na frente sem ser avaliado.** A Steam abre Stellar Blade pelo
+  `crs-handler.exe` (1 MB) e Max Payne 3 pelo `PlayMaxPayne3.exe` (0,4 MB) — os dois são
+  atalhos que relançam o binário de verdade. Agora o palpite da loja vale pontos, não a vaga.
+- **Preferir 64-bit não pode ser regra dura.** Max Payne 3 é um jogo 32-bit cujo atalho é
+  64-bit; a regra dura escolhia o atalho.
+
+Agora existe **um** ranking só, e o critério principal é o certo: **o `.exe` que importa uma API
+gráfica** (`d3d*`, `dxgi`, `opengl32`, `vulkan-1`). É o que separa os dois casos com folga —
+Max Payne 3 importa `d3dcompiler_43.dll` e o atalho não importa nada. Depois vêm o sufixo
+`-Win64-Shipping`, a pasta curada do índice, a semelhança com o nome do jogo, 64-bit, o palpite
+da loja e, por último, o tamanho. Pastas de terceiros (`EpicOnlineServices`, `EasyAntiCheat`,
+`redist`, ...) ficam fora.
+
+`crash` e `report` saíram da lista de palavras de stub — Crash Bandicoot é um jogo. Esses casos
+passaram a ser tratados por nomes compostos (`crashreport`, `crashhandler`), que não têm como
+disparar num título de verdade.
+
+Os 22 jogos da biblioteca de teste agora escolhem o binário certo, e os quatro casos viraram
+teste de regressão.
+
+### Novo comando `exe`
+
+```
+RenoDXLauncher.exe exe "space marine"
+```
+
+Mostra os `.exe` candidatos na ordem em que o app escolheria, com bits e tamanho — dá para
+conferir o alvo sem abrir a janela.
+
 ## v1.10.0
 
 ### Foto do autor do mod

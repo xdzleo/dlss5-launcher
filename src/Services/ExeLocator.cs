@@ -102,59 +102,102 @@ public static class PeUtils
 /// </summary>
 public static class ExeLocator
 {
+    /// <summary>Words that only ever appear in a launcher/helper binary. "crash" and "report"
+    /// are deliberately NOT here — Crash Bandicoot is a game and Reporter is a game; those two
+    /// are handled by the compound list below, which cannot fire on a real title.</summary>
     private static readonly string[] StubNames =
     {
-        "launcher", "setup", "unins", "crash", "redist", "dxsetup", "vc_redist", "vcredist",
-        "install", "config", "report", "eac", "easyanticheat", "activation", "support",
+        "launcher", "setup", "unins", "uninstall", "redist", "dxsetup", "vc_redist", "vcredist",
+        "install", "installer", "config", "eac", "easyanticheat", "activation", "support",
         "benchmark", "updater", "bootstrap", "helper", "cleanup", "touchup",
+    };
+
+    /// <summary>Compound stubs, matched against the name with separators stripped so
+    /// crash_reporter / CrashReporter / crashreporting all resolve to the same thing.</summary>
+    private static readonly string[] GluedStubs =
+    {
+        "gamelaunchhelper", "easyanticheat", "vcredist", "dxsetup", "unins000",
+        "crashreport", "crashhandler", "crashpad", "crashsender", "errorreport",
+        "certsupdater", "prereqsetup",
     };
 
     public static List<string> FindCandidates(GameInfo game, string? installSubdirOverride)
     {
         var results = new List<string>();
+        var peCache = new Dictionary<string, PeUtils.PeInfo?>(StringComparer.OrdinalIgnoreCase);
+        PeUtils.PeInfo? Pe(string path)
+        {
+            if (!peCache.TryGetValue(path, out var info))
+                peCache[path] = info = PeUtils.Inspect(path);
+            return info;
+        }
+
         try
         {
-            // 1. curated subdir override
+            var all = SafeEnumerate(game.InstallDir).ToList();
+
+            // The store's launch target. It is a HINT, not an answer: Steam launches Stellar
+            // Blade through crs-handler.exe (1 MB) and Max Payne 3 through PlayMaxPayne3.exe
+            // (0.4 MB) — both are shims that relaunch the real binary. So it earns a bonus in
+            // the ranking, it never jumps the queue.
+            string? hint = null;
+            if (game.ExeHint != null)
+            {
+                var direct = Path.Combine(game.InstallDir, game.ExeHint);
+                hint = File.Exists(direct) ? direct
+                    : all.FirstOrDefault(f => Path.GetFileName(f).Equals(
+                        Path.GetFileName(game.ExeHint), StringComparison.OrdinalIgnoreCase));
+                if (hint != null && !all.Contains(hint, StringComparer.OrdinalIgnoreCase))
+                    all.Add(hint);   // deeper than the scan depth, but real
+            }
+
+            // The curated deploy subdir from the RenoDX HDR Index — hand-checked data.
+            string? curated = null;
             if (installSubdirOverride != null)
             {
                 var dir = Path.Combine(game.InstallDir, installSubdirOverride);
-                if (Directory.Exists(dir))
-                    results.AddRange(SafeGetExes(dir).Where(e => !IsStub(e)));
+                if (Directory.Exists(dir)) curated = Path.GetFullPath(dir);
             }
 
-            // 2. store metadata hint. A hint whose name is a launcher stub (Xbox's hardcoded
-            //    gamelaunchhelper.exe, Epic's *Launcher.exe...) must NEVER lead: the render exe
-            //    usually lives in a subdir (...\Content\<Proj>\Binaries\WinGDK\Game.exe) and the
-            //    deploy dir would end up outside the game process's DLL search path — ReShade
-            //    would be installed where nothing loads it.
+            // One ranking for everything. Every earlier revision of this had priority TIERS,
+            // and every wrong pick so far came from a tier jumping the queue with a shim.
             string? stubHint = null;
-            if (game.ExeHint != null)
+            var ranked = new List<(string Path, int Score, long Size)>();
+            foreach (var f in all)
             {
-                var hint = Path.Combine(game.InstallDir, game.ExeHint);
-                if (!File.Exists(hint))
-                    hint = SafeEnumerate(game.InstallDir)
-                        .FirstOrDefault(f => Path.GetFileName(f).Equals(
-                            Path.GetFileName(game.ExeHint), StringComparison.OrdinalIgnoreCase)) ?? "";
-                if (File.Exists(hint))
+                if (InVendorDir(f, game.InstallDir)) continue;
+                if (IsStub(f, game.Name))
                 {
-                    if (IsStub(hint)) stubHint = hint;  // stays selectable, but last
-                    else results.Add(hint);
+                    // keep a stubby hint selectable in the combo, but dead last
+                    if (hint != null && f.Equals(hint, StringComparison.OrdinalIgnoreCase))
+                        stubHint = f;
+                    continue;
                 }
+
+                int score = 0;
+                var fileName = Path.GetFileName(f);
+                if (fileName.EndsWith("-Win64-Shipping.exe", StringComparison.OrdinalIgnoreCase)
+                    || fileName.EndsWith("-WinGDK-Shipping.exe", StringComparison.OrdinalIgnoreCase))
+                    score += 1000;                                    // Unreal never lies
+                if (curated != null && string.Equals(Path.GetDirectoryName(Path.GetFullPath(f)),
+                        curated, StringComparison.OrdinalIgnoreCase))
+                    score += 300;                                     // curated deploy dir
+                score += NameScore(f, game.Name) * 3;                 // 0..300
+                var pe = Pe(f);
+                if (UsesGpu(pe)) score += 400;                        // it talks to the GPU
+                if (pe?.Is64Bit == true) score += 120;                // prefer, never require
+                if (hint != null && f.Equals(hint, StringComparison.OrdinalIgnoreCase))
+                    score += 80;                                      // the store's guess
+
+                long size = 0;
+                try { size = new FileInfo(f).Length; } catch { }
+                ranked.Add((f, score, size));
             }
 
-            var all = SafeEnumerate(game.InstallDir).ToList();
-
-            // 3. Unreal shipping exe is always the real render exe
-            results.AddRange(all.Where(f =>
-                Path.GetFileName(f).EndsWith("-Win64-Shipping.exe", StringComparison.OrdinalIgnoreCase)
-                || Path.GetFileName(f).EndsWith("-WinGDK-Shipping.exe", StringComparison.OrdinalIgnoreCase)));
-
-            // 4. everything else, largest first
-            results.AddRange(all
-                .Where(f => !IsStub(f))
-                .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } }));
-
-            // 5. the stub hint last — still reachable in the combo if the heuristic was wrong
+            results.AddRange(ranked
+                .OrderByDescending(r => r.Score)
+                .ThenByDescending(r => r.Size)
+                .Select(r => r.Path));
             if (stubHint != null) results.Add(stubHint);
         }
         catch (Exception ex) { Log.Warn($"ExeLocator {game.Name}: {ex.Message}"); }
@@ -166,28 +209,76 @@ public static class ExeLocator
             .ToList();
     }
 
-    /// <summary>Stub detection on WORD boundaries: "eac" must not condemn "Peaceful.exe"
-    /// and "crash" must not condemn "CrashBandicoot.exe".</summary>
-    private static bool IsStub(string path)
+    /// <summary>Import prefixes only a rendering binary links against. Prefixes, not exact
+    /// names: Max Payne 3 imports d3dcompiler_43.dll and nothing else graphical, and that one
+    /// import is what tells the 22 MB game apart from its 64-bit 0.4 MB launcher shim.</summary>
+    private static readonly string[] GpuDlls =
     {
-        var name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
-        // split camelCase/underscore/dash/space/digits into words
-        var words = Regex.Split(name, @"(?<!^)(?=[A-Z])|[^a-z0-9]+|(?<=[a-z])(?=[0-9])",
-            RegexOptions.IgnoreCase).Where(w => w.Length > 0).ToArray();
-        foreach (var stub in StubNames)
+        "d3d", "dxgi", "opengl32", "vulkan-1", "amd_ags", "nvapi",
+    };
+
+    private static bool UsesGpu(PeUtils.PeInfo? pe) =>
+        pe != null && pe.Imports.Any(i => GpuDlls.Any(g => i.StartsWith(g, StringComparison.Ordinal)));
+
+    /// <summary>Folders that ship third-party installers and services — never the render exe.
+    /// Their binaries can be far bigger than the game's own (Epic's installer is 126 MB).</summary>
+    private static readonly string[] VendorDirs =
+    {
+        "epiconlineservices", "easyanticheat", "battleye", "_commonredist", "commonredist",
+        "redist", "directx", "vcredist", "dotnet", "prereq", "_installer", "installers",
+        "steamvr", "support", "tools", "sdk", "crashreporter",
+    };
+
+    private static bool InVendorDir(string path, string installDir)
+    {
+        var rel = path.Length > installDir.Length ? path[installDir.Length..] : path;
+        foreach (var part in rel.Split('\\', '/'))
         {
-            // whole-word match, or the whole name is exactly the stub
-            if (words.Contains(stub, StringComparer.OrdinalIgnoreCase)) return true;
-            if (name.Equals(stub, StringComparison.OrdinalIgnoreCase)) return true;
+            var p = part.ToLowerInvariant();
+            if (VendorDirs.Any(v => p == v || p.Replace(" ", "") == v)) return true;
         }
-        // glued compound stubs that survive the word split — these are unambiguous launcher
-        // shims, never a render exe ("gamelaunchhelper" is Xbox's hardcoded stub)
-        string[] glued =
-        {
-            "gamelaunchhelper", "easyanticheat", "vc_redist", "vcredist", "dxsetup",
-            "unins000", "crashreporter", "crashhandler", "crashpad", "errorreporter",
-        };
-        return glued.Any(g => name.Contains(g, StringComparison.OrdinalIgnoreCase));
+        return false;
+    }
+
+    /// <summary>How much an exe name looks like the game's own title — the strongest signal
+    /// that this is the binary the user actually plays.</summary>
+    private static int NameScore(string path, string gameName)
+    {
+        var exe = MatchService.Normalize(Path.GetFileNameWithoutExtension(path));
+        var game = MatchService.Normalize(gameName);
+        if (exe.Length == 0 || game.Length == 0) return 0;
+        if (exe == game) return 100;
+        if (exe.StartsWith(game) || game.StartsWith(exe)) return 80;   // "...SpaceMarine2Retail"
+        if (exe.Contains(game) || game.Contains(exe)) return 60;
+        // partial: share a long prefix (abbreviated names like "eldenring" vs "eldenringgame")
+        int common = 0;
+        while (common < exe.Length && common < game.Length && exe[common] == game[common]) common++;
+        return common >= 6 ? 30 : 0;
+    }
+
+    /// <summary>Stub detection on WORD boundaries: "eac" must not condemn "Peaceful.exe".
+    /// An exe whose name echoes the game's own title is never a stub, so "CrashBandicoot.exe"
+    /// survives the "crash" rule.</summary>
+    private static bool IsStub(string path, string gameName)
+    {
+        var raw = Path.GetFileNameWithoutExtension(path);
+        var name = raw.ToLowerInvariant();
+
+        // the game's own name beats every heuristic below
+        if (NameScore(path, gameName) >= 80) return false;
+
+        // Split camelCase/underscore/dash/space/digits into words. The split runs on the
+        // ORIGINAL spelling: lowercasing first erases the case boundary, and IgnoreCase makes
+        // [A-Z] match lowercase too — which used to turn every name into single letters and
+        // silently disabled this whole list.
+        var words = Regex.Split(raw, @"(?<!^)(?=[A-Z])|[^A-Za-z0-9]+|(?<=[a-z])(?=[0-9])")
+            .Where(w => w.Length > 0)
+            .Select(w => w.ToLowerInvariant())
+            .ToArray();
+        if (StubNames.Any(s => words.Contains(s, StringComparer.Ordinal))) return true;
+
+        var compact = Regex.Replace(name, "[^a-z0-9]", "");
+        return GluedStubs.Any(g => compact.Contains(g, StringComparison.Ordinal));
     }
 
     private static IEnumerable<string> SafeGetExes(string dir)

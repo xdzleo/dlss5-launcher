@@ -75,6 +75,7 @@ public static class Cli
             "list" or "ls" => await ListAsync(json),
             "check" or "updates" => await CheckAsync(json),
             "verify" => await VerifyAsync(rest.FirstOrDefault()),
+            "exe" or "exes" => await ExesAsync(rest.FirstOrDefault()),
             "settings" => await SettingsAsync(rest.FirstOrDefault()),
             "set" => await SetAsync(rest),
             "profile" => await ProfileAsync(rest),
@@ -95,6 +96,7 @@ public static class Cli
               list [--json]            lista os jogos detectados e o estado do mod
               check [--json]           verifica atualização de todos os mods instalados
               verify [<jogo>]          lê o ReShade.log e diz se o mod carregou mesmo
+              exe <jogo>               mostra os .exe candidatos na ordem escolhida (bits/tamanho)
               settings <jogo>          mostra as configurações do mod (do ReShade.ini)
               set <jogo> chave=valor…  grava configurações (com o jogo fechado)
               profile [--peak N] [--game N] [--ui N]
@@ -281,6 +283,32 @@ public static class Cli
             if (report.LastRun is { } lr) Console.WriteLine($"  (último registro: {lr:dd/MM/yyyy HH:mm})");
         }
         if (found == 0) Console.WriteLine("nenhum mod instalado para verificar.");
+        return 0;
+    }
+
+    /// <summary>Which exe the app would deploy to, and why — the ranking is a heuristic and
+    /// gets this wrong on odd layouts, so it has to be inspectable without opening the GUI.</summary>
+    private static async Task<int> ExesAsync(string? query)
+    {
+        var ctx = await LoadAsync();
+        var game = Resolve(ctx, query, out var err);
+        if (game is null) { Console.Error.WriteLine(err); return 1; }
+
+        var cands = ExeLocator.FindCandidates(game, ctx.Rhi.InstallSubdir(game.Name));
+        Console.WriteLine($"{game.Name} — {game.InstallDir}\n");
+        if (cands.Count == 0) { Console.WriteLine("  nenhum .exe candidato."); return 1; }
+
+        for (int i = 0; i < cands.Count; i++)
+        {
+            var pe = PeUtils.Inspect(cands[i], readImports: false);
+            var bits = pe is null ? "  ?  " : pe.Is64Bit ? "64-bit" : "32-bit";
+            long size = 0;
+            try { size = new FileInfo(cands[i]).Length; } catch { }
+            var rel = cands[i].StartsWith(game.InstallDir, StringComparison.OrdinalIgnoreCase)
+                ? cands[i][game.InstallDir.Length..].TrimStart('\\', '/')
+                : cands[i];
+            Console.WriteLine($"  {(i == 0 ? "→" : " ")} {bits} {size / 1048576.0,8:0.0} MB  {rel}");
+        }
         return 0;
     }
 
