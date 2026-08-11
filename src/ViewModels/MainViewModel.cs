@@ -184,6 +184,11 @@ public class MainViewModel : ObservableObject
     /// <summary>Everything known about how to configure THIS game, from every source.</summary>
     public ObservableCollection<ModNote> Notes { get; } = new();
 
+    /// <summary>Things to know BEFORE installing (required ReShade version, external download,
+    /// anti-cheat). Rendered above the install button on purpose: below it they sat under the
+    /// fold, so the user pressed Install without ever seeing the prerequisite.</summary>
+    public ObservableCollection<ModNote> Prerequisites { get; } = new();
+
     /// <summary>Rules that apply to every game of this engine (the wiki's callout blocks). Kept
     /// apart because they are long and identical for hundreds of games — they belong behind a
     /// disclosure, not on top of the game's own instructions.</summary>
@@ -397,6 +402,7 @@ public class MainViewModel : ObservableObject
         Settings.Clear();
         Advice.Clear();
         Notes.Clear();
+        Prerequisites.Clear();
         EngineNotes.Clear();
         DetailStatus = "";
         var item = Selected;
@@ -514,7 +520,10 @@ public class MainViewModel : ObservableObject
         {
             if (n.Text.Length == 0 && n.Preformatted is null) return;
             if (n.DedupKey.Length > 0 && !seen.Add(n.DedupKey)) return;
-            into.Add(n);
+            // prerequisites are hoisted above the install button wherever they came from
+            if (n.Location == "ANTES DE INSTALAR" && !ReferenceEquals(into, EngineNotes))
+                Prerequisites.Add(n);
+            else into.Add(n);
         }
 
         if (item.Mod is null) return;
@@ -534,7 +543,18 @@ public class MainViewModel : ObservableObject
         foreach (var n in item.Mod.Notes) Add(n, Notes);
 
         // 3. the curated index (install warnings, required ReShade version, external download)
-        foreach (var n in _rhi.GameNotes(item.Name)) Add(n, Notes);
+        foreach (var n in _rhi.GameNotes(item.Name))
+        {
+            // the index points at the author's page for some mods that DO have a working snapshot
+            // here; showing it as a prerequisite next to an enabled Install button reads as a
+            // contradiction, so it degrades to a plain link
+            if (n.Title == "Página do mod" && item.Mod.DownloadUrl != null)
+            {
+                Add(n with { Kind = NoteKind.Info, Location = null }, Notes);
+                continue;
+            }
+            Add(n, Notes);
+        }
 
         if (nativeHdr && Advice.All(a => a.Kind is not (AdviceKind.HdrOn or AdviceKind.HdrOff)))
             Add(new ModNote(NoteSource.Launcher, NoteKind.Info, "HDR nativo",

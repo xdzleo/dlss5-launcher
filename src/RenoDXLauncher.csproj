@@ -9,7 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.11.0</Version>
+    <Version>1.11.1</Version>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Full PE version metadata: blank/generic fields raise AV heuristic suspicion. -->

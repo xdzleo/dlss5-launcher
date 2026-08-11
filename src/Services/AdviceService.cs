@@ -16,22 +16,81 @@ public enum AdviceKind { HdrOff, HdrOn, Renderer, AntiCheat, Deprecated, Action 
 /// </summary>
 public static partial class AdviceService
 {
-    /// <summary>WHERE the user has to act. An instruction that does not say whether it happens in
-    /// the game's own menu or in the RenoDX overlay is half an instruction — and guessing wrong is
-    /// worse than saying nothing, so anything ambiguous returns null.</summary>
+    /// <summary>
+    /// WHERE the user has to act. An instruction that does not say whether it happens in the
+    /// game's own menu or in the RenoDX overlay is half an instruction — but a WRONG label is
+    /// worse than none: it sends the person to the wrong menu, they see nothing happen, and they
+    /// conclude the mod is broken. So this only speaks when the text is unambiguous.
+    ///
+    /// Three rules earned by real notes that the first version got backwards:
+    ///  - a place word inside a NEGATION means the opposite ("In-game HDR settings are disabled by
+    ///    RenoDX, adjust brightness in the mod" is an OVERLAY instruction, and was labelled NO JOGO);
+    ///  - a note that names BOTH places is a two-step procedure and gets no single label;
+    ///  - "slider", "upgrade", "tone map" and "renodx" name THINGS, not places — a note can talk
+    ///    about the game's own sliders. Only an explicit "in the mod / in the overlay / Settings
+    ///    Mode / &lt;FORMAT&gt; Output Size" anchors the overlay.
+    /// </summary>
     public static string? GuessLocation(string? text, string? section = null)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
-        if (System.Text.RegularExpressions.Regex.IsMatch(text,
-                @"in[\s-]?game|ingame|game'?s (own |native )?(hdr|brightness|contrast|gamma)"
-                + @"|game brightness|no jogo|dentro do jogo|fullscreen",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
-            return "NO JOGO";
-        if (System.Text.RegularExpressions.Regex.IsMatch(text,
-                @"upgrade|overlay|slider|settings mode|shader toggle|tone ?map|renodx",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-            || section is "Resource Upgrades" or "Options" or "Color Grading Templates")
-            return "OVERLAY RENODX (Home)";
+
+        // A note is usually a list of steps, and the steps can live in different places. Judge
+        // each clause on its own and only speak when the ones that say something all agree —
+        // "Disable in-game HDR. B8G8R8A8_TYPELESS Output Size" is two places, so it gets none.
+        var clauses = System.Text.RegularExpressions.Regex
+            .Split(text, @"\n|(?<=[.;!?])\s+|,\s+(?=\w)")
+            .Where(c => c.Trim().Length > 0);
+        var found = clauses.Select(c => LocationOfClause(c, section))
+            .Where(l => l != null)
+            .Distinct()
+            .ToList();
+        return found.Count == 1 ? found[0] : null;
+    }
+
+    private static readonly System.Text.RegularExpressions.RegexOptions Ic =
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+
+    /// <summary>The place named by ONE sentence, or null when it names none or both.</summary>
+    private static string? LocationOfClause(string clause, string? section)
+    {
+        // "X is disabled by the mod", "doesn't do anything", "no longer": the place named is the
+        // place NOT to touch
+        bool negated = System.Text.RegularExpressions.Regex.IsMatch(clause,
+            @"\b(disabled|overridden|ignored|no longer|does\s?n'?t|doesn't do anything|not needed"
+            + @"|automatically|has no effect|inert)\b", Ic);
+
+        bool inGame = System.Text.RegularExpressions.Regex.IsMatch(clause,
+            @"\bin[\s-]?game\b|\bingame\b|\bgame'?s (own |native )?(hdr|brightness|contrast|gamma|menu|settings)"
+            + @"|game settings|game menu|exclusive fullscreen", Ic);
+
+        // the wiki writes resource upgrades telegraphically, with no verb at all:
+        // "`B8G8R8A8_TYPELESS` `Output Size`" IS an instruction, and it is an overlay one
+        bool upgradeToken = System.Text.RegularExpressions.Regex.IsMatch(clause,
+            @"`?(output size|output ratio|any size)`?|\bswapchain proxy\b"
+            + @"|\b[A-Z]\d{0,2}[A-Z]\d{0,2}[A-Z0-9_]{3,}(_UNORM|_FLOAT|_TYPELESS|_SRGB)\b", Ic);
+
+        bool inOverlay = upgradeToken
+            || System.Text.RegularExpressions.Regex.IsMatch(clause,
+                @"\bin the (mod|addon|overlay)\b|\brenodx overlay\b|\bsettings mode\b"
+                + @"|\bresource upgrades?\b|\bupgrade\s+`?[A-Z][A-Z0-9_]{4,}`?", Ic)
+            || section is "Resource Upgrades" or "Color Grading Templates";
+
+        // an imperative is what turns a mention into an instruction; "once loaded in game" is
+        // narration and used to be read as "go to the game's menu"
+        bool imperative = upgradeToken || System.Text.RegularExpressions.Regex.IsMatch(clause,
+            @"\b(set|use|enable|disable|turn|toggle|adjust|change|open|leave|switch|move|press"
+            + @"|click|select|apply|avoid|keep|must|should|requires?)\b", Ic);
+        if (!imperative) return null;
+
+        // a negated place is the place NOT to touch, so it stops being a signal
+        if (negated)
+        {
+            if (inGame && inOverlay) return "OVERLAY RENODX (Home)";  // "in-game X is disabled, use the mod"
+            return null;
+        }
+        if (inGame && inOverlay) return null;   // two-step procedure: no single label
+        if (inGame) return "NO JOGO";
+        if (inOverlay) return "OVERLAY RENODX (Home)";
         return null;
     }
 

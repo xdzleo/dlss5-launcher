@@ -10,8 +10,69 @@ import sys
 from pathlib import Path
 
 
-def find_setting_blocks(text: str):
+def strip_comments(text: str) -> str:
+    """Blank out // and /* */ comments, preserving length and newlines.
+
+    Mods keep old Setting blocks commented out; parsing them publishes dead text as live
+    instructions (akuru-q's bmw ships three contradictory status messages that way).
+    """
+    out = list(text)
+    i = 0
+    n = len(out)
+    while i < n:
+        c = out[i]
+        if c in '"\'':
+            quote = c
+            i += 1
+            while i < n and out[i] != quote:
+                if out[i] == '\\':
+                    i += 1
+                i += 1
+            i += 1
+            continue
+        if c == '/' and i + 1 < n:
+            if out[i + 1] == '/':
+                while i < n and out[i] != '\n':
+                    out[i] = ' '
+                    i += 1
+                continue
+            if out[i + 1] == '*':
+                end = text.find('*/', i + 2)
+                end = n if end < 0 else end + 2
+                while i < end:
+                    if out[i] != '\n':
+                        out[i] = ' '
+                    i += 1
+                continue
+        i += 1
+    return ''.join(out)
+
+
+def literal_mask(block: str):
+    """True at every position inside a string literal, so a '.' in the author's prose is
+    never mistaken for a designated-initializer field."""
+    mask = [False] * len(block)
+    i = 0
+    n = len(block)
+    while i < n:
+        if block[i] != '"':
+            i += 1
+            continue
+        start = i
+        i += 1
+        while i < n and block[i] != '"':
+            if block[i] == '\\':
+                i += 1
+            i += 1
+        for j in range(start, min(i + 1, n)):
+            mask[j] = True
+        i += 1
+    return mask
+
+
+def find_setting_blocks(source: str):
     """Yield the inside of every Setting{ ... } block, brace-balanced."""
+    text = strip_comments(source)
     for m in re.finditer(r"Setting\s*\{", text):
         depth = 1
         i = m.end()
@@ -38,8 +99,9 @@ FIELD_RE = re.compile(r"\.(\w+)\s*=")
 
 def split_fields(block: str):
     """Split a designated-initializer block into (name, raw_value) pairs."""
+    mask = literal_mask(block)
     fields = []
-    matches = list(FIELD_RE.finditer(block))
+    matches = [m for m in FIELD_RE.finditer(block) if not mask[m.start()]]
     for idx, m in enumerate(matches):
         start = m.end()
         # value ends at the comma at depth 0 before the next field (or end)
@@ -56,10 +118,46 @@ STRING_RE = re.compile(r'^"(.*)"$', re.DOTALL)
 NUM_RE = re.compile(r'^-?(?:[0-9]+\.?[0-9]*|\.[0-9]+)f?$')
 
 
+ESCAPES = {'n': '\n', 'r': '', 't': '  ', '0': '', '\\': '\\', '"': '"', "'": "'"}
+
+
+def unescape(text: str) -> str:
+    """Undo C++ escapes in one left-to-right pass. Chained replaces never handled \\r and
+    rewrote their own output."""
+    out = []
+    i = 0
+    while i < len(text):
+        if text[i] == '\\' and i + 1 < len(text):
+            i += 1
+            out.append(ESCAPES.get(text[i], text[i]))
+        else:
+            out.append(text[i])
+        i += 1
+    return ''.join(out)
+
+
 BOILERPLATE_RE = re.compile(
     r"ko-?fi|patreon|discord|paypal|github\.com|buymeacoffee|twitter|donate"
     r"|was compiled on|^build:|^version:?$|^reset( all)?$|^credits?$"
     r"|^github$|^more mods$|special thanks|framework by|^mod by ", re.IGNORECASE)
+
+OPENS_URL_RE = re.compile(r"LaunchURL|https?://|ShellExecute", re.IGNORECASE)
+IMPERATIVE_RE = re.compile(
+    r"\b(set|use|enable|disable|turn|toggle|adjust|change|open|close|restart|install|update"
+    r"|make sure|leave|switch|move|press|click|select|apply|avoid|requires?|must|should|need)\b",
+    re.IGNORECASE)
+CREDIT_RE = re.compile(
+    r"\b(by|thanks to|credits?|maintained|shout-?out|bug hunter|framework)\b", re.IGNORECASE)
+SOCIAL_LINE_RE = re.compile(
+    r"ko-?fi|patreon|paypal|buymeacoffee|twitter|donate|join .*(discord|server)"
+    r"|was compiled on|^\s*build\s*(date)?\s*[:\-]|^\s*version\s*[:\-]", re.IGNORECASE)
+
+
+def drop_social_lines(text: str) -> str:
+    """Drop only the LINE that is social/build noise, never the whole block."""
+    kept = [l for l in text.split('\n') if not SOCIAL_LINE_RE.search(l)]
+    return '\n'.join(kept).strip()
+
 
 PRESET_PAIR_RE = re.compile(r'\{\s*"(\w+)"\s*,\s*(-?[\d.]+)f?\s*\}')
 UPDATE_SETTING_RE = re.compile(r'UpdateSetting\(\s*"(\w+)"\s*,\s*(-?[\d.]+)f?\s*\)')
@@ -73,8 +171,7 @@ def parse_value(raw: str):
     if raw.startswith('"') or raw.startswith('std::string'):
         lits = LITERAL_RE.findall(raw)
         if lits:
-            joined = ''.join(lits)
-            joined = joined.replace('\\n', '\n').replace('\\"', '"')
+            joined = unescape(''.join(lits))
             return joined if joined.strip() else None
     m = STRING_RE.match(raw)
     if m:
@@ -139,15 +236,28 @@ def parse_setting(block: str):
     if s['type'] in ('button', 'label'):
         text = (s.get('label') or s.get('tooltip') or '').strip()
         section = (s.get('section') or '').strip()
-        if not text or section.lower() == 'links' or BOILERPLATE_RE.search(text):
-            return None
-        s['instruction'] = True
-        s['key'] = ''
+        values = {}
         if s['type'] == 'button':
             values = {k: float(v) for k, v in PRESET_PAIR_RE.findall(block)}
             values.update({k: float(v) for k, v in UPDATE_SETTING_RE.findall(block)})
-            if values:
-                s['values'] = values
+        # a button whose only job is opening a URL is a link, not guidance
+        if not values and OPENS_URL_RE.search(block):
+            return None
+        text = drop_social_lines(text)
+        guidance = section.lower() in ('instructions', 'notes', 'read me', 'readme', 'how to')
+        if not text:
+            return None
+        # the author filed it under Instructions: believe them, whatever words it contains
+        if not guidance and not values:
+            if section.lower() == 'links' or BOILERPLATE_RE.search(text):
+                return None
+            if not IMPERATIVE_RE.search(text) and CREDIT_RE.search(text):
+                return None
+        s['instruction'] = True
+        s['key'] = ''
+        s['label'] = text
+        if values:
+            s['values'] = values
         s.pop('_has_binding', None)
         return s
     if 'key' not in s:

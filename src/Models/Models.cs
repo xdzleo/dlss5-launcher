@@ -73,8 +73,13 @@ public record ModNote(
     /// Without this every instruction reads as if it happened in the same place.</summary>
     string? Location = null)
 {
-    /// <summary>Text with markup collapsed, for dedup against other sources.</summary>
-    public string DedupKey => new string(Text.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+    /// <summary>Text with layout collapsed, for dedup against other sources. Symbols that change
+    /// the MEANING stay: dropping them made "Vanilla+ SDR" collide with "Vanilla SDR" and one of
+    /// Valheim's four presets silently vanish.</summary>
+    public string DedupKey => new string(
+        Text.Where(c => char.IsLetterOrDigit(c) || c is '+' or '-' or '/' or '.' or '%')
+            .Select(char.ToLowerInvariant)
+            .ToArray());
 }
 
 /// <summary>State of ReShade + RenoDX inside one game's deploy directory.</summary>

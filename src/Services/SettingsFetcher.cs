@@ -94,10 +94,68 @@ public static partial class SettingsFetcher
         return result;
     }
 
+    /// <summary>Blank out // and /* */ comments, preserving length and line breaks so every other
+    /// offset still lines up. Without this, mods that keep an old Setting block commented out
+    /// (akuru-q's BMW keeps three contradictory status messages in there) publish dead text as
+    /// live instructions.</summary>
+    internal static string StripComments(string text)
+    {
+        var chars = text.ToCharArray();
+        for (int i = 0; i < chars.Length; i++)
+        {
+            char c = chars[i];
+            if (c == '"' || c == '\'')
+            {
+                char quote = c;
+                i++;
+                while (i < chars.Length && chars[i] != quote)
+                {
+                    if (chars[i] == '\\') i++;
+                    i++;
+                }
+                continue;
+            }
+            if (c != '/' || i + 1 >= chars.Length) continue;
+            if (chars[i + 1] == '/')
+            {
+                while (i < chars.Length && chars[i] != '\n') chars[i++] = ' ';
+            }
+            else if (chars[i + 1] == '*')
+            {
+                int end = text.IndexOf("*/", i + 2, StringComparison.Ordinal);
+                end = end < 0 ? chars.Length : end + 2;
+                for (; i < end; i++) if (chars[i] != '\n') chars[i] = ' ';
+                i--;
+            }
+        }
+        return new string(chars);
+    }
+
+    /// <summary>Positions inside a string literal, so a field regex cannot fire on a '.' that is
+    /// part of the author's prose. Hitman's note contains ".25" and ". Formula" and used to be
+    /// truncated at the first one, losing 85% of the text.</summary>
+    private static bool[] LiteralMask(string block)
+    {
+        var mask = new bool[block.Length];
+        for (int i = 0; i < block.Length; i++)
+        {
+            if (block[i] != '"') continue;
+            int start = i++;
+            while (i < block.Length && block[i] != '"')
+            {
+                if (block[i] == '\\') i++;
+                i++;
+            }
+            for (int j = start; j <= Math.Min(i, block.Length - 1); j++) mask[j] = true;
+        }
+        return mask;
+    }
+
     /// <summary>Brace-balanced bodies of each <c>Setting{ ... }</c>, skipping string literals
     /// so a brace inside a tooltip never ends the block early.</summary>
-    private static IEnumerable<string> SettingBlocks(string text)
+    private static IEnumerable<string> SettingBlocks(string source)
     {
+        var text = StripComments(source);
         foreach (Match m in Regex.Matches(text, @"Setting\s*\{"))
         {
             int depth = 1, i = m.Index + m.Length, start = i;
@@ -128,7 +186,9 @@ public static partial class SettingsFetcher
         List<string>? labels = null;
         bool isGlobal = false;
 
-        var fields = FieldRegex().Matches(block);
+        // field matches that land INSIDE a string literal are the author's prose, not a field
+        var inLiteral = LiteralMask(block);
+        var fields = FieldRegex().Matches(block).Where(m => !inLiteral[m.Index]).ToList();
         for (int i = 0; i < fields.Count; i++)
         {
             var name = fields[i].Groups[1].Value;
@@ -166,16 +226,22 @@ public static partial class SettingsFetcher
         if (type is "button" or "label")
         {
             var text = label ?? tooltip;
-            if (text is null || IsBoilerplate(text, tooltip, section)) return null;
+            if (text is null) return null;
+            var values = type == "button" ? PresetValues(block) : null;
+            // a button whose only job is to open a URL is a link, not guidance ("Get more RenoDX
+            // mods!" was showing up as an instruction on the user's S.T.A.L.K.E.R. 2)
+            if (values is null && OpensUrlRegex().IsMatch(block)) return null;
+            text = DropSocialLines(text);
+            if (text.Length == 0 || IsBoilerplate(text, tooltip, section, values != null)) return null;
             return new SettingDef
             {
                 Key = "",
                 Type = type,
-                Label = label,
+                Label = label is null ? null : DropSocialLines(label),
                 Section = section,
                 Tooltip = tooltip,
                 IsInstruction = true,
-                PresetValues = type == "button" ? PresetValues(block) : null,
+                PresetValues = values,
             };
         }
 
@@ -198,27 +264,57 @@ public static partial class SettingsFetcher
 
     /// <summary>Social links and build stamps are not guidance — without this filter every game
     /// would gain five lines of "Author's Ko-Fi" and "This build was compiled on ...".</summary>
-    private static bool IsBoilerplate(string label, string? tooltip, string? section)
+    [GeneratedRegex(@"LaunchURL|https?://|ShellExecute", RegexOptions.IgnoreCase)]
+    private static partial Regex OpensUrlRegex();
+
+    /// <summary>Sections whose whole point is to explain the game. Never discarded — the word
+    /// "discord" inside one of these used to delete the entire block, and with it warnings like
+    /// yumia1's "NVIDIA GPUs only -- AMD/Intel are unsupported".</summary>
+    private static readonly string[] GuidanceSections = { "instructions", "notes", "read me", "readme", "how to" };
+
+    /// <summary>Drop only the LINE that is social/build noise, keeping the rest of the block.</summary>
+    private static string DropSocialLines(string text)
     {
+        var kept = text.Split('\n')
+            .Where(line => !Regex.IsMatch(line,
+                @"ko-?fi|patreon|paypal|buymeacoffee|twitter|donate|join .*(discord|server)"
+                + @"|was compiled on|^\s*build\s*(date)?\s*[:\-]|^\s*version\s*[:\-]",
+                RegexOptions.IgnoreCase))
+            .ToList();
+        return string.Join("\n", kept).Trim();
+    }
+
+    private static bool IsBoilerplate(string label, string? tooltip, string? section, bool isPreset)
+    {
+        bool guidanceSection = section is not null
+            && GuidanceSections.Contains(section.Trim().ToLowerInvariant());
+        if (guidanceSection) return false;   // the author labelled it as instructions; believe them
+
         // authors park their social buttons in a "Links" section — none of it is guidance
         if (section is not null && section.Equals("Links", StringComparison.OrdinalIgnoreCase))
             return true;
-        // "Reset"/"Reset All" restore the mod's own defaults and "Version:" is a build stamp —
-        // both are overlay furniture, not something the player is being told to do
+        // a preset carries values, so it is an action regardless of how it is named
+        if (isPreset) return false;
+        // "Reset All" restores the mod's own defaults and "Version:" is a build stamp — overlay
+        // furniture, not something the player is being told to do
         if (Regex.IsMatch(label, @"^\s*(reset(\s+all)?|version:?|credits?|github|more mods)\s*$",
                 RegexOptions.IgnoreCase))
             return true;
-        // credits paragraphs: "Game mod by X, RenoDX Framework by Y", "Special thanks to Z"
-        if (Regex.IsMatch(label, @"special thanks|framework by|^mod by ", RegexOptions.IgnoreCase))
+        // credits: no imperative verb, and a "<role> by <Name>" / "thanks to" shape
+        if (!HasImperative(label)
+            && Regex.IsMatch(label,
+                @"\b(by|thanks to|credits?|maintained|shout-?out|bug hunter|framework)\b",
+                RegexOptions.IgnoreCase))
             return true;
         var all = (label + " " + tooltip).ToLowerInvariant().Trim();
-        return all is "github" or "more mods" or "discord" or "ko-fi"
-            || all.Contains("ko-fi") || all.Contains("kofi") || all.Contains("patreon")
-            || all.Contains("discord") || all.Contains("paypal") || all.Contains("github.com")
-            || all.Contains("buymeacoffee") || all.Contains("twitter") || all.Contains("donate")
-            || label.StartsWith("Build:", StringComparison.OrdinalIgnoreCase)
-            || label.Contains("was compiled on", StringComparison.OrdinalIgnoreCase);
+        return all is "github" or "more mods" or "discord" or "ko-fi";
     }
+
+    /// <summary>Does this text tell the player to DO something? Credits never do.</summary>
+    private static bool HasImperative(string text) => Regex.IsMatch(text,
+        @"\b(set|use|enable|disable|turn|toggle|adjust|change|open|close|restart|install|update"
+        + @"|make sure|leave|switch|move|press|click|select|apply|avoid|requires?|must|should|need)\b",
+        RegexOptions.IgnoreCase);
 
     [GeneratedRegex(@"\{\s*""(\w+)""\s*,\s*(-?[\d.]+)f?\s*\}")]
     private static partial Regex PresetPairRegex();
@@ -241,12 +337,30 @@ public static partial class SettingsFetcher
     /// multi-line instructions. Reading only the first literal truncated them mid-sentence.</summary>
     private static string? AsString(string raw)
     {
-        var literals = QuotedRegex().Matches(raw)
-            .Select(m => m.Groups[1].Value.Replace("\\n", "\n").Replace("\\\"", "\"").Replace("\\\\", "\\"))
-            .ToList();
+        var literals = QuotedRegex().Matches(raw).Select(m => Unescape(m.Groups[1].Value)).ToList();
         if (literals.Count == 0) return null;
         var joined = string.Concat(literals).Trim();
         return joined.Length == 0 ? null : joined;
+    }
+
+    /// <summary>Undo C++ escapes in ONE left-to-right pass. Chained Replace calls are wrong twice
+    /// over: they never handled \r (so S.T.A.L.K.E.R. 2's note showed a literal "\r" at the end of
+    /// every line) and they rewrite the output of earlier replacements.</summary>
+    private static string Unescape(string s)
+    {
+        var sb = new System.Text.StringBuilder(s.Length);
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (s[i] != '\\' || i + 1 >= s.Length) { sb.Append(s[i]); continue; }
+            char n = s[++i];
+            sb.Append(n switch
+            {
+                'n' => "\n", 'r' => "", 't' => "  ", '0' => "",
+                '\\' => "\\", '"' => "\"", '\'' => "'",
+                _ => n.ToString(),
+            });
+        }
+        return sb.ToString();
     }
 
     private static double? AsNumber(string raw)

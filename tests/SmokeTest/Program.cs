@@ -368,6 +368,91 @@ Check(AdviceService.GuessLocation("Disable in-game HDR.") == "NO JOGO",
 Check(AdviceService.GuessLocation("Upgrade R11G11B10_FLOAT") == "OVERLAY RENODX (Home)",
     "local: 'Upgrade' e ajuste no overlay");
 
+// UMA etiqueta errada e pior que nenhuma: manda a pessoa no menu errado, ela nao ve efeito
+// nenhum e conclui que o mod nao funciona. Estes 5 casos vem de notas REAIS.
+Check(AdviceService.GuessLocation("Disable in-game HDR. `B8G8R8A8_TYPELESS` `Output Size`") is null,
+    "local: nota com passo no jogo E no overlay nao recebe etiqueta unica");
+Check(AdviceService.GuessLocation(
+        "- In-game HDR settings are disabled by RenoDX, adjust peak/game/ui brightness in the mod.")
+      == "OVERLAY RENODX (Home)",
+    "local: lugar NEGADO ('in-game esta desligado, use o mod') aponta para o overlay");
+Check(AdviceService.GuessLocation(
+        "Scaling AND Tonemap offset = 1. Main Menu will be black, but everything is fine once loaded in game.")
+      != "NO JOGO",
+    "local: 'once loaded in game' e narracao, nao instrucao de menu");
+Check(AdviceService.GuessLocation("- HDR Max. Luminance slider still controls peak brightness") is null,
+    "local: 'slider' sozinho nao prova overlay (o jogo tambem tem sliders)");
+Check(AdviceService.GuessLocation("Game's Brightness setting is disabled.") is null,
+    "local: frase que diz que o controle NAO faz nada nao vira 'aja aqui'");
+
+// parser: os quatro defeitos achados na revisao adversarial, com fonte real reduzida
+var cppTruncada = """
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::TEXT,
+      .label = std::string("- GAMMA CORRECTION slider controls game brightness\n")
+             + "- Formula for peak: MAX. INTENSITY * paper white\n"
+             + "- Example: 4.0 * 200 = 800 nits",
+      .section = "Instructions",
+  },
+""";
+var trunc = SettingsFetcher.Parse(cppTruncada).FirstOrDefault(d => d.IsInstruction);
+Check(trunc?.Label?.Contains("800 nits") == true,
+    "parser: '.' dentro do texto ('MAX. INTENSITY') nao corta a instrucao no meio");
+
+var cppComentado = """
+  /*new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::TEXT,
+      .label = "Status: Updating Engine.ini failed. Try the manual install.",
+      .section = "Instructions",
+  },*/
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::TEXT,
+      .label = "Use default in-game gamma.",
+      .section = "Instructions",
+  },
+""";
+var vivos = SettingsFetcher.Parse(cppComentado).Where(d => d.IsInstruction).ToList();
+Check(vivos.Count == 1 && vivos[0].Label!.Contains("default in-game gamma"),
+    $"parser: bloco COMENTADO nao vira instrucao (leu {vivos.Count})");
+
+var cppCr = """
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::TEXT,
+      .label = " - Ingame HDR must be turned ON! \r\n - Gamma still affects UI",
+      .section = "Instructions",
+  },
+""";
+var cr = SettingsFetcher.Parse(cppCr).First(d => d.IsInstruction);
+Check(!cr.Label!.Contains('\r') && cr.Label.Contains("Gamma still affects UI"),
+    "parser: \\r do fonte nao vaza para a tela");
+
+var cppDiscord = """
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::TEXT,
+      .label = "- NVIDIA GPUs only -- AMD/Intel will not work!\n- Join the HDR Den discord for help!",
+      .section = "Instructions",
+  },
+""";
+var disc = SettingsFetcher.Parse(cppDiscord).FirstOrDefault(d => d.IsInstruction);
+Check(disc?.Label?.Contains("NVIDIA GPUs only") == true && !disc.Label.Contains("discord"),
+    "parser: a palavra 'discord' apaga a LINHA, nunca o bloco de instrucao inteiro");
+
+var cppLink = """
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+      .label = "Get more RenoDX mods!",
+      .section = "About",
+      .on_change = []() { renodx::utils::platform::LaunchURL("https://github.com/clshortfuse/renodx"); },
+  },
+""";
+Check(!SettingsFetcher.Parse(cppLink).Any(d => d.IsInstruction),
+    "parser: botao que so abre URL nao vira 'instrucao do autor'");
+
+// dedup nao pode engolir preset cujo nome so difere por simbolo
+var n1 = new ModNote(NoteSource.ModSource, NoteKind.Preset, null, "Vanilla SDR");
+var n2 = new ModNote(NoteSource.ModSource, NoteKind.Preset, null, "Vanilla+ SDR");
+Check(n1.DedupKey != n2.DedupKey, "dedup: 'Vanilla+ SDR' nao colide com 'Vanilla SDR'");
+
 // os blocos de aviso da wiki vivem FORA de qualquer tabela e nunca eram lidos — sao o unico
 // lugar que explica como aplicar um upgrade
 var callouts = CatalogService.UnrealCallouts.Concat(CatalogService.UnityCallouts).ToList();

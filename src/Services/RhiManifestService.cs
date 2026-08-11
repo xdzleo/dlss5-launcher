@@ -110,8 +110,11 @@ public class RhiManifestService
                 var url = p.Value.TryGetProperty("url", out var u) ? u.GetString() : null;
                 var label = p.Value.TryGetProperty("label", out var l) ? l.GetString() : null;
                 if (url is { Length: > 0 })
-                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Step, "Download do mod",
-                        "Este mod não é distribuído pelo snapshot automático — baixe na página do autor.",
+                    // Worded as an offer, not as a fact about distribution: several of these games
+                    // DO have a working snapshot in the wiki, and the old wording contradicted the
+                    // app's own enabled Install button. BuildNotes decides which one to show.
+                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Step, "Página do mod",
+                        "O autor mantém uma página própria deste mod, com as instruções dele.",
                         new[] { new NoteLink(label is { Length: > 0 } ? label : "Abrir a página do mod", url) },
                         null, "ANTES DE INSTALAR"));
             }
@@ -175,22 +178,52 @@ public class RhiManifestService
                     $"Este jogo usa a build {bits}-bit do mod."));
     }
 
+    /// <summary>Sentences describing the RHI app's OWN interface. Copied verbatim they become a
+    /// lie in this app's mouth: Max Payne 3's note says the pin "has been automatically set in
+    /// Overrides (RS Channel)" — a screen this launcher does not have and a thing it did not do.
+    /// </summary>
+    private static string StripForeignUi(string text)
+    {
+        var kept = System.Text.RegularExpressions.Regex
+            .Split(text, @"(?<=[.!?])\s+")
+            .Where(s => !System.Text.RegularExpressions.Regex.IsMatch(s,
+                @"\bOverrides?\b.*\bRS Channel\b|\bRS Channel\b|has been automatically set"
+                + @"|in the Overrides panel",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+        return string.Join(" ", kept).Trim();
+    }
+
     /// <summary>Config blocks inside a note (dgVoodoo.conf, ini snippets) are separated by a blank
-    /// line — keep the prose readable and the block verbatim.</summary>
+    /// line — keep the prose readable and the block verbatim. Only text that actually LOOKS like a
+    /// snippet becomes a monospaced block; prose sent there gets clipped by the no-wrap box.</summary>
     private static string FirstParagraph(string text)
     {
-        var norm = text.Replace("\r\n", "\n");
+        var norm = StripForeignUi(text.Replace("\r\n", "\n"));
         int split = norm.IndexOf("\n\n", StringComparison.Ordinal);
-        return (split > 0 ? norm[..split] : norm).Trim();
+        var head = (split > 0 ? norm[..split] : norm).Trim();
+        // prose tail stays in the body instead of being clipped inside the code box
+        var tail = split > 0 ? norm[(split + 2)..].Trim() : "";
+        return tail.Length > 0 && !LooksLikeSnippet(tail) ? head + "\n\n" + tail : head;
     }
 
     private static string? RestParagraphs(string text)
     {
-        var norm = text.Replace("\r\n", "\n");
+        var norm = StripForeignUi(text.Replace("\r\n", "\n"));
         int split = norm.IndexOf("\n\n", StringComparison.Ordinal);
         if (split <= 0) return null;
         var rest = norm[(split + 2)..].Trim();
-        return rest.Length == 0 ? null : rest;
+        return rest.Length > 0 && LooksLikeSnippet(rest) ? rest : null;
+    }
+
+    /// <summary>Lines that must be copied character for character: ini sections, key=value pairs,
+    /// launch arguments.</summary>
+    private static bool LooksLikeSnippet(string text)
+    {
+        var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length == 0) return false;
+        int codey = lines.Count(l => System.Text.RegularExpressions.Regex.IsMatch(l.Trim(),
+            @"^\[.+\]$|^[\w.]+\s*[:=]\s*\S|^[-+]\w"));
+        return codey * 2 >= lines.Length;
     }
 
     private static void FillMap(JsonElement root, string prop, Dictionary<string, string> map)

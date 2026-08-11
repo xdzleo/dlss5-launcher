@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.11.1
+
+### Revisao adversarial da v1.11.0: 18 defeitos, quase todos meus
+
+A v1.11.0 abriu muita fonte de texto nova e o risco inverteu: em vez de faltar informacao, passou
+a aparecer informacao errada. Uma revisao adversarial em 5 frentes achou 18 defeitos confirmados.
+Todos consertados aqui, e os 13 casos viraram teste.
+
+**A etiqueta de lugar mentia.** Ela dizia NO JOGO ou OVERLAY RENODX por regex simples, e errava
+em tres formas medidas em notas reais:
+
+- Nota com **dois passos em lugares diferentes** ganhava uma etiqueta so, e o ramo "no jogo" era
+  testado primeiro. "Disable in-game HDR. `B8G8R8A8_TYPELESS` `Output Size`" saia como NO JOGO —
+  e o segundo passo, que e o que faz o mod funcionar, e no overlay. Aconteceu em 22 jogos.
+- **Negacao invertia o sentido.** "In-game HDR settings are disabled by RenoDX, adjust brightness
+  in the mod" era rotulado NO JOGO, ou seja, mandava a pessoa exatamente para o menu que o mod
+  tinha acabado de desligar.
+- **Narracao virava instrucao.** "...everything is fine once loaded in game" acendia NO JOGO.
+
+Agora a etiqueta julga **clausula por clausula**, exige um verbo de acao junto do marcador de
+lugar, inverte quando o lugar esta negado, e **cala quando as clausulas discordam**. Etiqueta
+errada e pior que etiqueta nenhuma: manda a pessoa no menu errado, ela nao ve efeito e conclui
+que o mod nao funciona.
+
+### Quatro defeitos no parser do codigo dos mods
+
+- **O regex de campo disparava dentro do texto.** O ponto em "MAX. INTENSITY" era lido como inicio
+  de um campo novo e cortava a nota ali. O Hitman perdia **85%** da instrucao — justamente a
+  tabela de calibracao.
+- **Blocos comentados eram lidos.** O mod do BMW mantem um `Setting` antigo dentro de `/* */`, e o
+  app publicava tres status contraditorios, incluindo "Updating Engine.ini failed".
+- **`\r` nao era desfeito.** A nota do S.T.A.L.K.E.R. 2 aparecia com um `\r` cru no fim de cada
+  linha.
+- **Uma palavra apagava o bloco inteiro.** Se a instrucao citasse "discord" em qualquer linha, o
+  bloco todo sumia. O Atelier Yumia perdia o aviso *"NVIDIA GPUs only — AMD/Intel are unsupported"*.
+  Agora so a linha social e removida, e bloco que o autor marcou como `Instructions` nunca e
+  descartado.
+
+### O app afirmava coisas que nao fez
+
+- O texto do indice sobre o **Max Payne 3** dizia que a versao do ReShade *"has been automatically
+  set in Overrides (RS Channel)"* — isso e a interface de OUTRO aplicativo. Copiado ao pe da letra,
+  virava mentira na boca deste launcher. Frases que descrevem a UI alheia agora sao removidas.
+- E dizia "este mod nao e distribuido pelo snapshot automatico" com o proprio botao de instalar
+  ativo do lado. Agora so aparece quando realmente nao ha download direto.
+
+### Tela
+
+- **Os pre-requisitos subiram para cima do botao de instalar.** Estavam abaixo da dobra: dava para
+  clicar em instalar sem nunca ver que o jogo exige outra versao do ReShade.
+- O bloco de codigo tinha uma barra de rolagem propria que **engolia a roda do mouse** e travava a
+  rolagem do modal inteiro. Removida; o texto quebra linha em vez de ser cortado.
+- Prosa nao vai mais para o bloco monoespacado (era cortada no meio da palavra).
+- O dedup ignorava simbolos e engolia o preset "Vanilla+ SDR" por causa do "Vanilla SDR".
+
+Numeros depois da limpeza: **201 mods** com instrucao do autor e **179 presets** — menos blocos
+que na v1.11.0 (433 contra 540), porque o que saiu era link, credito e carimbo de build.
+
 ## v1.11.0
 
 ### As notas do mod estavam quase todas sendo perdidas
