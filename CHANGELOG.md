@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.10.2
+
+### O tModLoader tinha ficado sem alvo (regressão da v1.10.1)
+
+A v1.10.1 passou a descartar `.exe` dentro de pastas de terceiro (`EpicOnlineServices`,
+`EasyAntiCheat`, `redist`, `dotnet`...). Só que o índice do RenoDX manda instalar o tModLoader
+**exatamente dentro de `<jogo>\dotnet`** — é o `dotnet.exe` que renderiza, porque o jogo é uma
+DLL. Ou seja: o único `.exe` que importava era jogado fora antes de ser pontuado, e a lista de
+candidatos saía **vazia**. Sem lista, o combo da janela fica vazio e não dá nem para escolher na
+mão.
+
+Agora a pasta curada do índice é **imune** ao filtro de pastas de terceiro e vale mais que
+qualquer heurística de nome — ela é dado conferido à mão, o resto é palpite. Ela também é lida
+direto, sem depender da varredura recursiva (que para em 5 níveis e ignora links), e vale para o
+runtime aninhado (`dotnet\6.0.0\`), que muda de lugar entre atualizações do jogo.
+
+### Nenhum filtro pode devolver lista vazia
+
+Se todos os filtros rejeitarem tudo, o app agora devolve os `.exe` que existem, ordenados por
+tamanho. Um primeiro item errado que o usuário corrige é melhor que um combo vazio. Isso já
+aparece na prática no Rockstar Social Club, cujos dois executáveis são de serviço.
+
+Os quatro casos viraram teste de regressão, incluindo o primeiro teste que o app já teve para a
+pasta curada do índice.
+
 ## v1.10.1
 
 ### Escolha do .exe do jogo reescrita

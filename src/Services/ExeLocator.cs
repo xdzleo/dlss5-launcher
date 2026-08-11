@@ -151,13 +151,27 @@ public static class ExeLocator
                     all.Add(hint);   // deeper than the scan depth, but real
             }
 
-            // The curated deploy subdir from the RenoDX HDR Index — hand-checked data.
+            // The curated deploy subdir from the RenoDX HDR Index — hand-checked data, and the
+            // only source here that is not a guess. It is read directly instead of relying on
+            // the recursive scan, which stops at depth 5 and skips reparse points.
             string? curated = null;
             if (installSubdirOverride != null)
             {
                 var dir = Path.Combine(game.InstallDir, installSubdirOverride);
-                if (Directory.Exists(dir)) curated = Path.GetFullPath(dir);
+                if (Directory.Exists(dir))
+                {
+                    curated = Path.GetFullPath(dir).TrimEnd('\\', '/');
+                    foreach (var f in SafeGetExes(dir).Concat(SafeEnumerate(dir)))
+                        if (!all.Contains(f, StringComparer.OrdinalIgnoreCase)) all.Add(f);
+                }
             }
+
+            // Is this file inside the curated dir (at any depth)? tModLoader's override is
+            // "dotnet", and the runtime lives in either <install>\dotnet\ or
+            // <install>\dotnet\<version>\ depending on when the game last updated.
+            bool InCurated(string path) => curated != null
+                && Path.GetFullPath(path).StartsWith(curated + Path.DirectorySeparatorChar,
+                    StringComparison.OrdinalIgnoreCase);
 
             // One ranking for everything. Every earlier revision of this had priority TIERS,
             // and every wrong pick so far came from a tier jumping the queue with a shim.
@@ -165,7 +179,12 @@ public static class ExeLocator
             var ranked = new List<(string Path, int Score, long Size)>();
             foreach (var f in all)
             {
-                if (InVendorDir(f, game.InstallDir)) continue;
+                bool curatedFile = InCurated(f);
+                // The vendor-folder list is a heuristic and the curated dir is reviewed data,
+                // so the data wins: tModLoader deploys into <install>\dotnet, and "dotnet" is
+                // in VendorDirs — without this the one exe that matters is dropped before it
+                // is ever scored, and the game ends up with an empty candidate list.
+                if (!curatedFile && InVendorDir(f, game.InstallDir)) continue;
                 if (IsStub(f, game.Name))
                 {
                     // keep a stubby hint selectable in the combo, but dead last
@@ -179,9 +198,10 @@ public static class ExeLocator
                 if (fileName.EndsWith("-Win64-Shipping.exe", StringComparison.OrdinalIgnoreCase)
                     || fileName.EndsWith("-WinGDK-Shipping.exe", StringComparison.OrdinalIgnoreCase))
                     score += 1000;                                    // Unreal never lies
-                if (curated != null && string.Equals(Path.GetDirectoryName(Path.GetFullPath(f)),
-                        curated, StringComparison.OrdinalIgnoreCase))
-                    score += 300;                                     // curated deploy dir
+                // Above name+gpu+bits combined (300+400+120): a curated dir must not lose to an
+                // exe in the root that merely carries the game's name, which is exactly the
+                // shim it was curated to avoid.
+                if (curatedFile) score += 900;
                 score += NameScore(f, game.Name) * 3;                 // 0..300
                 var pe = Pe(f);
                 if (UsesGpu(pe)) score += 400;                        // it talks to the GPU
@@ -199,6 +219,13 @@ public static class ExeLocator
                 .ThenByDescending(r => r.Size)
                 .Select(r => r.Path));
             if (stubHint != null) results.Add(stubHint);
+
+            // Last resort: every filter above is a guess, and a guess that rejects EVERYTHING
+            // leaves the user with an empty combo and no way to pick anything at all — worse
+            // than a wrong first entry they can override. Hand back whatever exists.
+            if (results.Count == 0)
+                results.AddRange(all
+                    .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } }));
         }
         catch (Exception ex) { Log.Warn($"ExeLocator {game.Name}: {ex.Message}"); }
 

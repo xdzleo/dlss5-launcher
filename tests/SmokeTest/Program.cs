@@ -116,6 +116,35 @@ var cbCands = ExeLocator.FindCandidates(
     new GameInfo { Name = "Crash Bandicoot N. Sane Trilogy", InstallDir = cbRoot, Store = GameStore.Steam }, null);
 Check(cbCands.FirstOrDefault() == cbReal, "'crash' não condena CrashBandicootNSaneTrilogy.exe");
 
+// tModLoader: a pasta de deploy curada do índice se chama "dotnet" — que é também nome de pasta
+// de terceiro. O dado curado tem que vencer o filtro heurístico, senão o único exe que importa
+// é descartado antes de ser pontuado e a lista sai vazia.
+var tmlRoot = Path.Combine(fakeRoot, "tModLoader");
+MakeExe(Path.Combine(tmlRoot, "tModLoader.exe"), true, false);          // apphost na raiz
+var tmlReal = MakeExe(Path.Combine(tmlRoot, "dotnet", "dotnet.exe"), true, false);
+var tmlGame = new GameInfo { Name = "tModLoader", InstallDir = tmlRoot, Store = GameStore.Steam };
+var tmlCands = ExeLocator.FindCandidates(tmlGame, "dotnet");
+Check(tmlCands.FirstOrDefault() == tmlReal,
+    $"tModLoader → dotnet\\dotnet.exe, apesar de 'dotnet' estar na lista de pastas de terceiro ({Path.GetFileName(tmlCands.FirstOrDefault() ?? "-")})");
+// mesma coisa com o runtime um nível mais fundo (layout que muda entre updates do jogo)
+var tml2Root = Path.Combine(fakeRoot, "tModLoader2");
+MakeExe(Path.Combine(tml2Root, "tModLoader.exe"), true, false);
+var tml2Real = MakeExe(Path.Combine(tml2Root, "dotnet", "6.0.0", "dotnet.exe"), true, false);
+Check(ExeLocator.FindCandidates(
+        new GameInfo { Name = "tModLoader", InstallDir = tml2Root, Store = GameStore.Steam },
+        "dotnet").FirstOrDefault() == tml2Real,
+    "tModLoader → runtime aninhado (dotnet\\6.0.0) também é encontrado");
+// sem o override o app não pode inventar: aí a raiz é a resposta certa
+Check(ExeLocator.FindCandidates(tmlGame, null).FirstOrDefault() != tmlReal,
+    "sem pasta curada, 'dotnet' volta a ser tratada como pasta de terceiro");
+
+// nenhum filtro pode devolver lista vazia: sem candidato o usuário não consegue nem escolher
+var onlyStubRoot = Path.Combine(fakeRoot, "SoStub");
+var onlyStub = MakeExe(Path.Combine(onlyStubRoot, "GameLaunchHelper.exe"), true, false);
+var onlyStubCands = ExeLocator.FindCandidates(
+    new GameInfo { Name = "Um Jogo Qualquer", InstallDir = onlyStubRoot, Store = GameStore.Xbox }, null);
+Check(onlyStubCands.Contains(onlyStub), "jogo só com exe de stub ainda devolve candidato (combo nunca fica vazio)");
+
 // Unreal: o shipping exe ganha de qualquer coisa, mesmo com um handler no mesmo diretório
 var sbRoot = Path.Combine(fakeRoot, "StellarBlade");
 var sbBin = Path.Combine(sbRoot, "SB", "Binaries", "Win64");
