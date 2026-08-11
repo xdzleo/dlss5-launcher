@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.8.0
+
+### “Ainda não tenho a lista de configurações deste mod”
+
+Essa mensagem estava **errada** em vários casos. Havia dois problemas diferentes:
+
+1. **Mods sem opções ajustáveis** (DOOM: The Dark Ages, DMC5, AC Valhalla e outros 30) — o autor
+   deixou os valores fixos e o mod só troca shaders. O app dizia que "não conhecia" o mod, quando
+   na verdade não há nada para ajustar. Agora ele diz isso com todas as letras.
+2. **Catálogo desatualizado** — o manifesto era um retrato do código do renodx no dia do build.
+   Foi regenerado (**344 mods**, era 294) e, quando aparecer um mod publicado *depois* desta
+   versão, o launcher agora **lê as opções direto do código-fonte do mod** no repositório do
+   maintainer, em vez de desistir.
+
 ## v1.7.0
 
 ### Crédito do autor do mod em destaque

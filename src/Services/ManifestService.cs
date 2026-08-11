@@ -61,6 +61,15 @@ public class ManifestService
     private static double? GetDouble(JsonElement e, string prop) =>
         e.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble() : null;
 
+    /// <summary>Settings of a mod, or null when the slug is unknown to this build.
+    /// An EMPTY list is meaningful: the mod exists and exposes no adjustable option.</summary>
     public IReadOnlyList<SettingDef>? GetSettings(string? slug) =>
         slug != null && _bySlug.TryGetValue(slug, out var list) ? list : null;
+
+    /// <summary>Do we know this mod at all? Distinguishes "mod without options" from
+    /// "mod newer than the embedded catalog".</summary>
+    public bool KnowsSlug(string? slug) => slug != null && _bySlug.ContainsKey(slug);
+
+    /// <summary>Add settings discovered at runtime (fetched from the maintainer's repo).</summary>
+    public void Merge(string slug, IReadOnlyList<SettingDef> settings) => _bySlug[slug] = settings.ToList();
 }

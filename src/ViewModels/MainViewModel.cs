@@ -458,11 +458,29 @@ public class MainViewModel : ObservableObject
                 return;
             }
             var defs = _manifest?.GetSettings(item.Mod.Slug);
+            if (defs is null && _manifest != null)
+            {
+                // mod publicado depois deste build: le as opcoes direto do fonte do mod
+                SetNoSettings($"Procurando as configurações do mod {item.Mod.Slug}...");
+                var fetched = await SettingsFetcher.TryFetchAsync(item.Mod);
+                if (token != _detailToken) return;
+                if (fetched != null)
+                {
+                    _manifest.Merge(item.Mod.Slug, fetched);
+                    defs = fetched;
+                    SetNoSettings("");
+                }
+            }
             if (defs is null)
             {
-                SetNoSettings($"Ainda não tenho a lista de configurações deste mod ({item.Mod.Slug}) — " +
-                    "ele é mais novo que o catálogo embutido. Instalar funciona normalmente; ajuste " +
-                    "pelo overlay do ReShade no jogo (tecla Home).");
+                SetNoSettings($"Não consegui obter a lista de configurações deste mod ({item.Mod.Slug}). " +
+                    "Instalar funciona normalmente; ajuste pelo overlay do ReShade no jogo (tecla Home).");
+                return;
+            }
+            if (defs.Count == 0)
+            {
+                SetNoSettings("Este mod não tem opções ajustáveis — o autor deixou os valores fixos. " +
+                    "Instalar e ativar é tudo que ele precisa.");
                 return;
             }
             if (item.State is null) return;

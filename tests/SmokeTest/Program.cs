@@ -172,6 +172,44 @@ Directory.CreateDirectory(Path.Combine(acDir, "EasyAntiCheat"));
 Check(AntiCheatScanner.Detect(acDir, null) == "Easy Anti-Cheat", "anti-cheat detectado pela pasta EasyAntiCheat");
 Check(AntiCheatScanner.Detect(Path.Combine(fakeRoot, "StubTest"), null) is null, "sem anti-cheat → null");
 
+// 4e. parser de settings em C# (usado quando o mod e mais novo que o app)
+var cppSample = """
+  new renodx::utils::settings::Setting{
+      .key = "ToneMapPeakNits",
+      .binding = &shader_injection.tone_map_peak_nits,
+      .default_value = 1000.f,
+      .label = "Peak Brightness",
+      .section = "Tone Mapping",
+      .tooltip = "Sets the value of peak white in nits",
+      .min = 48.f,
+      .max = 4000.f,
+  },
+  new renodx::utils::settings::Setting{
+      .key = "ToneMapType",
+      .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+      .default_value = 1.f,
+      .label = "Tone Mapper",
+      .labels = {"Vanilla", "RenoDRT"},
+  },
+  new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+      .label = "Github",
+  },
+""";
+var parsed = SettingsFetcher.Parse(cppSample);
+Check(parsed.Count == 2, $"parser C#: ignora BUTTON e le 2 settings (leu {parsed.Count})");
+var pk = parsed.FirstOrDefault(d => d.Key == "ToneMapPeakNits");
+Check(pk != null && pk.Default == 1000 && pk.Min == 48 && pk.Max == 4000,
+    $"parser C#: peak default/min/max corretos ({pk?.Default}/{pk?.Min}/{pk?.Max})");
+var tm = parsed.FirstOrDefault(d => d.Key == "ToneMapType");
+Check(tm != null && tm.Type == "int" && tm.Labels?.Count == 2,
+    $"parser C#: enum com rotulos ({tm?.Type}, {tm?.Labels?.Count} labels)");
+
+// manifest agora distingue "sem opcoes" de "desconhecido"
+Check(manifest.KnowsSlug("doom-tda") && manifest.GetSettings("doom-tda")!.Count == 0,
+    "manifest: doom-tda conhecido e SEM opcoes ajustaveis");
+Check(!manifest.KnowsSlug("slug-que-nao-existe"), "manifest: slug inexistente = desconhecido");
+
 // 5. ReShade provision + deploy (real download)
 var reshade = new ReShadeService();
 var deploy = await reshade.DeployAsync(fakeDir, fakeExe, null, null, new Progress<string>(Console.WriteLine));

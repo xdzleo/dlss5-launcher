@@ -2759,6 +2759,127 @@
    "type": "float"
   }
  ],
+ "asscreedblackflagresynced": [
+  {
+   "key": "ToneMapType",
+   "type": "int",
+   "default": 1.0,
+   "label": "Tone Mapper",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the tone mapper type. Toggle in-game HDR setting or restart game to take effect.",
+   "labels": [
+    "Vanilla",
+    "RenoDX (Vanilla+)",
+    "RenoDX (Customized)"
+   ]
+  },
+  {
+   "key": "LocalToneMapType",
+   "type": "int",
+   "default": 0.0,
+   "label": "Local Tone Map Type",
+   "section": "Local Tone Mapping",
+   "tooltip": "Sets the local tone mapper type. Enhanced preserves prevents oversaturation in dark scenes.",
+   "labels": [
+    "Vanilla",
+    "Enhanced"
+   ]
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "UI",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits. Requires a game restart to take effect.",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "Exposure",
+   "default": 1.0,
+   "label": "Exposure",
+   "section": "Color Grading",
+   "max": 2.0,
+   "format": "%.2f",
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlights",
+   "default": 50.0,
+   "label": "Highlights",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeShadows",
+   "default": 50.0,
+   "label": "Shadows",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeContrast",
+   "default": 50.0,
+   "label": "Contrast",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeSaturation",
+   "default": 50.0,
+   "label": "Saturation",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeDechroma",
+   "default": 0.0,
+   "label": "Dechroma",
+   "section": "Color Grading",
+   "tooltip": "Controls highlight desaturation due to overexposure.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeFlare",
+   "default": 0.0,
+   "label": "Flare",
+   "section": "Color Grading",
+   "tooltip": "Flare/Glare Compensation",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeCoolness",
+   "default": 0.0,
+   "label": "Coolness",
+   "section": "Color Grading",
+   "tooltip": "Shifts the image toward cooler tones.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorFilterStrength",
+   "default": 100.0,
+   "label": "Color Filter Strength",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxBloom",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
  "asscreedmirage": [
   {
    "key": "ToneMapType",
@@ -3037,15 +3158,25 @@
   {
    "key": "ToneMapType",
    "type": "int",
-   "default": 1.0,
+   "default": 2.0,
    "label": "Tone Mapper",
    "section": "Tone Mapping",
    "tooltip": "Sets the tone mapper type. Toggle in-game HDR setting or restart game to take effect.",
    "labels": [
     "Vanilla",
-    "Vanilla+",
-    "ACES"
+    "RenoDX (Vanilla+)",
+    "RenoDX (Enhanced)"
    ]
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "UI",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits. Requires a game restart to take effect.",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
   },
   {
    "key": "LocalToneMapType",
@@ -3119,9 +3250,9 @@
    "type": "float"
   },
   {
-   "key": "ColorGradeBlowout",
+   "key": "ColorGradeDechroma",
    "default": 0.0,
-   "label": "Blowout",
+   "label": "Dechroma",
    "section": "Color Grading",
    "tooltip": "Controls highlight desaturation due to overexposure.",
    "max": 100.0,
@@ -3146,7 +3277,7 @@
   },
   {
    "key": "FxBloom",
-   "default": 50.0,
+   "default": 75.0,
    "label": "Bloom",
    "section": "Effects",
    "max": 100.0,
@@ -3154,24 +3285,15 @@
   },
   {
    "key": "FxBloomScaling",
-   "default": 100.0,
+   "default": 0.0,
    "label": "Bloom Scaling",
    "section": "Effects",
    "tooltip": "Scales the black floor of the bloom effect.",
    "max": 100.0,
    "type": "float"
-  },
-  {
-   "key": "ToneMapUINits",
-   "default": 203.0,
-   "label": "UI Brightness",
-   "section": "Miscellaneous",
-   "tooltip": "Sets the brightness of UI and HUD elements in nits. Requires a game restart to take effect.",
-   "min": 48.0,
-   "max": 500.0,
-   "type": "float"
   }
  ],
+ "asscreedvalhalla": [],
  "atelierryzadx": [
   {
    "key": "CustomSatStrength",
@@ -4714,6 +4836,7 @@
    "type": "float"
   }
  ],
+ "bioshock-alt": [],
  "black-desert-online": [
   {
    "key": "SettingsMode",
@@ -4935,6 +5058,7 @@
    "type": "float"
   }
  ],
+ "bladesoffire": [],
  "bmw": [
   {
    "key": "toneMapType",
@@ -5878,6 +6002,159 @@
    "key": "fxFilmGrain",
    "default": 0.0,
    "label": "Film Grain",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "callistoprotocol": [
+  {
+   "key": "ToneMapType",
+   "type": "int",
+   "default": 1.0,
+   "label": "Tone Mapper",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the tone mapper type",
+   "labels": [
+    "Vanilla",
+    "RenoDX"
+   ]
+  },
+  {
+   "key": "ToneMapPeakNits",
+   "default": 1000.0,
+   "label": "Peak Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of peak white in nits",
+   "min": 48.0,
+   "max": 10000.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGameNits",
+   "default": 150.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapWorkingColorSpace",
+   "type": "int",
+   "default": 1.0,
+   "label": "Working Color Space",
+   "section": "Tone Mapping",
+   "labels": [
+    "BT.709",
+    "LMS"
+   ]
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 150.0,
+   "label": "UI Brightness",
+   "section": "UI",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "UIGammaCorrection",
+   "type": "bool",
+   "default": 1.0,
+   "label": "UI SDR EOTF Emulation",
+   "section": "UI",
+   "tooltip": "Emulates a 2.2 EOTF for the UI",
+   "labels": [
+    "Off",
+    "2.2"
+   ]
+  },
+  {
+   "key": "ColorGradeHighlights",
+   "default": 50.0,
+   "label": "Highlights",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeShadows",
+   "default": 50.0,
+   "label": "Shadows",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeContrast",
+   "default": 50.0,
+   "label": "Contrast",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeSaturation",
+   "default": 50.0,
+   "label": "Saturation",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlightSaturation",
+   "default": 50.0,
+   "label": "Highlight Saturation",
+   "section": "Color Grading",
+   "tooltip": "Adds or removes highlight color.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeFlare",
+   "default": 0.0,
+   "label": "Flare",
+   "section": "Color Grading",
+   "tooltip": "Flare/Glare Compensation",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeLUTStrength",
+   "default": 100.0,
+   "label": "Color Grade Strength",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeLUTScaling",
+   "default": 100.0,
+   "label": "Color Grade Scaling",
+   "section": "Color Grading",
+   "tooltip": "Scales the color grade LUT to full range when size is clamped.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxFilmGrainType",
+   "type": "int",
+   "default": 1.0,
+   "label": "Film Grain Type",
+   "section": "Effects",
+   "labels": [
+    "Vanilla",
+    "Perceptual"
+   ]
+  },
+  {
+   "key": "FxGrainStrength",
+   "default": 50.0,
+   "label": "FilmGrain",
    "section": "Effects",
    "max": 100.0,
    "type": "float"
@@ -10358,33 +10635,6 @@
    "type": "float"
   },
   {
-   "key": "ColorGradeHighlightSaturation",
-   "default": 50.0,
-   "label": "Highlight Saturation",
-   "section": "Color Grading",
-   "tooltip": "Adds or removes highlight color.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeBlowout",
-   "default": 0.0,
-   "label": "Blowout",
-   "section": "Color Grading",
-   "tooltip": "Adds highlight desaturation due to overexposure.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeFlare",
-   "default": 0.0,
-   "label": "Flare",
-   "section": "Color Grading",
-   "tooltip": "Flare/Glare Compensation",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
    "key": "FxSharpness",
    "default": 50.0,
    "label": "CAS Sharpness",
@@ -10562,6 +10812,7 @@
    "type": "float"
   }
  ],
+ "dbzspark": [],
  "deadisland2": [
   {
    "key": "ToneMapPeakNits",
@@ -11053,42 +11304,25 @@
   {
    "key": "GammaCorrection",
    "type": "int",
-   "default": 2.0,
+   "default": 1.0,
    "label": "SDR EOTF Emulation",
    "section": "Tone Mapping",
    "tooltip": "Emulates a 2.2 EOTF",
    "labels": [
     "Off",
-    "2.2 (Per Channel)",
-    "2.2 (By Luminance)"
+    "2.2"
    ]
   },
   {
-   "key": "ToneMapHueEmulation",
-   "type": "bool",
-   "default": 0.0,
-   "label": "Vanilla Hue Emulation",
+   "key": "ToneMapWorkingColorSpace",
+   "type": "int",
+   "default": 1.0,
+   "label": "Working Color Space",
    "section": "Tone Mapping",
-   "tooltip": "Adjusts hues to match the original tonemapper"
-  },
-  {
-   "key": "ColorGradeExposure",
-   "default": 1.0,
-   "label": "Exposure",
-   "section": "Color Grading",
-   "max": 2.0,
-   "format": "%.2f",
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeGamma",
-   "default": 1.0,
-   "label": "Gamma",
-   "section": "Color Grading",
-   "min": 0.75,
-   "max": 1.25,
-   "format": "%.2f",
-   "type": "float"
+   "labels": [
+    "BT.709",
+    "LMS"
+   ]
   },
   {
    "key": "ColorGradeHighlights",
@@ -11099,25 +11333,9 @@
    "type": "float"
   },
   {
-   "key": "ColorGradeHighlightContrast",
-   "default": 50.0,
-   "label": "Highlight Contrast",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
    "key": "ColorGradeShadows",
-   "default": 75.0,
+   "default": 65.0,
    "label": "Shadows",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeShadowContrast",
-   "default": 50.0,
-   "label": "Shadow Contrast",
    "section": "Color Grading",
    "max": 100.0,
    "type": "float"
@@ -11126,14 +11344,6 @@
    "key": "ColorGradeContrast",
    "default": 50.0,
    "label": "Contrast",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeAdaptationContrast",
-   "default": 50.0,
-   "label": "Adaptation Contrast",
    "section": "Color Grading",
    "max": 100.0,
    "type": "float"
@@ -11148,7 +11358,7 @@
   },
   {
    "key": "ColorGradeHighlightSaturation",
-   "default": 51.0,
+   "default": 50.0,
    "label": "Highlight Saturation",
    "section": "Color Grading",
    "tooltip": "Adds or removes highlight color.",
@@ -12307,6 +12517,9 @@
    "type": "float"
   }
  ],
+ "dmc5": [],
+ "doom-eternal": [],
+ "doom-tda": [],
  "dragonsdogma2": [
   {
    "key": "SettingsMode",
@@ -13441,6 +13654,7 @@
    "type": "float"
   }
  ],
+ "dyinglightthebeast": [],
  "elitedangerous": [
   {
    "key": "ToneMapType",
@@ -13496,15 +13710,6 @@
     "Luminance",
     "Per Channel"
    ]
-  },
-  {
-   "key": "ColorGradeExposure",
-   "default": 1.0,
-   "label": "Exposure",
-   "section": "Color Grading",
-   "max": 2.0,
-   "format": "%.2f",
-   "type": "float"
   },
   {
    "key": "ColorGradeHighlights",
@@ -17160,6 +17365,7 @@
    "is_global": true
   }
  ],
+ "gbfrelink": [],
  "generic": [
   {
    "key": "SettingsMode",
@@ -18015,6 +18221,8 @@
    ]
   }
  ],
+ "gomechaball": [],
+ "gotsushima": [],
  "gow2018": [
   {
    "key": "ToneMapType",
@@ -18816,7 +19024,7 @@
    "labels": [
     "Vanilla",
     "RenoDRT",
-    "PsychoV-17"
+    "PsychoV-22"
    ]
   },
   {
@@ -18826,7 +19034,7 @@
    "section": "Tone Mapping",
    "tooltip": "Sets the value of peak white in nits",
    "min": 48.0,
-   "max": 4000.0,
+   "max": 10000.0,
    "type": "float"
   },
   {
@@ -19474,6 +19682,186 @@
    ]
   }
  ],
+ "halocampaignevolved": [
+  {
+   "key": "ToneMapType",
+   "type": "int",
+   "default": 1.0,
+   "label": "Tone Mapper",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the tone mapper type",
+   "labels": [
+    "Vanilla",
+    "RenoDX (Vanilla+)"
+   ]
+  },
+  {
+   "key": "ToneMapPeakNits",
+   "default": 1000.0,
+   "label": "Peak Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of peak white in nits",
+   "min": 48.0,
+   "max": 4000.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGammaCorrection",
+   "type": "int",
+   "default": 1.0,
+   "label": "SDR EOTF Emulation",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates a 2.2 EOTF",
+   "labels": [
+    "Off",
+    "2.2"
+   ]
+  },
+  {
+   "key": "ToneMapOverrideBlackClip",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Override Black Clip",
+   "section": "Tone Mapping & Color Grading",
+   "tooltip": "Disables black clip in the tonemapper. Prevents crushing or black raise when the black clip parameter is used"
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "UI",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "UIGammaCorrection",
+   "type": "bool",
+   "default": 1.0,
+   "label": "UI SDR EOTF Emulation",
+   "section": "UI",
+   "tooltip": "Emulates a 2.2 EOTF for the UI",
+   "labels": [
+    "Off",
+    "2.2"
+   ]
+  },
+  {
+   "key": "ColorGradeExposure",
+   "default": 1.0,
+   "label": "Exposure",
+   "section": "Color Grading",
+   "max": 2.0,
+   "format": "%.2f",
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlights",
+   "default": 50.0,
+   "label": "Highlights",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeShadows",
+   "default": 50.0,
+   "label": "Shadows",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeContrast",
+   "default": 50.0,
+   "label": "Contrast",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeSaturation",
+   "default": 50.0,
+   "label": "Saturation",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlightSaturation",
+   "default": 50.0,
+   "label": "Highlight Saturation",
+   "section": "Color Grading",
+   "tooltip": "Adds or removes highlight color.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 0.0,
+   "label": "Blowout",
+   "section": "Color Grading",
+   "tooltip": "Controls highlight desaturation due to overexposure.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeFlare",
+   "default": 0.0,
+   "label": "Flare",
+   "section": "Color Grading",
+   "tooltip": "Flare/Glare Compensation",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeStrength",
+   "default": 100.0,
+   "label": "Color Grade Strength",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxGrainType",
+   "type": "int",
+   "default": 0.0,
+   "label": "Grain Type",
+   "section": "Effects",
+   "tooltip": "Replaces vanilla film grain with perceptual",
+   "labels": [
+    "Vanilla",
+    "Perceptual"
+   ]
+  },
+  {
+   "key": "FxGrainStrength",
+   "default": 50.0,
+   "label": "Film Grain Strength",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxChromaticAberration",
+   "default": 100.0,
+   "label": "Chromatic Aberration Strength",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
  "haste": [
   {
    "key": "SettingsMode",
@@ -20080,6 +20468,7 @@
    "is_global": true
   }
  ],
+ "hellblade2": [],
  "helldivers2": [
   {
    "key": "SettingsMode",
@@ -20262,6 +20651,7 @@
    "type": "float"
   }
  ],
+ "hitmanwoa": [],
  "hollowcocoon": [
   {
    "key": "SettingsMode",
@@ -21411,6 +21801,271 @@
    "type": "float"
   }
  ],
+ "indygreatcircle": [],
+ "infinity-nikki": [
+  {
+   "key": "SettingsMode",
+   "type": "int",
+   "default": 0.0,
+   "label": "Settings Mode",
+   "labels": [
+    "Simple",
+    "Intermediate",
+    "Advanced"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "ToneMapType",
+   "type": "int",
+   "default": 1.0,
+   "label": "Tone Mapper",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the tone mapper type",
+   "labels": [
+    "UE Vanilla (SDR)",
+    "UE Filmic Extended (HDR)"
+   ]
+  },
+  {
+   "key": "ToneMapPeakNits",
+   "default": 1000.0,
+   "label": "Peak Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of peak white in nits",
+   "min": 48.0,
+   "max": 4000.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGammaCorrection",
+   "type": "int",
+   "default": 1.0,
+   "label": "SDR EOTF Emulation",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates a 2.2 EOTF",
+   "labels": [
+    "Off",
+    "2.2"
+   ]
+  },
+  {
+   "key": "BlendFactor",
+   "default": 50.0,
+   "label": "Blend Factor",
+   "section": "Tone Mapping",
+   "tooltip": "Controls average scene brightness.",
+   "min": 0.0,
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapScaling",
+   "type": "int",
+   "default": 1.0,
+   "label": "Tonemap Scaling",
+   "section": "Tone Mapping",
+   "tooltip": "Max Channel: Hand-tuned to match the original tonemapper's behavior.\\n\"\n                   \"LMS: Based on emulating human vision.",
+   "labels": [
+    "Max Channel",
+    "LMS"
+   ]
+  },
+  {
+   "key": "ToneMapPerChPeak",
+   "default": 5.0,
+   "label": "Per Channel Peak",
+   "section": "Scene Grading",
+   "tooltip": "Used to control hue/chroma input peak.",
+   "min": 1.0,
+   "max": 11.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapHueShift",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Scene Grading",
+   "tooltip": "Hue-shift emulation strength.",
+   "min": 0.0,
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeChromaCorrectBlowout",
+   "default": 0.0,
+   "label": "Blowout",
+   "section": "Scene Grading",
+   "tooltip": "Emulates blowout from per channel tonemapping.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeExposure",
+   "default": 1.0,
+   "label": "Exposure",
+   "section": "Custom Color Grading",
+   "max": 2.0,
+   "format": "%.2f",
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlights",
+   "default": 50.0,
+   "label": "Highlights",
+   "section": "Custom Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeShadows",
+   "default": 50.0,
+   "label": "Shadows",
+   "section": "Custom Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeContrast",
+   "default": 50.0,
+   "label": "Contrast",
+   "section": "Custom Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeSaturation",
+   "default": 50.0,
+   "label": "Saturation",
+   "section": "Custom Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlightSaturation",
+   "default": 50.0,
+   "label": "Highlight Saturation",
+   "section": "Custom Color Grading",
+   "tooltip": "Adds or removes highlight color.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 0.0,
+   "label": "Dechroma",
+   "section": "Custom Color Grading",
+   "tooltip": "Controls highlight desaturation due to overexposure.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeFlare",
+   "default": 0.0,
+   "label": "Flare",
+   "section": "Custom Color Grading",
+   "tooltip": "Flare/Glare Compensation",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeLUTStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading LUTs",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeLUTScaling",
+   "default": 100.0,
+   "label": "LUT Scaling",
+   "section": "Color Grading LUTs",
+   "tooltip": "Scales the color grade LUT to full range when size is clamped.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeLUTGamutRestoration",
+   "type": "bool",
+   "default": 1.0,
+   "label": "LUT Gamut Restoration",
+   "section": "Color Grading LUTs",
+   "tooltip": "Restores wide gamut colors clipped by the LUT"
+  },
+  {
+   "key": "FxGrainType",
+   "type": "int",
+   "default": 0.0,
+   "label": "Grain Type",
+   "section": "Effects",
+   "tooltip": "Replaces vanilla film grain with perceptual",
+   "labels": [
+    "Vanilla",
+    "Perceptual"
+   ]
+  },
+  {
+   "key": "FxGrainStrength",
+   "default": 50.0,
+   "label": "Film Grain",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxSharpening",
+   "default": 0.0,
+   "label": "Lilium RCAS Sharpening",
+   "section": "Effects",
+   "tooltip": "Adds RCAS, as implemented by Lilium for HDR.",
+   "type": "float"
+  },
+  {
+   "key": "TonemapUnderUI",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Tonemap Under UI",
+   "section": "Other",
+   "tooltip": "Helps blend UI elements when the scene is bright.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "UIGammaCorrection",
+   "type": "bool",
+   "default": 1.0,
+   "label": "UI SDR EOTF Emulation",
+   "section": "Other",
+   "tooltip": "Emulates a 2.2 EOTF for the UI",
+   "labels": [
+    "Off",
+    "2.2"
+   ]
+  }
+ ],
  "jedisurvivor": [
   {
    "key": "ToneMapType",
@@ -21941,6 +22596,8 @@
    "type": "float"
   }
  ],
+ "karmathedarkworld": [],
+ "kingdomcome2": [],
  "koarr": [
   {
    "key": "SettingsMode",
@@ -24186,10 +24843,11 @@
    "default": 1.0,
    "label": "Tone Mapper",
    "section": "Tone Mapping",
-   "tooltip": "Vanilla = untouched native HDR. Vanilla+ = paper white, highlight roll-off, color grading and effects.",
+   "tooltip": "Sets the tone mapper type",
    "labels": [
     "Vanilla",
-    "Vanilla+"
+    "Vanilla+",
+    "PsychoV-24"
    ]
   },
   {
@@ -24309,6 +24967,18 @@
    "type": "float"
   },
   {
+   "key": "ColorGradeLUTSampling",
+   "type": "int",
+   "default": 1.0,
+   "label": "LUT Sampling",
+   "section": "Color Grading",
+   "tooltip": "Interpolation of the game's native grade LUT. Tetrahedral reduces banding; Trilinear = vanilla.",
+   "labels": [
+    "Trilinear",
+    "Tetrahedral"
+   ]
+  },
+  {
    "key": "FxBloom",
    "default": 50.0,
    "label": "Bloom",
@@ -24341,6 +25011,7 @@
    "label": "RCAS Sharpening",
    "section": "Effects",
    "tooltip": "Adds RCAS, as implemented by Lilium for HDR. Disable other sharpening (DLAA / ReShade) to avoid double-sharpening.",
+   "max": 100.0,
    "type": "float"
   },
   {
@@ -24376,8 +25047,19 @@
     "Off",
     "On"
    ]
+  },
+  {
+   "key": "FxVideoNits",
+   "default": 500.0,
+   "label": "Video Brightness",
+   "section": "Effects",
+   "tooltip": "Sets the peak brightness for video content in nits",
+   "min": 100.0,
+   "max": 1000.0,
+   "type": "float"
   }
  ],
+ "masseffectle": [],
  "maxpayne3": [
   {
    "key": "SettingsMode",
@@ -24778,6 +25460,7 @@
    "type": "float"
   }
  ],
+ "mgsdelta": [],
  "mhrise": [
   {
    "key": "ToneMapType",
@@ -26071,6 +26754,8 @@
    ]
   }
  ],
+ "ngsigma": [],
+ "ngsigma2": [],
  "ninjagaiden4": [
   {
    "key": "fxFilmGrainType",
@@ -26305,6 +26990,7 @@
    "is_global": true
   }
  ],
+ "oblivionremastered": [],
  "onimusha-wots": [
   {
    "key": "ToneMapType",
@@ -27447,6 +28133,7 @@
    "type": "float"
   }
  ],
+ "outerworlds2": [],
  "p4g": [
   {
    "key": "toneMapType",
@@ -29062,6 +29749,184 @@
    "type": "float"
   }
  ],
+ "rdr2vk": [
+  {
+   "key": "ToneMapType",
+   "type": "int",
+   "default": 1.0,
+   "label": "Tone Mapper",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the tone mapper type",
+   "labels": [
+    "Vanilla",
+    "RenoDX (Enhanced)",
+    "RenoDX (Vanilla+)",
+    "SDR"
+   ]
+  },
+  {
+   "key": "ToneMapPeakNits",
+   "default": 1000.0,
+   "label": "Peak Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of peak white in nits",
+   "min": 48.0,
+   "max": 10000.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "GammaCorrection",
+   "type": "int",
+   "default": 0.0,
+   "label": "SDR EOTF Emulation",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates a 2.2 EOTF",
+   "labels": [
+    "Off",
+    "2.2"
+   ]
+  },
+  {
+   "key": "ColorGradeGamma",
+   "default": 1.0,
+   "label": "Gamma",
+   "section": "Color Grading",
+   "min": 0.75,
+   "max": 1.25,
+   "format": "%.2f",
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlights",
+   "default": 50.0,
+   "label": "Highlights",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeShadows",
+   "default": 50.0,
+   "label": "Shadows",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeContrast",
+   "default": 50.0,
+   "label": "Contrast",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeSaturation",
+   "default": 50.0,
+   "label": "Saturation",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlightSaturation",
+   "default": 50.0,
+   "label": "Highlight Saturation",
+   "section": "Color Grading",
+   "tooltip": "Adds or removes highlight color.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeDechroma",
+   "default": 0.0,
+   "label": "Dechroma",
+   "section": "Color Grading",
+   "tooltip": "Controls highlight desaturation due to overexposure.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeFlare",
+   "default": 0.0,
+   "label": "Flare",
+   "section": "Color Grading",
+   "tooltip": "Flare/Glare Compensation",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeLUTStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxVignette",
+   "default": 100.0,
+   "label": "Vignette",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxDithering",
+   "default": 100.0,
+   "label": "Dithering",
+   "section": "Effects",
+   "type": "float"
+  },
+  {
+   "key": "FxGrainStrength",
+   "default": 0.0,
+   "label": "Film Grain",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "UnclampLighting",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Unclamp Lighting",
+   "section": "Advanced",
+   "tooltip": "Removes clamp on brightness"
+  },
+  {
+   "key": "CustomLUTEncoding",
+   "type": "int",
+   "default": 1.0,
+   "label": "LUT Encoding",
+   "section": "Advanced",
+   "tooltip": "Skip LUT encoding like Vanilla HDR or use SDR's sRGB-like encoding.",
+   "labels": [
+    "Vanilla (Linear)",
+    "Fixed (sRGB-like, Matches SDR)"
+   ]
+  }
+ ],
  "re4remake": [
   {
    "key": "ToneMapType",
@@ -29108,34 +29973,25 @@
   {
    "key": "GammaCorrection",
    "type": "int",
-   "default": 2.0,
+   "default": 1.0,
    "label": "SDR EOTF Emulation",
    "section": "Tone Mapping",
    "tooltip": "Emulates a 2.2 EOTF",
    "labels": [
     "Off",
-    "2.2 (Per Channel)",
-    "2.2 (By Luminosity)"
+    "2.2"
    ]
   },
   {
-   "key": "ToneMapBlowout",
-   "default": 100.0,
-   "label": "Blowout",
+   "key": "ToneMapWorkingColorSpace",
+   "type": "int",
+   "default": 1.0,
+   "label": "Display Mapping Primaries",
    "section": "Tone Mapping",
-   "tooltip": "Emulates blowout from per channel tonemapping",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ToneMapHueShift",
-   "default": 100.0,
-   "label": "Hue Shift",
-   "section": "Tone Mapping",
-   "tooltip": "Hue-shift emulation strength.",
-   "min": 0.0,
-   "max": 100.0,
-   "type": "float"
+   "labels": [
+    "BT.709",
+    "LMS"
+   ]
   },
   {
    "key": "ColorGradeToeAdjustmentType",
@@ -29196,7 +30052,7 @@
   },
   {
    "key": "ColorGradeShadows",
-   "default": 50.0,
+   "default": 75.0,
    "label": "Shadows",
    "section": "Color Grading",
    "max": 100.0,
@@ -29204,7 +30060,7 @@
   },
   {
    "key": "ColorGradeShadowContrast",
-   "default": 42.0,
+   "default": 50.0,
    "label": "Shadow Contrast",
    "section": "Color Grading",
    "max": 100.0,
@@ -29366,16 +30222,26 @@
    "type": "float"
   },
   {
+   "key": "ToneMapWorkingColorSpace",
+   "type": "int",
+   "default": 1.0,
+   "label": "Working Color Space",
+   "section": "Tone Mapping",
+   "labels": [
+    "BT.709",
+    "LMS"
+   ]
+  },
+  {
    "key": "GammaCorrection",
    "type": "int",
-   "default": 2.0,
+   "default": 1.0,
    "label": "SDR EOTF Emulation",
    "section": "Tone Mapping",
    "tooltip": "Emulates a 2.2 EOTF",
    "labels": [
     "Off",
-    "2.2 (Per Channel)",
-    "2.2 (By Luminosity)"
+    "2.2"
    ]
   },
   {
@@ -29415,7 +30281,7 @@
   },
   {
    "key": "ColorGradeShadows",
-   "default": 50.0,
+   "default": 80.0,
    "label": "Shadows",
    "section": "Color Grading",
    "max": 100.0,
@@ -29423,7 +30289,7 @@
   },
   {
    "key": "ColorGradeShadowContrast",
-   "default": 42.0,
+   "default": 50.0,
    "label": "Shadow Contrast",
    "section": "Color Grading",
    "max": 100.0,
@@ -31262,6 +32128,7 @@
    ]
   }
  ],
+ "rotsp": [],
  "routine": [
   {
    "key": "ToneMapType",
@@ -31752,6 +32619,7 @@
    ]
   }
  ],
+ "seaofthieves": [],
  "shadowofwar": [
   {
    "key": "ToneMapType",
@@ -33893,6 +34761,8 @@
    "type": "float"
   }
  ],
+ "spiderman2": [],
+ "spiderman_2018_miles": [],
  "stalker2": [
   {
    "key": "toneMapType",
@@ -35120,6 +35990,7 @@
    "type": "float"
   }
  ],
+ "tempopo": [],
  "terraria": [
   {
    "key": "SettingsMode",
@@ -37307,6 +38178,7 @@
    "type": "float"
   }
  ],
+ "unchartedlotc": [],
  "unrealengine": [
   {
    "key": "SettingsMode",
@@ -39052,12 +39924,12 @@
   {
    "key": "ToneMapScaling",
    "type": "int",
-   "default": 1.0,
-   "label": "Display Mapper",
+   "default": 0.0,
+   "label": "Tone Map Method",
    "section": "Tone Mapping",
-   "tooltip": "Selects final display mapping operator.",
+   "tooltip": "Selects the tone map method used. Extended sticks closer to the original creative intent. Psycho can give more pleasing hues.",
    "labels": [
-    "Max Channel",
+    "Extended",
     "PsychoV"
    ]
   },
@@ -39146,7 +40018,7 @@
    "default": 3.0,
    "label": "Game Tone Mapper",
    "section": "Scene Grading",
-   "tooltip": "Adjusts the tone mapper used by the game.\\nThe provided names are from the game's files.\\n\\\"Kuro\\\" is the original behavior.",
+   "tooltip": "Adjusts the scene tone mapper before the game's LUT.\\nThe provided names are from the game's files.\\n\\\"Kuro\\\" is the original behavior.",
    "labels": [
     "None",
     "Genshin",
@@ -39159,7 +40031,17 @@
    "default": 100.0,
    "label": "Tonemap Strength",
    "section": "Scene Grading",
-   "tooltip": "Change strength of KuroTonemapping.",
+   "tooltip": "Change strength of the extended game tonemapping.",
+   "min": 0.0,
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "WuWaLUTLightness",
+   "default": 100.0,
+   "label": "LUT Lightness",
+   "section": "Scene Grading",
+   "tooltip": "How much of the game LUT's own lightness/contrast to keep. Has no effect in SDR.",
    "min": 0.0,
    "max": 100.0,
    "type": "float"
@@ -39169,17 +40051,8 @@
    "default": 100.0,
    "label": "LUT Strength",
    "section": "Scene Grading",
-   "tooltip": "Change strength of SDR LUT",
+   "tooltip": "Strength of the game LUT's color tint.",
    "min": 0.0,
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeStrength",
-   "default": 100.0,
-   "label": "Color Grading Strength",
-   "section": "Custom Color Grading",
-   "tooltip": "Blend amount between pre-display-map color and mapped color.",
    "max": 100.0,
    "type": "float"
   },
@@ -39217,59 +40090,10 @@
    "type": "float"
   },
   {
-   "key": "ColorGradeGamma",
-   "default": 100.0,
-   "label": "Gamma",
-   "section": "Custom Color Grading",
-   "tooltip": "Psycho grading gamma (100 = neutral).",
-   "min": 50.0,
-   "max": 200.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeContrastHighlights",
-   "default": 100.0,
-   "label": "Contrast Highlights",
-   "section": "Custom Color Grading",
-   "tooltip": "Extra highlight contrast shaping (100 = neutral).",
-   "min": 0.0,
-   "max": 200.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeContrastShadows",
-   "default": 100.0,
-   "label": "Contrast Shadows",
-   "section": "Custom Color Grading",
-   "tooltip": "Extra shadow contrast shaping (100 = neutral).",
-   "min": 0.0,
-   "max": 200.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeAdaptationContrast",
-   "default": 100.0,
-   "label": "Adaptation Contrast",
-   "section": "Custom Color Grading",
-   "tooltip": "Perceptual adaptation contrast (100 = neutral).",
-   "min": 0.0,
-   "max": 200.0,
-   "type": "float"
-  },
-  {
    "key": "ColorGradeSaturation",
    "default": 50.0,
    "label": "Saturation",
    "section": "Custom Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeHighlightSaturation",
-   "default": 50.0,
-   "label": "Highlight Saturation",
-   "section": "Custom Color Grading",
-   "tooltip": "Adds or removes highlight color.",
    "max": 100.0,
    "type": "float"
   },
@@ -39284,30 +40108,10 @@
   },
   {
    "key": "ColorGradeHueCorrection",
-   "default": 0.0,
+   "default": 50.0,
    "label": "Hue Restore",
    "section": "Custom Color Grading",
    "tooltip": "Controls hue restore strength.",
-   "min": 0.0,
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeSaturationCorrection",
-   "default": 100.0,
-   "label": "Purity Scale",
-   "section": "Custom Color Grading",
-   "tooltip": "Scales purity/saturation strength.",
-   "min": 0.0,
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeHueShift",
-   "default": 50.0,
-   "label": "Highlight Purity Bias",
-   "section": "Custom Color Grading",
-   "tooltip": "Biases highlight purity around the neutral midpoint.",
    "min": 0.0,
    "max": 100.0,
    "type": "float"
@@ -39333,12 +40137,25 @@
    "type": "float"
   },
   {
-   "key": "ColorGradeFlare",
-   "default": 0.0,
-   "label": "Flare",
+   "key": "ColorGradeHueReferenceClip",
+   "default": 2.0,
+   "label": "Hue Reference Clip",
    "section": "Custom Color Grading",
-   "tooltip": "Flare/Glare Compensation",
-   "max": 100.0,
+   "tooltip": "White clip point for the hue/purity emulation reference curve.",
+   "min": 1.0,
+   "max": 8.0,
+   "format": "%.2f",
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHueReferenceShoulder",
+   "default": 1.0,
+   "label": "Hue Reference Shoulder",
+   "section": "Custom Color Grading",
+   "tooltip": "Rolloff start point for the hue/purity emulation reference curve.",
+   "min": 0.1,
+   "max": 4.0,
+   "format": "%.2f",
    "type": "float"
   },
   {
@@ -39667,17 +40484,8 @@
    "type": "float"
   }
  ],
- "bladesoffire": [
-  {
-   "key": "CustomSharpening",
-   "default": 100.0,
-   "label": "Sharpening",
-   "section": "Effects",
-   "tooltip": "Controls the amount of sharpening, 100 is the game's default.",
-   "max": 100.0,
-   "type": "float"
-  }
- ],
+ "zelda-eow": [],
+ "daac": [],
  "fatesamurairemnant": [
   {
    "key": "SettingsMode",
@@ -43501,137 +44309,6 @@
    "label": "HDR Contrast Compensation",
    "section": "Advanced",
    "tooltip": "Removes the contrast increase in HDR based on the paper white slider."
-  }
- ],
- "kingdomcome2": [
-  {
-   "key": "SettingsMode",
-   "type": "int",
-   "default": 0.0,
-   "label": "Settings Mode",
-   "labels": [
-    "Simple",
-    "Advanced"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "ToneMapType",
-   "type": "int",
-   "default": 1.0,
-   "label": "Tone Mapper",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the tone mapper type",
-   "labels": [
-    "Vanilla",
-    "RenoDRT"
-   ]
-  },
-  {
-   "key": "ToneMapPeakNits",
-   "default": 1000.0,
-   "label": "Peak Brightness",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the value of peak white in nits",
-   "min": 48.0,
-   "max": 4000.0,
-   "type": "float"
-  },
-  {
-   "key": "ToneMapGameNits",
-   "default": 203.0,
-   "label": "Game Brightness",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the value of 100% white in nits",
-   "min": 48.0,
-   "max": 500.0,
-   "type": "float"
-  },
-  {
-   "key": "ToneMapUINits",
-   "default": 203.0,
-   "label": "UI Brightness",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the brightness of UI and HUD elements in nits",
-   "min": 48.0,
-   "max": 500.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeExposure",
-   "default": 1.0,
-   "label": "Exposure",
-   "section": "Color Grading",
-   "max": 2.0,
-   "format": "%.2f",
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeHighlights",
-   "default": 50.0,
-   "label": "Highlights",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeShadows",
-   "default": 50.0,
-   "label": "Shadows",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeContrast",
-   "default": 50.0,
-   "label": "Contrast",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeSaturation",
-   "default": 50.0,
-   "label": "Saturation",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeHighlightSaturation",
-   "default": 50.0,
-   "label": "Highlight Saturation",
-   "section": "Color Grading",
-   "tooltip": "Adds or removes highlight color.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeBlowout",
-   "default": 0.0,
-   "label": "Blowout",
-   "section": "Color Grading",
-   "tooltip": "Adds highlight desaturation due to overexposure.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeFlare",
-   "default": 0.0,
-   "label": "Flare",
-   "section": "Color Grading",
-   "tooltip": "Flare/Glare Compensation",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxBloom",
-   "default": 100.0,
-   "label": "Bloom",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
   }
  ],
  "soulframe": [
@@ -48094,6 +48771,18 @@
    ]
   },
   {
+   "key": "ToneMapGammaCorrectionWorkingSpace",
+   "type": "int",
+   "default": 0.0,
+   "label": "SDR EOTF Scaling",
+   "section": "Tone Mapping",
+   "tooltip": "Display Emulation: Matches the behavior of the display in SDR\\n\"\n                   \"Match Tone Map Scaling: Performs the correction in the working space of the selected tone map scaling. May have a preferrable look.",
+   "labels": [
+    "Display Emulation",
+    "Match Tone Map Scaling"
+   ]
+  },
+  {
    "key": "BlendFactor",
    "default": 50.0,
    "label": "Blend Factor",
@@ -48109,10 +48798,33 @@
    "default": 1.0,
    "label": "Tonemap Scaling",
    "section": "Tone Mapping",
-   "tooltip": "Max Channel: Hand-tuned to match the original tonemapper's behavior.\\n\"\n                   \"LMS: Based on emulating human vision.",
+   "tooltip": "Max Channel: Hand-tuned to match the original tonemapper's behavior.\\n\"\n                   \"AP1: Applies grading and display mapping per channel in AP1.\\n\"\n                   \"LMS: Applies grading, filmic extension, and display mapping per channel in normalized LMS.",
    "labels": [
     "Max Channel",
+    "AP1",
     "LMS"
+   ]
+  },
+  {
+   "key": "ToneMapHueRestore",
+   "default": 50.0,
+   "label": "Hue Restore",
+   "section": "Tone Mapping",
+   "tooltip": "Controls LMS hue restoration for the extended and blended vanilla tonemaps.",
+   "min": 0.0,
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ForceBlueCorrect",
+   "type": "int",
+   "default": 1.0,
+   "label": "Force Blue Correct",
+   "section": "Tone Mapping",
+   "tooltip": "Force Blue Correct when using AP1 Tonemap Scaling.",
+   "labels": [
+    "Off",
+    "On"
    ]
   },
   {
@@ -48127,7 +48839,7 @@
   },
   {
    "key": "ToneMapHueShift",
-   "default": 50.0,
+   "default": 100.0,
    "label": "Hue Shift",
    "section": "Scene Grading",
    "tooltip": "Hue-shift emulation strength.",
@@ -48137,7 +48849,7 @@
   },
   {
    "key": "ColorGradeChromaCorrectBlowout",
-   "default": 0.0,
+   "default": 100.0,
    "label": "Blowout",
    "section": "Scene Grading",
    "tooltip": "Emulates blowout from per channel tonemapping.",
@@ -48176,6 +48888,18 @@
    "section": "Custom Color Grading",
    "max": 100.0,
    "type": "float"
+  },
+  {
+   "key": "ToneMapContrastMethod",
+   "type": "int",
+   "default": 0.0,
+   "label": "Contrast Method",
+   "section": "Custom Color Grading",
+   "tooltip": "Adaptation: Uses an anchored adaptation response.\\n\"\n                   \"Power: Uses an anchored power curve.",
+   "labels": [
+    "Adaptation",
+    "Power"
+   ]
   },
   {
    "key": "ColorGradeContrast",
@@ -48238,6 +48962,18 @@
    "type": "float"
   },
   {
+   "key": "ColorGradeLUTScalingMethod",
+   "type": "int",
+   "default": 0.0,
+   "label": "LUT Scaling Mode",
+   "section": "Color Grading LUTs",
+   "tooltip": "Perceptual: Always scales the LUT to true black, and attempts to remap the LUT color back onto the image. This is how LUT Scaling worked originally.\\n\"\n                   \"Simple: Scales the LUT to the lowest point possible while maintaining the original look of the LUT.",
+   "labels": [
+    "Perceptual",
+    "Simple"
+   ]
+  },
+  {
    "key": "ColorGradeLUTGamutRestoration",
    "type": "bool",
    "default": 1.0,
@@ -48296,6 +49032,14 @@
     "Off",
     "2.2"
    ]
+  },
+  {
+   "key": "HeroLightsStrength",
+   "default": 50.0,
+   "label": "Hero Lights Strength",
+   "tooltip": "Controls the intensity of hero lights.",
+   "max": 100.0,
+   "type": "float"
   },
   {
    "key": "Set_Path",
@@ -48793,115 +49537,6 @@
     "Off",
     "On"
    ]
-  }
- ],
- "asscreedblackflagresynced": [
-  {
-   "key": "ToneMapType",
-   "type": "int",
-   "default": 1.0,
-   "label": "Tone Mapper",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the tone mapper type. Toggle in-game HDR setting or restart game to take effect.",
-   "labels": [
-    "Vanilla",
-    "RenoDX (Vanilla+)",
-    "RenoDX (Customized)"
-   ]
-  },
-  {
-   "key": "ToneMapUINits",
-   "default": 203.0,
-   "label": "UI Brightness",
-   "section": "UI",
-   "tooltip": "Sets the brightness of UI and HUD elements in nits. Requires a game restart to take effect.",
-   "min": 48.0,
-   "max": 500.0,
-   "type": "float"
-  },
-  {
-   "key": "Exposure",
-   "default": 1.0,
-   "label": "Exposure",
-   "section": "Color Grading",
-   "max": 2.0,
-   "format": "%.2f",
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeHighlights",
-   "default": 50.0,
-   "label": "Highlights",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeShadows",
-   "default": 50.0,
-   "label": "Shadows",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeContrast",
-   "default": 50.0,
-   "label": "Contrast",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeSaturation",
-   "default": 50.0,
-   "label": "Saturation",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeDechroma",
-   "default": 0.0,
-   "label": "Dechroma",
-   "section": "Color Grading",
-   "tooltip": "Controls highlight desaturation due to overexposure.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeFlare",
-   "default": 0.0,
-   "label": "Flare",
-   "section": "Color Grading",
-   "tooltip": "Flare/Glare Compensation",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorGradeCoolness",
-   "default": 0.0,
-   "label": "Coolness",
-   "section": "Color Grading",
-   "tooltip": "Shifts the image toward cooler tones.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "ColorFilterStrength",
-   "default": 100.0,
-   "label": "Color Filter Strength",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "FxBloom",
-   "default": 100.0,
-   "label": "Bloom",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
   }
  ],
  "deadislandde": [
@@ -51371,547 +52006,6 @@
    "type": "float"
   }
  ],
- "unityengine": [
-  {
-   "key": "SettingsMode",
-   "type": "int",
-   "default": 0.0,
-   "label": "Settings Mode",
-   "labels": [
-    "Simple",
-    "Intermediate",
-    "Advanced"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "toneMapType",
-   "type": "int",
-   "default": 3.0,
-   "label": "Tone Mapper",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the tone mapper type",
-   "labels": [
-    "Vanilla",
-    "None",
-    "Frostbite",
-    "RenoDRT (Hermite Spline)",
-    "DICE"
-   ]
-  },
-  {
-   "key": "toneMapPeakNits",
-   "default": 1000.0,
-   "label": "Peak Brightness",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the value of peak white in nits",
-   "min": 48.0,
-   "max": 4000.0,
-   "type": "float"
-  },
-  {
-   "key": "toneMapGameNits",
-   "default": 203.0,
-   "label": "Game Brightness",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the value of 100% white in nits",
-   "min": 48.0,
-   "max": 500.0,
-   "type": "float"
-  },
-  {
-   "key": "toneMapUINits",
-   "default": 203.0,
-   "label": "UI Brightness",
-   "section": "Tone Mapping",
-   "tooltip": "Sets the brightness of UI and HUD elements in nits",
-   "min": 48.0,
-   "max": 500.0,
-   "type": "float"
-  },
-  {
-   "key": "toneMapGammaCorrection",
-   "type": "int",
-   "default": 1.0,
-   "label": "SDR EOTF Emulation",
-   "section": "Tone Mapping",
-   "tooltip": "Emulates output decoding used on SDR displays.",
-   "labels": [
-    "Off",
-    "2.2",
-    "BT.1886"
-   ]
-  },
-  {
-   "key": "toneMapPerChannel",
-   "type": "bool",
-   "default": 1.0,
-   "label": "Scaling",
-   "section": "Tone Mapping",
-   "tooltip": "Luminance scales colors consistently while per-channel saturates and blows out sooner",
-   "labels": [
-    "Luminance",
-    "Per Channel"
-   ]
-  },
-  {
-   "key": "toneMapColorSpace",
-   "type": "int",
-   "default": 2.0,
-   "label": "Working Color Space",
-   "section": "Tone Mapping",
-   "labels": [
-    "BT709",
-    "BT2020",
-    "AP1"
-   ]
-  },
-  {
-   "key": "toneMapHueProcessor",
-   "type": "int",
-   "default": 1.0,
-   "label": "Hue Processor",
-   "section": "Tone Mapping",
-   "labels": [
-    "OKLab",
-    "ICtCp",
-    "darktable UCS"
-   ]
-  },
-  {
-   "key": "toneMapHueShift",
-   "default": 50.0,
-   "label": "Hue Shift",
-   "section": "Tone Mapping",
-   "tooltip": "Hue-shift emulation strength.",
-   "min": 0.0,
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "toneMapHueCorrection",
-   "default": 0.0,
-   "label": "Hue Correction",
-   "section": "Tone Mapping",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "toneMapShoulderStart",
-   "default": 1.0,
-   "label": "Rolloff/Shoulder Start",
-   "section": "Tone Mapping",
-   "max": 1.0,
-   "format": "%.2f",
-   "type": "float"
-  },
-  {
-   "key": "colorGradeExposure",
-   "default": 1.0,
-   "label": "Exposure",
-   "section": "Color Grading",
-   "max": 2.0,
-   "format": "%.2f",
-   "type": "float"
-  },
-  {
-   "key": "colorGradeHighlights",
-   "default": 50.0,
-   "label": "Highlights",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeShadows",
-   "default": 50.0,
-   "label": "Shadows",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeContrast",
-   "default": 50.0,
-   "label": "Contrast",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeSaturation",
-   "default": 50.0,
-   "label": "Saturation",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeBlowout",
-   "default": 50.0,
-   "label": "Highlights Saturation",
-   "section": "Color Grading",
-   "tooltip": "Adds or removes highlights color.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeDechroma",
-   "default": 0.0,
-   "label": "Blowout",
-   "section": "Color Grading",
-   "tooltip": "Controls highlight desaturation due to overexposure.",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeFlare",
-   "default": 25.0,
-   "label": "Flare",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeClip",
-   "default": 0.0,
-   "label": "Clipping",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeInternalLUTStrength",
-   "default": 100.0,
-   "label": "Internal LUT Strength",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeInternalLUTScaling",
-   "default": 0.0,
-   "label": "Internal LUT Scaling",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeInternalLUTShaper",
-   "type": "bool",
-   "default": 1.0,
-   "label": "LUT Shaper",
-   "section": "Color Grading",
-   "labels": [
-    "Vanilla",
-    "PQ"
-   ]
-  },
-  {
-   "key": "colorGradeUserLUTStrength",
-   "default": 100.0,
-   "label": "User LUT Strength",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeUserLUTScaling",
-   "default": 0.0,
-   "label": "User LUT Scaling",
-   "section": "Color Grading",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "colorGradeLUTSampling",
-   "type": "bool",
-   "default": 1.0,
-   "label": "LUT Sampling",
-   "section": "Color Grading",
-   "labels": [
-    "Vanilla",
-    "Tetrahedral"
-   ]
-  },
-  {
-   "key": "colorGradeColorSpace",
-   "type": "int",
-   "default": 0.0,
-   "label": "Output Color Space",
-   "section": "Color Grading",
-   "tooltip": "Emulates display color temperature.\"\n                   \"\\nOff for BT.709 D65.\"\n                   \"\\nJPN Modern for BT.709 D93.\"\n                   \"\\nJPN CRT for BT.601 ARIB-TR-B9 D93.\"\n                   \"\\nJPN CRT 2 for BT.601 ARIB-TR-B9 9300k 27 MPCD.\"\n                   \"\\nUS CRT for BT.601 (NTSC-U).",
-   "labels": [
-    "Off",
-    "JPN Modern",
-    "JPN CRT",
-    "JPN CRT 2",
-    "US CRT"
-   ]
-  },
-  {
-   "key": "fxBloom",
-   "default": 50.0,
-   "label": "Bloom",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxLens",
-   "default": 50.0,
-   "label": "Lens Dirt/Flare",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxDoF",
-   "default": 100.0,
-   "label": "Depth of Field",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxCA",
-   "default": 50.0,
-   "label": "Chromatic Aberration",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxVignette",
-   "default": 50.0,
-   "label": "Vignette",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxNoise",
-   "default": 50.0,
-   "label": "Dithering Noise",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxFilmGrain",
-   "default": 50.0,
-   "label": "Film Grain",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "fxFilmGrainType",
-   "type": "bool",
-   "default": 0.0,
-   "label": "Film Grain Type",
-   "section": "Effects",
-   "labels": [
-    "Vanilla",
-    "Perceptual"
-   ]
-  },
-  {
-   "key": "fxHdrBoost",
-   "default": 0.0,
-   "label": "FakeHDR Boost",
-   "section": "Effects",
-   "max": 100.0,
-   "type": "float"
-  },
-  {
-   "key": "rolloffUI",
-   "type": "int",
-   "default": 1.0,
-   "label": "UI Behavior",
-   "section": "Compatibility",
-   "tooltip": "Only affects a few selected shaders",
-   "labels": [
-    "Do nothing",
-    "Rolloff (peak)",
-    "Clamp (sdr)"
-   ]
-  },
-  {
-   "key": "Swapchain_Encoding",
-   "type": "bool",
-   "label": "Swapchain Encoding",
-   "section": "Compatibility",
-   "tooltip": "Disabled if detected automatically.",
-   "labels": [
-    "Linear",
-    "Gamma"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Scaling_Offset",
-   "type": "int",
-   "default": 0.0,
-   "label": "Scaling offset",
-   "section": "Compatibility",
-   "tooltip": "Moves Game Brightness application if possible.",
-   "labels": [
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Tonemap_Offset",
-   "type": "int",
-   "default": 0.0,
-   "label": "Tonemap offset",
-   "section": "Compatibility",
-   "tooltip": "Moves Tonemap/Color Grading application if possible.",
-   "labels": [
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Blit_Copy_Hack",
-   "type": "int",
-   "default": 1.0,
-   "label": "Blit Copy Hack",
-   "section": "Compatibility",
-   "tooltip": "\\nHijacks Copy shader to apply Tonemap/Color Grade/Scaling.\"\n                   \"\\nAuto triggers when no other shader is available.\"\n                   \"\\nAffected by offsets",
-   "labels": [
-    "Off",
-    "Auto",
-    "On",
-    "Scaling only"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Use_Swapchain_Proxy",
-   "type": "int",
-   "default": 0.0,
-   "label": "Swapchain Proxy",
-   "section": "Resource Upgrades",
-   "labels": [
-    "Off",
-    "On",
-    "On (Compatibility Mode)"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Use_Resource_Cloning",
-   "type": "int",
-   "default": 0.0,
-   "label": "Use Resource Cloning",
-   "section": "Resource Upgrades",
-   "labels": [
-    "Off",
-    "On"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Force_Pipeline_Cloning",
-   "type": "int",
-   "default": 0.0,
-   "label": "Force Pipeline Cloning",
-   "section": "Resource Upgrades",
-   "tooltip": "Not sure how it works, mostly to solve issues with dx12 (I think).",
-   "labels": [
-    "Off",
-    "On"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Upgrade_CopyDestinations",
-   "type": "int",
-   "default": 1.0,
-   "label": "Upgrade Copy Destinations",
-   "section": "Resource Upgrades",
-   "tooltip": "Includes upgrading texture copy destinations.",
-   "labels": [
-    "Off",
-    "On",
-    "Auto-Upgrade"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "Resize_Internal_Lut",
-   "type": "int",
-   "default": 0.0,
-   "label": "Resize Internal LUT",
-   "section": "Resource Upgrades",
-   "labels": [
-    "Off",
-    "On"
-   ]
-  },
-  {
-   "key": "Upgrade_UseSCRGB",
-   "type": "int",
-   "default": 1.0,
-   "label": "Swap Chain Format",
-   "section": "Resource Upgrades",
-   "tooltip": "Selects use of HDR10 or scRGB swapchain.",
-   "labels": [
-    "HDR10",
-    "scRGB"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "ForceBorderless",
-   "type": "int",
-   "default": 0.0,
-   "label": "Force Borderless Window",
-   "section": "Resource Upgrades",
-   "labels": [
-    "Disabled",
-    "Enabled"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "PreventFullscreen",
-   "type": "int",
-   "default": 0.0,
-   "label": "Prevent Exclusive Fullscreen",
-   "section": "Resource Upgrades",
-   "labels": [
-    "Disabled",
-    "Enabled"
-   ],
-   "is_global": true
-  },
-  {
-   "key": "DumpUberShaders",
-   "type": "int",
-   "default": 0.0,
-   "label": "Dump Uber Shaders",
-   "section": "Development",
-   "tooltip": "Traces and dumps uber shaders that sample a 1024x32 or 256x16 internal LUT.",
-   "labels": [
-    "Off",
-    "On"
-   ],
-   "is_global": true
-  }
- ],
  "forzahorizon6": [
   {
    "key": "SettingsMode",
@@ -52842,6 +52936,7 @@
    "type": "float"
   }
  ],
+ "_blue_reflection": [],
  "_hbr": [
   {
    "key": "SettingsMode",
@@ -61954,6 +62049,14 @@
    "type": "float"
   },
   {
+   "key": "HideUI",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Hide UI (DX12 DLSSFG ONLY)",
+   "section": "Effects",
+   "tooltip": "Hides the user interface.\\n\"\n                   \"Only works with DLSSFG enabled, otherwise it does nothing."
+  },
+  {
    "key": "SwapchainClampColorSpace",
    "type": "int",
    "default": 2.0,
@@ -61981,6 +62084,643 @@
     "scRGB"
    ],
    "is_global": true
+  }
+ ],
+ "botw": [
+  {
+   "key": "tonemap_clamp_color_space",
+   "type": "int",
+   "default": 0.0,
+   "label": "Clamp Tonemap Grading",
+   "section": "Tone Mapping",
+   "tooltip": "Clamps the tonemap colour grading. Use BT.709 for a vanilla result.",
+   "labels": [
+    "BT.709",
+    "BT.2020"
+   ]
+  },
+  {
+   "key": "SDRBlendFactor",
+   "default": 18.0,
+   "label": "SDR Blend Factor",
+   "section": "Tone Mapping",
+   "tooltip": "Blends SDR to look more faithful to the art style",
+   "min": 0.0,
+   "max": 60.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeScene",
+   "default": 70.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 65.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "VanillaSaturation",
+   "default": 100.0,
+   "label": "Vanilla Saturation",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of saturation applied by the game",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxHueClip",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "kirbyfl": [
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxHueClip",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxDof",
+   "default": 100.0,
+   "label": "Depth of Field",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "legohpc": [
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "DisableLetterbox",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Disable Letterbox",
+   "section": "Effects",
+   "tooltip": "Disables letterboxing in cutscenes"
+  },
+  {
+   "key": "FxBloom",
+   "type": "float",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects"
+  },
+  {
+   "key": "FxVignette",
+   "type": "float",
+   "default": 100.0,
+   "label": "Vignette",
+   "section": "Effects"
+  },
+  {
+   "key": "StudStrength",
+   "default": 0.0,
+   "label": "Stud Brightness",
+   "section": "Effects",
+   "tooltip": "Boosts stud brightness",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxDof",
+   "type": "float",
+   "default": 100.0,
+   "label": "Depth of Field",
+   "section": "Effects"
+  }
+ ],
+ "lm3": [
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxHueClip",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxVignette",
+   "default": 100.0,
+   "label": "Vignette",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "HideUI",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Hide UI",
+   "section": "Effects"
+  }
+ ],
+ "metroiddread": [],
+ "metroidprime": [
+  {
+   "key": "ToneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxBloom",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "mhgu": [
+  {
+   "key": "ToneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "FxHueClip",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxGrading",
+   "default": 100.0,
+   "label": "Vanilla Colour Grading",
+   "section": "Effects",
+   "tooltip": "Controls vanilla colour grading strength",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "mk8": [
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxHueClip",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LUTStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Effects",
+   "tooltip": "Controls intensity of LUT applied by the game",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "splatoon": [
+  {
+   "key": "ToneMapStrength",
+   "default": 100.0,
+   "label": "Color Grading",
+   "section": "Tone Mapping",
+   "tooltip": "Controls intensity of tonemap applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Color Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR color shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeConeResponse",
+   "default": 60.0,
+   "label": "Cone Response",
+   "section": "Tone Mapping",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeHighlightSaturation",
+   "type": "float",
+   "default": 50.0,
+   "label": "Highlight Saturation",
+   "section": "Color Grading",
+   "tooltip": "Adds or removes highlight color."
+  },
+  {
+   "key": "ColorGradeFlare",
+   "type": "float",
+   "default": 0.0,
+   "label": "Flare",
+   "section": "Color Grading",
+   "tooltip": "Flare/Glare compensation"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxBloom",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "splatoon2": [
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "splatoon3": [
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "supermario3dworld": [
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 0.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game. Only applies to certain levels.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxBloom",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "totk": [
+  {
+   "key": "SDRBlendFactor",
+   "default": 18.0,
+   "label": "SDR Blend Factor",
+   "section": "Tone Mapping",
+   "tooltip": "Blends SDR to look more faithful to the art style",
+   "min": 0.0,
+   "max": 60.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeScene",
+   "default": 70.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 65.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "VanillaSaturation",
+   "default": 100.0,
+   "label": "Vanilla Saturation",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of saturation applied by the game",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxHueClip",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "xbcx": [
+  {
+   "key": "LUTStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls game LUT strength",
+   "max": 100.0,
+   "type": "float"
+  }
+ ],
+ "xenobladechronicles": [
+  {
+   "key": "ToneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeScene",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR hue shifts to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "ColorGradeBlowout",
+   "default": 50.0,
+   "label": "SDR Blowout",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates SDR blowout to match vanilla",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "LutStrength",
+   "default": 100.0,
+   "label": "LUT Strength",
+   "section": "Color Grading",
+   "tooltip": "Controls intensity of LUT applied by the game.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "FxBloom",
+   "default": 100.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "tooltip": "Controls vanilla bloom strength",
+   "max": 100.0,
+   "type": "float"
   }
  ],
  "acevo": [
@@ -63023,8 +63763,8 @@
    "key": "CharacterSSGICompositeMethod",
    "type": "int",
    "default": 1.0,
-   "label": "Apply Game VBGI",
-   "section": "Character VBGI",
+   "label": "Apply Game SSGI",
+   "section": "Character SSGI",
    "labels": [
     "Off",
     "On"
@@ -63034,7 +63774,7 @@
    "key": "CharacterSSGICompositeStrength",
    "default": 3.0,
    "label": "Strength",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Overall contribution scale for character GI.",
    "min": 0.0,
    "max": 3.0,
@@ -63045,7 +63785,7 @@
    "key": "CharacterSSGICompositeAlphaScale",
    "default": 1.0,
    "label": "Alpha Scale",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Scales sampled SSGI alpha before blending.",
    "min": 0.0,
    "max": 3.0,
@@ -63056,7 +63796,7 @@
    "key": "CharacterSSGICompositeChroma",
    "default": 0.5,
    "label": "Chroma",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Scales colorful GI component; lower values reduce tinting.",
    "min": 0.0,
    "max": 2.0,
@@ -63067,7 +63807,7 @@
    "key": "CharacterSSGICompositeLuma",
    "default": 0.0,
    "label": "Luma",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Scales neutral GI brightness; keep low to avoid white haze.",
    "min": 0.0,
    "max": 1.0,
@@ -63078,7 +63818,7 @@
    "key": "CharacterSSGICompositeShadowPower",
    "default": 1.25,
    "label": "Shadow Power",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Higher values concentrate GI toward darker areas.",
    "min": 0.1,
    "max": 4.0,
@@ -63089,7 +63829,7 @@
    "key": "CharacterSSGICompositeDarkBoost",
    "default": 0.0,
    "label": "Dark Boost",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Extra GI multiplier in darker regions (after shadow mask).",
    "min": 0.0,
    "max": 4.0,
@@ -63100,7 +63840,7 @@
    "key": "CharacterSSGICompositeBrightBoost",
    "default": 3.0,
    "label": "Bright Boost",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Boosts GI on brighter regions (values above 1.0 increase bright-side contribution).",
    "min": 0.0,
    "max": 3.0,
@@ -63111,7 +63851,7 @@
    "key": "CharacterSSGICompositeHeadroomPower",
    "default": 1.25,
    "label": "Headroom Power",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Controls how strongly bright pixels reject additional GI.",
    "min": 0.1,
    "max": 4.0,
@@ -63122,7 +63862,7 @@
    "key": "CharacterSSGICompositeMaxAdd",
    "default": 0.02,
    "label": "Max Add",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Per-channel cap for added GI to prevent haze/bloomy washout.",
    "min": 0.0,
    "max": 1.0,
@@ -63133,7 +63873,7 @@
    "key": "CharacterSSGICompositePeakLumaCap",
    "default": 0.0,
    "label": "Peak Luma Cap",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Caps peak GI brightness on characters after blending weights. Set 0 to disable.",
    "min": 0.0,
    "max": 1.0,
@@ -63144,7 +63884,7 @@
    "key": "CharacterSSGICompositeDepthReject",
    "default": 2.0,
    "label": "Depth Reject",
-   "section": "Character VBGI",
+   "section": "Character SSGI",
    "tooltip": "Higher values suppress GI across depth discontinuities and silhouette edges.",
    "min": 0.0,
    "max": 16.0,
@@ -63392,7 +64132,7 @@
   },
   {
    "key": "CharShadowLightFadeStart",
-   "default": 0.35,
+   "default": 0.5,
    "label": "Light Fade Start",
    "section": "Character Shadowing",
    "min": 0.0,
@@ -63424,8 +64164,8 @@
    "key": "EnvSSSEnabled",
    "type": "bool",
    "default": 1.0,
-   "label": "Bend SSS",
-   "section": "Environment Screen Space Shadows",
+   "label": "Sun SSS",
+   "section": "Sun Screen Space Shadows",
    "labels": [
     "Off",
     "On"
@@ -63435,7 +64175,7 @@
    "key": "EnvSSSStrength",
    "default": 100.0,
    "label": "Strength",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.0,
    "max": 100.0,
    "type": "float"
@@ -63445,7 +64185,7 @@
    "type": "int",
    "default": 32.0,
    "label": "Sample Count",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 1.0,
    "max": 64.0,
    "format": "%d"
@@ -63455,7 +64195,7 @@
    "type": "int",
    "default": 0.0,
    "label": "Hard Shadow Samples",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "tooltip": "Number of hard-contact samples at the start of the ray march. 0 = auto (Sample Count / 8). Higher = sharper contact shadows, but may miss thin occluders.",
    "min": 0.0,
    "max": 32.0,
@@ -63466,7 +64206,7 @@
    "type": "int",
    "default": 0.0,
    "label": "Fade Out Samples",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "tooltip": "Number of fade-out samples at the end of the ray march. 0 = auto (Sample Count / 3). Higher = smoother transition from shadow to no shadow, reducing banding in soft shadows.",
    "min": 0.0,
    "max": 32.0,
@@ -63476,7 +64216,7 @@
    "key": "EnvSSSSurfaceThickness",
    "default": 0.005,
    "label": "Surface Thickness",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.001,
    "max": 0.2,
    "format": "%.4f",
@@ -63486,7 +64226,7 @@
    "key": "EnvSSSContrast",
    "default": 2.0,
    "label": "Shadow Contrast",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.0,
    "max": 12.0,
    "format": "%.2f",
@@ -63497,7 +64237,7 @@
    "type": "bool",
    "default": 1.0,
    "label": "Height Above Ground",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "labels": [
     "Off",
     "On"
@@ -63507,7 +64247,7 @@
    "key": "EnvSSSHeightMin",
    "default": 0.0,
    "label": "Min Height",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.0,
    "max": 10.0,
    "format": "%.2f",
@@ -63517,7 +64257,7 @@
    "key": "EnvSSSHeightMax",
    "default": 1.0,
    "label": "Ground Search",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 1.0,
    "max": 200.0,
    "format": "%.0f",
@@ -63527,7 +64267,7 @@
    "key": "EnvSSSHeightFade",
    "default": 0.1,
    "label": "Height Fade",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.0,
    "max": 5.0,
    "format": "%.2f",
@@ -63537,7 +64277,7 @@
    "key": "EnvSSSVerticalReject",
    "default": 0.3,
    "label": "Vertical Reject",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.0,
    "max": 1.0,
    "format": "%.2f",
@@ -63547,7 +64287,7 @@
    "key": "EnvSSSMaxDarkening",
    "default": 0.4,
    "label": "Max Darkening",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.0,
    "max": 1.0,
    "format": "%.2f",
@@ -63557,7 +64297,7 @@
    "key": "EnvSSBrightRejectThreshold",
    "default": 0.5,
    "label": "Brightness Reject",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.0,
    "max": 5.0,
    "format": "%.2f",
@@ -63567,23 +64307,155 @@
    "key": "EnvSSBrightRejectFade",
    "default": 0.5,
    "label": "Brightness Fade",
-   "section": "Environment Screen Space Shadows",
+   "section": "Sun Screen Space Shadows",
    "min": 0.01,
    "max": 3.0,
    "format": "%.2f",
    "type": "float"
   },
   {
+   "key": "EnvSSSCSMGate",
+   "type": "bool",
+   "default": 1.0,
+   "label": "CSM Indoor Gate",
+   "section": "Sun Screen Space Shadows",
+   "tooltip": "Skip screen-space shadows on pixels already in deep CSM shadow (prevents false shadows inside buildings).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
    "key": "DebugShowEnvSSS",
    "type": "int",
    "default": 0.0,
-   "label": "Env SSS Debug View",
-   "section": "Environment Screen Space Shadows",
+   "label": "Sun SSS Debug View",
+   "section": "Sun Screen Space Shadows",
    "labels": [
     "Off",
     "SSS Mask",
     "Shadow Value"
    ]
+  },
+  {
+   "key": "LocalSSSEnable",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Local SSS",
+   "section": "Local Screen Space Shadows",
+   "tooltip": "Enable Bend_SSS screen-space ray-march shadows for point/spot lights.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "LocalSSSStrength",
+   "type": "float",
+   "default": 1.0,
+   "label": "Strength",
+   "section": "Local Screen Space Shadows",
+   "min": 0.0,
+   "max": 1.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "LocalSSSLightType",
+   "type": "int",
+   "default": 2.0,
+   "label": "Light Type",
+   "section": "Local Screen Space Shadows",
+   "tooltip": "Which light types receive screen-space shadows.",
+   "labels": [
+    "Spot",
+    "Point",
+    "Both"
+   ]
+  },
+  {
+   "key": "LocalSSSSampleCount",
+   "type": "int",
+   "default": 10.0,
+   "label": "Sample Count",
+   "section": "Local Screen Space Shadows",
+   "min": 1.0,
+   "max": 64.0,
+   "format": "%d"
+  },
+  {
+   "key": "LocalSSSHardSamples",
+   "type": "int",
+   "default": 0.0,
+   "label": "Hard Samples",
+   "section": "Local Screen Space Shadows",
+   "tooltip": "Number of hard-contact samples at the start. 0 = auto (Sample Count / 8).",
+   "min": 0.0,
+   "max": 32.0,
+   "format": "%d"
+  },
+  {
+   "key": "LocalSSSFadeSamples",
+   "type": "int",
+   "default": 0.0,
+   "label": "Fade Samples",
+   "section": "Local Screen Space Shadows",
+   "tooltip": "Number of fade-out samples at the end. 0 = auto (Sample Count / 3).",
+   "min": 0.0,
+   "max": 32.0,
+   "format": "%d"
+  },
+  {
+   "key": "LocalSSSSurfaceThickness",
+   "type": "float",
+   "default": 0.02,
+   "label": "Surface Thickness",
+   "section": "Local Screen Space Shadows",
+   "min": 0.001,
+   "max": 0.2,
+   "format": "%.4f"
+  },
+  {
+   "key": "LocalSSSContrast",
+   "type": "float",
+   "default": 12.0,
+   "label": "Shadow Contrast",
+   "section": "Local Screen Space Shadows",
+   "min": 0.0,
+   "max": 12.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "LocalSSSLightFadeStart",
+   "type": "float",
+   "default": 0.15,
+   "label": "Light Fade Start",
+   "section": "Local Screen Space Shadows",
+   "tooltip": "Screen-distance where shadow starts fading (0 = at the light, 1 = at light radius edge).",
+   "min": 0.0,
+   "max": 1.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "LocalSSSLightFadeEnd",
+   "type": "float",
+   "default": 1.0,
+   "label": "Light Fade End",
+   "section": "Local Screen Space Shadows",
+   "tooltip": "Screen-distance where shadow is fully faded out.",
+   "min": 0.0,
+   "max": 1.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "LocalSSSOccluderDepthScale",
+   "type": "float",
+   "default": 0.0,
+   "label": "Occluder Depth Scale",
+   "section": "Local Screen Space Shadows",
+   "tooltip": "Scale minimum occluder depth for thin geometry. Higher = wider occluders, fewer false shadows.",
+   "min": 0.0,
+   "max": 4.0,
+   "format": "%.2f"
   },
   {
    "key": "GTVBAOMode",
@@ -63613,7 +64485,7 @@
   {
    "key": "GTVBAODenoisePasses",
    "type": "int",
-   "default": 2.0,
+   "default": 1.0,
    "label": "Denoise Passes",
    "section": "GTVBAO",
    "labels": [
@@ -63638,7 +64510,7 @@
   {
    "key": "GTVBAONoiseType",
    "type": "int",
-   "default": 2.0,
+   "default": 0.0,
    "label": "Noise Type",
    "section": "GTVBAO",
    "tooltip": "IS-FAST = pre-computed blue noise (needs fast_noise_ea.dds). \"\n                 \"IGN = Interleaved Gradient Noise. Hilbert = Hilbert curve noise. \"\n                 \"Only applies when IS-FAST master toggle is On; forced to Hilbert when Off.",
@@ -63680,7 +64552,7 @@
   },
   {
    "key": "GTVBAOFinalPower",
-   "default": 2.2,
+   "default": 1.8,
    "label": "Final Power",
    "section": "GTVBAO",
    "min": 0.5,
@@ -63690,7 +64562,7 @@
   },
   {
    "key": "GTVBAOSampleDistribution",
-   "default": 1.0,
+   "default": 3.0,
    "label": "Sample Distribution",
    "section": "GTVBAO",
    "min": 1.0,
@@ -63736,7 +64608,7 @@
   {
    "key": "GTVBAOGTVBAOCosineMode",
    "type": "int",
-   "default": 2.0,
+   "default": 1.0,
    "label": "Cosine Sampling Mode",
    "section": "GTVBAO",
    "tooltip": "Mode 1: Uniform slices with per-slice weight. Mode 2: Ray projection from world-space lobe. Mode 3: CDF importance sampling (best quality/speed).",
@@ -63760,7 +64632,7 @@
   },
   {
    "key": "GTVBAODepthMIPOffset",
-   "default": 2.0,
+   "default": 3.5,
    "label": "Depth MIP Offset",
    "section": "GTVBAO",
    "min": 2.0,
@@ -63801,7 +64673,7 @@
   {
    "key": "GTVBAODenoiserType",
    "type": "int",
-   "default": 2.0,
+   "default": 0.0,
    "label": "Denoiser Type",
    "section": "GTVBAO",
    "tooltip": "Spatial: 5x5 edge-aware blur only. Spatio-Temporal: blends with previous frame for much higher stability on thin geometry. Poisson: disk sampling with luma/depth/normal similarity weights.",
@@ -63868,7 +64740,7 @@
   {
    "key": "GTVBAOTemporalFrames",
    "type": "int",
-   "default": 2.0,
+   "default": 0.0,
    "label": "Temporal Frames",
    "section": "GTVBAO",
    "tooltip": "How many previous frames influence the result. 0-1 = off (spatial only). 2 = fast response. 8 = balanced (default). 16 = most stable, some ghosting.",
@@ -64034,7 +64906,8 @@
     "Depth",
     "6:BitmaskHeat",
     "7:SectorCount",
-    "8:1stSliceBits"
+    "8:1stSliceBits",
+    "9:FoliageMask"
    ]
   },
   {
@@ -64091,6 +64964,72 @@
    ]
   },
   {
+   "key": "GTVBAOExcludeFoliage",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Exclude Foliage",
+   "section": "GTVBAO",
+   "tooltip": "Skip AO computation on foliage pixels (prevent wind disocclusion noise).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "GTVBAOFoliageAOValue",
+   "type": "float",
+   "default": 0.0,
+   "label": "Foliage AO Value",
+   "section": "GTVBAO",
+   "min": 0.0,
+   "max": 1.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "FoliageGrassAOEnabled",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Grass AO",
+   "section": "Foliage Grass AO",
+   "tooltip": "Per-blade vertical AO gradient: dark at root, bright at tip. Replaces noisy SSAO/GTAO on foliage with a stable bake. (Ghost of Tsushima §1.5e-ii)",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "FoliageGrassAOBase",
+   "type": "float",
+   "default": 0.15,
+   "label": "Grass AO Base",
+   "section": "Foliage Grass AO",
+   "tooltip": "AO multiplier at the blade root. Lower = darker base (more self-occlusion).",
+   "min": 0.0,
+   "max": 0.8,
+   "format": "%.2f"
+  },
+  {
+   "key": "FoliageGrassAOTip",
+   "type": "float",
+   "default": 1.33,
+   "label": "Grass AO Tip",
+   "section": "Foliage Grass AO",
+   "tooltip": "AO multiplier at the blade tip. Values > 1.0 slightly brighten the tip (rim-light effect).",
+   "min": 0.5,
+   "max": 1.5,
+   "format": "%.2f"
+  },
+  {
+   "key": "FoliageGrassAOCurve",
+   "type": "float",
+   "default": 0.25,
+   "label": "Grass AO Curve",
+   "section": "Foliage Grass AO",
+   "min": 0.1,
+   "max": 2.0,
+   "format": "%.2f"
+  },
+  {
    "key": "BRDFHammonDiffuse",
    "type": "bool",
    "default": 0.0,
@@ -64116,7 +65055,7 @@
   {
    "key": "BRDFMultiScatterSpecular",
    "type": "bool",
-   "default": 0.0,
+   "default": 1.0,
    "label": "Multi-Scatter GGX Specular",
    "section": "BRDF Improvement",
    "tooltip": "Replaces Blinn-Phong specular with GGX D·V·F + Kulla-Conty multi-scatter compensation (SIGGRAPH 2017).",
@@ -64128,7 +65067,7 @@
   {
    "key": "BRDFSpecularStrength",
    "type": "float",
-   "default": 0.65,
+   "default": 0.33,
    "label": "Specular Blend",
    "section": "BRDF Improvement",
    "tooltip": "Blend between vanilla Blinn-Phong and GGX+multi-scatter specular. 0=vanilla, 1=full GGX+MS, 2=2x boost.",
@@ -64150,7 +65089,7 @@
   {
    "key": "BRDFRoughnessMax",
    "type": "float",
-   "default": 0.5,
+   "default": 0.75,
    "label": "Roughness Max",
    "section": "BRDF Improvement",
    "min": 0.5,
@@ -64175,7 +65114,7 @@
    "key": "SSGIEnable",
    "type": "bool",
    "default": 1.0,
-   "label": "SSGI Enable",
+   "label": "VBGI Enable",
    "section": "VBGI",
    "tooltip": "Visibility bitmask indirect diffuse GI. Requires GTVBAO mode = On.",
    "labels": [
@@ -64185,7 +65124,7 @@
   },
   {
    "key": "SSGIIntensity",
-   "default": 1.0,
+   "default": 0.75,
    "label": "Intensity",
    "section": "VBGI",
    "min": 0.0,
@@ -64230,7 +65169,7 @@
   {
    "key": "SSGIMultiBounceStrength",
    "type": "float",
-   "default": 5.0,
+   "default": 1.0,
    "label": "Multi-Bounce Strength",
    "section": "VBGI",
    "min": 0.0,
@@ -64340,7 +65279,7 @@
   {
    "key": "SSGIReduceAO",
    "type": "bool",
-   "default": 1.0,
+   "default": 0.0,
    "label": "Reduce AO with GI",
    "section": "VBGI",
    "tooltip": "Reduce GTVBAO occlusion where indirect light is strong. Keeps dark crevices dark while brightening lit surfaces.",
@@ -64388,7 +65327,7 @@
   {
    "key": "MultiBounceFrameSkip",
    "type": "int",
-   "default": 1.0,
+   "default": 0.0,
    "label": "Multi-Bounce Frame Skip",
    "section": "VBGI",
    "tooltip": "Skip multi-bounce accumulation every N frames.",
@@ -64513,7 +65452,7 @@
   {
    "key": "CPUOptDeferredDispatch",
    "type": "bool",
-   "default": 1.0,
+   "default": 0.0,
    "label": "Deferred Dispatch",
    "section": "CPU Opt",
    "tooltip": "Move GTVBAO/VBGI dispatch to OnPresent (1-frame latency). Kai-only, default ON — avoids CS binding contamination.",
@@ -64933,6 +65872,155 @@
     "Result",
     "Sun Color"
    ]
+  },
+  {
+   "key": "MotionBlurEnabled",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Enable",
+   "section": "Motion Blur",
+   "tooltip": "Camera-motion blur post-process (Guertin et al. 2013).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "MotionBlurSampleCount",
+   "type": "float",
+   "default": 16.0,
+   "label": "Sample Count",
+   "section": "Motion Blur",
+   "tooltip": "Gather samples per pixel. Higher = smoother, more GPU cost. 25 matches the paper.",
+   "min": 4.0,
+   "max": 48.0,
+   "format": "%.0f"
+  },
+  {
+   "key": "MotionBlurTileSize",
+   "type": "float",
+   "default": 40.0,
+   "label": "Tile Size (px)",
+   "section": "Motion Blur",
+   "tooltip": "Tile size in pixels. Paper default=40. Smaller = finer velocity detail, larger = broader blur.",
+   "min": 4.0,
+   "max": 150.0,
+   "format": "%.0f"
+  },
+  {
+   "key": "MotionBlurVelocityScale",
+   "type": "float",
+   "default": 1.0,
+   "label": "Velocity Scale",
+   "section": "Motion Blur",
+   "tooltip": "Multiply motion vectors. >1 = more blur, <1 = less blur.",
+   "min": 0.1,
+   "max": 5.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "MotionBlurSampleSpread",
+   "type": "float",
+   "default": 1.0,
+   "label": "Sample Spread",
+   "section": "Motion Blur",
+   "tooltip": "Multiply sample distance along blur direction. >1 = longer motion streaks.",
+   "min": 0.1,
+   "max": 5.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "MotionBlurStrength",
+   "type": "float",
+   "default": 1.0,
+   "label": "Strength",
+   "section": "Motion Blur",
+   "tooltip": "Blend original vs blurred. 0=off, 1=full.",
+   "min": 0.0,
+   "max": 1.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "MotionBlurNoiseType",
+   "type": "int",
+   "default": 0.0,
+   "label": "Noise Type",
+   "section": "Motion Blur",
+   "tooltip": "Jitter noise source. Halton = deterministic, IS-FAST = blue noise (better at low samples).",
+   "labels": [
+    "Halton",
+    "IS-FAST"
+   ]
+  },
+  {
+   "key": "MotionBlurHalfRes",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Half Resolution",
+   "section": "Motion Blur",
+   "tooltip": "Run at half resolution for ~2x performance.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "MotionBlurVelocityMax",
+   "type": "float",
+   "default": 0.0,
+   "label": "Max Velocity (px)",
+   "section": "Motion Blur",
+   "tooltip": "Soft-clamp velocity at this pixel value. 0=off. Prevents excessive character blur.",
+   "min": 0.0,
+   "max": 200.0,
+   "format": "%.0f"
+  },
+  {
+   "key": "MotionBlurDebugLogging",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Debug Logging",
+   "section": "Motion Blur",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "MotionBlurAdaptiveSamples",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Adaptive Sampling",
+   "section": "Motion Blur",
+   "tooltip": "Use fewer samples for slow motion. Near-zero quality loss, ~40%% faster.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "MotionBlurVelocitySource",
+   "type": "int",
+   "default": 0.0,
+   "label": "Velocity Source",
+   "section": "Motion Blur",
+   "tooltip": "Motion vector source. Game MV = per-object + camera vectors. Depth reprojection = camera-only vectors.",
+   "labels": [
+    "Game MV (auto)",
+    "Depth Reprojection"
+   ]
+  },
+  {
+   "key": "MotionBlurDebugView",
+   "type": "int",
+   "default": 0.0,
+   "label": "Debug View",
+   "section": "Motion Blur",
+   "tooltip": "Visualize processed motion vectors. R=horizontal+, G=vertical+. Gray=static.",
+   "labels": [
+    "Off",
+    "Velocity"
+   ]
   }
  ],
  "ffxv-vanillaplus": [
@@ -65235,6 +66323,65 @@
    "min": -100.0,
    "max": 100.0,
    "type": "float"
+  }
+ ],
+ "haloinfinite": [
+  {
+   "key": "ToneMapPeakNits",
+   "default": 1000.0,
+   "label": "Peak Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of peak white in nits",
+   "min": 48.0,
+   "max": 4000.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "ToneMapGraphicsNits",
+   "default": 203.0,
+   "label": "Graphics Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the brightness of ui in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "DLSSReplacement",
+   "type": "bool",
+   "default": 1.0,
+   "label": "DLAA Replacement",
+   "section": "Antialiasing",
+   "tooltip": "Runs NVIDIA DLAA in place of Halo Infinite's TAA pass when the TAA resources can be resolved. Requires nvngx_dlss.dll next to the game executable.",
+   "labels": [
+    "Passthrough",
+    "DLAA"
+   ]
+  },
+  {
+   "key": "DLSSPreset",
+   "type": "int",
+   "default": 0.0,
+   "label": "DLSS Preset",
+   "section": "Antialiasing",
+   "labels": [
+    "Default",
+    "F - CNN",
+    "J - Transformer 1",
+    "K - Transformer 1",
+    "L - Transformer 2",
+    "M - Transformer 2"
+   ]
   }
  ],
  "kai-vanillaplus": [
@@ -66931,6 +68078,626 @@
    "is_global": true
   }
  ],
+ "senkiseki-dlaa": [
+  {
+   "key": "DLAAEnabled",
+   "type": "int",
+   "default": 2.0,
+   "label": "Anti-Aliasing",
+   "section": "Antialiasing",
+   "tooltip": "Off: no anti-aliasing (FXAA replaced by a passthrough). FXAA: the game's original luma FXAA. DLAA: NVIDIA DLAA (requires nvngx_dlss.dll).",
+   "labels": [
+    "Off",
+    "FXAA",
+    "DLAA"
+   ]
+  },
+  {
+   "key": "DLAAPreset",
+   "type": "int",
+   "default": 3.0,
+   "label": "DLSS Preset",
+   "section": "Antialiasing",
+   "labels": [
+    "Default",
+    "F-CNN",
+    "J-T1",
+    "K-T1",
+    "L-T2",
+    "M-T2"
+   ]
+  },
+  {
+   "key": "DLAAJitter",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Camera Jitter",
+   "section": "Antialiasing",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAJitterSign",
+   "type": "int",
+   "default": 3.0,
+   "label": "Jitter Sign",
+   "section": "Antialiasing",
+   "labels": [
+    "FlipBoth",
+    "FlipX",
+    "FlipY",
+    "Current"
+   ]
+  },
+  {
+   "key": "DLAAJitterScale",
+   "type": "int",
+   "default": 2.0,
+   "label": "Jitter Report (diag)",
+   "section": "Antialiasing",
+   "tooltip": "DIAGNOSTIC: scales the NGX jitter offset reported to DLSS WITHOUT changing the rendered jitter. 'None' reports 0 (frames ARE still jittered) — if that looks identical to 1x, DLSS ignores the reported jitter entirely. 0.5x/2x test the magnitude.",
+   "labels": [
+    "None (report 0)",
+    "0.5x",
+    "1x (exact)",
+    "2x"
+   ]
+  },
+  {
+   "key": "DLAAPhaseJitterInMV",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: Jitter In MV (diag)",
+   "section": "Antialiasing",
+   "tooltip": "ROOT-CAUSE FIX (diagnostic): the per-frame rendered jitter is NOT being compensated via the reported offset (Freeze Report = no change), so it reads as sub-pixel motion -> shimmer, worst at low FPS. The velocity shader bakes the jitter DELTA (current - previous frame) into the MVs, and the reported jitter is forced to 0 so DLSS does NOT double-count. This routes the jitter through the MVs, which DLSS demonstrably consumes. Use with Jitter Color = On, Jitter Depth = Off, Report = 1x.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseReportOnly",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: Report-Only Jitter (diag)",
+   "section": "Antialiasing",
+   "tooltip": "DEFINITIVE A/B of whether DLSS consumes the reported jitter offset: renders the frame UNJITTERED but still reports the Halton jitter to DLSS. If the image changes vs plain jitter-off, DLSS uses the offset; if it looks identical, DLSS ignores the reported offset entirely. Log shows px=0 (rendered) vs jpx!=0 (reported).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAJitterTest",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Jitter Test (8px)",
+   "section": "Antialiasing",
+   "tooltip": "Applies a fixed 8px viewport shift. With DLAA OFF + Jitter ON, the whole image must visibly jump 8px (real rasterization shift) to confirm viewport jitter works.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAJitterMethod",
+   "type": "int",
+   "default": 1.0,
+   "label": "Jitter Method",
+   "section": "Antialiasing",
+   "tooltip": "Per VS: jitter is added inside each replaced scene-geometry vertex shader (each new scene's VS permutations must be patched). Global: the shared camera ViewProjection in _Globals is patched once, jittering every scene object regardless of VS hash (no per-scene shader gathering).",
+   "labels": [
+    "Per VS",
+    "Global"
+   ]
+  },
+  {
+   "key": "DLAAZeroMV",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Zero Motion Vectors",
+   "section": "Antialiasing",
+   "tooltip": "Forces all motion vectors to 0. A/B: if image looks similar, MVs aren't helping; if worse, MVs contribute useful info.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAMVDirection",
+   "type": "bool",
+   "default": 0.0,
+   "label": "MV Direction Flip",
+   "section": "Antialiasing",
+   "tooltip": "Flips motion vector sign (previous-current instead of current-previous). A/B: if flipping fixes ghosting, the convention was wrong.",
+   "labels": [
+    "Off",
+    "Flip"
+   ]
+  },
+  {
+   "key": "DLAAMVThreshold",
+   "type": "float",
+   "default": 0.2,
+   "label": "MV Threshold (px)",
+   "section": "Antialiasing",
+   "tooltip": "Zeros CAMERA motion vectors below this magnitude. Kills static sub-pixel MV noise that poisons history. Per-object / Prev-Bone MVs have their own threshold: DLAAPerObjectMVThreshold.",
+   "min": 0.0,
+   "max": 5.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "DLAAPerObjectMVThreshold",
+   "type": "float",
+   "default": 0.0,
+   "label": "Per-Object MV Threshold (px)",
+   "section": "Antialiasing",
+   "tooltip": "Zeros PER-OBJECT / Prev-Bone motion vectors below this magnitude (dynamic objects: character limbs, hair, etc.). The camera path keeps its own DLAAMVThreshold. Leave 0 to keep all per-object MVs (including small noise).",
+   "min": 0.0,
+   "max": 5.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "DLAAVelocityFormat",
+   "type": "bool",
+   "default": 0.0,
+   "label": "32-bit Motion Vectors",
+   "section": "Antialiasing",
+   "tooltip": "MV texture precision A/B: r16g16_float (16-bit, default) vs r32g32_float (32-bit). 32-bit costs a little bandwidth; 16-bit is already exact for pixel-space MVs up to 2048px.",
+   "labels": [
+    "16-bit (r16g16)",
+    "32-bit (r32g32)"
+   ]
+  },
+  {
+   "key": "DLAAExcludeEffects",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Exclude Effects from DLAA",
+   "section": "Antialiasing",
+   "tooltip": "Masks particles/effects out of DLAA: they get an off-screen motion vector so DLSS falls back to the current frame (no temporal shimmer/ghosting).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAADepthSource",
+   "type": "int",
+   "default": 0.0,
+   "label": "Depth Source",
+   "section": "Antialiasing",
+   "tooltip": "Which pass's depth DLAA uses. Auto = last full-res depth push (may be wrong). Pick the one that shows a real depth map in MV Debug=Depth. See scan log.",
+   "labels": [
+    "Auto",
+    "0x0E83E74E",
+    "0x55D61207",
+    "0x322E20D4"
+   ]
+  },
+  {
+   "key": "DLAAForceReset",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Force Reset (No History)",
+   "section": "Antialiasing",
+   "tooltip": "Forces NGX InReset=1 every frame (no temporal accumulation). A/B test: if identical to Off, history is already disabled.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPerObjectMotion",
+   "type": "int",
+   "default": 0.0,
+   "label": "Per-Object Motion",
+   "section": "Antialiasing",
+   "tooltip": "Camera Only: camera reprojection MVs only. Per-Object: patched char VSs emit prevClip (current-pose re-skin -> camera-relative MVs). Prev-Bone: patched char VSs re-skin with the PREVIOUS frame's per-character bone matrices -> true limb/animation MVs. Requires Phase B bind mode (NoBind/Minimal off) and a restart.",
+   "labels": [
+    "Camera Only",
+    "Per-Object",
+    "Prev-Bone"
+   ]
+  },
+  {
+   "key": "DLAAVelocityScale",
+   "type": "float",
+   "default": 1.0,
+   "label": "Velocity Scale",
+   "section": "Antialiasing",
+   "min": 0.1,
+   "max": 5.0,
+   "format": "%.2f"
+  },
+  {
+   "key": "DLAAMVScale",
+   "type": "int",
+   "default": 0.0,
+   "label": "MV Scale (diag)",
+   "section": "Antialiasing",
+   "labels": [
+    "1.0 (px)",
+    "1/W, 1/H",
+    "2/W, 2/H"
+   ]
+  },
+  {
+   "key": "DLAAPhaseDepthSampleUnjit",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: Sample Depth Unjittered (diag)",
+   "section": "Antialiasing",
+   "tooltip": "A/B: sample the velocity camera path's depth at the UNJITTERED pixel (curPxU) instead of the jittered pixel (pix). With an unjittered depth buffer, depth[pix] belongs to content at unjittered position pix, not at curPxU = pix - jitterPx — sampling at pix misreads the depth by up to half a pixel whenever jitter is on, injecting a per-frame MV error DLSS can't compensate (shimmer, worst at 30 FPS). On = sample at curPxU.",
+   "labels": [
+    "Off (depth[pix])",
+    "On (depth[curPxU])"
+   ]
+  },
+  {
+   "key": "DLAAPhaseSynthMV",
+   "type": "int",
+   "default": 0.0,
+   "label": "Phase: Synthetic Jitter MV (diag)",
+   "section": "Antialiasing",
+   "tooltip": "ESTABLISH THE SIGN: bypasses depth reprojection and writes an ANALYTIC global MV (no DLSS, no depth, no matrices) so the reproj debug view proves the correct jitter-delta MV + sign. At 30 FPS static + jitter ON, whichever of Jcur-Jprev / Jprev-Jcur makes the reproj view BLACK is the sign DLSS needs (then feed it via JitterInMV + report 0).",
+   "labels": [
+    "Off",
+    "Zero (Test A)",
+    "Jcur-Jprev",
+    "Jprev-Jcur"
+   ]
+  },
+  {
+   "key": "DLAADebugView",
+   "type": "int",
+   "default": 0.0,
+   "label": "MV Debug",
+   "section": "Antialiasing",
+   "labels": [
+    "Off",
+    "HSV",
+    "Arrows",
+    "Magnitude",
+    "Reproj",
+    "Depth"
+   ]
+  },
+  {
+   "key": "DLAADebugScale",
+   "type": "float",
+   "default": 50.0,
+   "label": "MV Debug Scale",
+   "section": "Antialiasing",
+   "min": 1.0,
+   "max": 200.0,
+   "format": "%.0f"
+  },
+  {
+   "key": "DLAAFlagIsHDR",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Flag: HDR Input",
+   "section": "Antialiasing",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAFlagDepthInverted",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Flag: Depth Inverted",
+   "section": "Antialiasing",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAFlagAutoExposure",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Flag: Auto Exposure",
+   "section": "Antialiasing",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAHdrDecode",
+   "type": "int",
+   "default": 0.0,
+   "label": "HDR Decode (diag)",
+   "section": "Antialiasing",
+   "tooltip": "HDR-mod compatibility A/B (COMPOSITE path only): converts the DLSS input/output color encoding. Off = feed DLSS the composite as-is. sRGB = decode composite sRGB->linear before DLSS and re-encode the DLSS output linear->sRGB. PQ = same with ST.2084 PQ. The Pre-ToneMap inject path (DLAAHdrInject) does NOT use this.",
+   "labels": [
+    "Off",
+    "sRGB",
+    "PQ"
+   ]
+  },
+  {
+   "key": "DLAAHdrInject",
+   "type": "int",
+   "default": 1.0,
+   "label": "HDR Pre-ToneMap Inject",
+   "section": "Antialiasing",
+   "tooltip": "Where DLAA runs the DLSS pass. Auto: runs at the final_blending draw (raw untonemapped scene) when the HDR mod (_renodx-senkiseki.addon64) is loaded, so the HDR mod tone maps the DLAA'd image itself. Pre-ToneMap: force that path. Composite: run DLSS on the tone-mapped composite at FXAA (old path — SDR-capped with the HDR mod).",
+   "labels": [
+    "Auto",
+    "Pre-ToneMap",
+    "Composite"
+   ]
+  },
+  {
+   "key": "DLAAHdrFloatOut",
+   "type": "bool",
+   "default": 1.0,
+   "label": "HDR: Float DLSS Output",
+   "section": "Antialiasing",
+   "tooltip": "Makes the DLSS output texture r16g16b16a16_float instead of r8g8b8a8. The 8-bit UNORM output clamps highlight values before the HDR mod's tone map can recover them (clipping/banding on the Pre-ToneMap path). Float preserves the range through the tone map. Recreates the DLSS feature once on toggle.",
+   "labels": [
+    "Off (8-bit)",
+    "On (r16 float)"
+   ]
+  },
+  {
+   "key": "DLAADebugLogging",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Debug Logging",
+   "section": "Antialiasing",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhase0Logging",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase 0 Probe Logging",
+   "section": "Antialiasing",
+   "tooltip": "Prev-pose feasibility probe (bone-buffer SRV pushes at vertex t0, per-object VS skinned/world detection, buffer handle reuse, and vertex-buffer BindFlags to detect GPU-skinned UAV buffers for the Luma-style prev-vertex capture). Kept SEPARATE from Debug Logging so bone logs aren't buried in general spam.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseB",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase B Generic VS Patch",
+   "section": "Antialiasing",
+   "tooltip": "Generic DXBC patcher: adds prev-bone re-skin + prevVP to every skinned VS at pipeline creation (per-object motion MVs without per-shader HLSL).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseBJitterOnly",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Phase B Jitter-Only",
+   "section": "Antialiasing",
+   "tooltip": "CAMERA PATH (default ON): the generic VS patch injects ONLY the SV_Position camera jitter (b13) — no prevClip output, no prev-bone re-skin, no prevVP, no outline, no OSGN append. Under the GLOBAL jitter method the b13 offset is 0, so this is an inert safety patch. Turn OFF to restore the per-object motion machinery. Requires restart.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseBOutline",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Phase B Outline Offset",
+   "section": "Antialiasing",
+   "tooltip": "Replicate the GameEdgeParameters outline offset in the patched prevClip. Now gated on ACTUAL shader usage (most char VSs declare it but never read it, so this is normally a no-op) — only genuinely-outlined shaders get the offset.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseFreezeJitter",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: Freeze Jitter",
+   "section": "Antialiasing",
+   "tooltip": "DIAGNOSTIC: replace the Halton sequence with a CONSTANT sub-pixel jitter (+0.25/-0.25px) every frame. If the Prev-Bone shake disappears with a fixed jitter, the error is the frame-to-frame jitter VARIATION (compensation/timing mismatch), not the MVs themselves.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseFreezeReport",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: Freeze Report (diag)",
+   "section": "Antialiasing",
+   "tooltip": "A/B: render the NORMAL (Halton) jitter but report a CONSTANT jitter to DLSS. If the shake DISAPPEARS, DLSS was reacting to the VARYING report (so the offset we feed is wrong); if it STILL shakes, DLSS ignores the report and the RENDERED variation is the culprit.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseFreezeRender",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: Freeze Render (diag)",
+   "section": "Antialiasing",
+   "tooltip": "A/B (mirror of Freeze Report): render a CONSTANT jitter but report the normal (Halton) jitter. If it SHAKES, DLSS consumes the report; if it STAYS STABLE, DLSS ignores it.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseMVComp",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Phase: MV Jitter Comp",
+   "section": "Antialiasing",
+   "tooltip": "DIAGNOSTIC: per-object jitter subtraction in the velocity shader A/B (Test A/B with MVJittered off). Off: if the character STOPS shaking, the character was never jittered (we were over-subtracting); if it still shakes, the character IS jittered and compensation isn't the cause.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseMVJittered",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: MVJittered=1 (Test C)",
+   "section": "Antialiasing",
+   "tooltip": "DIAGNOSTIC (Test C): feed JITTERED MVs and set MVJittered=1 so DLSS removes the jitter internally (instead of subtracting in the shader). The camera path then ADDS the jitter to stay consistent. Use with Phase: MV Jitter Comp = Off.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseJitterDepth",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase: Jitter Depth (diag)",
+   "section": "Antialiasing",
+   "tooltip": "A/B: jitter the DEPTH pass too, so DLSS's color and depth are in the SAME jitter state (Test B). Off (default) = depth stays the game's native UNJITTERED depth (Test A). On = the world + character depth passes are jittered with the color. Only the shadow VS stays unjittered. Watch for the character shadow moving.",
+   "labels": [
+    "Off (Test A)",
+    "On (Test B)"
+   ]
+  },
+  {
+   "key": "DLAAPhaseJitterColor",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Phase: Jitter Color (diag)",
+   "section": "Antialiasing",
+   "tooltip": "A/B: master color-jitter toggle. On (default) = color rendered with the jittered VP (normal DLAA). Off = color renders UNJITTERED and 0 jitter is reported to DLSS — the clean baseline (unjittered color + unjittered depth + report 0).",
+   "labels": [
+    "Off (Baseline)",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseBNoBind",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase B No-Bind (Game t0/b0 Only)",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION: patch the VS to read ONLY the game's own t0 bones and b0 ViewProjection, so the patched draw needs NO addon t#/b# bindings (no leak, no extra SRV/CB read). prevClip == current clip (motion ~0) — correct smoke-test baseline. Requires restart to take effect (D3D11 pipeline cache).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseBMinimal",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase B Minimal (No Reads)",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION (purest): the injected block reads NO resources at all — prevClip = the game's own b0 ViewProjection x float4(v0,1), no re-skin, no outline. Isolates the output register / OSGN / dcl_temps machinery from every new resource read. Requires restart (D3D11 pipeline cache).",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseBNoOutput",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase B No Output Register",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION: the injected block runs (reads v0 + cb0[10..13]) but adds NO prevClip output register — the PS's v7 goes undefined again. If the crash STOPS, the extra output register / OSGN append is the cause. Requires restart.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseBConstant",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase B Constant Output",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION: minimal, but the new output register is written with a CONSTANT (0,0,0,1) — zero reads at all. If it still crashes, the mere existence of the output register faults; if it doesn't, the cb0 read / v7 data matters. Requires restart.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseEConstant",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase E Constant Output",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION: Phase E adds ONLY the o3 output register, written with a CONSTANT (0.5,0.5,0,1) — no new input decl, no SV_SampleIndex relocation, no vN read. If it still hangs, the mere appended output register faults; if not, the input/relocation/read matters. Requires restart.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseENoRead",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase E No Input Read",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION: normal input decl + SV relocation, but the injected body writes a CONSTANT — never reads vN. Isolates the vN data path from the declaration/relocation machinery. Requires restart.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseENoMath",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase E No Math",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION: normal input decl + SV relocation, body = mov o3, vN straight through (no max/div/mad). Isolates the divide/mad math from the read. Requires restart.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseENoNewOutput",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase E No New Output (o2.zw)",
+   "section": "Antialiasing",
+   "tooltip": "CRASH BISECTION: full input decl + SV relocation + full div/mad math, but prevNDC is written into the EXISTING max output's .zw (o2.zw for 3-RT) instead of appending a NEW SV_TARGET output — NO OSGN append, NO dcl_output. Every crashing test so far appended a new output; if this is safe, the appended output register was the trigger. Requires restart.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "DLAAPhaseBDump",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Phase B Evidence Dump",
+   "section": "Antialiasing",
+   "tooltip": "Write every patched VS's original + patched bytecode (0x<hash>.cso / 0x<new>.patched.cso) and a per-draw crash trace (drawtrace.log) to renodx-dev/dump/phaseb/. The LAST drawtrace line before a GPU TDR identifies the crashing draw.",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  }
+ ],
  "senkiseki32": [
   {
    "key": "SettingsMode",
@@ -67829,6 +69596,534 @@
     "US CRT",
     "JPN CRT"
    ]
+  }
+ ],
+ "unityengine": [
+  {
+   "key": "SettingsMode",
+   "type": "int",
+   "default": 0.0,
+   "label": "Settings Mode",
+   "labels": [
+    "Simple",
+    "Intermediate",
+    "Advanced"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "toneMapType",
+   "type": "int",
+   "default": 3.0,
+   "label": "Tone Mapper",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the tone mapper type",
+   "labels": [
+    "Vanilla",
+    "None",
+    "Frostbite",
+    "RenoDRT (Hermite Spline)",
+    "DICE"
+   ]
+  },
+  {
+   "key": "toneMapPeakNits",
+   "default": 1000.0,
+   "label": "Peak Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of peak white in nits",
+   "min": 48.0,
+   "max": 4000.0,
+   "type": "float"
+  },
+  {
+   "key": "toneMapGameNits",
+   "default": 203.0,
+   "label": "Game Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the value of 100% white in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "toneMapUINits",
+   "default": 203.0,
+   "label": "UI Brightness",
+   "section": "Tone Mapping",
+   "tooltip": "Sets the brightness of UI and HUD elements in nits",
+   "min": 48.0,
+   "max": 500.0,
+   "type": "float"
+  },
+  {
+   "key": "toneMapGammaCorrection",
+   "type": "int",
+   "default": 1.0,
+   "label": "SDR EOTF Emulation",
+   "section": "Tone Mapping",
+   "tooltip": "Emulates output decoding used on SDR displays.",
+   "labels": [
+    "Off",
+    "2.2",
+    "BT.1886"
+   ]
+  },
+  {
+   "key": "toneMapPerChannel",
+   "type": "bool",
+   "default": 1.0,
+   "label": "Scaling",
+   "section": "Tone Mapping",
+   "tooltip": "Luminance scales colors consistently while per-channel saturates and blows out sooner",
+   "labels": [
+    "Luminance",
+    "Per Channel"
+   ]
+  },
+  {
+   "key": "toneMapColorSpace",
+   "type": "int",
+   "default": 2.0,
+   "label": "Working Color Space",
+   "section": "Tone Mapping",
+   "labels": [
+    "BT709",
+    "BT2020",
+    "AP1"
+   ]
+  },
+  {
+   "key": "toneMapHueProcessor",
+   "type": "int",
+   "default": 1.0,
+   "label": "Hue Processor",
+   "section": "Tone Mapping",
+   "labels": [
+    "OKLab",
+    "ICtCp",
+    "darktable UCS"
+   ]
+  },
+  {
+   "key": "toneMapHueShift",
+   "default": 50.0,
+   "label": "Hue Shift",
+   "section": "Tone Mapping",
+   "tooltip": "Hue-shift emulation strength.",
+   "min": 0.0,
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "toneMapHueCorrection",
+   "default": 0.0,
+   "label": "Hue Correction",
+   "section": "Tone Mapping",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "toneMapShoulderStart",
+   "default": 1.0,
+   "label": "Rolloff/Shoulder Start",
+   "section": "Tone Mapping",
+   "max": 1.0,
+   "format": "%.2f",
+   "type": "float"
+  },
+  {
+   "key": "colorGradeExposure",
+   "default": 1.0,
+   "label": "Exposure",
+   "section": "Color Grading",
+   "max": 2.0,
+   "format": "%.2f",
+   "type": "float"
+  },
+  {
+   "key": "colorGradeHighlights",
+   "default": 50.0,
+   "label": "Highlights",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeShadows",
+   "default": 50.0,
+   "label": "Shadows",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeContrast",
+   "default": 50.0,
+   "label": "Contrast",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeSaturation",
+   "default": 50.0,
+   "label": "Saturation",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeBlowout",
+   "default": 50.0,
+   "label": "Highlights Saturation",
+   "section": "Color Grading",
+   "tooltip": "Adds or removes highlights color.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeDechroma",
+   "default": 0.0,
+   "label": "Blowout",
+   "section": "Color Grading",
+   "tooltip": "Controls highlight desaturation due to overexposure.",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeFlare",
+   "default": 25.0,
+   "label": "Flare",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeClip",
+   "default": 0.0,
+   "label": "Clipping",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeInternalLUTStrength",
+   "default": 100.0,
+   "label": "Internal LUT Strength",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeInternalLUTScaling",
+   "default": 0.0,
+   "label": "Internal LUT Scaling",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeInternalLUTShaper",
+   "type": "bool",
+   "default": 1.0,
+   "label": "LUT Shaper",
+   "section": "Color Grading",
+   "labels": [
+    "Vanilla",
+    "PQ"
+   ]
+  },
+  {
+   "key": "colorGradeUserLUTStrength",
+   "default": 100.0,
+   "label": "User LUT Strength",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeUserLUTScaling",
+   "default": 0.0,
+   "label": "User LUT Scaling",
+   "section": "Color Grading",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "colorGradeLUTSampling",
+   "type": "bool",
+   "default": 1.0,
+   "label": "LUT Sampling",
+   "section": "Color Grading",
+   "labels": [
+    "Vanilla",
+    "Tetrahedral"
+   ]
+  },
+  {
+   "key": "colorGradeColorSpace",
+   "type": "int",
+   "default": 0.0,
+   "label": "Output Color Space",
+   "section": "Color Grading",
+   "tooltip": "Emulates display color temperature.\"\n                   \"\\nOff for BT.709 D65.\"\n                   \"\\nJPN Modern for BT.709 D93.\"\n                   \"\\nJPN CRT for BT.601 ARIB-TR-B9 D93.\"\n                   \"\\nJPN CRT 2 for BT.601 ARIB-TR-B9 9300k 27 MPCD.\"\n                   \"\\nUS CRT for BT.601 (NTSC-U).",
+   "labels": [
+    "Off",
+    "JPN Modern",
+    "JPN CRT",
+    "JPN CRT 2",
+    "US CRT"
+   ]
+  },
+  {
+   "key": "fxBloom",
+   "default": 50.0,
+   "label": "Bloom",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "fxLens",
+   "default": 50.0,
+   "label": "Lens Dirt/Flare",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "fxDoF",
+   "default": 100.0,
+   "label": "Depth of Field",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "fxCA",
+   "default": 50.0,
+   "label": "Chromatic Aberration",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "fxVignette",
+   "default": 50.0,
+   "label": "Vignette",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "fxNoise",
+   "default": 50.0,
+   "label": "Dithering Noise",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "fxFilmGrain",
+   "default": 50.0,
+   "label": "Film Grain",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "fxFilmGrainType",
+   "type": "bool",
+   "default": 0.0,
+   "label": "Film Grain Type",
+   "section": "Effects",
+   "labels": [
+    "Vanilla",
+    "Perceptual"
+   ]
+  },
+  {
+   "key": "fxHdrBoost",
+   "default": 0.0,
+   "label": "FakeHDR Boost",
+   "section": "Effects",
+   "max": 100.0,
+   "type": "float"
+  },
+  {
+   "key": "rolloffUI",
+   "type": "int",
+   "default": 1.0,
+   "label": "UI Behavior",
+   "section": "Compatibility",
+   "tooltip": "Only affects a few selected shaders",
+   "labels": [
+    "Do nothing",
+    "Rolloff (peak)",
+    "Clamp (sdr)"
+   ]
+  },
+  {
+   "key": "Swapchain_Encoding",
+   "type": "bool",
+   "label": "Swapchain Encoding",
+   "section": "Compatibility",
+   "tooltip": "Disabled if detected automatically.",
+   "labels": [
+    "Linear",
+    "Gamma"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Scaling_Offset",
+   "type": "int",
+   "default": 0.0,
+   "label": "Scaling offset",
+   "section": "Compatibility",
+   "tooltip": "Moves Game Brightness application if possible.",
+   "labels": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Tonemap_Offset",
+   "type": "int",
+   "default": 0.0,
+   "label": "Tonemap offset",
+   "section": "Compatibility",
+   "tooltip": "Moves Tonemap/Color Grading application if possible.",
+   "labels": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Blit_Copy_Hack",
+   "type": "int",
+   "default": 1.0,
+   "label": "Blit Copy Hack",
+   "section": "Compatibility",
+   "tooltip": "\\nHijacks Copy shader to apply Tonemap/Color Grade/Scaling.\"\n                   \"\\nAuto triggers when no other shader is available.\"\n                   \"\\nAffected by offsets",
+   "labels": [
+    "Off",
+    "Auto",
+    "On",
+    "Scaling only"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Use_Swapchain_Proxy",
+   "type": "int",
+   "default": 0.0,
+   "label": "Swapchain Proxy",
+   "section": "Resource Upgrades",
+   "labels": [
+    "Off",
+    "On",
+    "On (Compatibility Mode)"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Use_Resource_Cloning",
+   "type": "int",
+   "default": 0.0,
+   "label": "Use Resource Cloning",
+   "section": "Resource Upgrades",
+   "labels": [
+    "Off",
+    "On"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Force_Pipeline_Cloning",
+   "type": "int",
+   "default": 0.0,
+   "label": "Force Pipeline Cloning",
+   "section": "Resource Upgrades",
+   "tooltip": "Not sure how it works, mostly to solve issues with dx12 (I think).",
+   "labels": [
+    "Off",
+    "On"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Upgrade_CopyDestinations",
+   "type": "int",
+   "default": 1.0,
+   "label": "Upgrade Copy Destinations",
+   "section": "Resource Upgrades",
+   "tooltip": "Includes upgrading texture copy destinations.",
+   "labels": [
+    "Off",
+    "On",
+    "Auto-Upgrade"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "Resize_Internal_Lut",
+   "type": "int",
+   "default": 0.0,
+   "label": "Resize Internal LUT",
+   "section": "Resource Upgrades",
+   "labels": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "Upgrade_UseSCRGB",
+   "type": "int",
+   "default": 1.0,
+   "label": "Swap Chain Format",
+   "section": "Resource Upgrades",
+   "tooltip": "Selects use of HDR10 or scRGB swapchain.",
+   "labels": [
+    "HDR10",
+    "scRGB"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "ForceBorderless",
+   "type": "int",
+   "default": 0.0,
+   "label": "Force Borderless Window",
+   "section": "Resource Upgrades",
+   "labels": [
+    "Disabled",
+    "Enabled"
+   ],
+   "is_global": true
+  },
+  {
+   "key": "PreventFullscreen",
+   "type": "int",
+   "default": 0.0,
+   "label": "Prevent Exclusive Fullscreen",
+   "section": "Resource Upgrades",
+   "labels": [
+    "Disabled",
+    "Enabled"
+   ],
+   "is_global": true
   }
  ]
 }

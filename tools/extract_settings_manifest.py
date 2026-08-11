@@ -160,9 +160,9 @@ def main(argv):
             slug = game_dir.name
             if slug in manifest:
                 continue
-            settings = extract_game(game_dir)
-            if settings:
-                manifest[slug] = settings
+            # Grava tambem os slugs com ZERO settings: o app precisa distinguir
+            # "mod sem opcoes ajustaveis" de "mod que eu nao conheco".
+            manifest[slug] = extract_game(game_dir)
     print(f'{sum(len(v) for v in manifest.values())} settings across {len(manifest)} games')
     if out_path:
         Path(out_path).write_text(json.dumps(manifest, indent=1, ensure_ascii=False), encoding='utf-8')
