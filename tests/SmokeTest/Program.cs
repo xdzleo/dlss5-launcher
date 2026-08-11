@@ -248,6 +248,24 @@ Check(undone.Get("ADDON", "LoadFromDllMain", ignoreCase: true) == "outro.addon64
 Check(undone.Get("RENODX-DLSSFIX", "DLSSPath") is null && !DlssFixService.IsInstalled(fgDir),
     "remover limpa caminhos e apaga o addon");
 
+// 4g. foto do autor: mapa derivado do catalogo real
+AvatarService.Learn(catalog);
+var musaMod = catalog.FirstOrDefault(e => e.Maintainer == "Musa" && e.DownloadUrl != null);
+Check(AvatarService.UserOf(musaMod) == "mqhaji", $"Musa -> mqhaji (deu {AvatarService.UserOf(musaMod)})");
+var jonMod = catalog.FirstOrDefault(e => e.Maintainer != null && e.Maintainer.StartsWith("OopyDoopy") && e.DownloadUrl != null);
+Check(AvatarService.UserOf(jonMod) == "oopydoopy", $"OopyDoopy -> oopydoopy (deu {AvatarService.UserOf(jonMod)})");
+var sfMod = catalog.FirstOrDefault(e => e.Maintainer == "ShortFuse" && e.DownloadUrl != null);
+Check(AvatarService.UserOf(sfMod) == "clshortfuse", $"ShortFuse -> clshortfuse (deu {AvatarService.UserOf(sfMod)})");
+// a armadilha: quem publica no repo principal NAO pode herdar a foto do ShortFuse
+var vooshMod = catalog.FirstOrDefault(e => e.Maintainer == "Voosh" && e.DownloadUrl != null);
+var vooshUser = AvatarService.UserOf(vooshMod);
+Check(vooshUser is null || vooshUser == "notvoosh",
+    $"Voosh nunca vira clshortfuse (deu {vooshUser ?? "sem foto"})");
+Check(AvatarService.UserOf(new CatalogEntry { GameName = "z", Maintainer = "Inexistente" }) is null,
+    "autor desconhecido -> sem foto (usa a inicial)");
+var avatar = await AvatarService.GetAvatarAsync(jonMod);
+Check(avatar != null && File.Exists(avatar), $"baixa a foto real do OopyDoopy ({(avatar != null ? new FileInfo(avatar).Length + " bytes" : "falhou")})");
+
 // 5. ReShade provision + deploy (real download)
 var reshade = new ReShadeService();
 var deploy = await reshade.DeployAsync(fakeDir, fakeExe, null, null, new Progress<string>(Console.WriteLine));

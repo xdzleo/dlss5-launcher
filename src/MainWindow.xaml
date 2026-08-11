@@ -438,6 +438,28 @@
                                 <Border Width="1" Height="11" Background="{StaticResource BorderStrongBrush}" Margin="10,0"/>
                                 <TextBlock Text="{Binding Selected.BadgeText}" FontSize="11.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+
+                                <!-- estabilidade do mod, segundo a wiki -->
+                                <Border CornerRadius="5" Padding="7,3" Margin="10,0,0,0" Background="#16382B"
+                                        VerticalAlignment="Center" ToolTip="{Binding Selected.ModStatusTooltip}"
+                                        Visibility="{Binding Selected.ModIsStable, Converter={StaticResource BoolToVis}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconCheck}" Fill="{StaticResource GreenBrush}"
+                                              Stretch="Uniform" Width="11" Height="11" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Estável" FontSize="10.5" FontWeight="SemiBold"
+                                                   Foreground="#8FE9C4" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border CornerRadius="5" Padding="7,3" Margin="10,0,0,0" Background="#3A2E12"
+                                        VerticalAlignment="Center" ToolTip="{Binding Selected.ModStatusTooltip}"
+                                        Visibility="{Binding Selected.ModIsUnstable, Converter={StaticResource BoolToVis}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconWarning}" Fill="{StaticResource OrangeBrush}"
+                                              Stretch="Uniform" Width="11" Height="11" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Instável" FontSize="10.5" FontWeight="SemiBold"
+                                                   Foreground="#F5C65E" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
 
                             <!-- credito do autor do mod: quem mantem, com atalho pro historico -->
@@ -456,24 +478,41 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
-                                    <Border Width="34" Height="34" CornerRadius="17" DockPanel.Dock="Left"
-                                            VerticalAlignment="Center">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                <GradientStop Color="#FF8A3D" Offset="0"/>
-                                                <GradientStop Color="#E5622F" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                        <TextBlock Text="{Binding Selected.MaintainerInitial}" FontSize="15"
-                                                   FontWeight="Bold" Foreground="#1A1206"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
+                                    <Grid Width="36" Height="36" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                        <!-- inicial: fallback quando o autor nao tem foto conhecida -->
+                                        <Border CornerRadius="18">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#FF8A3D" Offset="0"/>
+                                                    <GradientStop Color="#E5622F" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="{Binding Selected.MaintainerInitial}" FontSize="15"
+                                                       FontWeight="Bold" Foreground="#1A1206"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <!-- foto do GitHub -->
+                                        <Border CornerRadius="18"
+                                                Visibility="{Binding HasMaintainerAvatar, Converter={StaticResource BoolToVis}}">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="{Binding MaintainerAvatar, Converter={StaticResource CoverImage}}"
+                                                            Stretch="UniformToFill"/>
+                                            </Border.Background>
+                                        </Border>
+                                    </Grid>
                                     <StackPanel Margin="12,0,10,0" VerticalAlignment="Center">
                                         <TextBlock Text="CRIADO POR" FontSize="9.5" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextFaintBrush}"/>
                                         <TextBlock Text="{Binding Selected.MaintainerName}" FontSize="13.5"
                                                    FontWeight="SemiBold" Margin="0,2,0,0"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="Abrir o perfil do autor no GitHub"
+                                                   Cursor="Hand">
+                                            <TextBlock.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick"
+                                                              Command="{Binding OpenMaintainerCommand}"/>
+                                            </TextBlock.InputBindings>
+                                        </TextBlock>
                                     </StackPanel>
                                 </DockPanel>
                             </Border>

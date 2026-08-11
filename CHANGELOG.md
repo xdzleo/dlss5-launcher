@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.10.0
+
+### Foto do autor do mod
+
+O crédito agora mostra a **foto real do autor no GitHub** (com a inicial como reserva quando não
+dá para descobrir), e clicar no nome abre o perfil dele.
+
+O catálogo só traz nomes de exibição ("Musa", "OopyDoopy (Jon)"), nunca o usuário do GitHub — mas
+a URL do addon aponta para o fork que constrói o mod, que é a conta do autor. O mapa é derivado
+disso, do próprio catálogo. Com um cuidado: mods construídos no repositório principal apontariam
+todos para o ShortFuse, então nesses casos o app prefere não mostrar foto nenhuma a mostrar
+**o rosto da pessoa errada**.
+
+### Selo de estabilidade
+
+Ao lado da loja e do estado agora aparece o selo que a wiki do RenoDX usa: **✓ Estável** em verde
+ou **⚠ Instável** em âmbar (mod marcado como em construção).
+
 ## v1.9.0
 
 ### Correção de DLSS Frame Generation

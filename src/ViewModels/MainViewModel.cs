@@ -48,6 +48,8 @@ public class MainViewModel : ObservableObject
         CloseDialogCommand = new RelayCommand(() => IsDialogOpen = false);
         DlssFixCommand = new AsyncRelayCommand(ToggleDlssFixAsync, () => !Busy);
         LaunchGameCommand = new RelayCommand(LaunchGame, () => Selected != null);
+        OpenMaintainerCommand = new RelayCommand(OpenMaintainer,
+            () => AvatarService.ProfileUrl(Selected?.Mod) != null);
         UpdateAllCommand = new AsyncRelayCommand(UpdateAllAsync, () => !Busy && UpdateCount > 0);
     }
 
@@ -188,6 +190,15 @@ public class MainViewModel : ObservableObject
 
     /// <summary>A correção de DLSS FG faz sentido neste jogo (mod converte SDR->HDR e o jogo
     /// tem o runtime de Frame Generation).</summary>
+    /// <summary>Foto do autor do mod (GitHub). Null = mostra a inicial.</summary>
+    private string? _maintainerAvatar;
+    public string? MaintainerAvatar
+    {
+        get => _maintainerAvatar;
+        set { if (Set(ref _maintainerAvatar, value)) OnPropertyChanged(nameof(HasMaintainerAvatar)); }
+    }
+    public bool HasMaintainerAvatar => _maintainerAvatar != null;
+
     private bool _showDlssFix;
     public bool ShowDlssFix { get => _showDlssFix; set => Set(ref _showDlssFix, value); }
 
@@ -221,6 +232,7 @@ public class MainViewModel : ObservableObject
     public RelayCommand CloseDialogCommand { get; }
     public AsyncRelayCommand DlssFixCommand { get; }
     public RelayCommand LaunchGameCommand { get; }
+    public RelayCommand OpenMaintainerCommand { get; }
     public AsyncRelayCommand UpdateAllCommand { get; }
 
     /// <summary>Quantos mods instalados têm build mais nova disponível.</summary>
@@ -256,6 +268,7 @@ public class MainViewModel : ObservableObject
         OpenFolderCommand.RaiseCanExecuteChanged();
         LaunchGameCommand.RaiseCanExecuteChanged();
         DlssFixCommand.RaiseCanExecuteChanged();
+        OpenMaintainerCommand.RaiseCanExecuteChanged();
         OpenNexusCommand.RaiseCanExecuteChanged();
     }
 
@@ -275,6 +288,7 @@ public class MainViewModel : ObservableObject
             _manifest ??= await Task.Run(() => new ManifestService());
             var rhiTask = _rhi.LoadAsync();
             _catalogEntries = await _catalog.LoadAsync(forceRefresh);
+            AvatarService.Learn(_catalogEntries);
             await rhiTask;
 
             StatusText = "Procurando jogos instalados...";
@@ -421,10 +435,20 @@ public class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedExe));
         if (exe != null && item.ChosenExe is null) item.ChosenExe = exe;
 
+        await LoadAvatarAsync(token);
         await LoadSettingsSafeAsync(token);
         await CheckDlssFixAsync(token);
         await CheckLoadVerdictAsync(token);
         RaiseCommands();
+    }
+
+    private async Task LoadAvatarAsync(int token)
+    {
+        MaintainerAvatar = null;
+        var mod = _detailItem?.Mod;
+        if (mod is null) return;
+        var path = await AvatarService.GetAvatarAsync(mod);
+        if (token == _detailToken) MaintainerAvatar = path;
     }
 
     /// <summary>A correção de DLSS FG só é oferecida quando o mod converte SDR->HDR e o jogo
@@ -902,6 +926,12 @@ public class MainViewModel : ObservableObject
         var dir = Selected?.TargetDir ?? Selected?.Game.InstallDir;
         if (dir != null && Directory.Exists(dir))
             Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
+    }
+
+    private void OpenMaintainer()
+    {
+        if (AvatarService.ProfileUrl(_detailItem?.Mod ?? Selected?.Mod) is { } url)
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 
     private void OpenNexus()

@@ -55,6 +55,14 @@ public class GameItemVm : ObservableObject
     }
     public bool HasDirectDownload => Mod?.DownloadUrl != null;
 
+    /// <summary>Selo de status da wiki: estavel (check verde) x em construcao (aviso).</summary>
+    public bool ModIsStable => Mod?.Working == true;
+    public bool ModIsUnstable => Mod != null && !Mod.Working;
+    public string ModStatusText => ModIsStable ? "Estável" : "Instável";
+    public string ModStatusTooltip => ModIsStable
+        ? "A wiki do RenoDX marca este mod como funcionando"
+        : "A wiki do RenoDX marca este mod como em construção — pode ter problemas";
+
     public string? CoverPath { get => _coverPath; set { if (Set(ref _coverPath, value)) OnPropertyChanged(nameof(HasCover)); } }
     public bool HasCover => _coverPath != null;
     public string Initials
