@@ -210,6 +210,44 @@ Check(manifest.KnowsSlug("doom-tda") && manifest.GetSettings("doom-tda")!.Count 
     "manifest: doom-tda conhecido e SEM opcoes ajustaveis");
 Check(!manifest.KnowsSlug("slug-que-nao-existe"), "manifest: slug inexistente = desconhecido");
 
+// 4f. correcao de DLSS FG (aplica/remove no ini, em jogo FALSO)
+var fgDir = Path.Combine(fakeRoot, "FgGame");
+Directory.CreateDirectory(Path.Combine(fgDir, "Engine", "Binaries"));
+foreach (var dll in new[] { "nvngx_dlss.dll", "nvngx_dlssg.dll", "sl.interposer.dll" })
+    File.WriteAllBytes(Path.Combine(fgDir, "Engine", "Binaries", dll), new byte[] { 0x4D, 0x5A });
+var det = DlssFixService.Detect(fgDir);
+Check(det.HasFrameGen && det.DlssPath != null && det.StreamlinePath != null,
+    "detecta runtime de DLSS FG (dlssg + dlss + streamline)");
+
+var ueMod = new CatalogEntry { GameName = "X", Kind = ModKind.UnrealEngine, Slug = "unrealengine" };
+var dedicated = new CatalogEntry { GameName = "Y", Kind = ModKind.Dedicated, Slug = "cp2077" };
+Check(DlssFixService.ShouldOffer(ueMod, det), "oferece p/ mod generico (converte SDR->HDR)");
+Check(!DlssFixService.ShouldOffer(dedicated, det), "NAO oferece p/ mod dedicado (HDR nativo)");
+Check(!DlssFixService.ShouldOffer(ueMod, new DlssFixService.Detection(false, null, null)),
+    "NAO oferece quando o jogo nao tem DLSS FG");
+
+// ini precisa preservar addons ja listados no LoadFromDllMain
+var fgIni = new IniFile(Path.Combine(fgDir, "ReShade.ini"));
+fgIni.Set("ADDON", "LoadFromDllMain", "outro.addon64");
+fgIni.Save();
+await DlssFixService.ApplyAsync(fgDir, det);
+var after = new IniFile(Path.Combine(fgDir, "ReShade.ini"));
+var loadList = after.Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "";
+Check(loadList.Contains("outro.addon64") && loadList.Contains(DlssFixService.AddonFile),
+    $"LoadFromDllMain preserva o addon existente ({loadList})");
+Check(after.Get("RENODX-DLSSFIX", "DLSSPath")?.EndsWith("nvngx_dlss.dll") == true,
+    "DLSSPath gravado com caminho completo");
+Check(after.Get("RENODX-DLSSFIX", "StreamlinePath")?.EndsWith("sl.interposer.dll") == true,
+    "StreamlinePath gravado");
+Check(DlssFixService.IsInstalled(fgDir), "correcao detectada como instalada");
+
+DlssFixService.Remove(fgDir);
+var undone = new IniFile(Path.Combine(fgDir, "ReShade.ini"));
+Check(undone.Get("ADDON", "LoadFromDllMain", ignoreCase: true) == "outro.addon64",
+    "remover devolve o LoadFromDllMain ao estado anterior");
+Check(undone.Get("RENODX-DLSSFIX", "DLSSPath") is null && !DlssFixService.IsInstalled(fgDir),
+    "remover limpa caminhos e apaga o addon");
+
 // 5. ReShade provision + deploy (real download)
 var reshade = new ReShadeService();
 var deploy = await reshade.DeployAsync(fakeDir, fakeExe, null, null, new Progress<string>(Console.WriteLine));

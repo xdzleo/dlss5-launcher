@@ -46,6 +46,7 @@ public class MainViewModel : ObservableObject
         AddManualGameCommand = new AsyncRelayCommand(AddManualGameAsync, () => !Busy);
         CheckUpdatesCommand = new AsyncRelayCommand(CheckUpdatesAsync, () => !Busy);
         CloseDialogCommand = new RelayCommand(() => IsDialogOpen = false);
+        DlssFixCommand = new AsyncRelayCommand(ToggleDlssFixAsync, () => !Busy);
         LaunchGameCommand = new RelayCommand(LaunchGame, () => Selected != null);
         UpdateAllCommand = new AsyncRelayCommand(UpdateAllAsync, () => !Busy && UpdateCount > 0);
     }
@@ -185,6 +186,22 @@ public class MainViewModel : ObservableObject
     private bool _hasLoadVerdict;
     public bool HasLoadVerdict { get => _hasLoadVerdict; set => Set(ref _hasLoadVerdict, value); }
 
+    /// <summary>A correção de DLSS FG faz sentido neste jogo (mod converte SDR->HDR e o jogo
+    /// tem o runtime de Frame Generation).</summary>
+    private bool _showDlssFix;
+    public bool ShowDlssFix { get => _showDlssFix; set => Set(ref _showDlssFix, value); }
+
+    private bool _dlssFixApplied;
+    public bool DlssFixApplied
+    {
+        get => _dlssFixApplied;
+        set { if (Set(ref _dlssFixApplied, value)) OnPropertyChanged(nameof(DlssFixButtonText)); }
+    }
+
+    public string DlssFixButtonText => _dlssFixApplied ? "Remover correção" : "Aplicar correção";
+
+    private DlssFixService.Detection? _dlssDetection;
+
     private string _detailStatus = "";
     public string DetailStatus { get => _detailStatus; set => Set(ref _detailStatus, value); }
 
@@ -202,6 +219,7 @@ public class MainViewModel : ObservableObject
     public AsyncRelayCommand AddManualGameCommand { get; }
     public AsyncRelayCommand CheckUpdatesCommand { get; }
     public RelayCommand CloseDialogCommand { get; }
+    public AsyncRelayCommand DlssFixCommand { get; }
     public RelayCommand LaunchGameCommand { get; }
     public AsyncRelayCommand UpdateAllCommand { get; }
 
@@ -237,6 +255,7 @@ public class MainViewModel : ObservableObject
         ResetSettingsCommand.RaiseCanExecuteChanged();
         OpenFolderCommand.RaiseCanExecuteChanged();
         LaunchGameCommand.RaiseCanExecuteChanged();
+        DlssFixCommand.RaiseCanExecuteChanged();
         OpenNexusCommand.RaiseCanExecuteChanged();
     }
 
@@ -403,8 +422,52 @@ public class MainViewModel : ObservableObject
         if (exe != null && item.ChosenExe is null) item.ChosenExe = exe;
 
         await LoadSettingsSafeAsync(token);
+        await CheckDlssFixAsync(token);
         await CheckLoadVerdictAsync(token);
         RaiseCommands();
+    }
+
+    /// <summary>A correção de DLSS FG só é oferecida quando o mod converte SDR->HDR e o jogo
+    /// traz o runtime do DLSS FG — aplicar às cegas mentiria para o DLSS na direção oposta.</summary>
+    private async Task CheckDlssFixAsync(int token)
+    {
+        ShowDlssFix = false;
+        _dlssDetection = null;
+        var item = _detailItem;
+        if (item?.Mod is null || item.TargetDir is null) return;
+        var installDir = item.Game.InstallDir;
+        var detection = await Task.Run(() => DlssFixService.Detect(installDir));
+        if (token != _detailToken) return;
+        if (!DlssFixService.ShouldOffer(item.Mod, detection)) return;
+        _dlssDetection = detection;
+        DlssFixApplied = DlssFixService.IsInstalled(item.TargetDir);
+        ShowDlssFix = true;
+    }
+
+    private async Task ToggleDlssFixAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null || _dlssDetection is null) return;
+        ActionBusy = true;
+        try
+        {
+            var dir = item.TargetDir;
+            if (DlssFixApplied)
+            {
+                await Task.Run(() => DlssFixService.Remove(dir));
+                DlssFixApplied = false;
+                DetailStatus = "Correção de DLSS removida.";
+            }
+            else
+            {
+                var det = _dlssDetection;
+                await Task.Run(() => DlssFixService.ApplyAsync(dir, det, new Progress<string>(s => DetailStatus = s)));
+                DlssFixApplied = true;
+                DetailStatus = "Correção aplicada. Reinicie o jogo.";
+            }
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
     }
 
     /// <summary>Ask ReShade.log whether the mod really loaded — the only ground truth

@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.9.0
+
+### Correção de DLSS Frame Generation
+
+Quando o RenoDX converte um jogo de SDR para HDR, o jogo continua dizendo ao DLSS que os buffers
+são SDR — e o Frame Generation interpola com a matemática errada, o que aparece como **piscadas**
+e artefatos nos quadros gerados. O addon oficial `renodx-dlssfix` corrige isso.
+
+O launcher agora oferece essa correção **em um botão**, e só quando ela faz sentido: mod genérico
+(o caminho que converte SDR→HDR) **e** o jogo tendo o runtime de Frame Generation (`nvngx_dlssg.dll`
+ou `sl.interposer.dll`) na pasta. Em jogos de HDR nativo ele nem aparece — ali a correção seria
+inútil, e aplicá-la às cegas mentiria para o DLSS na direção oposta.
+
+Ele baixa o addon, encontra as DLLs sozinho e escreve o `[RENODX-DLSSFIX]` no `ReShade.ini`
+preservando addons já listados. Reversível pelo mesmo botão.
+
 ## v1.8.0
 
 ### “Ainda não tenho a lista de configurações deste mod”
