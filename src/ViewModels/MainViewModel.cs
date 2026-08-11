@@ -188,6 +188,12 @@ public class MainViewModel : ObservableObject
     private bool _hasLoadVerdict;
     public bool HasLoadVerdict { get => _hasLoadVerdict; set => Set(ref _hasLoadVerdict, value); }
 
+    private bool _needsRepair;
+    /// <summary>O ReShade que está na pasta é a build SEM suporte a add-ons — o mod nunca vai
+    /// carregar até ser substituído. Como o banner de instalar some depois de instalado, este é
+    /// o único caminho de volta para quem caiu nesse estado.</summary>
+    public bool NeedsRepair { get => _needsRepair; set => Set(ref _needsRepair, value); }
+
     /// <summary>A correção de DLSS FG faz sentido neste jogo (mod converte SDR->HDR e o jogo
     /// tem o runtime de Frame Generation).</summary>
     /// <summary>Foto do autor do mod (GitHub). Null = mostra a inicial.</summary>
@@ -500,6 +506,7 @@ public class MainViewModel : ObservableObject
     {
         LoadVerdict = "";
         HasLoadVerdict = false;
+        NeedsRepair = false;
         var item = _detailItem;
         if (item?.State is null || item.State.AddonPath is null) return;
         var dir = item.State.TargetDir;
@@ -507,6 +514,7 @@ public class MainViewModel : ObservableObject
         if (token != _detailToken) return;
         LoadVerdict = report.Message;
         HasLoadVerdict = true;
+        NeedsRepair = report.Result is LoadResult.LimitedBuild or LoadResult.NoAddonSupport;
 
         // mods RenoDX atualizam direto — avisa quando há build nova no servidor
         if (item.Mod != null)
@@ -514,7 +522,7 @@ public class MainViewModel : ObservableObject
             var newer = await AddonService.IsUpdateAvailableAsync(item.Mod, item.State);
             if (token != _detailToken) return;
             if (newer == true)
-                LoadVerdict += "\n\nHá uma versão MAIS NOVA deste mod disponível — clique em \"Instalar / Atualizar mod\".";
+                LoadVerdict += "\n\nHá uma versão MAIS NOVA deste mod disponível — clique em \"Atualizar\" ali em cima.";
         }
     }
 

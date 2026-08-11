@@ -549,7 +549,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconDownload}" Fill="#231A05" Stretch="Uniform"
                                                   Width="14" Height="14" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Atualizar agora" Margin="7,0,0,0" FontSize="12.5"
+                                            <TextBlock Text="Atualizar" Margin="7,0,0,0" FontSize="12.5"
                                                        FontWeight="SemiBold" Foreground="#231A05"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -582,76 +582,94 @@
                             <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
                                       FontSize="11.5"/>
 
-                            <!-- primary action (hidden while the update card owns the CTA) -->
-                            <Button Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Instalar ou atualizar mod"
-                                    Margin="0,14,0,0" Command="{Binding InstallCommand}"
-                                    Visibility="{Binding Selected.HasUpdate, Converter={StaticResource NotToVis}}">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Path Data="{StaticResource IconDownload}" Fill="#1A1206" Stretch="Uniform"
-                                          Width="17" Height="17" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Instalar / Atualizar mod" Margin="10,0,0,0" FontSize="13.5"
-                                               FontWeight="SemiBold" Foreground="#1A1206" VerticalAlignment="Center"/>
-                                </StackPanel>
+                            <!-- BANNER DE INSTALAR: existe apenas enquanto NAO ha mod instalado.
+                                 Depois de instalado ele nao tem o que oferecer, e atualizacao e
+                                 assunto do cartao ambar la em cima. Some tambem em jogo sem mod. -->
+                            <Button Padding="14,13" Margin="0,14,0,0" Command="{Binding InstallCommand}"
+                                    AutomationProperties.Name="Instalar mod">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Selected.IsInstalled}" Value="False"/>
+                                                    <Condition Binding="{Binding Selected.HasMod}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="10"
+                                            Background="#38000000" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource IconDownload}" Fill="#241805" Stretch="Uniform"
+                                              Width="17" Height="17"/>
+                                    </Border>
+                                    <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Instalar mod HDR" FontSize="14" FontWeight="SemiBold"
+                                                   Foreground="#1A1206"/>
+                                        <TextBlock Text="ReShade + addon do RenoDX na pasta do executável acima"
+                                                   FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"
+                                                   Foreground="#5A3A14"/>
+                                    </StackPanel>
+                                </DockPanel>
                             </Button>
 
-                            <Button Style="{StaticResource ToggleCard}" Margin="0,9,0,0"
-                                    AutomationProperties.Name="Ativar ou desativar mod"
-                                    Command="{Binding ToggleCommand}">
+                            <!-- REPARO: o ReShade da pasta e a build sem suporte a add-ons, entao o
+                                 mod nunca vai carregar. Como o banner de instalar some depois de
+                                 instalado, sem isto o usuario ficaria sem nenhum caminho de volta. -->
+                            <Button Padding="14,13" Margin="0,14,0,0" Command="{Binding InstallCommand}"
+                                    AutomationProperties.Name="Reinstalar o ReShade"
+                                    Visibility="{Binding NeedsRepair, Converter={StaticResource BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}"/>
+                                </Button.Style>
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="10"
+                                            Background="#38000000" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource IconWarning}" Fill="#241805" Stretch="Uniform"
+                                              Width="17" Height="17"/>
+                                    </Border>
+                                    <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Reinstalar o ReShade" FontSize="14" FontWeight="SemiBold"
+                                                   Foreground="#1A1206"/>
+                                        <TextBlock Text="A build instalada aqui não tem suporte a add-ons — o mod não carrega assim"
+                                                   FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"
+                                                   Foreground="#5A3A14"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Button>
+
+                            <!-- REMOVER: onde antes ficava "desativar". Desativar so renomeia o
+                                 arquivo e nao e o que se quer 9 em cada 10 vezes; virou o botao de
+                                 energia na barra de baixo, para quem quiser comparar HDR ligado e
+                                 desligado sem perder a instalacao. -->
+                            <Button Margin="0,10,0,0" AutomationProperties.Name="Remover mod"
+                                    Command="{Binding RemoveCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ToggleCard}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Selected.IsInstalled}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
                                 <DockPanel>
                                     <Border DockPanel.Dock="Left" Width="30" Height="30" CornerRadius="9"
-                                            VerticalAlignment="Center">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#2A3040"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
-                                                        <Setter Property="Background" Value="#1B4535"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Path Data="{StaticResource IconPower}" Stretch="Uniform"
-                                              Width="15" Height="15">
-                                            <Path.Style>
-                                                <Style TargetType="Path">
-                                                    <Setter Property="Fill" Value="{StaticResource TextDimBrush}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
-                                                            <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Path.Style>
-                                        </Path>
+                                            Background="#3A2024" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource IconTrash}" Fill="#EE9A9A" Stretch="Uniform"
+                                              Width="15" Height="15"/>
                                     </Border>
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock FontSize="12.5" FontWeight="SemiBold">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="Mod desativado"/>
-                                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
-                                                            <Setter Property="Text" Value="Mod ativado"/>
-                                                            <Setter Property="Foreground" Value="#8FE9C4"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock FontSize="11" Foreground="{StaticResource TextFaintBrush}"
-                                                   Margin="0,2,0,0">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="Clique para ativar no jogo"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
-                                                            <Setter Property="Text" Value="Clique para desativar"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
+                                        <TextBlock Text="Remover mod" FontSize="12.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextBrush}"/>
+                                        <TextBlock Text="Apaga o addon da pasta do jogo. Suas configurações continuam salvas no ReShade.ini."
+                                                   FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
+                                                   Foreground="{StaticResource TextFaintBrush}"/>
                                     </StackPanel>
                                 </DockPanel>
                             </Button>
@@ -778,10 +796,34 @@
                                     <Path Data="{StaticResource IconGlobe}" Fill="{StaticResource TextBrush}"
                                           Stretch="Uniform" Width="15" Height="15"/>
                                 </Button>
-                                <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding RemoveCommand}"
-                                        ToolTip="Remover o mod" AutomationProperties.Name="Remover o mod">
-                                    <Path Data="{StaticResource IconTrash}" Fill="{StaticResource TextBrush}"
-                                          Stretch="Uniform" Width="15" Height="15"/>
+                                <!-- ativar/desativar: trocou de lugar com o remover. Renomear o
+                                     addon para .disabled serve para comparar HDR ligado x desligado
+                                     sem perder a instalacao — util, mas nao e a acao principal. -->
+                                <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding ToggleCommand}"
+                                        AutomationProperties.Name="Ativar ou desativar mod">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="ToolTip" Value="Ativar o mod neste jogo"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
+                                                    <Setter Property="ToolTip"
+                                                            Value="Desativar o mod sem remover (renomeia o addon)"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Path Data="{StaticResource IconPower}" Stretch="Uniform" Width="15" Height="15">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="{StaticResource TextDimBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
                                 </Button>
                             </StackPanel>
                         </DockPanel>

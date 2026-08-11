@@ -18,9 +18,9 @@ public record LoadReport(
     {
         LoadResult.Loaded => $"Confirmado: o mod carregou no jogo{(AddonName is null ? "" : $" ({AddonName}{(AddonVersion is null ? "" : " v" + AddonVersion)})")}.",
         LoadResult.Failed => $"Falhou: o ReShade tentou carregar o mod e FALHOU: {Detail}",
-        LoadResult.LimitedBuild => "Atenção: este ReShade é a build SEM suporte a add-ons — clique em \"Instalar / Atualizar mod\" que eu troco pela versão certa.",
+        LoadResult.LimitedBuild => "Atenção: este ReShade é a build SEM suporte a add-ons — clique em \"Reinstalar o ReShade\" que eu troco pela versão certa.",
         LoadResult.NoAddonSupport => "Atenção: o ReShade instalado aqui NÃO tem suporte a add-ons (o jogo rodou e ele nem procurou por mods). "
-            + "Clique em \"Instalar / Atualizar mod\" que eu substituo pela build com suporte a add-ons.",
+            + "Clique em \"Reinstalar o ReShade\" que eu substituo pela build com suporte a add-ons.",
         LoadResult.NotLoaded => "Atenção: o jogo rodou com ReShade, mas o mod RenoDX não foi carregado. Confira se o addon está ativado e na pasta certa.",
         _ => "Ainda não há registro: abra o jogo uma vez para eu verificar se o mod carregou.",
     };

@@ -165,7 +165,10 @@
                                             <GradientStop Color="#EE7328" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <!-- Stretch, nao Center: o conteudo decide se centraliza. Um
+                                         ContentPresenter centralizado impede um banner de duas
+                                         linhas com icone a esquerda. -->
+                                    <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
                                 </Border>
                             </Grid>
                             <ControlTemplate.Triggers>
