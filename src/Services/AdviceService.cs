@@ -16,6 +16,25 @@ public enum AdviceKind { HdrOff, HdrOn, Renderer, AntiCheat, Deprecated, Action 
 /// </summary>
 public static partial class AdviceService
 {
+    /// <summary>Remove pictographic characters that come from external note data (wiki/RHI):
+    /// WPF renders them as boxes or wrong glyphs depending on which font resolves them.</summary>
+    public static string StripSymbols(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        var sb = new System.Text.StringBuilder(text.Length);
+        foreach (var rune in text.EnumerateRunes())
+        {
+            int v = rune.Value;
+            bool pictographic =
+                (v >= 0x2190 && v <= 0x2BFF) ||   // arrows, symbols, dingbats
+                (v >= 0xFE00 && v <= 0xFE0F) ||   // variation selectors
+                (v >= 0x1F000 && v <= 0x1FAFF) || // emoji planes
+                v == 0x00A0;                      // nbsp: breaks wrapping
+            sb.Append(pictographic ? ' ' : rune.ToString());
+        }
+        return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"[ 	]{2,}", " ").Trim();
+    }
+
     // "disable in-game HDR", "disable the game's native HDR", "in-game HDR ... off"
     [GeneratedRegex(@"(disabl\w*|turn\s*off)[^.]*\b(in[\s-]?game|native|game'?s)\b[^.]*\bhdr\b"
         + @"|\b(in[\s-]?game|native)\b[^.]*\bhdr\b[^.]*\b(off|disabl\w*)\b",

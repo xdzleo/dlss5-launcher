@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.4.0
+
+### Aviso de atualização
+
+Quando um mod tem build mais nova, agora é impossível não ver:
+
+- **Selo âmbar “ATUALIZAR”** na capa do jogo, com ponto de status âmbar embaixo.
+- **Cartão de aviso** no painel do jogo, explicando que as configurações são preservadas, com
+  botão **“Atualizar agora”** ali mesmo.
+- **Botão âmbar “Atualizar todos (N)”** na barra superior, que só aparece quando há pendências.
+
+### Visual
+
+- **Cards no estilo biblioteca**: a capa preenche o cartão inteiro, com gradiente para o título
+  ficar legível sobre qualquer arte; marca da loja no canto; leve zoom ao passar o mouse.
+- **Capas que faltavam agora carregam**: a Steam moderna guarda a arte em
+  `librarycache/<appid>/<hash>/library_capsule.jpg` (o código só olhava o formato antigo), e os
+  jogos de **Xbox/Game Pass** têm imagens próprias na pasta, declaradas no `MicrosoftGame.config`.
+- **Painel de detalhes com cabeçalho ilustrado** (capa esmaecida atrás do título).
+- Barra superior com logo, botões com ícone, estado vazio ilustrado quando nada casa com o filtro.
+- Notas vindas de fontes externas passam por um filtro que remove símbolos que o Windows
+  renderiza como quadrados.
+- Botões agora têm **nomes de acessibilidade** (leitores de tela e automação de teste).
+
 ## v1.3.0
 
 ### Visual refeito

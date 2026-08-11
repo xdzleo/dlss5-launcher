@@ -60,15 +60,35 @@ public static partial class StoreScanners
         return dict;
     }
 
+    private static string? _steamPath;
+    private static bool _steamPathResolved;
+
+    /// <summary>Steam's install dir (memoized) — also where the library art cache lives.</summary>
+    public static string? SteamInstallPath
+    {
+        get
+        {
+            if (_steamPathResolved) return _steamPath;
+            _steamPathResolved = true;
+            try
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+                using var steamKey = baseKey.OpenSubKey(@"SOFTWARE\Valve\Steam");
+                var path = steamKey?.GetValue("InstallPath") as string;
+                if (path != null && Directory.Exists(path)) _steamPath = path;
+            }
+            catch (Exception ex) { Log.Warn($"steam path: {ex.Message}"); }
+            return _steamPath;
+        }
+    }
+
     public static List<GameInfo> ScanSteam()
     {
         var games = new List<GameInfo>();
         try
         {
-            using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
-            using var steamKey = baseKey.OpenSubKey(@"SOFTWARE\Valve\Steam");
-            var steamPath = steamKey?.GetValue("InstallPath") as string;
-            if (steamPath is null || !Directory.Exists(steamPath)) return games;
+            var steamPath = SteamInstallPath;
+            if (steamPath is null) return games;
 
             var libVdf = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
             var libraries = new List<string> { steamPath };

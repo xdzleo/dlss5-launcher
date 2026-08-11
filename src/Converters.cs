@@ -31,6 +31,16 @@ public class StoreIconConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>bool → Collapsed when true (the inverse of BooleanToVisibilityConverter).</summary>
+public class InverseBoolToVisConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is true ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>int count → Visible when &gt; 0, else Collapsed.</summary>
 public class CountToVisConverter : IValueConverter
 {

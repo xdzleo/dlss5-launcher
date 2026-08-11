@@ -3,9 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RenoDXLauncher.ViewModels"
         xmlns:local="clr-namespace:RenoDXLauncher"
-        Title="RenoDX Launcher" Height="900" Width="1500" MinWidth="1080" MinHeight="640"
+        Title="RenoDX Launcher" Height="920" Width="1560" MinWidth="1100" MinHeight="660"
         Background="{StaticResource BgBrush}"
         TextOptions.TextFormattingMode="Ideal"
+        UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <local:CoverImageConverter x:Key="CoverImage"/>
@@ -13,76 +14,80 @@
         <local:AdviceColorConverter x:Key="AdviceFg" Foreground="True"/>
         <local:CountToVisConverter x:Key="CountToVis"/>
         <local:StoreIconConverter x:Key="StoreIcon"/>
+        <local:InverseBoolToVisConverter x:Key="NotToVis"/>
 
-        <!-- ===== game tile ===== -->
+        <!-- ===== game tile: cover fills the card, text sits on a scrim ===== -->
         <DataTemplate x:Key="GameTile" DataType="{x:Type vm:GameItemVm}">
-            <Border x:Name="Card" Width="176" Margin="9" Background="{StaticResource CardBrush}"
-                    CornerRadius="10" BorderThickness="1" BorderBrush="{StaticResource BorderBrush2}">
-                <StackPanel>
-                    <!-- cover -->
-                    <Grid Height="248">
-                        <Border CornerRadius="9,9,0,0" Background="#14161B">
-                            <TextBlock Text="{Binding Initials}" FontSize="40" FontWeight="Bold"
-                                       Foreground="{StaticResource GrayBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <Border CornerRadius="9,9,0,0"
-                                Visibility="{Binding HasCover, Converter={StaticResource BoolToVis}}">
+            <Grid x:Name="Root" Width="184" Height="286" Margin="9">
+                <Border x:Name="Card" CornerRadius="12" Background="{StaticResource CardBrush}"
+                        BorderThickness="1" BorderBrush="{StaticResource BorderBrush2}"
+                        RenderTransformOrigin="0.5,0.5" ClipToBounds="True">
+                    <Border.RenderTransform>
+                        <ScaleTransform x:Name="CardScale" ScaleX="1" ScaleY="1"/>
+                    </Border.RenderTransform>
+                    <Grid>
+                        <!-- fallback: initials -->
+                        <TextBlock Text="{Binding Initials}" FontSize="44" FontWeight="Bold"
+                                   Foreground="#3A414E" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" Margin="0,0,0,40"/>
+                        <!-- cover -->
+                        <Border Visibility="{Binding HasCover, Converter={StaticResource BoolToVis}}">
                             <Border.Background>
                                 <ImageBrush ImageSource="{Binding CoverPath, Converter={StaticResource CoverImage}}"
                                             Stretch="UniformToFill"/>
                             </Border.Background>
                         </Border>
-                        <!-- store brand mark -->
-                        <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="8"
-                                CornerRadius="6" Width="26" Height="26" Background="#D90D0F13"
+                        <!-- scrim so the title is always legible over any art -->
+                        <Border VerticalAlignment="Bottom" Height="128">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#00101216" Offset="0"/>
+                                    <GradientStop Color="#C8101216" Offset="0.45"/>
+                                    <GradientStop Color="#F5101216" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <!-- store mark -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9"
+                                CornerRadius="7" Width="27" Height="27" Background="#B3080A0E"
                                 ToolTip="{Binding StoreLabel}">
                             <Path Data="{Binding Game.Store, Converter={StaticResource StoreIcon}}"
-                                  Fill="{StaticResource TextBrush}" Stretch="Uniform"
-                                  Width="14" Height="14" Opacity="0.92"/>
+                                  Fill="#E8EDF5" Stretch="Uniform" Width="14" Height="14"/>
                         </Border>
-                    </Grid>
-                    <!-- name + badge -->
-                    <StackPanel Margin="11,9,11,11">
-                        <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold"
-                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
-                        <Border Margin="0,7,0,0" CornerRadius="5" Padding="7,3" HorizontalAlignment="Left">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="#22262F"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Badge}" Value="Enabled">
-                                            <Setter Property="Background" Value="#1F4A38"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Badge}" Value="UpdateAvailable">
-                                            <Setter Property="Background" Value="#17444C"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Badge}" Value="Disabled">
-                                            <Setter Property="Background" Value="#4A3C14"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Badge}" Value="Available">
-                                            <Setter Property="Background" Value="#1D3757"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Badge}" Value="NexusOnly">
-                                            <Setter Property="Background" Value="#38305A"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
+
+                        <!-- update flag: the loudest thing on the tile -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="9"
+                                CornerRadius="7" Padding="7,4" Background="#E6A11B"
+                                Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
+                                ToolTip="Há uma versão mais nova deste mod">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center">
+                                <Path Data="{StaticResource IconWarning}" Fill="#231A05" Stretch="Uniform"
+                                      Width="11" Height="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="ATUALIZAR" FontSize="9" FontWeight="Bold" Margin="4,0,0,0"
+                                           Foreground="#231A05" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- title + status -->
+                        <StackPanel VerticalAlignment="Bottom" Margin="12,0,12,12">
+                            <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold"
+                                       Foreground="White" TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding Name}" MaxHeight="34" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Ellipse Width="7" Height="7" VerticalAlignment="Center">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="{StaticResource GrayBrush}"/>
+                                            <Setter Property="Fill" Value="#5A6272"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Badge}" Value="Enabled">
                                                     <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Badge}" Value="UpdateAvailable">
-                                                    <Setter Property="Fill" Value="{StaticResource CyanBrush}"/>
+                                                    <Setter Property="Fill" Value="{StaticResource OrangeBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Badge}" Value="Disabled">
-                                                    <Setter Property="Fill" Value="{StaticResource OrangeBrush}"/>
+                                                    <Setter Property="Fill" Value="#8A93A3"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Badge}" Value="Available">
                                                     <Setter Property="Fill" Value="{StaticResource BlueBrush}"/>
@@ -94,52 +99,69 @@
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
-                                <TextBlock Text="{Binding BadgeText}" FontSize="10" FontWeight="SemiBold">
+                                <TextBlock Text="{Binding BadgeText}" FontSize="9.5" FontWeight="SemiBold"
+                                           Margin="6,0,0,0" VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+                                            <Setter Property="Foreground" Value="#96A0B2"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Badge}" Value="Enabled">
-                                                    <Setter Property="Foreground" Value="#8FE9C4"/>
+                                                    <Setter Property="Foreground" Value="#7FE3B8"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Badge}" Value="UpdateAvailable">
-                                                    <Setter Property="Foreground" Value="#9BE7F0"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="Disabled">
-                                                    <Setter Property="Foreground" Value="#F5D68A"/>
+                                                    <Setter Property="Foreground" Value="#F5C65E"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Badge}" Value="Available">
-                                                    <Setter Property="Foreground" Value="#A8CBF5"/>
+                                                    <Setter Property="Foreground" Value="#9CC4F5"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Badge}" Value="NexusOnly">
-                                                    <Setter Property="Foreground" Value="#C7B8F5"/>
+                                                    <Setter Property="Foreground" Value="#BFB0F0"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
                             </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
             <DataTemplate.Triggers>
                 <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Card" Property="Background" Value="{StaticResource CardHoverBrush}"/>
-                    <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}"/>
+                    <Setter TargetName="Card" Property="BorderBrush" Value="#5A6478"/>
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleX"
+                                                 To="1.035" Duration="0:0:0.14"/>
+                                <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleY"
+                                                 To="1.035" Duration="0:0:0.14"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Trigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleX"
+                                                 To="1" Duration="0:0:0.14"/>
+                                <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleY"
+                                                 To="1" Duration="0:0:0.14"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.ExitActions>
                 </Trigger>
             </DataTemplate.Triggers>
         </DataTemplate>
 
         <!-- ===== setting row ===== -->
         <DataTemplate x:Key="SettingRow" DataType="{x:Type vm:SettingVm}">
-            <Border Margin="0,4" Padding="12,10" CornerRadius="8" Background="{StaticResource CardBrush}"
+            <Border Margin="0,4" Padding="13,11" CornerRadius="9" Background="{StaticResource CardBrush}"
                     BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
                     ToolTip="{Binding Tooltip}" ToolTipService.ShowDuration="40000"
                     ToolTipService.InitialShowDelay="350">
                 <StackPanel>
                     <DockPanel>
-                        <Border DockPanel.Dock="Right" CornerRadius="5" Padding="7,2" Background="#2A2F3A"
+                        <Border DockPanel.Dock="Right" CornerRadius="6" Padding="8,3" Background="#2A3040"
                                 Visibility="{Binding IsSlider, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="{Binding ValueText}" FontWeight="SemiBold" FontSize="11.5"
                                        Foreground="{StaticResource AccentBrush}"/>
@@ -148,12 +170,12 @@
                     </DockPanel>
                     <Slider Minimum="{Binding Min}" Maximum="{Binding Max}"
                             Value="{Binding Value, Mode=TwoWay}"
-                            TickFrequency="{Binding Step}" IsSnapToTickEnabled="True" Margin="0,7,0,0"
+                            TickFrequency="{Binding Step}" IsSnapToTickEnabled="True" Margin="0,8,0,0"
                             Visibility="{Binding IsSlider, Converter={StaticResource BoolToVis}}"/>
                     <ComboBox ItemsSource="{Binding ComboLabels}" SelectedIndex="{Binding ComboIndex, Mode=TwoWay}"
-                              Margin="0,7,0,0"
+                              Margin="0,8,0,0"
                               Visibility="{Binding IsCombo, Converter={StaticResource BoolToVis}}"/>
-                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" Content="Ativo" Margin="0,7,0,0"
+                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" Content="Ativo" Margin="0,8,0,0"
                               Visibility="{Binding IsCheck, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </Border>
@@ -162,27 +184,41 @@
 
     <DockPanel>
         <!-- ===== top bar ===== -->
-        <Border DockPanel.Dock="Top" Background="{StaticResource PanelBrush}" Padding="18,12"
+        <Border DockPanel.Dock="Top" Padding="20,13"
                 BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,0,0,1">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#191C22" Offset="0"/>
+                    <GradientStop Color="#15171C" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <TextBlock Text="RenoDX" FontSize="20" FontWeight="Bold"
-                               Foreground="{StaticResource AccentBrush}"/>
-                    <TextBlock Text="Launcher" FontSize="20" FontWeight="Light" Margin="7,0,0,0"
-                               Foreground="{StaticResource TextBrush}"/>
+                    <Border Width="30" Height="30" CornerRadius="8" Margin="0,0,11,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FF8A3D" Offset="0"/>
+                                <GradientStop Color="#E5622F" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <TextBlock Text="R" FontSize="17" FontWeight="Bold" Foreground="#14100A"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="RenoDX" FontSize="19" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock Text="Launcher" FontSize="19" FontWeight="Light" Margin="7,0,0,0"
+                               Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right"
                             VerticalAlignment="Center">
-                    <!-- search -->
-                    <Grid Width="230" Margin="0,0,9,0">
-                        <TextBox x:Name="SearchBox" VerticalContentAlignment="Center" Padding="32,6,8,6"
+                    <Grid Width="234" Margin="0,0,10,0">
+                        <TextBox x:Name="SearchBox" VerticalContentAlignment="Center" Padding="33,7,9,7"
                                  Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"/>
                         <Path Data="{StaticResource IconSearch}" Fill="{StaticResource TextFaintBrush}"
                               Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Left"
-                              VerticalAlignment="Center" Margin="11,0,0,0" IsHitTestVisible="False"/>
+                              VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False"/>
                         <TextBlock Text="Pesquisar jogo" Foreground="{StaticResource TextFaintBrush}"
-                                   FontSize="12.5" VerticalAlignment="Center" Margin="33,0,0,0"
+                                   FontSize="12.5" VerticalAlignment="Center" Margin="34,0,0,0"
                                    IsHitTestVisible="False">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -197,52 +233,60 @@
                         </TextBlock>
                     </Grid>
 
-                    <ComboBox Width="165" Margin="0,0,14,0" VerticalContentAlignment="Center"
+                    <ComboBox Width="168" Margin="0,0,16,0" VerticalContentAlignment="Center"
                               ItemsSource="{Binding FilterOptions}" SelectedIndex="{Binding FilterIndex}"/>
 
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Command="{Binding RefreshCommand}"
+                    <!-- update-all: loud when there is something to update -->
+                    <Button Margin="0,0,10,0" AutomationProperties.Name="Atualizar todos" Command="{Binding UpdateAllCommand}" Padding="13,8"
+                            Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Baixa a versão mais nova de todos os mods marcados (suas configurações são preservadas)">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource AccentButton}">
+                                <Setter Property="Background" Value="#E6A11B"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F5B534"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource IconWarning}" Fill="#231A05" Stretch="Uniform"
+                                  Width="14" Height="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding UpdateAllText}" Margin="7,0,0,0" VerticalAlignment="Center"
+                                       Foreground="#231A05" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="Atualizar lista" Command="{Binding RefreshCommand}"
                             ToolTip="Reler o catálogo e reescanear os jogos instalados">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconRefresh}"/>
                             <TextBlock Text="Atualizar" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Command="{Binding CheckUpdatesCommand}"
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="Ver atualizacoes" Command="{Binding CheckUpdatesCommand}"
                             ToolTip="Checa em todos os mods instalados se há build mais nova no servidor">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconUpdate}"/>
                             <TextBlock Text="Ver atualizações" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-
-                    <Button Style="{StaticResource AccentButton}" Margin="0,0,7,0" Command="{Binding UpdateAllCommand}"
-                            Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVis}}"
-                            ToolTip="Baixa a versão mais nova de todos os mods marcados (configurações preservadas)">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconDownload}" Fill="#14100A"/>
-                            <TextBlock Text="{Binding UpdateAllText}" Margin="7,0,0,0" VerticalAlignment="Center"
-                                       Foreground="#14100A" FontWeight="SemiBold"/>
-                        </StackPanel>
-                    </Button>
-
                     <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0"
-                            Command="{Binding AddManualGameCommand}" ToolTip="Adicionar a pasta de um jogo manualmente">
+                            AutomationProperties.Name="Adicionar jogo" Command="{Binding AddManualGameCommand}" ToolTip="Adicionar a pasta de um jogo manualmente">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPlus}"/>
-                            <TextBlock Text="Adicionar jogo" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Adicionar" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Click="OnProfileClick"
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="Meu monitor" Click="OnProfileClick"
                             ToolTip="Definir o brilho (nits) do seu monitor">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"/>
                             <TextBlock Text="Meu monitor" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-
-                    <Button Style="{StaticResource ToolButton}" Click="OnGuideClick" ToolTip="Checklist de HDR">
+                    <Button Style="{StaticResource ToolButton}" AutomationProperties.Name="Guia HDR" Click="OnGuideClick" ToolTip="Checklist de HDR">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconBook}"/>
                             <TextBlock Text="Guia HDR" Margin="7,0,0,0" VerticalAlignment="Center"/>
@@ -254,10 +298,10 @@
         </Border>
 
         <!-- ===== status bar ===== -->
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource PanelBrush}" Padding="18,9"
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource PanelBrush}" Padding="20,10"
                 BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,1,0,0">
             <DockPanel>
-                <ProgressBar DockPanel.Dock="Right" Width="130" Height="4" IsIndeterminate="True"
+                <ProgressBar DockPanel.Dock="Right" Width="140" Height="4" IsIndeterminate="True"
                              VerticalAlignment="Center"
                              Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Text="{Binding StatusText}" FontSize="11.5"
@@ -271,223 +315,290 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- ===== game grid ===== -->
-            <ListBox Grid.Column="0" ItemsSource="{Binding GamesView}" SelectedItem="{Binding Selected}"
-                     Background="Transparent" BorderThickness="0" Margin="9,9,4,9"
-                     ItemTemplate="{StaticResource GameTile}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     VirtualizingPanel.IsVirtualizing="False">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel/>
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Padding" Value="0"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Bd" CornerRadius="12" BorderThickness="2"
-                                            BorderBrush="Transparent">
-                                        <ContentPresenter/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Bd" Property="BorderBrush"
-                                                    Value="{StaticResource AccentBrush}"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-            </ListBox>
+            <Grid Grid.Column="0">
+                <ListBox ItemsSource="{Binding GamesView}" SelectedItem="{Binding Selected}"
+                         Background="Transparent" BorderThickness="0" Margin="10,10,4,10"
+                         ItemTemplate="{StaticResource GameTile}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="False">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Bd" CornerRadius="14" BorderThickness="2"
+                                                BorderBrush="Transparent" Margin="3">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderBrush"
+                                                        Value="{StaticResource AccentBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+
+                <!-- empty state -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                            Visibility="{Binding GamesView.IsEmpty, Converter={StaticResource BoolToVis}}">
+                    <Path Data="{StaticResource IconSearch}" Fill="#39404E" Stretch="Uniform"
+                          Width="44" Height="44" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Nenhum jogo aqui" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"
+                               Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Mude a busca ou o filtro — ou use “Adicionar” para apontar a pasta."
+                               Style="{StaticResource Caption}" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
 
             <!-- ===== detail panel ===== -->
-            <Border Grid.Column="1" Width="430" Background="{StaticResource PanelBrush}"
+            <Border Grid.Column="1" Width="440" Background="{StaticResource PanelBrush}"
                     BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1,0,0,0"
                     Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,16,14,18">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <!-- header -->
-                        <TextBlock Text="{Binding Selected.Name}" Style="{StaticResource H1}" TextWrapping="Wrap"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
-                            <Path Data="{Binding Selected.Game.Store, Converter={StaticResource StoreIcon}}"
-                                  Fill="{StaticResource TextDimBrush}" Stretch="Uniform" Width="12" Height="12"
-                                  VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Selected.StoreLabel}" FontSize="11.5" Margin="6,0,0,0"
-                                       Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
-                            <Border Width="1" Height="11" Background="{StaticResource BorderStrongBrush}"
-                                    Margin="10,0"/>
-                            <TextBlock Text="{Binding Selected.BadgeText}" FontSize="11.5" FontWeight="SemiBold"
-                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding Selected.Mod.Maintainer, StringFormat='Mod por {0}'}"
-                                   Style="{StaticResource Caption}" Margin="0,5,0,0"
-                                   Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}"/>
-
-                        <!-- exe picker -->
-                        <TextBlock Text="EXECUTÁVEL DO JOGO" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
-                        <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
-                                  FontSize="11.5"/>
-
-                        <!-- primary actions -->
-                        <Button Style="{StaticResource AccentButton}" Margin="0,14,0,0" Padding="13,10"
-                                Command="{Binding InstallCommand}">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Path Style="{StaticResource IconPath}" Data="{StaticResource IconDownload}"
-                                      Fill="#14100A" Width="16" Height="16"/>
-                                <TextBlock Text="Instalar / Atualizar mod" Margin="8,0,0,0" FontSize="13"
-                                           FontWeight="SemiBold" Foreground="#14100A" VerticalAlignment="Center"/>
+                        <!-- hero -->
+                        <Grid Height="132">
+                            <Border Visibility="{Binding Selected.HasCover, Converter={StaticResource BoolToVis}}">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="{Binding Selected.CoverPath, Converter={StaticResource CoverImage}}"
+                                                Stretch="UniformToFill" Opacity="0.5"/>
+                                </Border.Background>
+                            </Border>
+                            <Border>
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#8016181D" Offset="0"/>
+                                        <GradientStop Color="#E016181D" Offset="0.55"/>
+                                        <GradientStop Color="#FF16181D" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                            <StackPanel VerticalAlignment="Bottom" Margin="20,0,18,14">
+                                <TextBlock Text="{Binding Selected.Name}" Style="{StaticResource H1}"
+                                           TextWrapping="Wrap" MaxHeight="58" TextTrimming="CharacterEllipsis"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                    <Path Data="{Binding Selected.Game.Store, Converter={StaticResource StoreIcon}}"
+                                          Fill="{StaticResource TextDimBrush}" Stretch="Uniform" Width="12" Height="12"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Selected.StoreLabel}" FontSize="11.5" Margin="6,0,0,0"
+                                               Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                    <Border Width="1" Height="11" Background="{StaticResource BorderStrongBrush}"
+                                            Margin="10,0"/>
+                                    <TextBlock Text="{Binding Selected.BadgeText}" FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
                             </StackPanel>
-                        </Button>
+                        </Grid>
 
-                        <UniformGrid Columns="3" Margin="0,8,0,0">
-                            <Button Margin="0,0,4,0" Command="{Binding ToggleCommand}">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPower}"
-                                          Width="14" Height="14"/>
-                                    <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Text" Value="Ativar"/>
+                        <StackPanel Margin="20,4,18,20">
+                            <TextBlock Text="{Binding Selected.Mod.Maintainer, StringFormat='Mod por {0}'}"
+                                       Style="{StaticResource Caption}"
+                                       Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}"/>
+
+                            <!-- UPDATE WARNING: the reason the user asked for this -->
+                            <Border CornerRadius="10" Padding="13,12" Margin="0,14,0,0" Background="#332612"
+                                    BorderBrush="#8A6A1E" BorderThickness="1"
+                                    Visibility="{Binding Selected.HasUpdate, Converter={StaticResource BoolToVis}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconWarning}" Fill="{StaticResource OrangeBrush}"
+                                              Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Atualização disponível" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="#F5C65E" Margin="9,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Style="{StaticResource Caption}" Margin="0,7,0,0" Foreground="#D8C398"
+                                               Text="O autor publicou uma build mais nova deste mod. Suas configurações são preservadas na atualização."/>
+                                    <Button Margin="0,11,0,0" Padding="12,8" AutomationProperties.Name="Instalar ou atualizar mod" Command="{Binding InstallCommand}"
+                                            HorizontalAlignment="Left">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource AccentButton}">
+                                                <Setter Property="Background" Value="#E6A11B"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
-                                                        <Setter Property="Text" Value="Desativar"/>
-                                                    </DataTrigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#F5B534"/>
+                                                    </Trigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        </Button.Style>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconDownload}" Fill="#231A05" Stretch="Uniform"
+                                                  Width="14" Height="14" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Atualizar agora" Margin="7,0,0,0" FontSize="12.5"
+                                                       FontWeight="SemiBold" Foreground="#231A05"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
-                            </Button>
-                            <Button Margin="2,0" Command="{Binding RemoveCommand}">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconTrash}"
-                                          Width="14" Height="14"/>
-                                    <TextBlock Text="Remover" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12"/>
-                                </StackPanel>
-                            </Button>
-                            <Button Margin="4,0,0,0" Command="{Binding OpenFolderCommand}">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconFolder}"
-                                          Width="14" Height="14"/>
-                                    <TextBlock Text="Pasta" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12"/>
-                                </StackPanel>
-                            </Button>
-                        </UniformGrid>
-
-                        <Button Margin="0,8,0,0" Command="{Binding OpenNexusCommand}"
-                                Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Path Style="{StaticResource IconPath}" Data="{StaticResource IconGlobe}"
-                                      Width="14" Height="14"/>
-                                <TextBlock Text="Página do mod na internet" Margin="7,0,0,0"
-                                           VerticalAlignment="Center" FontSize="12"/>
-                            </StackPanel>
-                        </Button>
-
-                        <!-- transient status -->
-                        <Border CornerRadius="8" Padding="11,9" Margin="0,12,0,0" Background="#2A2415"
-                                BorderBrush="#5E4E1E" BorderThickness="1"
-                                Visibility="{Binding DetailStatus.Length, Converter={StaticResource CountToVis}}">
-                            <TextBlock Text="{Binding DetailStatus}" TextWrapping="Wrap" FontSize="11.5"
-                                       LineHeight="17" Foreground="#F0D9A0"/>
-                        </Border>
-
-                        <!-- load verdict -->
-                        <Border CornerRadius="8" Padding="11,9" Margin="0,10,0,0"
-                                Background="{StaticResource CardBrush}"
-                                BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
-                                Visibility="{Binding HasLoadVerdict, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="{Binding LoadVerdict}" TextWrapping="Wrap" FontSize="11.5"
-                                       LineHeight="17" Foreground="{StaticResource TextBrush}"/>
-                        </Border>
-
-                        <!-- recommendations -->
-                        <StackPanel Margin="0,16,0,0"
-                                    Visibility="{Binding Advice.Count, Converter={StaticResource CountToVis}}">
-                            <TextBlock Text="RECOMENDADO PARA ESTE JOGO" Style="{StaticResource SectionLabel}"/>
-                            <ItemsControl ItemsSource="{Binding Advice}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border CornerRadius="8" Padding="11,10" Margin="0,0,0,7"
-                                                Background="{Binding Kind, Converter={StaticResource AdviceBg}}">
-                                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12"
-                                                       FontWeight="SemiBold" LineHeight="17"
-                                                       Foreground="{Binding Kind, Converter={StaticResource AdviceFg}}"/>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <!-- notes -->
-                        <StackPanel Margin="0,8,0,0"
-                                    Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
-                            <TextBlock Text="NOTAS DO MOD" Style="{StaticResource SectionLabel}"/>
-                            <ItemsControl ItemsSource="{Binding Notes}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="{StaticResource CardBrush}"
-                                                BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
-                                                CornerRadius="8" Padding="11,9" Margin="0,0,0,6">
-                                            <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="11.5"
-                                                       LineHeight="17" Foreground="{StaticResource TextDimBrush}"/>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <!-- settings -->
-                        <StackPanel Visibility="{Binding Selected.IsInstalled, Converter={StaticResource BoolToVis}}">
-                            <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,18,0,16"/>
-                            <TextBlock Text="Configurações do mod" Style="{StaticResource H2}"/>
-                            <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0"
-                                       Text="Gravadas no ReShade.ini do jogo. Salve com o jogo FECHADO."/>
-
-                            <Border CornerRadius="8" Padding="11,9" Margin="0,10,0,0" Background="#2A2415"
-                                    BorderBrush="#5E4E1E" BorderThickness="1"
-                                    Visibility="{Binding HasNoSettingsReason, Converter={StaticResource BoolToVis}}">
-                                <TextBlock Text="{Binding NoSettingsReason}" TextWrapping="Wrap" FontSize="11.5"
-                                           LineHeight="17" Foreground="#F0D9A0"/>
                             </Border>
 
-                            <ItemsControl ItemsSource="{Binding Settings}" ItemTemplate="{StaticResource SettingRow}"
-                                          Margin="0,8,0,0"/>
+                            <!-- exe picker -->
+                            <TextBlock Text="EXECUTÁVEL DO JOGO" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
+                            <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
+                                      FontSize="11.5"/>
 
-                            <UniformGrid Columns="3" Margin="0,12,0,0"
-                                         Visibility="{Binding Settings.Count, Converter={StaticResource CountToVis}}">
-                                <Button Style="{StaticResource AccentButton}" Margin="0,0,4,0"
-                                        Command="{Binding SaveSettingsCommand}">
+                            <!-- primary action (hidden while the update card owns the CTA) -->
+                            <Button Style="{StaticResource AccentButton}" Margin="0,14,0,0" Padding="13,11"
+                                    AutomationProperties.Name="Instalar ou atualizar mod" Command="{Binding InstallCommand}"
+                                    Visibility="{Binding Selected.HasUpdate, Converter={StaticResource NotToVis}}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconDownload}"
+                                          Fill="#14100A" Width="16" Height="16"/>
+                                    <TextBlock Text="Instalar / Atualizar mod" Margin="8,0,0,0" FontSize="13"
+                                               FontWeight="SemiBold" Foreground="#14100A" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <UniformGrid Columns="3" Margin="0,8,0,0">
+                                <Button Margin="0,0,4,0" AutomationProperties.Name="Ativar ou desativar mod" Command="{Binding ToggleCommand}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSave}"
-                                              Fill="#14100A" Width="14" Height="14"/>
-                                        <TextBlock Text="Salvar" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="#14100A" VerticalAlignment="Center"/>
+                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPower}"
+                                              Width="14" Height="14"/>
+                                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="Ativar"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
+                                                            <Setter Property="Text" Value="Desativar"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </StackPanel>
                                 </Button>
-                                <Button Margin="2,0" Command="{Binding ApplyProfileCommand}"
-                                        ToolTip="Escreve os nits do seu monitor neste jogo">
+                                <Button Margin="2,0" AutomationProperties.Name="Remover mod" Command="{Binding RemoveCommand}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"
+                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconTrash}"
                                               Width="14" Height="14"/>
-                                        <TextBlock Text="Meu perfil" Margin="6,0,0,0" FontSize="12"
-                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="Remover" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12"/>
                                     </StackPanel>
                                 </Button>
-                                <Button Margin="4,0,0,0" Command="{Binding ResetSettingsCommand}">
+                                <Button Margin="4,0,0,0" AutomationProperties.Name="Abrir pasta" Command="{Binding OpenFolderCommand}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconReset}"
+                                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconFolder}"
                                               Width="14" Height="14"/>
-                                        <TextBlock Text="Padrão" Margin="6,0,0,0" FontSize="12"
-                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="Pasta" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12"/>
                                     </StackPanel>
                                 </Button>
                             </UniformGrid>
+
+                            <Button Margin="0,8,0,0" AutomationProperties.Name="Pagina do mod" Command="{Binding OpenNexusCommand}"
+                                    Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconGlobe}"
+                                          Width="14" Height="14"/>
+                                    <TextBlock Text="Página do mod na internet" Margin="7,0,0,0"
+                                               VerticalAlignment="Center" FontSize="12"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0" Background="#2A2415"
+                                    BorderBrush="#5E4E1E" BorderThickness="1"
+                                    Visibility="{Binding DetailStatus.Length, Converter={StaticResource CountToVis}}">
+                                <TextBlock Text="{Binding DetailStatus}" TextWrapping="Wrap" FontSize="11.5"
+                                           LineHeight="17" Foreground="#F0D9A0"/>
+                            </Border>
+
+                            <Border CornerRadius="9" Padding="12,10" Margin="0,10,0,0"
+                                    Background="{StaticResource CardBrush}"
+                                    BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
+                                    Visibility="{Binding HasLoadVerdict, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding LoadVerdict}" TextWrapping="Wrap" FontSize="11.5"
+                                           LineHeight="17" Foreground="{StaticResource TextBrush}"/>
+                            </Border>
+
+                            <StackPanel Margin="0,16,0,0"
+                                        Visibility="{Binding Advice.Count, Converter={StaticResource CountToVis}}">
+                                <TextBlock Text="RECOMENDADO PARA ESTE JOGO" Style="{StaticResource SectionLabel}"/>
+                                <ItemsControl ItemsSource="{Binding Advice}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="9" Padding="12,11" Margin="0,0,0,7"
+                                                    Background="{Binding Kind, Converter={StaticResource AdviceBg}}">
+                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12"
+                                                           FontWeight="SemiBold" LineHeight="17"
+                                                           Foreground="{Binding Kind, Converter={StaticResource AdviceFg}}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Margin="0,8,0,0"
+                                        Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
+                                <TextBlock Text="NOTAS DO MOD" Style="{StaticResource SectionLabel}"/>
+                                <ItemsControl ItemsSource="{Binding Notes}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource CardBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
+                                                    CornerRadius="9" Padding="12,10" Margin="0,0,0,6">
+                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="11.5"
+                                                           LineHeight="17" Foreground="{StaticResource TextDimBrush}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding Selected.IsInstalled, Converter={StaticResource BoolToVis}}">
+                                <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,20,0,16"/>
+                                <TextBlock Text="Configurações do mod" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0"
+                                           Text="Gravadas no ReShade.ini do jogo. Salve com o jogo FECHADO."/>
+
+                                <Border CornerRadius="9" Padding="12,10" Margin="0,10,0,0" Background="#2A2415"
+                                        BorderBrush="#5E4E1E" BorderThickness="1"
+                                        Visibility="{Binding HasNoSettingsReason, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding NoSettingsReason}" TextWrapping="Wrap" FontSize="11.5"
+                                               LineHeight="17" Foreground="#F0D9A0"/>
+                                </Border>
+
+                                <ItemsControl ItemsSource="{Binding Settings}" ItemTemplate="{StaticResource SettingRow}"
+                                              Margin="0,8,0,0"/>
+
+                                <UniformGrid Columns="3" Margin="0,12,0,0"
+                                             Visibility="{Binding Settings.Count, Converter={StaticResource CountToVis}}">
+                                    <Button Style="{StaticResource AccentButton}" Margin="0,0,4,0"
+                                            AutomationProperties.Name="Salvar configuracoes" Command="{Binding SaveSettingsCommand}">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSave}"
+                                                  Fill="#14100A" Width="14" Height="14"/>
+                                            <TextBlock Text="Salvar" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#14100A" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Margin="2,0" AutomationProperties.Name="Aplicar meu perfil" Command="{Binding ApplyProfileCommand}"
+                                            ToolTip="Escreve os nits do seu monitor neste jogo">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"
+                                                  Width="14" Height="14"/>
+                                            <TextBlock Text="Meu perfil" Margin="6,0,0,0" FontSize="12"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Margin="4,0,0,0" AutomationProperties.Name="Restaurar padrao" Command="{Binding ResetSettingsCommand}">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconReset}"
+                                                  Width="14" Height="14"/>
+                                            <TextBlock Text="Padrão" Margin="6,0,0,0" FontSize="12"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </UniformGrid>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

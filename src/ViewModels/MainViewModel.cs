@@ -359,8 +359,8 @@ public class MainViewModel : ObservableObject
         }
 
         // full free-text notes below the cards
-        if (item.Mod?.Note is { } n1) Notes.Add(n1);
-        if (rhiNote is { } n2) Notes.Add(n2);
+        if (item.Mod?.Note is { } n1) Notes.Add(AdviceService.StripSymbols(n1));
+        if (rhiNote is { } n2) Notes.Add(AdviceService.StripSymbols(n2));
         if (nativeHdr && Advice.All(a => a.Kind is not (AdviceKind.HdrOn or AdviceKind.HdrOff)))
             Notes.Add("Este jogo tem HDR nativo — o mod corrige/melhora o HDR do próprio jogo. Normalmente o HDR precisa estar LIGADO dentro do jogo.");
         if (item.Mod?.Kind == ModKind.UnrealEngine)
