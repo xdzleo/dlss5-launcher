@@ -319,13 +319,10 @@ public class MainViewModel : ObservableObject
                 knownNames.Contains(MatchService.Normalize(folderName))
                 || knownNames.Contains(MatchService.Normalize(MatchService.StripEditionSuffix(folderName)));
             var games = await StoreScanners.ScanAllAsync(KnownGame);
+            // a hand-picked folder is named by whoever packed it, not by the developer — the
+            // resolver reads the exe and the parent folders to find out which game it is
             foreach (var dir in Config.ManualGameDirs.Where(Directory.Exists))
-                games.Add(new GameInfo
-                {
-                    Name = Path.GetFileName(dir.TrimEnd('\\', '/')),
-                    InstallDir = dir,
-                    Store = GameStore.Manual,
-                });
+                games.Add(FolderGameResolver.Resolve(dir, _catalogEntries));
 
             Games.Clear();
             foreach (var g in games)

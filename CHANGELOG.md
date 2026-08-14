@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.11.2
+
+### Pasta adicionada a mao agora e reconhecida pelo jogo, nao pelo nome da pasta
+
+Um jogo instalado a mao quase nunca esta numa pasta com o nome do jogo. O app usava o nome da
+pasta escolhida e parava por ai — entao uma pasta chamada `Retail` virava um jogo chamado
+"Retail", que nao casa com nada no catalogo. Subir um nivel tambem nao resolvia: pasta baixada
+costuma vir com decoracao (`-Grupo`, `[Repack]`, `v1.2.3`) que nenhum titulo de catalogo tem.
+
+Agora o app tenta varios nomes, do mais fraco para o mais forte:
+
+1. o nome da pasta;
+2. o nome do pai, subindo enquanto a pasta tiver nome de layout (`Retail`, `Binaries`, `Win64`,
+   `bin`, `Content`...);
+3. os dois sem as decoracoes de release;
+4. **o nome do executavel** — que quem escolhe e o desenvolvedor, nao quem empacotou a pasta.
+
+O primeiro que o catalogo reconhecer ganha, e o jogo passa a aparecer com o nome do catalogo em
+vez de "Retail". O nome completo e sempre tentado primeiro, entao "Half-Life" continua sendo
+Half-Life.
+
+Exemplo real: `...\007.First.Light-InsaneRamZes\Retail` — o executavel se chama
+`007FirstLight.exe`, que normaliza exatamente para o titulo do catalogo.
+
+### Novo comando `add`
+
+```
+RenoDXLauncher.exe add "C:\caminho\da\pasta"
+```
+
+Registra a pasta e ja diz o que ele reconheceu: nome do jogo, mod, mantenedor, se tem download
+direto e qual `.exe` vai receber o ReShade. Quando nao reconhece, lista os nomes que tentou —
+que e a informacao de que voce precisa para saber por que falhou.
+
 ## v1.11.1
 
 ### Revisao adversarial da v1.11.0: 18 defeitos, quase todos meus

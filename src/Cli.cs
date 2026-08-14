@@ -76,6 +76,7 @@ public static class Cli
             "check" or "updates" => await CheckAsync(json),
             "verify" => await VerifyAsync(rest.FirstOrDefault()),
             "exe" or "exes" => await ExesAsync(rest.FirstOrDefault()),
+            "add" or "adicionar" => await AddFolderAsync(rest.FirstOrDefault()),
             "settings" => await SettingsAsync(rest.FirstOrDefault()),
             "set" => await SetAsync(rest),
             "profile" => await ProfileAsync(rest),
@@ -97,6 +98,7 @@ public static class Cli
               check [--json]           verifica atualização de todos os mods instalados
               verify [<jogo>]          lê o ReShade.log e diz se o mod carregou mesmo
               exe <jogo>               mostra os .exe candidatos na ordem escolhida (bits/tamanho)
+              add <pasta>              registra uma pasta de jogo que as lojas nao conhecem
               settings <jogo>          mostra as configurações do mod (do ReShade.ini)
               set <jogo> chave=valor…  grava configurações (com o jogo fechado)
               profile [--peak N] [--game N] [--ui N]
@@ -135,12 +137,7 @@ public static class Cli
         var games = await StoreScanners.ScanAllAsync(Known);
         var config = LauncherConfig.Load();
         foreach (var dir in config.ManualGameDirs.Where(Directory.Exists))
-            games.Add(new GameInfo
-            {
-                Name = Path.GetFileName(dir.TrimEnd('\\', '/')),
-                InstallDir = dir,
-                Store = GameStore.Manual,
-            });
+            games.Add(FolderGameResolver.Resolve(dir, catalog));
         return new Ctx(games, catalog, config, new ManifestService(), rhi);
     }
 
@@ -309,6 +306,43 @@ public static class Cli
                 : cands[i];
             Console.WriteLine($"  {(i == 0 ? "→" : " ")} {bits} {size / 1048576.0,8:0.0} MB  {rel}");
         }
+        return 0;
+    }
+
+    /// <summary>Register a game folder the store scanners cannot see (a game installed by hand).
+    /// The folder is only remembered — nothing inside it is read or written until the user asks
+    /// for an install.</summary>
+    private static async Task<int> AddFolderAsync(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) { Console.Error.WriteLine("uso: add <pasta do jogo>"); return 2; }
+        var dir = Path.GetFullPath(path.Trim().Trim('"')).TrimEnd('\\', '/');
+        if (!Directory.Exists(dir)) { Console.Error.WriteLine($"pasta não existe: {dir}"); return 1; }
+
+        var config = LauncherConfig.Load();
+        bool already = config.ManualGameDirs.Contains(dir, StringComparer.OrdinalIgnoreCase);
+        if (!already)
+        {
+            config.ManualGameDirs.Add(dir);
+            config.Save();
+        }
+
+        var catalog = await new CatalogService().LoadAsync();
+        var game = FolderGameResolver.Resolve(dir, catalog);
+        var mod = MatchService.FindMatch(game, catalog);
+
+        Console.WriteLine($"{(already ? "já estava registrada" : "pasta registrada")}: {dir}");
+        Console.WriteLine($"reconhecida como: {game.Name}");
+        if (mod is null)
+        {
+            Console.WriteLine("catálogo do RenoDX: NENHUM mod casa com este nome.");
+            Console.WriteLine($"nomes tentados: {string.Join(" | ", FolderGameResolver.CandidateNames(dir, ExeLocator.FindCandidates(game, null).FirstOrDefault()))}");
+            return 1;
+        }
+        Console.WriteLine($"mod: {mod.GameName} (slug {mod.Slug}, por {mod.Maintainer})");
+        Console.WriteLine($"     {(mod.DownloadUrl != null ? "download direto disponível" : "sem download direto — veja a página do mod")}"
+            + $" · {(mod.Working ? "estável" : "EM CONSTRUÇÃO")}");
+        var exe = ExeLocator.FindCandidates(game, new RhiManifestService().InstallSubdir(game.Name)).FirstOrDefault();
+        Console.WriteLine($"alvo: {exe ?? "(nenhum .exe encontrado)"}");
         return 0;
     }
 

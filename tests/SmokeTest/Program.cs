@@ -448,6 +448,24 @@ var cppLink = """
 Check(!SettingsFetcher.Parse(cppLink).Any(d => d.IsInstruction),
     "parser: botao que so abre URL nao vira 'instrucao do autor'");
 
+// 3c. pasta adicionada a mao: quem empacotou a pasta nomeia ela, nao o desenvolvedor. O nome
+// util pode estar no pai ("...\<Jogo>\Retail") ou so no exe.
+var manualRoot = Path.Combine(fakeRoot, "007.First.Light-InsaneRamZes", "Retail");
+MakeExe(Path.Combine(manualRoot, "007FirstLight.exe"), true, true);
+var byFolder = MatchService.FindMatch(
+    new GameInfo { Name = "Retail", InstallDir = manualRoot, Store = GameStore.Manual }, catalog);
+Check(byFolder is null, "pasta 'Retail' sozinha nao casa com nada (era o defeito)");
+var resolved = FolderGameResolver.Resolve(manualRoot, catalog);
+Check(MatchService.FindMatch(resolved, catalog)?.Slug == "007firstlight",
+    $"pasta ...\\007.First.Light-InsaneRamZes\\Retail reconhecida (nome resolvido: {resolved.Name})");
+var names = FolderGameResolver.CandidateNames(manualRoot,
+    Path.Combine(manualRoot, "007FirstLight.exe"));
+Check(names.Contains("007FirstLight") && names.Any(n => n.Contains("007.First.Light")),
+    "candidatos incluem o nome do exe e o da pasta pai");
+// o strip de tag de release e so um candidato EXTRA: o nome inteiro vem primeiro
+Check(FolderGameResolver.CandidateNames(Path.Combine(fakeRoot, "Half-Life"), null)[0] == "Half-Life",
+    "nome completo e sempre o primeiro candidato (Half-Life nao vira Half)");
+
 // dedup nao pode engolir preset cujo nome so difere por simbolo
 var n1 = new ModNote(NoteSource.ModSource, NoteKind.Preset, null, "Vanilla SDR");
 var n2 = new ModNote(NoteSource.ModSource, NoteKind.Preset, null, "Vanilla+ SDR");
