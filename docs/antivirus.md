@@ -1,4 +1,4 @@
-# Antivírus acusando o RenoDX Launcher
+﻿# Antivírus acusando o RenoDX Launcher
 
 Esta página tem dois públicos: quem baixou e levou um susto, e quem mantém o projeto e
 precisa resolver.
@@ -153,6 +153,74 @@ pwsh tools\av-selfcheck.ps1 -VirusTotalApiKey <chave>
 
 Chave grátis em <https://www.virustotal.com/gui/join-us>. No CI, o secret `VT_API_KEY`
 liga o teste automaticamente nos dois workflows.
+
+### O que foi testado, e por que so a assinatura resolve
+
+Na v1.12.0 o instalador publicado marcou 2/65 no VirusTotal: `Trojan:Win32/Wacatac.B!ml`
+(Microsoft) e `MALICIOUS` (DeepInstinct). Os dois sao veredito de **machine learning** — o
+sufixo `!ml` e explicito, e o DeepInstinct e um motor puramente de ML. Nenhum dos dois e
+assinatura de familia de malware real.
+
+Antes de aceitar isso, quatro variantes do MESMO codigo foram compiladas e submetidas:
+
+| Variante | Compressao | Deteccoes |
+|---|---|---|
+| Build local | `lzma2/max` + solid | **0/67** |
+| Build do CI (o publicado) | `lzma2/max` + solid | 2/65 |
+| Sem solid | `lzma2/max` | 1/69 |
+| Compressao normal | `lzma2/normal` + solid | 2/68 |
+| Compressao zip | `zip` | 1/67 |
+
+As duas primeiras linhas sao o resultado que importa: **mesma configuracao, mesmo codigo,
+0 numa maquina e 2 na outra**. E nenhuma configuracao de compressao zerou — passar para
+`zip`, que engorda o arquivo em 16 MB, ainda deixa 1.
+
+A conclusao e que nao ha nada no conteudo sendo detectado. O binario fica na margem de um
+classificador, e cai de um lado ou do outro conforme ruido de build. Mexer em compressao
+para tentar escapar disso e perda de tempo, e o custo (download maior) e real.
+
+O que muda o resultado, em ordem de efeito: **assinar** (a reputacao acumula na identidade
+do certificado e transfere entre versoes) e **submeter o falso-positivo**, que para
+deteccao `!ml` funciona — o modelo e reajustado. Prevalencia resolve sozinha com o tempo,
+mas so com volume de download.
+
+O `.exe` do app e o zip portatil marcaram **0** em todas as varreduras. Quem passa da
+instalacao nao encontra nada.
+
+### Texto pronto para a submissão
+
+Cole isto no campo de informações adicionais. Ele é escrito para um analista: cada
+afirmação é verificável no repositório, e é por isso que as verificações do CI existem.
+**Troque o hash, a versão e o link do build a cada release.**
+
+> RenoDX Launcher is an open-source (MIT) manager for RenoDX HDR game mods.
+> Source: https://github.com/xdzleo/renodx-launcher
+>
+> This exact file was produced by GitHub Actions, not on a developer machine:
+> https://github.com/xdzleo/renodx-launcher/actions/runs/32233599158 (commit `20c0247`).
+> SHA-256: `e5ea09223e605c53e9f37ac5b0041e2c49c69622244927249bfb17b2716884b8`
+>
+> The application does not inject code into other processes. The source tree contains no
+> `WriteProcessMemory`, `CreateRemoteThread`, `VirtualAllocEx`, `SetWindowsHookEx`,
+> `OpenProcess` or `QueueUserAPC`; this is asserted by an automated check on every push
+> (`tools/av-selfcheck.ps1`, test 11). It installs no service, driver, scheduled task or
+> Run key, and never copies itself. The only P/Invokes in the project are `AttachConsole`,
+> `AllocConsole`, `FreeConsole` (command-line mode) and `WinVerifyTrust`.
+>
+> What it does that may look unusual, and why:
+>
+> - It downloads ReShade (add-on build) from reshade.me and extracts `ReShade64.dll` from
+>   the archive appended to the official installer. Before extracting anything it verifies
+>   the download's Authenticode signature against the ReShade author's certificate
+>   (`CN=ReShade`, cert SHA-256 `445802BC…95790`) and discards the download on mismatch.
+> - It writes that DLL into a game folder under a graphics-API proxy name (`dxgi.dll`,
+>   `d3d9.dll`, `opengl32.dll`). This is how PC graphics mods have worked for fifteen
+>   years — ReShade, ENB, Special K, dxvk.
+> - It reads the PE import table of game executables with ordinary file I/O, to choose the
+>   correct proxy name.
+>
+> The installer is stock Inno Setup 6.7.3. Code signing through SignPath Foundation is in
+> progress.
 
 ### Canais de submissão de falso-positivo
 
