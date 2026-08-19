@@ -470,7 +470,11 @@ if (-not $Installer) {
             $ps = Start-Process -FilePath $exeInstalado -ArgumentList 'help' -Wait -PassThru `
                                 -NoNewWindow -RedirectStandardOutput $so -RedirectStandardError $se
             $saida = Get-Content $so -Raw -ErrorAction SilentlyContinue
-            if ($ps.ExitCode -eq 0 -and $saida -match 'linha de comando') {
+            # Casa com o nome do produto, que nunca e traduzido. Casar com texto traduzido
+            # (era 'linha de comando') faz o teste reprovar em maquina cujo Windows esta em
+            # outro idioma - aconteceu no runner do CI, que e ingles, assim que a CLI passou
+            # a ser localizada.
+            if ($ps.ExitCode -eq 0 -and $saida -match 'RenoDX Launcher') {
                 Add-Result 'Smoke do binario instalado' 'PASS' `
                     'RenoDXLauncher.exe help -> exit 0; o runtime .NET carregou da pasta instalada.'
             } else {
