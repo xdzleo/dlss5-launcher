@@ -1,71 +1,94 @@
 name: Release
 
-# Cuts a signed release: build in CI (SignPath requires a trusted build system),
-# submit the artifact to SignPath Foundation for Authenticode signing, then attach
-# the SIGNED zip to the GitHub Release. Trigger by pushing a tag like v1.1.0.
+# Corta um release assinado. Dispare empurrando uma tag vX.Y.Z.
+#
+# Ordem, e por que ela e essa:
+#
+#   publish -> assina o RenoDXLauncher.exe -> monta o instalador -> assina o instalador
+#
+# O instalador precisa ser montado DEPOIS que o exe ja esta assinado, senao o binario
+# que fica no disco do usuario apos instalar seria o nao assinado - e e justamente
+# esse que o antivirus dele vai escanear todo dia. Assinar so o instalador nao basta.
+#
+# Sem os segredos do SignPath configurados, o release sai mesmo assim, NAO assinado
+# (com aviso), em vez de falhar. Ver docs/SIGNING-SETUP.md.
+
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  # Versao do Inno Setup fixada e conferida por hash: o compilador do instalador e
+  # parte da cadeia de suprimentos do binario que o usuario baixa.
+  INNO_VERSION: '6.7.3'
+  INNO_URL: 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe'
+  INNO_SHA256: '9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732'
 
 jobs:
-  build:
+  release:
     runs-on: windows-latest
-    outputs:
-      artifact-id: ${{ steps.upload.outputs.artifact-id }}
-      version: ${{ steps.ver.outputs.version }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - name: Resolve version from tag
+      - name: Versao a partir da tag
         id: ver
         shell: bash
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Publish (self-contained, folder — no self-extraction)
-        run: >
-          dotnet publish src/RenoDXLauncher.csproj -c Release -r win-x64
-          --self-contained true -p:PublishSingleFile=false -o publish --nologo
-
-      - name: Zip
-        shell: pwsh
-        run: Compress-Archive -Path publish/* -DestinationPath "RenoDXLauncher-${{ steps.ver.outputs.version }}-win-x64.zip"
-
-      - name: Upload unsigned build artifact
-        id: upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: renodx-launcher-unsigned
-          path: RenoDXLauncher-*.zip
-          if-no-files-found: error
-
-  sign-and-release:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      # SignPath is only wired up once the Foundation approves the project (see
-      # docs/SIGNING-SETUP.md). Until the secret exists, still ship — unsigned —
-      # instead of failing the release.
-      - name: Is signing configured?
+      - name: O SignPath esta configurado?
         id: cfg
+        shell: bash
+        env:
+          TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          ORG: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
         run: |
-          if [ -n "${{ secrets.SIGNPATH_API_TOKEN }}" ] && [ -n "${{ vars.SIGNPATH_ORGANIZATION_ID }}" ]; then
+          if [ -n "$TOKEN" ] && [ -n "$ORG" ]; then
             echo "signing=true" >> "$GITHUB_OUTPUT"
           else
             echo "signing=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::SignPath não configurado — publicando release NÃO ASSINADA."
+            echo "::warning::SignPath nao configurado - publicando release NAO ASSINADA."
           fi
 
-      - name: Submit signing request to SignPath
-        id: sign
+      # ---------------------------------------------------------------- build --
+
+      # -p:Version vem da tag de proposito: o .iss tira o VersionInfo do PE do binario
+      # ja compilado, entao sem isso uma tag v1.12.0 sobre um csproj em 1.11.2 geraria um
+      # setup.exe anunciando 1.12.0 com 1.11.2 gravado no PE. Metadata inconsistente entre
+      # o instalador e o que ele carrega dentro e motivo de recusa em signing request.
+      - name: Publish (self-contained, em pasta - nunca single-file)
+        run: >
+          dotnet publish src/RenoDXLauncher.csproj -c Release -r win-x64
+          --self-contained true -p:PublishSingleFile=false
+          -p:Version=${{ steps.ver.outputs.version }} -o publish --nologo
+
+      # --------------------------------------------- rodada 1: assinar o exe --
+
+      - name: Empacota o app para assinar
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path publish/* -DestinationPath "dist/RenoDXLauncher-${{ steps.ver.outputs.version }}-win-x64.zip"
+
+      - name: Sobe o app nao assinado
+        id: upload-app
+        if: steps.cfg.outputs.signing == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-unsigned
+          path: dist/RenoDXLauncher-*-win-x64.zip
+          if-no-files-found: error
+
+      - name: SignPath - assina o RenoDXLauncher.exe
         if: steps.cfg.outputs.signing == 'true'
         uses: signpath/github-action-submit-signing-request@v1
         with:
@@ -73,22 +96,117 @@ jobs:
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
           project-slug: renodx-launcher
           signing-policy-slug: release-signing
-          github-artifact-id: ${{ needs.build.outputs.artifact-id }}
+          artifact-configuration-slug: app-zip
+          github-artifact-id: ${{ steps.upload-app.outputs.artifact-id }}
           wait-for-completion: true
-          output-artifact-directory: dist
-          # keep the result as the original .zip (SignPath signs the exe inside it)
+          output-artifact-directory: signed-app
           skip-decompress: true
 
-      - name: Download unsigned build (when signing is not configured yet)
-        if: steps.cfg.outputs.signing != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: renodx-launcher-unsigned
-          path: dist
+      - name: Troca o exe pelo assinado
+        if: steps.cfg.outputs.signing == 'true'
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem signed-app -Filter *.zip -Recurse | Select-Object -First 1
+          if (-not $zip) { throw 'SignPath nao devolveu o zip assinado' }
+          Remove-Item publish -Recurse -Force
+          Expand-Archive -Path $zip.FullName -DestinationPath publish -Force
+          $sig = Get-AuthenticodeSignature publish/RenoDXLauncher.exe
+          if ($sig.Status -ne 'Valid') { throw "o exe voltou do SignPath com assinatura $($sig.Status)" }
+          Write-Host "assinado por: $($sig.SignerCertificate.Subject)"
+          # o zip portable tambem passa a levar o exe assinado
+          Remove-Item dist/*.zip -Force
+          Compress-Archive -Path publish/* -DestinationPath "dist/RenoDXLauncher-${{ steps.ver.outputs.version }}-win-x64.zip"
 
-      - name: Publish GitHub Release
+      # ------------------------------------------------- monta o instalador --
+
+      - name: Instala o Inno Setup (versao e hash fixados)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            $ProgressPreference = 'SilentlyContinue'
+            Invoke-WebRequest -Uri $env:INNO_URL -OutFile inno.exe -UseBasicParsing
+            $sha = (Get-FileHash inno.exe -Algorithm SHA256).Hash.ToLower()
+            if ($sha -ne $env:INNO_SHA256) { throw "SHA-256 do Inno Setup nao confere: $sha" }
+            ./inno.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- | Out-Null
+          }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe nao encontrado apos instalar" }
+          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Compila o instalador
+        shell: pwsh
+        run: |
+          & $env:ISCC_PATH installer/RenoDXLauncher.iss `
+            "/DAppVersion=${{ steps.ver.outputs.version }}" `
+            "/DSourceDir=$(Resolve-Path publish)" `
+            "/DOutputDir=$(Resolve-Path dist)" /Q
+          if ($LASTEXITCODE -ne 0) { throw "ISCC falhou ($LASTEXITCODE)" }
+          Get-ChildItem dist | Format-Table Name, Length
+
+      # ------------------------------------- rodada 2: assinar o instalador --
+
+      - name: Sobe o instalador nao assinado
+        id: upload-installer
+        if: steps.cfg.outputs.signing == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-unsigned
+          path: dist/RenoDXLauncher-*-setup.exe
+          if-no-files-found: error
+
+      - name: SignPath - assina o instalador
+        if: steps.cfg.outputs.signing == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: renodx-launcher
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-installer
+
+      - name: Troca o instalador pelo assinado
+        if: steps.cfg.outputs.signing == 'true'
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem signed-installer -Filter *setup.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw 'SignPath nao devolveu o instalador assinado' }
+          Copy-Item $exe.FullName -Destination "dist/$($exe.Name)" -Force
+          $sig = Get-AuthenticodeSignature "dist/$($exe.Name)"
+          if ($sig.Status -ne 'Valid') { throw "o instalador voltou do SignPath com assinatura $($sig.Status)" }
+          Write-Host "assinado por: $($sig.SignerCertificate.Subject)"
+
+      # ------------------------------------------------------- verificacao --
+
+      - name: Bateria de verificacao antivirus
+        shell: pwsh
+        env:
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        run: ./tools/av-selfcheck.ps1
+
+      # O .pdb fica fora do instalador (peso morto na maquina do usuario) mas vai anexado
+      # ao Release: e onde alguem triando um crash reportado vai busca-lo.
+      - name: Anexa o .pdb aos artefatos
+        shell: pwsh
+        run: Copy-Item publish/RenoDXLauncher.pdb dist/ -Force
+
+      - name: SHA256SUMS
+        shell: pwsh
+        run: |
+          Get-ChildItem dist -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
+          } | Out-File dist/SHA256SUMS.txt -Encoding ascii
+          Get-Content dist/SHA256SUMS.txt
+
+      - name: Publica o GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.zip
+          files: |
+            dist/*-setup.exe
+            dist/*.zip
+            dist/RenoDXLauncher.pdb
+            dist/SHA256SUMS.txt
           fail_on_unmatched_files: true
           generate_release_notes: true

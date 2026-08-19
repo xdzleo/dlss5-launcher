@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using RenoDXLauncher;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
@@ -56,7 +57,7 @@ public class MainViewModel : ObservableObject
 
     // ---------- top-level state ----------
 
-    private string _statusText = "Pronto.";
+    private string _statusText = L.T("Main_Status_Ready");
     public string StatusText { get => _statusText; set => Set(ref _statusText, value); }
 
     // Flags SEPARADAS: o finally de uma ação (Install) não pode zerar o single-flight do
@@ -99,7 +100,16 @@ public class MainViewModel : ObservableObject
         set { if (Set(ref _search, value)) GamesView.Refresh(); }
     }
 
-    public string[] FilterOptions { get; } = { "Todos os jogos", "Com mod disponível", "Mod instalado", "Sem mod" };
+    // Propriedade calculada, e nao array fixo: a ordem dos itens define FilterIndex, mas o
+    // texto e lido do resx a cada leitura do binding, entao trocar de idioma nao deixa a
+    // combo em portugues numa janela reaberta em ingles.
+    public string[] FilterOptions =>
+    [
+        L.T("Main_Filter_All"),
+        L.T("Main_Filter_HasMod"),
+        L.T("Main_Filter_Installed"),
+        L.T("Main_Filter_NoMod"),
+    ];
     private int _filterIndex;
     public int FilterIndex
     {
@@ -171,8 +181,8 @@ public class MainViewModel : ObservableObject
                 Config.PinnedExes[Selected.Key] = value;
                 Config.Save();
                 if (previousState?.AddonPath != null && Selected.State?.AddonPath is null)
-                    DetailStatus = "Atenção: existe um mod instalado na pasta anterior " +
-                        $"({Path.GetDirectoryName(previousState.AddonPath)}) — remova-o de lá ou volte para aquele executável.";
+                    DetailStatus = L.T("Main_Detail_ModInPreviousFolder",
+                        Path.GetDirectoryName(previousState.AddonPath));
                 _ = LoadSettingsSafeAsync(_detailToken);
                 RaiseCommands();
             }
@@ -227,7 +237,8 @@ public class MainViewModel : ObservableObject
         set { if (Set(ref _dlssFixApplied, value)) OnPropertyChanged(nameof(DlssFixButtonText)); }
     }
 
-    public string DlssFixButtonText => _dlssFixApplied ? "Remover correção" : "Aplicar correção";
+    public string DlssFixButtonText =>
+        L.T(_dlssFixApplied ? "Main_DlssFix_Remove" : "Main_DlssFix_Apply");
 
     private DlssFixService.Detection? _dlssDetection;
 
@@ -269,7 +280,7 @@ public class MainViewModel : ObservableObject
         }
     }
     public bool HasUpdates => _updateCount > 0;
-    public string UpdateAllText => $"Atualizar todos ({_updateCount})";
+    public string UpdateAllText => L.T("Main_UpdateAll_Button", _updateCount);
 
     private void RaiseCommands()
     {
@@ -300,7 +311,7 @@ public class MainViewModel : ObservableObject
         var cts = _backgroundCts = new CancellationTokenSource();
         try
         {
-            StatusText = "Carregando catálogo RenoDX...";
+            StatusText = L.T("Main_Status_LoadingCatalog");
             Config = LauncherConfig.Load();
             OnPropertyChanged(nameof(Config));
             _manifest ??= await Task.Run(() => new ManifestService());
@@ -309,7 +320,7 @@ public class MainViewModel : ObservableObject
             AvatarService.Learn(_catalogEntries);
             await rhiTask;
 
-            StatusText = "Procurando jogos instalados...";
+            StatusText = L.T("Main_Status_ScanningGames");
             // the folder scan only surfaces dirs whose NAME matches a catalog game,
             // so standalone installs appear without polluting the grid with random folders
             var knownNames = _catalogEntries
@@ -331,7 +342,7 @@ public class MainViewModel : ObservableObject
                 Games.Add(new GameItemVm(g, match));
             }
             var withMod = Games.Count(g => g.HasMod);
-            StatusText = $"{Games.Count} jogos encontrados — {withMod} com mod RenoDX disponível.";
+            StatusText = L.T("Main_Status_GamesFound", Games.Count, withMod);
 
             var ct = cts.Token;
             _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), ct));
@@ -339,7 +350,7 @@ public class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warn($"load: {ex}");
-            StatusText = $"Erro ao carregar: {ex.Message}";
+            StatusText = L.T("Error_Load", ex.Message);
         }
         finally { Loading = false; }
     }
@@ -389,7 +400,7 @@ public class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warn($"detail: {ex}");
-            if (token == _detailToken) DetailStatus = $"Erro ao carregar detalhes: {ex.Message}";
+            if (token == _detailToken) DetailStatus = L.T("Error_DetailLoad", ex.Message);
         }
     }
 
@@ -422,7 +433,7 @@ public class MainViewModel : ObservableObject
             if (token != _detailToken) return;
             if (ac != null && Advice.All(a => a.Kind != AdviceKind.AntiCheat))
                 Advice.Insert(0, new Advice("",
-                    $"{ac} detectado neste jogo — usar o mod ONLINE pode BANIR sua conta. Jogue offline.",
+                    L.T("Install_AntiCheat_Advice", ac),
                     AdviceKind.AntiCheat));
         }
 
@@ -489,14 +500,14 @@ public class MainViewModel : ObservableObject
             {
                 await Task.Run(() => DlssFixService.Remove(dir));
                 DlssFixApplied = false;
-                DetailStatus = "Correção de DLSS removida.";
+                DetailStatus = L.T("Main_DlssFix_Removed");
             }
             else
             {
                 var det = _dlssDetection;
                 await Task.Run(() => DlssFixService.ApplyAsync(dir, det, new Progress<string>(s => DetailStatus = s)));
                 DlssFixApplied = true;
-                DetailStatus = "Correção aplicada. Reinicie o jogo.";
+                DetailStatus = L.T("Main_DlssFix_Applied");
             }
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
@@ -531,7 +542,9 @@ public class MainViewModel : ObservableObject
             var text = AdviceService.StripSymbols(ins.Label ?? ins.Tooltip ?? "");
             if (text.Length == 0) continue;
             Add(new ModNote(NoteSource.ModSource, NoteKind.Step,
-                ins.PresetValues != null ? $"Preset do autor: {ins.Label}" : "Instrução do autor",
+                ins.PresetValues != null
+                    ? L.T("Main_Note_AuthorPreset", ins.Label)
+                    : L.T("Main_Note_AuthorInstruction"),
                 ins.PresetValues != null ? (ins.Tooltip ?? text) : text,
                 null, null, AdviceService.GuessLocation(text, ins.Section)), Notes);
         }
@@ -545,7 +558,7 @@ public class MainViewModel : ObservableObject
             // the index points at the author's page for some mods that DO have a working snapshot
             // here; showing it as a prerequisite next to an enabled Install button reads as a
             // contradiction, so it degrades to a plain link
-            if (n.Title == "Página do mod" && item.Mod.DownloadUrl != null)
+            if (n.Id == RhiManifestService.ModPageNoteId && item.Mod.DownloadUrl != null)
             {
                 Add(n with { Kind = NoteKind.Info, Location = null }, Notes);
                 continue;
@@ -554,8 +567,9 @@ public class MainViewModel : ObservableObject
         }
 
         if (nativeHdr && Advice.All(a => a.Kind is not (AdviceKind.HdrOn or AdviceKind.HdrOff)))
-            Add(new ModNote(NoteSource.Launcher, NoteKind.Info, "HDR nativo",
-                "Este jogo tem HDR próprio e o mod corrige/melhora ele — normalmente o HDR precisa estar LIGADO dentro do jogo.",
+            Add(new ModNote(NoteSource.Launcher, NoteKind.Info,
+                L.T("Main_Note_NativeHdr_Title"),
+                L.T("Main_Note_NativeHdr_Text"),
                 null, null, "NO JOGO"), Notes);
 
         // 4. engine-wide rules: the only place that explains how to apply an upgrade at all
@@ -573,7 +587,9 @@ public class MainViewModel : ObservableObject
 
 
     public string EngineNotesHeader => EngineNotes.Count == 0 ? ""
-        : $"REGRAS DO MOD GENÉRICO ({(Selected?.Mod?.Kind == ModKind.UnityEngine ? "UNITY" : "UNREAL")}) — {EngineNotes.Count}";
+        : L.T("Main_EngineNotes_Header",
+            Selected?.Mod?.Kind == ModKind.UnityEngine ? "UNITY" : "UNREAL",
+            EngineNotes.Count);
 
     /// <summary>Ask ReShade.log whether the mod really loaded — the only ground truth
     /// available from outside the game.</summary>
@@ -597,7 +613,7 @@ public class MainViewModel : ObservableObject
             var newer = await AddonService.IsUpdateAvailableAsync(item.Mod, item.State);
             if (token != _detailToken) return;
             if (newer == true)
-                LoadVerdict += "\n\nHá uma versão MAIS NOVA deste mod disponível — clique em \"Atualizar\" ali em cima.";
+                LoadVerdict += "\n\n" + L.T("Main_Detail_UpdateAvailable");
         }
     }
 
@@ -623,15 +639,14 @@ public class MainViewModel : ObservableObject
             if (item?.Mod is null) return;
             if (item.Mod.Slug is null)
             {
-                SetNoSettings("Este mod é distribuído só pelo Nexus/Discord — o launcher não conhece as " +
-                    "configurações dele. Ajuste pelo overlay do ReShade no jogo (tecla Home).");
+                SetNoSettings(L.T("Main_NoSettings_ExternalMod"));
                 return;
             }
             var defs = _manifest?.GetSettings(item.Mod.Slug);
             if (defs is null && _manifest != null)
             {
                 // mod publicado depois deste build: le as opcoes direto do fonte do mod
-                SetNoSettings($"Procurando as configurações do mod {item.Mod.Slug}...");
+                SetNoSettings(L.T("Main_NoSettings_Fetching", item.Mod.Slug));
                 var fetched = await SettingsFetcher.TryFetchAsync(item.Mod);
                 if (token != _detailToken) return;
                 if (fetched != null)
@@ -643,8 +658,7 @@ public class MainViewModel : ObservableObject
             }
             if (defs is null)
             {
-                SetNoSettings($"Não consegui obter a lista de configurações deste mod ({item.Mod.Slug}). " +
-                    "Instalar funciona normalmente; ajuste pelo overlay do ReShade no jogo (tecla Home).");
+                SetNoSettings(L.T("Main_NoSettings_Unavailable", item.Mod.Slug));
                 return;
             }
             if (defs.Count == 0)
@@ -652,11 +666,9 @@ public class MainViewModel : ObservableObject
                 // "no knobs" does not mean "nothing to do": several of these mods are configured
                 // entirely from the game's own menu, and the author says how in the notes above.
                 bool hasInstructions = Notes.Any(n => n.Source == NoteSource.ModSource);
-                SetNoSettings(hasInstructions
-                    ? "Este mod não tem sliders — o ajuste é feito dentro do jogo, do jeito que o autor "
-                      + "descreveu em COMO AJUSTAR ESTE JOGO, aqui em cima."
-                    : "Este mod não tem opções ajustáveis — o autor deixou os valores fixos. "
-                      + "Instalar e ativar é tudo que ele precisa.");
+                SetNoSettings(L.T(hasInstructions
+                    ? "Main_NoSettings_InGameOnly"
+                    : "Main_NoSettings_Fixed"));
                 return;
             }
             if (item.State is null) return;
@@ -681,7 +693,7 @@ public class MainViewModel : ObservableObject
         if (item?.Mod is null) return;
         if (item.ChosenExe is null || item.TargetDir is null)
         {
-            DetailStatus = "Escolha o executável do jogo primeiro (lista acima).";
+            DetailStatus = L.T("Install_NoExe");
             return;
         }
         ActionBusy = true;
@@ -693,8 +705,7 @@ public class MainViewModel : ObservableObject
             var pe = await Task.Run(() => PeUtils.Inspect(item.ChosenExe, readImports: false));
             if (pe != null && item.Mod.AddonBits != 0 && (pe.Is64Bit ? 64 : 32) != item.Mod.AddonBits)
             {
-                DetailStatus = $"Instalação bloqueada: o mod é {item.Mod.AddonBits}-bit mas o executável escolhido é " +
-                    $"{(pe.Is64Bit ? 64 : 32)}-bit. Selecione o executável certo do jogo na lista acima.";
+                DetailStatus = L.T("Install_BitnessMismatch", item.Mod.AddonBits, pe.Is64Bit ? 64 : 32);
                 return;
             }
 
@@ -705,15 +716,12 @@ public class MainViewModel : ObservableObject
             {
                 var confirmed = DialogWindow.Confirm(
                     Application.Current?.MainWindow,
-                    $"{ac} detectado — risco de banimento",
-                    $"Este jogo usa {ac}.\n\n" +
-                    "O ReShade com suporte a add-ons NÃO é assinado. Em jogos ONLINE protegidos por " +
-                    "anti-cheat, isso pode resultar em BANIMENTO PERMANENTE da sua conta.\n\n" +
-                    "Só continue se você for jogar OFFLINE (ou se souber exatamente o que está fazendo).",
-                    "Instalar mesmo assim", DialogKind.Danger);
+                    L.T("Install_AntiCheat_Title", ac),
+                    L.T("Install_AntiCheat_Modal", ac),
+                    L.T("Install_AntiCheat_Confirm"), DialogKind.Danger);
                 if (!confirmed)
                 {
-                    DetailStatus = $"Instalação cancelada ({ac} detectado).";
+                    DetailStatus = L.T("Install_Cancelled_AntiCheat", ac);
                     return;
                 }
             }
@@ -739,8 +747,7 @@ public class MainViewModel : ObservableObject
                     try
                     {
                         AddonService.RollbackReShade(item.TargetDir!, deploy.DllName);
-                        DetailStatus = "Falha ao baixar o mod — o ReShade que eu tinha acabado de instalar foi removido " +
-                            "(o jogo ficou como estava). Tente de novo.";
+                        DetailStatus = L.T("Install_Rollback_Done");
                     }
                     catch (Exception rex) { Log.Warn($"rollback: {rex.Message}"); }
                 }
@@ -755,24 +762,25 @@ public class MainViewModel : ObservableObject
                 try
                 {
                     var applied = await Task.Run(() => SettingsService.ApplyDisplayProfile(item.State!.IniPath, defs, Config));
-                    profileMsg = applied > 0
-                        ? $" Perfil do monitor aplicado ({Config.PeakNits:0} nits)."
-                        : " (Este mod não tem ajustes de nits — HDR nativo.)";
+                    // o espaco fica no codigo, e nao no recurso: separador de frase nao e texto
+                    profileMsg = " " + (applied > 0
+                        ? L.T("Install_ProfileApplied", Config.PeakNits)
+                        : L.T("Install_ProfileNoNits"));
                 }
                 catch (Exception ex)
                 {
                     Log.Warn($"profile-on-install: {ex.Message}");
-                    profileMsg = " O mod instalou, mas o perfil de nits não foi aplicado — use 'Usar meu perfil' depois.";
+                    profileMsg = " " + L.T("Install_ProfileFailed");
                 }
             }
             if (item == _detailItem) await LoadSettingsSafeAsync(_detailToken);
-            DetailStatus = $"Mod instalado e ativado. {deploy.Message}{profileMsg} Abra o jogo e pressione Home para ver o overlay.";
+            DetailStatus = L.T("Install_Success", deploy.Message, profileMsg);
             RefreshViewKeepSelection();
         }
         catch (Exception ex)
         {
             Log.Warn($"install {item.Name}: {ex}");
-            DetailStatus = $"Erro: {ex.Message}";
+            DetailStatus = L.T("Error_Install", ex.Message);
         }
         finally { ActionBusy = false; RaiseCommands(); }
     }
@@ -786,7 +794,7 @@ public class MainViewModel : ObservableObject
             var enable = !item.State.AddonEnabled;
             await Task.Run(() => AddonService.SetEnabled(item.State, enable));
             item.RefreshState();
-            DetailStatus = enable ? "Mod ATIVADO." : "Mod DESATIVADO (arquivo renomeado para .disabled).";
+            DetailStatus = L.T(enable ? "Main_Mod_Enabled" : "Main_Mod_Disabled");
             RefreshViewKeepSelection();
         }
         catch (Exception ex)
@@ -806,18 +814,16 @@ public class MainViewModel : ObservableObject
         if (item?.State?.AddonPath is null) return;
         var answer = DialogWindow.Choose(
             Application.Current?.MainWindow,
-            "Remover mod",
-            $"Remover o mod RenoDX de \"{item.Name}\"?\n\n" +
-            "Remover tudo: apaga o addon e também o ReShade (se nenhum outro addon usar).\n" +
-            "Só o mod: mantém o ReShade instalado.",
-            "Remover tudo", "Só o mod");
+            L.T("Main_Remove_Title"),
+            L.T("Main_Remove_Body", item.Name),
+            L.T("Main_Remove_All"), L.T("Main_Remove_ModOnly"));
         if (answer == MessageBoxResult.Cancel) return;
         try
         {
             await Task.Run(() => AddonService.Remove(item.State, alsoReShade: answer == MessageBoxResult.Yes));
             item.RefreshState();
             Settings.Clear();
-            DetailStatus = "Mod removido. As configurações ficaram salvas no ReShade.ini.";
+            DetailStatus = L.T("Main_Remove_Done");
             RefreshViewKeepSelection();
         }
         catch (Exception ex)
@@ -837,12 +843,11 @@ public class MainViewModel : ObservableObject
         {
             // only values the user actually changed — untouched ini keys keep their exact text
             var dirty = Settings.Where(s => s.IsDirty).Select(s => (s.Def, s.Value)).ToList();
-            if (dirty.Count == 0) { DetailStatus = "Nada para salvar."; return; }
+            if (dirty.Count == 0) { DetailStatus = L.T("Main_Settings_NothingToSave"); return; }
             var iniPath = item.State.IniPath;
             await Task.Run(() => SettingsService.Write(iniPath, dirty));
             await LoadSettingsSafeAsync(_detailToken);
-            DetailStatus = $"{dirty.Count} configurações salvas em {iniPath}. " +
-                "Com o jogo aberto: mova o slider Preset para 2 e volte para 1 no overlay (Home) para aplicar sem reiniciar.";
+            DetailStatus = L.T("Main_Settings_Saved", dirty.Count, iniPath);
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
     }
@@ -859,8 +864,8 @@ public class MainViewModel : ObservableObject
             var applied = await Task.Run(() => SettingsService.ApplyDisplayProfile(iniPath, defs, Config));
             await LoadSettingsSafeAsync(_detailToken);
             DetailStatus = applied > 0
-                ? $"Perfil aplicado: pico {Config.PeakNits:0} / jogo {Config.GameNits:0} / UI {Config.UiNits:0} nits."
-                : "Este mod não expõe ajustes de nits (HDR nativo) — nada foi alterado.";
+                ? L.T("Main_Profile_Applied", Config.PeakNits, Config.GameNits, Config.UiNits)
+                : L.T("Main_Profile_NoNits");
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
     }
@@ -875,7 +880,7 @@ public class MainViewModel : ObservableObject
             var defs = Settings.Select(s => s.Def).ToList();
             await Task.Run(() => SettingsService.Reset(iniPath, defs));
             await LoadSettingsSafeAsync(_detailToken);
-            DetailStatus = "Configurações resetadas para o padrão do mod (chaves removidas do ini).";
+            DetailStatus = L.T("Main_Settings_Reset");
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
     }
@@ -890,11 +895,11 @@ public class MainViewModel : ObservableObject
             var installed = Games.Where(g => g.IsInstalled && g.Mod?.DownloadUrl != null && g.State != null).ToList();
             if (installed.Count == 0)
             {
-                StatusText = "Nenhum mod instalado para verificar.";
+                StatusText = L.T("Main_Updates_NoneInstalled");
                 UpdateCount = 0;
                 return;
             }
-            StatusText = $"Verificando atualizações de {installed.Count} mod(s)...";
+            StatusText = L.T("Main_Updates_Checking", installed.Count);
 
             // limita a concorrência para não estourar conexões nem irritar os servidores
             using var gate = new SemaphoreSlim(6);
@@ -915,14 +920,15 @@ public class MainViewModel : ObservableObject
             }
             UpdateCount = count;
             RefreshViewKeepSelection();
-            StatusText = count > 0
-                ? $"{count} mod(s) com atualização disponível." + (unknown > 0 ? $" ({unknown} não verificável)" : "")
-                : "Todos os mods instalados estão atualizados." + (unknown > 0 ? $" ({unknown} não verificável)" : "");
+            var unverified = unknown > 0 ? " " + L.T("Main_Updates_Unverified", unknown) : "";
+            StatusText = (count > 0
+                ? L.T("Main_Updates_Available", count)
+                : L.T("Main_Updates_AllCurrent")) + unverified;
         }
         catch (Exception ex)
         {
             Log.Warn($"check updates: {ex}");
-            StatusText = $"Erro ao verificar atualizações: {ex.Message}";
+            StatusText = L.T("Error_CheckUpdates", ex.Message);
         }
         finally { ActionBusy = false; }
     }
@@ -935,10 +941,9 @@ public class MainViewModel : ObservableObject
         if (pending.Count == 0) return;
         if (!DialogWindow.Confirm(
                 Application.Current?.MainWindow,
-                "Atualizar mods",
-                $"Atualizar {pending.Count} mod(s) para a versão mais nova?\n\n" +
-                "Suas configurações (nits, tone mapper...) são preservadas — só o arquivo do mod é trocado.",
-                "Atualizar"))
+                L.T("Main_UpdateAll_Title"),
+                L.T("Main_UpdateAll_Body", pending.Count),
+                L.T("Common_Update")))
             return;
 
         ActionBusy = true;
@@ -950,7 +955,7 @@ public class MainViewModel : ObservableObject
             {
                 try
                 {
-                    StatusText = $"Atualizando {item.Name}...";
+                    StatusText = L.T("Main_Updates_Updating", item.Name);
                     await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod!, item.TargetDir!));
                     item.RefreshState();
                     item.HasUpdate = false;
@@ -965,8 +970,8 @@ public class MainViewModel : ObservableObject
             UpdateCount = Games.Count(g => g.HasUpdate);
             RefreshViewKeepSelection();
             StatusText = failed.Count == 0
-                ? $"{ok} mod(s) atualizados."
-                : $"{ok} atualizados, {failed.Count} falharam: {string.Join("; ", failed.Take(3))}";
+                ? L.T("Main_Updates_Done", ok)
+                : L.T("Main_Updates_DonePartial", ok, failed.Count, string.Join("; ", failed.Take(3)));
         }
         finally { ActionBusy = false; }
     }
@@ -988,7 +993,7 @@ public class MainViewModel : ObservableObject
             if (uri != null)
             {
                 Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
-                DetailStatus = "Abrindo pela loja...";
+                DetailStatus = L.T("Main_Launch_ViaStore");
                 return;
             }
             var exe = item.ChosenExe;
@@ -999,14 +1004,14 @@ public class MainViewModel : ObservableObject
                     UseShellExecute = true,
                     WorkingDirectory = Path.GetDirectoryName(exe)!,
                 });
-                DetailStatus = "Jogo iniciado.";
+                DetailStatus = L.T("Main_Launch_Started");
             }
-            else DetailStatus = "Não sei qual executável iniciar — escolha um na lista acima.";
+            else DetailStatus = L.T("Main_Launch_NoExe");
         }
         catch (Exception ex)
         {
             Log.Warn($"launch {item.Name}: {ex.Message}");
-            DetailStatus = $"Não consegui iniciar: {ex.Message}";
+            DetailStatus = L.T("Error_Launch", ex.Message);
         }
     }
 
@@ -1032,7 +1037,7 @@ public class MainViewModel : ObservableObject
 
     private async Task AddManualGameAsync()
     {
-        var dlg = new Microsoft.Win32.OpenFolderDialog { Title = "Escolha a pasta do jogo" };
+        var dlg = new Microsoft.Win32.OpenFolderDialog { Title = L.T("Main_AddGame_FolderPickerTitle") };
         if (dlg.ShowDialog() != true) return;
         var dir = dlg.FolderName;
         if (!Config.ManualGameDirs.Contains(dir, StringComparer.OrdinalIgnoreCase))

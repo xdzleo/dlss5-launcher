@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using RenoDXLauncher.Localization;
 
 namespace RenoDXLauncher;
 
@@ -52,19 +53,22 @@ public partial class DialogWindow : Window
     {
         var w = Build(owner, title, body, kind);
         w.SecondButton.Visibility = Visibility.Collapsed;
-        w.PrimaryButton.Content = "Entendi";
+        w.PrimaryButton.Content = L.T("Common_GotIt");
         w.PrimaryResult = MessageBoxResult.OK;
         w.ShowDialog();
     }
 
     /// <summary>Confirm / cancel. Returns true when the user confirms.</summary>
-    public static bool Confirm(Window? owner, string title, string body, string confirmText = "Continuar",
+    /// <param name="confirmText">Label of the confirm button; <c>null</c> uses the translated
+    /// default. It cannot be a default parameter value because that must be a compile-time
+    /// constant, and the translation is only known once the language is chosen.</param>
+    public static bool Confirm(Window? owner, string title, string body, string? confirmText = null,
         DialogKind kind = DialogKind.Question)
     {
         var w = Build(owner, title, body, kind);
-        w.SecondButton.Content = "Cancelar";
+        w.SecondButton.Content = L.T("Common_Cancel");
         w.SecondResult = MessageBoxResult.Cancel;
-        w.PrimaryButton.Content = confirmText;
+        w.PrimaryButton.Content = confirmText ?? L.T("Common_Continue");
         w.PrimaryResult = MessageBoxResult.Yes;
         w.ShowDialog();
         return w._result == MessageBoxResult.Yes;
@@ -76,7 +80,7 @@ public partial class DialogWindow : Window
     {
         var w = Build(owner, title, body, kind);
         w.ThirdButton.Visibility = Visibility.Visible;
-        w.ThirdButton.Content = "Cancelar";
+        w.ThirdButton.Content = L.T("Common_Cancel");
         w.ThirdResult = MessageBoxResult.Cancel;
         w.SecondButton.Content = noText;
         w.SecondResult = MessageBoxResult.No;

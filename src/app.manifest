@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="RenoDXLauncher.app" type="win32" />
+
+  <!--
+    Manifest proprio no lugar do que o SDK gera sozinho.
+
+    O manifest automatico do SDK tem exatamente duas coisas: assemblyIdentity (com o
+    nome generico "MyApplication.app") e requestedExecutionLevel asInvoker. Este aqui
+    mantem as duas identicas e acrescenta UMA: o bloco compatibility/supportedOS.
+
+    Por que supportedOS importa para antivirus: executavel sem esse bloco e tratado
+    pelo Windows como legado, e recebe os shims da camada de compatibilidade - que
+    funcionam injetando DLL no processo. Injecao de DLL no proprio processo e
+    exatamente o padrao que heuristica comportamental procura, e e ruido que da para
+    simplesmente nao gerar.
+
+    Por que asInvoker continua: o launcher nunca precisa de admin (tudo que ele grava
+    vai para %LocalAppData%\RenoDXLauncher ou para a pasta do jogo - ver AppPaths).
+    Um app que pede elevacao sem precisar, e que grava DLL com nome de DLL de sistema
+    dentro do diretorio de outro programa, e a pior combinacao de sinais possivel.
+    Declarar asInvoker tambem desliga a Installer Detection do Windows, que faz
+    executavel com setup/install/update no nome pedir elevacao por conta propria.
+
+    Deliberadamente NAO declarado aqui: dpiAware e longPathAware. Nenhum dos dois
+    existe no manifest padrao do SDK, entao adiciona-los mudaria o comportamento da
+    janela - e nenhum dos dois tem relacao com deteccao de antivirus. Se um dia
+    valerem a pena, que seja numa mudanca propria, avaliada pelo efeito visual.
+  -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+      <!-- Windows 8.1 -->
+      <supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}" />
+    </application>
+  </compatibility>
+</assembly>

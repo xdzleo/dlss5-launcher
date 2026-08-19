@@ -1,10 +1,11 @@
-<Window x:Class="RenoDXLauncher.MainWindow"
+﻿<Window x:Class="RenoDXLauncher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RenoDXLauncher.ViewModels"
         xmlns:local="clr-namespace:RenoDXLauncher"
+        xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
         Icon="Assets/app.png"
-        Title="RenoDX Launcher" Height="920" Width="1560" MinWidth="1100" MinHeight="660"
+        Title="{loc:Tr App_Name}" Height="920" Width="1560" MinWidth="1100" MinHeight="660"
         Background="{StaticResource BgBrush}"
         TextOptions.TextFormattingMode="Ideal"
         UseLayoutRounding="True"
@@ -53,7 +54,7 @@
                                  BorderThickness="0" Foreground="#C9D4E4" TextWrapping="Wrap"
                                  HorizontalScrollBarVisibility="Disabled"
                                  VerticalScrollBarVisibility="Disabled"
-                                 Padding="0" ToolTip="Selecione para copiar"/>
+                                 Padding="0" ToolTip="{loc:Tr Common_SelectToCopy}"/>
                     </Border>
                     <ItemsControl ItemsSource="{Binding Links}" Margin="0,7,0,0">
                         <ItemsControl.ItemTemplate>
@@ -117,11 +118,11 @@
                         <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="9"
                                 CornerRadius="7" Padding="7,4" Background="#E6A11B"
                                 Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
-                                ToolTip="Há uma versão mais nova deste mod">
+                                ToolTip="{loc:Tr Main_Tile_Update_Tooltip}">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconWarning}" Fill="#231A05" Stretch="Uniform"
                                       Width="11" Height="11" VerticalAlignment="Center"/>
-                                <TextBlock Text="ATUALIZAR" FontSize="9" FontWeight="Bold" Margin="4,0,0,0"
+                                <TextBlock Text="{loc:Tr Main_Tile_UpdateBadge}" FontSize="9" FontWeight="Bold" Margin="4,0,0,0"
                                            Foreground="#231A05" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
@@ -232,7 +233,7 @@
                     <ComboBox ItemsSource="{Binding ComboLabels}" SelectedIndex="{Binding ComboIndex, Mode=TwoWay}"
                               Margin="0,8,0,0"
                               Visibility="{Binding IsCombo, Converter={StaticResource BoolToVis}}"/>
-                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" Content="Ativo" Margin="0,8,0,0"
+                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" Content="{loc:Tr Common_Enabled}" Margin="0,8,0,0"
                               Visibility="{Binding IsCheck, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </Border>
@@ -275,7 +276,7 @@
                         <Path Data="{StaticResource IconSearch}" Fill="{StaticResource TextFaintBrush}"
                               Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Left"
                               VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False"/>
-                        <TextBlock Text="Pesquisar jogo" Foreground="{StaticResource TextFaintBrush}"
+                        <TextBlock Text="{loc:Tr Main_SearchPlaceholder}" Foreground="{StaticResource TextFaintBrush}"
                                    FontSize="12.5" VerticalAlignment="Center" Margin="34,0,0,0"
                                    IsHitTestVisible="False">
                             <TextBlock.Style>
@@ -295,9 +296,8 @@
                               ItemsSource="{Binding FilterOptions}" SelectedIndex="{Binding FilterIndex}"/>
 
                     <!-- update-all: loud when there is something to update -->
-                    <Button Margin="0,0,10,0" AutomationProperties.Name="Atualizar todos" Command="{Binding UpdateAllCommand}" Padding="13,8"
-                            Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVis}}"
-                            ToolTip="Baixa a versão mais nova de todos os mods marcados (suas configurações são preservadas)">
+                    <Button Margin="0,0,10,0" AutomationProperties.Name="{loc:Tr Main_UpdateAll_Name}" Command="{Binding UpdateAllCommand}" Padding="13,8"
+                            Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVis}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource AccentButton}">
                                 <Setter Property="Background" Value="#E6A11B"/>
@@ -316,38 +316,35 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="Atualizar lista" Command="{Binding RefreshCommand}"
-                            ToolTip="Reler o catálogo e reescanear os jogos instalados">
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="{loc:Tr Main_Refresh_Name}" Command="{Binding RefreshCommand}">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconRefresh}"/>
-                            <TextBlock Text="Atualizar" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Tr Common_Refresh}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="Ver atualizacoes" Command="{Binding CheckUpdatesCommand}"
-                            ToolTip="Checa em todos os mods instalados se há build mais nova no servidor">
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="{loc:Tr Main_CheckUpdates}" Command="{Binding CheckUpdatesCommand}">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconUpdate}"/>
-                            <TextBlock Text="Ver atualizações" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Tr Main_CheckUpdates}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0"
-                            AutomationProperties.Name="Adicionar jogo" Command="{Binding AddManualGameCommand}" ToolTip="Adicionar a pasta de um jogo manualmente">
+                            AutomationProperties.Name="{loc:Tr Main_AddGame_Name}" Command="{Binding AddManualGameCommand}">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPlus}"/>
-                            <TextBlock Text="Adicionar" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Tr Common_Add}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="Meu monitor" Click="OnProfileClick"
-                            ToolTip="Definir o brilho (nits) do seu monitor">
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="{loc:Tr Main_Monitor}" Click="OnProfileClick">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"/>
-                            <TextBlock Text="Meu monitor" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Tr Main_Monitor}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" AutomationProperties.Name="Guia HDR" Click="OnGuideClick" ToolTip="Checklist de HDR">
+                    <Button Style="{StaticResource ToolButton}" AutomationProperties.Name="{loc:Tr Main_Guide}" Click="OnGuideClick">
                         <StackPanel Orientation="Horizontal">
                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconBook}"/>
-                            <TextBlock Text="Guia HDR" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Tr Main_Guide}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -405,9 +402,9 @@
                         Visibility="{Binding GamesView.IsEmpty, Converter={StaticResource BoolToVis}}">
                 <Path Data="{StaticResource IconSearch}" Fill="#39404E" Stretch="Uniform"
                       Width="44" Height="44" HorizontalAlignment="Center"/>
-                <TextBlock Text="Nenhum jogo aqui" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"
+                <TextBlock Text="{loc:Tr Main_Empty_Title}" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"
                            Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
-                <TextBlock Text="Mude a busca ou o filtro — ou use “Adicionar” para apontar a pasta."
+                <TextBlock Text="{loc:Tr Main_Empty_Hint}"
                            Style="{StaticResource Caption}" Margin="0,5,0,0" HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
@@ -464,16 +461,16 @@
                         </Border>
 
                         <Button Margin="0,12,0,0" Padding="12,10" Command="{Binding LaunchGameCommand}"
-                                AutomationProperties.Name="Jogar">
+                                AutomationProperties.Name="{loc:Tr Main_Play}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Path Data="{StaticResource IconPlay}" Fill="{StaticResource TextBrush}"
                                       Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
-                                <TextBlock Text="Jogar" Margin="8,0,0,0" FontSize="12.5" FontWeight="SemiBold"
+                                <TextBlock Text="{loc:Tr Main_Play}" Margin="8,0,0,0" FontSize="12.5" FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 
-                        <TextBlock Text="PASTA DE INSTALACAO" Style="{StaticResource SectionLabel}" Margin="0,16,0,5"/>
+                        <TextBlock Text="{loc:Tr Dialog_InstallDir_Label}" Style="{StaticResource SectionLabel}" Margin="0,16,0,5"/>
                         <TextBlock Text="{Binding Selected.Game.InstallDir}" Style="{StaticResource Caption}"
                                    FontSize="10.5" TextTrimming="CharacterEllipsis" MaxHeight="46"
                                    ToolTip="{Binding Selected.Game.InstallDir}"/>
@@ -502,7 +499,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Path Data="{StaticResource IconCheck}" Fill="{StaticResource GreenBrush}"
                                               Stretch="Uniform" Width="11" Height="11" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Estável" FontSize="10.5" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Tr Dialog_Mod_Stable}" FontSize="10.5" FontWeight="SemiBold"
                                                    Foreground="#8FE9C4" Margin="5,0,0,0" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
@@ -512,7 +509,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Path Data="{StaticResource IconWarning}" Fill="{StaticResource OrangeBrush}"
                                               Stretch="Uniform" Width="11" Height="11" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Instável" FontSize="10.5" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Tr Dialog_Mod_Unstable}" FontSize="10.5" FontWeight="SemiBold"
                                                    Foreground="#F5C65E" Margin="5,0,0,0" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
@@ -525,12 +522,12 @@
                                     Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}">
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Padding="11,7" VerticalAlignment="Center"
-                                            Click="OnHistoryClick" AutomationProperties.Name="Historico do mod"
-                                            ToolTip="Todas as versões deste mod, com data">
+                                            Click="OnHistoryClick" AutomationProperties.Name="{loc:Tr Dialog_History_Name}"
+                                            ToolTip="{loc:Tr Dialog_History_Tooltip}">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconUpdate}" Fill="{StaticResource TextBrush}"
                                                   Stretch="Uniform" Width="13" Height="13" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Histórico" Margin="7,0,0,0" FontSize="12"
+                                            <TextBlock Text="{loc:Tr Common_History}" Margin="7,0,0,0" FontSize="12"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
@@ -557,12 +554,12 @@
                                         </Border>
                                     </Grid>
                                     <StackPanel Margin="12,0,10,0" VerticalAlignment="Center">
-                                        <TextBlock Text="CRIADO POR" FontSize="9.5" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Tr Dialog_Maintainer_Label}" FontSize="9.5" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextFaintBrush}"/>
                                         <TextBlock Text="{Binding Selected.MaintainerName}" FontSize="13.5"
                                                    FontWeight="SemiBold" Margin="0,2,0,0"
                                                    TextTrimming="CharacterEllipsis"
-                                                   ToolTip="Abrir o perfil do autor no GitHub"
+                                                   ToolTip="{loc:Tr Dialog_Maintainer_Tooltip}"
                                                    Cursor="Hand">
                                             <TextBlock.InputBindings>
                                                 <MouseBinding MouseAction="LeftClick"
@@ -585,12 +582,12 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Path Data="{StaticResource IconWarning}" Fill="{StaticResource OrangeBrush}"
                                               Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Atualização disponível" FontSize="13" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Tr Dialog_Update_Title}" FontSize="13" FontWeight="SemiBold"
                                                    Foreground="#F5C65E" Margin="9,0,0,0" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <TextBlock Style="{StaticResource Caption}" Margin="0,7,0,0" Foreground="#D8C398"
-                                               Text="O autor publicou uma build mais nova deste mod. Suas configurações são preservadas na atualização."/>
-                                    <Button Margin="0,11,0,0" Padding="12,8" AutomationProperties.Name="Instalar ou atualizar mod" Command="{Binding InstallCommand}"
+                                               Text="{loc:Tr Dialog_Update_Desc}"/>
+                                    <Button Margin="0,11,0,0" Padding="12,8" AutomationProperties.Name="{loc:Tr Dialog_Update_Action_Name}" Command="{Binding InstallCommand}"
                                             HorizontalAlignment="Left">
                                         <Button.Style>
                                             <Style TargetType="Button" BasedOn="{StaticResource AccentButton}">
@@ -605,7 +602,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconDownload}" Fill="#231A05" Stretch="Uniform"
                                                   Width="14" Height="14" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Atualizar" Margin="7,0,0,0" FontSize="12.5"
+                                            <TextBlock Text="{loc:Tr Common_Update}" Margin="7,0,0,0" FontSize="12.5"
                                                        FontWeight="SemiBold" Foreground="#231A05"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -621,20 +618,20 @@
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Padding="12,8" VerticalAlignment="Center"
                                             Command="{Binding DlssFixCommand}"
-                                            AutomationProperties.Name="Correcao de DLSS">
+                                            AutomationProperties.Name="{loc:Tr Dialog_DlssFix_Name}">
                                         <TextBlock Text="{Binding DlssFixButtonText}" FontSize="12"/>
                                     </Button>
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="DLSS Frame Generation piscando?" FontSize="12.5"
+                                        <TextBlock Text="{loc:Tr Dialog_DlssFix_Title}" FontSize="12.5"
                                                    FontWeight="SemiBold" Foreground="#A8D4F0"/>
-                                        <TextBlock Text="Só use se notar piscadas ou artefatos." FontSize="11"
+                                        <TextBlock Text="{loc:Tr Dialog_DlssFix_Desc}" FontSize="11"
                                                    Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
 
                             <!-- exe picker -->
-                            <TextBlock Text="EXECUTÁVEL DO JOGO" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
+                            <TextBlock Text="{loc:Tr Dialog_Exe_Label}" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
                             <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
                                       FontSize="11.5"/>
 
@@ -643,7 +640,7 @@
                                  nunca ver que o jogo exige outra versao do ReShade. -->
                             <StackPanel Margin="0,14,0,0"
                                         Visibility="{Binding Prerequisites.Count, Converter={StaticResource CountToVis}}">
-                                <TextBlock Text="ANTES DE INSTALAR" Style="{StaticResource SectionLabel}"/>
+                                <TextBlock Text="{loc:Tr Dialog_Prereq_Label}" Style="{StaticResource SectionLabel}"/>
                                 <ItemsControl ItemsSource="{Binding Prerequisites}"
                                               ItemTemplate="{StaticResource NoteCard}"/>
                             </StackPanel>
@@ -652,7 +649,7 @@
                                  Depois de instalado ele nao tem o que oferecer, e atualizacao e
                                  assunto do cartao ambar la em cima. Some tambem em jogo sem mod. -->
                             <Button Padding="14,13" Margin="0,14,0,0" Command="{Binding InstallCommand}"
-                                    AutomationProperties.Name="Instalar mod">
+                                    AutomationProperties.Name="{loc:Tr Dialog_Install_Title}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -674,9 +671,9 @@
                                               Width="17" Height="17"/>
                                     </Border>
                                     <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Instalar mod HDR" FontSize="14" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Tr Dialog_Install_Title}" FontSize="14" FontWeight="SemiBold"
                                                    Foreground="#1A1206"/>
-                                        <TextBlock Text="ReShade + addon do RenoDX na pasta do executável acima"
+                                        <TextBlock Text="{loc:Tr Dialog_Install_Desc}"
                                                    FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"
                                                    Foreground="#5A3A14"/>
                                     </StackPanel>
@@ -687,7 +684,7 @@
                                  mod nunca vai carregar. Como o banner de instalar some depois de
                                  instalado, sem isto o usuario ficaria sem nenhum caminho de volta. -->
                             <Button Padding="14,13" Margin="0,14,0,0" Command="{Binding InstallCommand}"
-                                    AutomationProperties.Name="Reinstalar o ReShade"
+                                    AutomationProperties.Name="{loc:Tr Dialog_Repair_Title}"
                                     Visibility="{Binding NeedsRepair, Converter={StaticResource BoolToVis}}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}"/>
@@ -699,9 +696,9 @@
                                               Width="17" Height="17"/>
                                     </Border>
                                     <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Reinstalar o ReShade" FontSize="14" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Tr Dialog_Repair_Title}" FontSize="14" FontWeight="SemiBold"
                                                    Foreground="#1A1206"/>
-                                        <TextBlock Text="A build instalada aqui não tem suporte a add-ons — o mod não carrega assim"
+                                        <TextBlock Text="{loc:Tr Dialog_Repair_Desc}"
                                                    FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"
                                                    Foreground="#5A3A14"/>
                                     </StackPanel>
@@ -712,7 +709,7 @@
                                  arquivo e nao e o que se quer 9 em cada 10 vezes; virou o botao de
                                  energia na barra de baixo, para quem quiser comparar HDR ligado e
                                  desligado sem perder a instalacao. -->
-                            <Button Margin="0,10,0,0" AutomationProperties.Name="Remover mod"
+                            <Button Margin="0,10,0,0" AutomationProperties.Name="{loc:Tr Dialog_Remove_Title}"
                                     Command="{Binding RemoveCommand}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource ToggleCard}">
@@ -731,9 +728,9 @@
                                               Width="15" Height="15"/>
                                     </Border>
                                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Remover mod" FontSize="12.5" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Tr Dialog_Remove_Title}" FontSize="12.5" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextBrush}"/>
-                                        <TextBlock Text="Apaga o addon da pasta do jogo. Suas configurações continuam salvas no ReShade.ini."
+                                        <TextBlock Text="{loc:Tr Dialog_Remove_Desc}"
                                                    FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
                                                    Foreground="{StaticResource TextFaintBrush}"/>
                                     </StackPanel>
@@ -757,7 +754,7 @@
 
                             <StackPanel Margin="0,16,0,0"
                                         Visibility="{Binding Advice.Count, Converter={StaticResource CountToVis}}">
-                                <TextBlock Text="RECOMENDADO PARA ESTE JOGO" Style="{StaticResource SectionLabel}"/>
+                                <TextBlock Text="{loc:Tr Dialog_Advice_Label}" Style="{StaticResource SectionLabel}"/>
                                 <ItemsControl ItemsSource="{Binding Advice}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -774,7 +771,7 @@
 
                             <StackPanel Margin="0,8,0,0"
                                         Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
-                                <TextBlock Text="COMO AJUSTAR ESTE JOGO" Style="{StaticResource SectionLabel}"/>
+                                <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"/>
                                 <ItemsControl ItemsSource="{Binding Notes}"
                                               ItemTemplate="{StaticResource NoteCard}"/>
                             </StackPanel>
@@ -790,7 +787,7 @@
                                 </Expander.Header>
                                 <StackPanel Margin="0,8,0,0">
                                     <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,8" TextWrapping="Wrap"
-                                               Text="Estas regras vêm da wiki do RenoDX e valem para todo jogo deste motor — inclusive quando a nota do jogo não repete."/>
+                                               Text="{loc:Tr Dialog_EngineNotes_Desc}"/>
                                     <ItemsControl ItemsSource="{Binding EngineNotes}"
                                                   ItemTemplate="{StaticResource NoteCard}"/>
                                 </StackPanel>
@@ -798,9 +795,9 @@
 
                             <StackPanel Visibility="{Binding Selected.IsInstalled, Converter={StaticResource BoolToVis}}">
                                 <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,20,0,16"/>
-                                <TextBlock Text="Configurações do mod" Style="{StaticResource H2}"/>
+                                <TextBlock Text="{loc:Tr Dialog_Settings_Title}" Style="{StaticResource H2}"/>
                                 <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0"
-                                           Text="Gravadas no ReShade.ini do jogo. Salve com o jogo FECHADO."/>
+                                           Text="{loc:Tr Dialog_Settings_Desc}"/>
 
                                 <Border CornerRadius="9" Padding="12,10" Margin="0,10,0,0" Background="#2A2415"
                                         BorderBrush="#5E4E1E" BorderThickness="1"
@@ -821,28 +818,28 @@
                                 <UniformGrid Columns="3" Margin="0,12,0,0"
                                              Visibility="{Binding Settings.Count, Converter={StaticResource CountToVis}}">
                                     <Button Style="{StaticResource AccentButton}" Margin="0,0,4,0"
-                                            AutomationProperties.Name="Salvar configuracoes" Command="{Binding SaveSettingsCommand}">
+                                            AutomationProperties.Name="{loc:Tr Dialog_SaveSettings_Name}" Command="{Binding SaveSettingsCommand}">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSave}"
                                                   Fill="#14100A" Width="14" Height="14"/>
-                                            <TextBlock Text="Salvar" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Tr Common_Save}" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold"
                                                        Foreground="#14100A" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
-                                    <Button Margin="2,0" AutomationProperties.Name="Aplicar meu perfil" Command="{Binding ApplyProfileCommand}"
-                                            ToolTip="Escreve os nits do seu monitor neste jogo">
+                                    <Button Margin="2,0" AutomationProperties.Name="{loc:Tr Dialog_ApplyProfile_Name}" Command="{Binding ApplyProfileCommand}"
+                                            ToolTip="{loc:Tr Dialog_ApplyProfile_Tooltip}">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"
                                                   Width="14" Height="14"/>
-                                            <TextBlock Text="Meu perfil" Margin="6,0,0,0" FontSize="12"
+                                            <TextBlock Text="{loc:Tr Dialog_ApplyProfile_Text}" Margin="6,0,0,0" FontSize="12"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
-                                    <Button Margin="4,0,0,0" AutomationProperties.Name="Restaurar padrao" Command="{Binding ResetSettingsCommand}">
+                                    <Button Margin="4,0,0,0" AutomationProperties.Name="{loc:Tr Dialog_ResetSettings_Name}" Command="{Binding ResetSettingsCommand}">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                             <Path Style="{StaticResource IconPath}" Data="{StaticResource IconReset}"
                                                   Width="14" Height="14"/>
-                                            <TextBlock Text="Padrão" Margin="6,0,0,0" FontSize="12"
+                                            <TextBlock Text="{loc:Tr Common_Default}" Margin="6,0,0,0" FontSize="12"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
@@ -856,16 +853,16 @@
                     <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,18,0,0" Padding="0,16,0,0"
                             BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,1,0,0">
                         <DockPanel>
-                            <Button DockPanel.Dock="Right" Content="Fechar" MinWidth="104" Padding="14,8"
-                                    Command="{Binding CloseDialogCommand}" AutomationProperties.Name="Fechar"/>
+                            <Button DockPanel.Dock="Right" Content="{loc:Tr Common_Close}" MinWidth="104" Padding="14,8"
+                                    Command="{Binding CloseDialogCommand}" AutomationProperties.Name="{loc:Tr Common_Close}"/>
                             <StackPanel Orientation="Horizontal">
                                 <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding OpenFolderCommand}"
-                                        ToolTip="Abrir a pasta do jogo" AutomationProperties.Name="Abrir pasta do jogo">
+                                        ToolTip="{loc:Tr Dialog_OpenFolder}" AutomationProperties.Name="{loc:Tr Dialog_OpenFolder}">
                                     <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextBrush}"
                                           Stretch="Uniform" Width="15" Height="15"/>
                                 </Button>
                                 <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding OpenNexusCommand}"
-                                        ToolTip="Pagina do mod na internet" AutomationProperties.Name="Pagina do mod na internet">
+                                        ToolTip="{loc:Tr Dialog_ModPage}" AutomationProperties.Name="{loc:Tr Dialog_ModPage}">
                                     <Path Data="{StaticResource IconGlobe}" Fill="{StaticResource TextBrush}"
                                           Stretch="Uniform" Width="15" Height="15"/>
                                 </Button>
@@ -873,14 +870,14 @@
                                      addon para .disabled serve para comparar HDR ligado x desligado
                                      sem perder a instalacao — util, mas nao e a acao principal. -->
                                 <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding ToggleCommand}"
-                                        AutomationProperties.Name="Ativar ou desativar mod">
+                                        AutomationProperties.Name="{loc:Tr Dialog_Toggle_Name}">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                            <Setter Property="ToolTip" Value="Ativar o mod neste jogo"/>
+                                            <Setter Property="ToolTip" Value="{loc:Tr Dialog_Toggle_Enable_Tooltip}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
                                                     <Setter Property="ToolTip"
-                                                            Value="Desativar o mod sem remover (renomeia o addon)"/>
+                                                            Value="{loc:Tr Dialog_Toggle_Disable_Tooltip}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

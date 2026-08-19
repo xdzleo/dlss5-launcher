@@ -9,9 +9,12 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.11.2</Version>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <Version>1.12.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- Idiomas que o app fala. Sem esta lista o SDK descarta os satelites de recurso,
+         e so o idioma neutro (pt-BR, que fica no proprio assembly) sobreviveria.
+         Adicionou um Strings.<tag>.resx? Acrescente a tag aqui tambem. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- Full PE version metadata: blank/generic fields raise AV heuristic suspicion. -->
     <Product>RenoDX Launcher</Product>
     <AssemblyTitle>RenoDX Launcher</AssemblyTitle>
@@ -22,6 +25,34 @@
     <PackageProjectUrl>https://github.com/xdzleo/renodx-launcher</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <NeutralLanguage>pt-BR</NeutralLanguage>
+    <!-- Manifest proprio: acrescenta supportedOS ao asInvoker que o SDK ja gerava.
+         Ver o arquivo src/app.manifest, que explica o porque de cada bloco. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- === Forma do binario publicado ===
+         Os tres valores abaixo ja sao o padrao. Estao escritos explicitamente porque
+         cada um deles, se ligado, piora a deteccao por antivirus - e um "vamos
+         otimizar o startup" bem-intencionado no futuro reabriria o problema.
+
+         PublishSingleFile  exe que descomprime a si mesmo em disco e roda o resultado:
+                            o padrao que heuristica mais pontua. E o zip de release
+                            tambem e gerado a partir da PASTA, nunca de um bundle.
+         PublishTrimmed     ha relato reproduzivel de trimming disparando falso-positivo
+                            no Defender. (WPF nao suporta trimming de qualquer forma.)
+         PublishReadyToRun  existe uma tecnica de evasao publicada que abusa do formato
+                            R2R ("R2R stomping"), entao binario R2R recebe atencao extra
+                            dos analisadores. O ganho aqui seria so tempo de abertura.
+         IL puro + apphost, sem AOT, e a forma mais analisavel - e a de menor atrito. -->
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishReadyToRun>false</PublishReadyToRun>
+
+    <!-- Simbolo portable (padrao do Release). O .pdb NAO entra no instalador: vai
+         anexado ao GitHub Release, para triagem de crash sem peso morto na instalacao. -->
+    <DebugType>portable</DebugType>
+
+    <!-- Remove o createdump.exe do publish (ver o target no fim do arquivo). -->
+    <RemoveDiagnosticTools>true</RemoveDiagnosticTools>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,11 +66,30 @@
     <None Include="Assets\Fonts\Inter-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- Os Localization\Strings*.resx nao precisam ser listados: o SDK ja inclui .resx do
+       diretorio do projeto por padrao, e o nome do recurso sai como
+       RenoDXLauncher.Localization.Strings, que e o que L.cs procura. -->
+
   <ItemGroup>
     <EmbeddedResource Include="Assets\settings_manifest.json" />
     <EmbeddedResource Include="Assets\Mods.fallback.md" />
     <EmbeddedResource Include="Assets\games-index.fallback.json" />
     <EmbeddedResource Include="Assets\rhi_manifest.fallback.json" />
   </ItemGroup>
+
+  <!-- O runtime pack traz createdump.exe, o utilitario de dump de processo da Microsoft.
+       O launcher nunca o usa (so e chamado com DOTNET_DbgEnableMiniDump=1). Dump de
+       memoria de processo alheio e tecnica catalogada de roubo de credencial, entao
+       varios motores comportamentais tem regra para esse executavel; deixa-lo na pasta
+       instalada so adiciona superficie de suspeita sem entregar nada.
+       Definir RemoveDiagnosticTools=false traz ele de volta. -->
+  <Target Name="RemoveDiagnosticToolsFromPublish"
+          AfterTargets="Publish"
+          Condition="'$(RemoveDiagnosticTools)' == 'true'">
+    <ItemGroup>
+      <_DiagnosticToolsToRemove Include="$(PublishDir)createdump.exe" />
+    </ItemGroup>
+    <Delete Files="@(_DiagnosticToolsToRemove)" ContinueOnError="true" />
+  </Target>
 
 </Project>

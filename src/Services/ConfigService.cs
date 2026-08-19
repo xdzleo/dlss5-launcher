@@ -18,6 +18,10 @@ public class LauncherConfig
     /// <summary>Manually added game folders.</summary>
     public List<string> ManualGameDirs { get; set; } = new();
 
+    /// <summary>Idioma da interface, como tag BCP-47 ("pt-BR", "en"). Vazio ou ausente
+    /// significa "seguir o Windows", que e o padrao e o que quase todo mundo quer.</summary>
+    public string? Language { get; set; }
+
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 
     public static LauncherConfig Load()

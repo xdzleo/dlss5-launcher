@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
@@ -50,7 +51,7 @@ public static class Cli
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"erro: {ex.Message}");
+            Console.Error.WriteLine(L.T("Cli_Error_Unhandled", ex.Message));
             return 1;
         }
         finally
@@ -89,33 +90,53 @@ public static class Cli
         };
     }
 
+    /// <summary>Width of the syntax column in the help table.</summary>
+    private const int HelpSyntaxWidth = 26;
+
     private static int Help()
     {
-        Console.WriteLine("""
-            RenoDX Launcher — modo linha de comando
+        var game = L.T("Cli_Arg_Game");
+        var folder = L.T("Cli_Arg_Folder");
+        var kv = L.T("Cli_Arg_KeyValue");
 
-              list [--json]            lista os jogos detectados e o estado do mod
-              check [--json]           verifica atualização de todos os mods instalados
-              verify [<jogo>]          lê o ReShade.log e diz se o mod carregou mesmo
-              exe <jogo>               mostra os .exe candidatos na ordem escolhida (bits/tamanho)
-              add <pasta>              registra uma pasta de jogo que as lojas nao conhecem
-              settings <jogo>          mostra as configurações do mod (do ReShade.ini)
-              set <jogo> chave=valor…  grava configurações (com o jogo fechado)
-              profile [--peak N] [--game N] [--ui N]
-                                       mostra/define o perfil de nits do monitor
-              install <jogo>           instala/atualiza ReShade + addon
-              enable <jogo>            ativa o mod          disable <jogo>   desativa
-              doctor                   diagnóstico completo (por que meu jogo não aparece?)
-
-            <jogo> casa por parte do nome, sem diferenciar maiúsculas. Ex.:
-              RenoDXLauncher.exe set "dying light" ToneMapPeakNits=1300
-            """);
+        Console.WriteLine(L.T("Cli_Help_Header", L.T("App_Name")));
+        Console.WriteLine();
+        HelpRow("list [--json]", L.T("Cli_Help_List"));
+        HelpRow("check [--json]", L.T("Cli_Help_Check"));
+        HelpRow($"verify [{game}]", L.T("Cli_Help_Verify"));
+        HelpRow($"exe {game}", L.T("Cli_Help_Exe"));
+        HelpRow($"add {folder}", L.T("Cli_Help_Add"));
+        HelpRow($"settings {game}", L.T("Cli_Help_Settings"));
+        HelpRow($"set {game} {kv}…", L.T("Cli_Help_Set"));
+        HelpRow("profile [--peak N] [--game N] [--ui N]", L.T("Cli_Help_Profile"));
+        HelpRow($"install {game}", L.T("Cli_Help_Install"));
+        HelpRow($"enable {game}", L.T("Cli_Help_Enable"));
+        HelpRow($"disable {game}", L.T("Cli_Help_Disable"));
+        HelpRow("doctor", L.T("Cli_Help_Doctor"));
+        Console.WriteLine();
+        Console.WriteLine(L.T("Cli_Help_Match", game));
+        Console.WriteLine("  RenoDXLauncher.exe set \"dying light\" ToneMapPeakNits=1300");
         return 0;
+    }
+
+    /// <summary>One help line. The syntax column is assembled from literal command names, so no
+    /// translation can rename a command — only the description and the metavariables are localized.</summary>
+    private static void HelpRow(string syntax, string description)
+    {
+        if (syntax.Length > HelpSyntaxWidth)
+        {
+            Console.WriteLine($"  {syntax}");
+            Console.WriteLine($"  {new string(' ', HelpSyntaxWidth)} {description}");
+        }
+        else
+        {
+            Console.WriteLine($"  {syntax.PadRight(HelpSyntaxWidth)} {description}");
+        }
     }
 
     private static int Unknown(string cmd)
     {
-        Console.Error.WriteLine($"comando desconhecido: {cmd}");
+        Console.Error.WriteLine(L.T("Cli_Error_UnknownCommand", cmd));
         Help();
         return 2;
     }
@@ -127,7 +148,7 @@ public static class Cli
 
     private static async Task<Ctx> LoadAsync(bool quiet = false)
     {
-        if (!quiet) Console.Error.WriteLine("carregando catálogo e escaneando jogos...");
+        if (!quiet) Console.Error.WriteLine(L.T("Cli_Loading"));
         var catalog = await new CatalogService().LoadAsync();
         var rhi = new RhiManifestService();
         await rhi.LoadAsync();
@@ -145,20 +166,20 @@ public static class Cli
     private static GameInfo? Resolve(Ctx ctx, string? query, out string? error)
     {
         error = null;
-        if (string.IsNullOrWhiteSpace(query)) { error = "informe o nome do jogo"; return null; }
+        if (string.IsNullOrWhiteSpace(query)) { error = L.T("Cli_Error_GameRequired"); return null; }
         var hits = ctx.Games
             .Where(g => g.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
             .ToList();
         if (hits.Count == 0)
         {
-            error = $"nenhum jogo casa com \"{query}\"";
+            error = L.T("Cli_Error_GameNotFound", query);
             return null;
         }
         if (hits.Count > 1)
         {
             var exact = hits.FirstOrDefault(g => g.Name.Equals(query, StringComparison.OrdinalIgnoreCase));
             if (exact != null) return exact;
-            error = $"\"{query}\" é ambíguo: {string.Join(", ", hits.Take(6).Select(g => g.Name))}";
+            error = L.T("Cli_Error_GameAmbiguous", query, string.Join(", ", hits.Take(6).Select(g => g.Name)));
             return null;
         }
         return hits[0];
@@ -194,6 +215,16 @@ public static class Cli
 
     // ---------- commands ----------
 
+    /// <summary>Human-readable form of a raw status token. The token itself stays untranslated:
+    /// it goes into --json and drives the "installed" count, so scripts must not see it move.</summary>
+    private static string StatusLabel(string status) => status switch
+    {
+        "disponivel" => L.T("Cli_Status_Available"),
+        "ativado" => L.T("Cli_Status_Enabled"),
+        "desativado" => L.T("Cli_Status_Disabled"),
+        _ => L.T("Cli_Status_NoMod"),
+    };
+
     private static async Task<int> ListAsync(bool json)
     {
         var ctx = await LoadAsync(json);
@@ -218,43 +249,56 @@ public static class Cli
             Console.WriteLine(JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true }));
             return 0;
         }
-        Console.WriteLine($"{"JOGO",-42} {"LOJA",-10} {"STATUS",-11} MOD");
+        Console.WriteLine($"{L.T("Cli_List_Col_Game"),-42} {L.T("Cli_List_Col_Store"),-10} " +
+            $"{L.T("Cli_List_Col_Status"),-11} {L.T("Cli_List_Col_Mod")}");
         Console.WriteLine(new string('-', 92));
         foreach (var r in rows)
-            Console.WriteLine($"{Trunc(r.name, 42),-42} {r.store,-10} {r.status,-11} {r.mod ?? "-"}");
-        Console.WriteLine($"\n{rows.Count} jogos · {rows.Count(r => r.mod != null)} com mod · " +
-            $"{rows.Count(r => r.status is "ativado" or "desativado")} instalados");
+            Console.WriteLine($"{Trunc(r.name, 42),-42} {r.store,-10} {StatusLabel(r.status),-11} {r.mod ?? "-"}");
+        Console.WriteLine();
+        Console.WriteLine(L.T("Cli_List_Summary", rows.Count, rows.Count(r => r.mod != null),
+            rows.Count(r => r.status is "ativado" or "desativado")));
         return 0;
     }
+
+    /// <summary>Machine-readable verdict for --json. Deliberately not localized: scripts parse it,
+    /// so it must not change when the interface language changes.</summary>
+    private static string RawVerdict(bool? newer) => newer switch
+    {
+        true => "ATUALIZAÇÃO DISPONÍVEL",
+        false => "atualizado",
+        _ => "não verificável",
+    };
+
+    private static string VerdictLabel(bool? newer) => newer switch
+    {
+        true => L.T("Cli_Check_UpdateAvailable"),
+        false => L.T("Cli_Check_UpToDate"),
+        _ => L.T("Cli_Check_Unknown"),
+    };
 
     private static async Task<int> CheckAsync(bool json)
     {
         var ctx = await LoadAsync(json);
-        var results = new List<(string name, string verdict)>();
+        var results = new List<(string name, bool? newer)>();
         foreach (var g in ctx.Games)
         {
             var mod = MatchService.FindMatch(g, ctx.Catalog);
             if (mod?.DownloadUrl is null) continue;
             var (_, state) = StateOf(ctx, g);
             if (state?.AddonPath is null) continue;
-            var newer = await AddonService.IsUpdateAvailableAsync(mod, state);
-            results.Add((g.Name, newer switch
-            {
-                true => "ATUALIZAÇÃO DISPONÍVEL",
-                false => "atualizado",
-                _ => "não verificável",
-            }));
+            results.Add((g.Name, await AddonService.IsUpdateAvailableAsync(mod, state)));
         }
         if (json)
         {
-            Console.WriteLine(JsonSerializer.Serialize(results.Select(r => new { game = r.name, status = r.verdict }),
+            Console.WriteLine(JsonSerializer.Serialize(
+                results.Select(r => new { game = r.name, status = RawVerdict(r.newer) }),
                 new JsonSerializerOptions { WriteIndented = true }));
             return 0;
         }
-        foreach (var (name, verdict) in results)
-            Console.WriteLine($"{Trunc(name, 46),-46} {verdict}");
-        var pending = results.Count(r => r.verdict.StartsWith("ATUAL"));
-        Console.WriteLine($"\n{results.Count} mods instalados · {pending} com atualização");
+        foreach (var (name, newer) in results)
+            Console.WriteLine($"{Trunc(name, 46),-46} {VerdictLabel(newer)}");
+        Console.WriteLine();
+        Console.WriteLine(L.T("Cli_Check_Summary", results.Count, results.Count(r => r.newer == true)));
         return 0;
     }
 
@@ -277,9 +321,13 @@ public static class Cli
             found++;
             var report = ReShadeLogService.Check(state.TargetDir);
             Console.WriteLine($"{g.Name}\n  {report.Message}");
-            if (report.LastRun is { } lr) Console.WriteLine($"  (último registro: {lr:dd/MM/yyyy HH:mm})");
+            if (report.LastRun is { } lr)
+            {
+                var stamp = lr.ToString("dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture);
+                Console.WriteLine("  " + L.T("Cli_Verify_LastRun", stamp));
+            }
         }
-        if (found == 0) Console.WriteLine("nenhum mod instalado para verificar.");
+        if (found == 0) Console.WriteLine(L.T("Cli_Verify_NothingInstalled"));
         return 0;
     }
 
@@ -293,7 +341,7 @@ public static class Cli
 
         var cands = ExeLocator.FindCandidates(game, ctx.Rhi.InstallSubdir(game.Name));
         Console.WriteLine($"{game.Name} — {game.InstallDir}\n");
-        if (cands.Count == 0) { Console.WriteLine("  nenhum .exe candidato."); return 1; }
+        if (cands.Count == 0) { Console.WriteLine("  " + L.T("Cli_Exe_NoCandidates")); return 1; }
 
         for (int i = 0; i < cands.Count; i++)
         {
@@ -314,9 +362,13 @@ public static class Cli
     /// for an install.</summary>
     private static async Task<int> AddFolderAsync(string? path)
     {
-        if (string.IsNullOrWhiteSpace(path)) { Console.Error.WriteLine("uso: add <pasta do jogo>"); return 2; }
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            Console.Error.WriteLine(L.T("Cli_Usage", $"add {L.T("Cli_Arg_Folder")}"));
+            return 2;
+        }
         var dir = Path.GetFullPath(path.Trim().Trim('"')).TrimEnd('\\', '/');
-        if (!Directory.Exists(dir)) { Console.Error.WriteLine($"pasta não existe: {dir}"); return 1; }
+        if (!Directory.Exists(dir)) { Console.Error.WriteLine(L.T("Cli_Add_FolderMissing", dir)); return 1; }
 
         var config = LauncherConfig.Load();
         bool already = config.ManualGameDirs.Contains(dir, StringComparer.OrdinalIgnoreCase);
@@ -330,19 +382,21 @@ public static class Cli
         var game = FolderGameResolver.Resolve(dir, catalog);
         var mod = MatchService.FindMatch(game, catalog);
 
-        Console.WriteLine($"{(already ? "já estava registrada" : "pasta registrada")}: {dir}");
-        Console.WriteLine($"reconhecida como: {game.Name}");
+        Console.WriteLine(L.T(already ? "Cli_Add_AlreadyRegistered" : "Cli_Add_Registered", dir));
+        Console.WriteLine(L.T("Cli_Add_RecognizedAs", game.Name));
         if (mod is null)
         {
-            Console.WriteLine("catálogo do RenoDX: NENHUM mod casa com este nome.");
-            Console.WriteLine($"nomes tentados: {string.Join(" | ", FolderGameResolver.CandidateNames(dir, ExeLocator.FindCandidates(game, null).FirstOrDefault()))}");
+            Console.WriteLine(L.T("Cli_Add_NoModMatch"));
+            Console.WriteLine(L.T("Cli_Add_NamesTried",
+                string.Join(" | ", FolderGameResolver.CandidateNames(dir, ExeLocator.FindCandidates(game, null).FirstOrDefault()))));
             return 1;
         }
-        Console.WriteLine($"mod: {mod.GameName} (slug {mod.Slug}, por {mod.Maintainer})");
-        Console.WriteLine($"     {(mod.DownloadUrl != null ? "download direto disponível" : "sem download direto — veja a página do mod")}"
-            + $" · {(mod.Working ? "estável" : "EM CONSTRUÇÃO")}");
+        Console.WriteLine(L.T("Cli_Add_ModFound", mod.GameName, mod.Slug, mod.Maintainer));
+        var download = mod.DownloadUrl != null ? L.T("Cli_Mod_DirectDownload") : L.T("Cli_Mod_NoDirectDownload");
+        var maturity = mod.Working ? L.T("Cli_Mod_Stable") : L.T("Cli_Mod_Wip");
+        Console.WriteLine($"     {download} · {maturity}");
         var exe = ExeLocator.FindCandidates(game, new RhiManifestService().InstallSubdir(game.Name)).FirstOrDefault();
-        Console.WriteLine($"alvo: {exe ?? "(nenhum .exe encontrado)"}");
+        Console.WriteLine(L.T("Cli_Target", exe ?? L.T("Cli_Exe_NoneFound")));
         return 0;
     }
 
@@ -353,31 +407,37 @@ public static class Cli
         if (game is null) { Console.Error.WriteLine(err); return 1; }
         var mod = MatchService.FindMatch(game, ctx.Catalog);
         var (_, state) = StateOf(ctx, game);
-        if (state?.AddonPath is null) { Console.Error.WriteLine("mod não instalado nesse jogo."); return 1; }
+        if (state?.AddonPath is null) { Console.Error.WriteLine(L.T("Cli_Error_ModNotInstalled")); return 1; }
         var defs = ctx.Manifest.GetSettings(mod?.Slug);
-        if (defs is null) { Console.Error.WriteLine($"sem manifesto de configurações para o mod {mod?.Slug ?? "?"}."); return 1; }
+        if (defs is null) { Console.Error.WriteLine(L.T("Cli_Error_NoSettings", mod?.Slug ?? "?")); return 1; }
 
         Console.WriteLine($"{game.Name} — {state.IniPath}\n");
         foreach (var v in SettingsService.Read(state.IniPath, defs))
         {
-            var current = v.Current?.ToString("0.####", CultureInfo.InvariantCulture) ?? "(padrão)";
+            var current = v.Current?.ToString("0.####", CultureInfo.InvariantCulture) ?? L.T("Cli_Settings_Default");
             var def = v.Def.Default?.ToString("0.####", CultureInfo.InvariantCulture) ?? "-";
-            Console.WriteLine($"  {v.IniKeyCasing,-32} {current,-12} padrão={def,-8} {v.Def.Label}");
+            var defCol = L.T("Cli_Settings_DefaultColumn", def);
+            Console.WriteLine($"  {v.IniKeyCasing,-32} {current,-12} {defCol,-16} {v.Def.Label}");
         }
         return 0;
     }
 
     private static async Task<int> SetAsync(string[] rest)
     {
-        if (rest.Length < 2) { Console.Error.WriteLine("uso: set <jogo> chave=valor [chave=valor…]"); return 2; }
+        var kv = L.T("Cli_Arg_KeyValue");
+        if (rest.Length < 2)
+        {
+            Console.Error.WriteLine(L.T("Cli_Usage", $"set {L.T("Cli_Arg_Game")} {kv} [{kv}…]"));
+            return 2;
+        }
         var ctx = await LoadAsync();
         var game = Resolve(ctx, rest[0], out var err);
         if (game is null) { Console.Error.WriteLine(err); return 1; }
         var mod = MatchService.FindMatch(game, ctx.Catalog);
         var (_, state) = StateOf(ctx, game);
-        if (state?.AddonPath is null) { Console.Error.WriteLine("mod não instalado nesse jogo."); return 1; }
+        if (state?.AddonPath is null) { Console.Error.WriteLine(L.T("Cli_Error_ModNotInstalled")); return 1; }
         var defs = ctx.Manifest.GetSettings(mod?.Slug);
-        if (defs is null) { Console.Error.WriteLine("sem manifesto de configurações para esse mod."); return 1; }
+        if (defs is null) { Console.Error.WriteLine(L.T("Cli_Error_NoSettings", mod?.Slug ?? "?")); return 1; }
 
         var changes = new List<(SettingDef, double)>();
         foreach (var pair in rest.Skip(1).Where(a => a.Contains('=')))
@@ -386,26 +446,27 @@ public static class Cli
             var key = pair[..i];
             var raw = pair[(i + 1)..];
             var def = defs.FirstOrDefault(d => d.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
-            if (def is null) { Console.Error.WriteLine($"chave desconhecida nesse mod: {key}"); return 1; }
+            if (def is null) { Console.Error.WriteLine(L.T("Cli_Set_UnknownKey", key)); return 1; }
             if (!double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var val))
-            { Console.Error.WriteLine($"valor inválido: {raw}"); return 1; }
+            { Console.Error.WriteLine(L.T("Cli_Set_InvalidValue", raw)); return 1; }
             changes.Add((def, val));
         }
-        if (changes.Count == 0) { Console.Error.WriteLine("nada para gravar."); return 2; }
+        if (changes.Count == 0) { Console.Error.WriteLine(L.T("Cli_Set_NothingToWrite", kv)); return 2; }
 
         // writing into a real game's config is irreversible from here — always name the exact
         // target first, and let --dry-run show what would change without touching anything
-        Console.WriteLine($"alvo: {game.Name}  ->  {state.IniPath}");
+        Console.WriteLine(L.T("Cli_Target", $"{game.Name}  ->  {state.IniPath}"));
         bool dry = rest.Any(a => a.Equals("--dry-run", StringComparison.OrdinalIgnoreCase));
         var current = SettingsService.Read(state.IniPath, defs).ToDictionary(v => v.Def.Key, v => v.Current);
         foreach (var (d, v) in changes)
         {
-            var before = current.GetValueOrDefault(d.Key)?.ToString("0.####", CultureInfo.InvariantCulture) ?? "(padrão)";
+            var before = current.GetValueOrDefault(d.Key)?.ToString("0.####", CultureInfo.InvariantCulture)
+                ?? L.T("Cli_Settings_Default");
             Console.WriteLine($"  {d.Key}: {before} -> {v.ToString("0.####", CultureInfo.InvariantCulture)}");
         }
-        if (dry) { Console.WriteLine("(--dry-run: nada foi gravado)"); return 0; }
+        if (dry) { Console.WriteLine(L.T("Cli_Set_DryRun")); return 0; }
         SettingsService.Write(state.IniPath, changes);
-        Console.WriteLine("gravado.");
+        Console.WriteLine(L.T("Cli_Set_Written"));
         return 0;
     }
 
@@ -421,15 +482,17 @@ public static class Cli
         var peak = Get("peak"); var game = Get("game"); var ui = Get("ui");
         if (peak is null && game is null && ui is null)
         {
-            Console.WriteLine($"pico={cfg.PeakNits:0}  jogo={cfg.GameNits:0}  ui={cfg.UiNits:0}  " +
-                $"aplicar-ao-instalar={(cfg.ApplyProfileOnInstall ? "sim" : "não")}");
+            Console.WriteLine(L.T("Cli_Profile_Current",
+                L.T("Cli_Profile_Nits", cfg.PeakNits, cfg.GameNits, cfg.UiNits),
+                L.T(cfg.ApplyProfileOnInstall ? "Common_Yes" : "Common_No")));
             return Task.FromResult(0);
         }
         if (peak is { } p) cfg.PeakNits = p;
         if (game is { } g) cfg.GameNits = g;
         if (ui is { } u) cfg.UiNits = u;
         cfg.Save();
-        Console.WriteLine($"perfil salvo: pico={cfg.PeakNits:0} jogo={cfg.GameNits:0} ui={cfg.UiNits:0}");
+        Console.WriteLine(L.T("Cli_Profile_Saved",
+            L.T("Cli_Profile_Nits", cfg.PeakNits, cfg.GameNits, cfg.UiNits)));
         return Task.FromResult(0);
     }
 
@@ -439,25 +502,25 @@ public static class Cli
         var game = Resolve(ctx, query, out var err);
         if (game is null) { Console.Error.WriteLine(err); return 1; }
         var mod = MatchService.FindMatch(game, ctx.Catalog);
-        if (mod?.DownloadUrl is null) { Console.Error.WriteLine("esse jogo não tem mod com download direto."); return 1; }
+        if (mod?.DownloadUrl is null) { Console.Error.WriteLine(L.T("Cli_Install_NoDirectDownload")); return 1; }
 
         var ac = AntiCheatScanner.Detect(game.InstallDir, null);
         if (ac != null)
         {
-            Console.Error.WriteLine($"ABORTADO: {ac} detectado — instalar pode BANIR sua conta em jogo online.");
-            Console.Error.WriteLine("Use a interface gráfica se quiser confirmar esse risco conscientemente.");
+            Console.Error.WriteLine(L.T("Cli_Install_AntiCheat_Abort", ac));
+            Console.Error.WriteLine(L.T("Cli_Install_AntiCheat_UseGui"));
             return 3;
         }
 
         var (exe, _) = StateOf(ctx, game);
-        if (exe is null) { Console.Error.WriteLine("não encontrei o executável do jogo."); return 1; }
+        if (exe is null) { Console.Error.WriteLine(L.T("Cli_Error_ExeNotFound", L.T("Cli_Arg_Game"))); return 1; }
         var dir = Path.GetDirectoryName(exe)!;
         var progress = new Progress<string>(Console.WriteLine);
         var deploy = await new ReShadeService().DeployAsync(dir, exe, ctx.Rhi.GraphicsApi(game.Name),
             ctx.Rhi.DllNameOverride(game.Name), progress);
         if (!deploy.Success) { Console.Error.WriteLine(deploy.Message); return 1; }
         await AddonService.DownloadAddonAsync(mod, dir, progress);
-        Console.WriteLine($"OK: {mod.Slug} instalado em {dir}");
+        Console.WriteLine(L.T("Cli_Install_Done", mod.Slug, dir));
         return 0;
     }
 
@@ -467,30 +530,33 @@ public static class Cli
         var game = Resolve(ctx, query, out var err);
         if (game is null) { Console.Error.WriteLine(err); return 1; }
         var (_, state) = StateOf(ctx, game);
-        if (state?.AddonPath is null) { Console.Error.WriteLine("mod não instalado nesse jogo."); return 1; }
+        if (state?.AddonPath is null) { Console.Error.WriteLine(L.T("Cli_Error_ModNotInstalled")); return 1; }
         AddonService.SetEnabled(state, enable);
-        Console.WriteLine($"{game.Name}: mod {(enable ? "ATIVADO" : "DESATIVADO")}");
+        Console.WriteLine(L.T(enable ? "Cli_Toggle_Enabled" : "Cli_Toggle_Disabled", game.Name));
         return 0;
     }
 
     private static async Task<int> DoctorAsync()
     {
-        Console.WriteLine("=== RenoDX Launcher · diagnóstico ===\n");
-        Console.WriteLine($"dados:      {AppPaths.DataDir}");
-        Console.WriteLine($"log:        {Log.LogPath}");
+        Console.WriteLine(L.T("Cli_Doctor_Header", L.T("App_Name")));
+        Console.WriteLine();
+        Console.WriteLine($"{L.T("Cli_Doctor_Label_Data"),-12}{AppPaths.DataDir}");
+        Console.WriteLine($"{L.T("Cli_Doctor_Label_Log"),-12}{Log.LogPath}");
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var catalog = await new CatalogService().LoadAsync();
-        Console.WriteLine($"\ncatálogo:   {catalog.Count} entradas ({sw.ElapsedMilliseconds} ms), " +
-            $"{catalog.Count(e => e.DownloadUrl != null)} com download, " +
-            $"{catalog.Count(e => e.SteamAppId != null)} com steam appid");
+        Console.WriteLine();
+        Console.WriteLine($"{L.T("Cli_Doctor_Label_Catalog"),-12}" +
+            L.T("Cli_Doctor_Catalog_Summary", catalog.Count, sw.ElapsedMilliseconds,
+                catalog.Count(e => e.DownloadUrl != null), catalog.Count(e => e.SteamAppId != null)));
 
-        Console.WriteLine("\nscanners:");
+        Console.WriteLine();
+        Console.WriteLine(L.T("Cli_Doctor_Label_Scanners"));
         void Time(string name, Func<List<GameInfo>> f)
         {
             var s = System.Diagnostics.Stopwatch.StartNew();
             var n = f().Count;
-            Console.WriteLine($"  {name,-12} {n,3} jogos  ({s.ElapsedMilliseconds} ms)");
+            Console.WriteLine($"  {name,-12} {L.T("Cli_Doctor_ScannerRow", n, s.ElapsedMilliseconds)}");
         }
         Time("Steam", StoreScanners.ScanSteam);
         Time("Epic", StoreScanners.ScanEpic);
@@ -501,18 +567,20 @@ public static class Cli
         Time("Battle.net", StoreScanners.ScanBattleNet);
         Time("Rockstar", StoreScanners.ScanRockstar);
         var known = catalog.SelectMany(e => e.NormalizedAliases).ToHashSet(StringComparer.Ordinal);
-        Time("Pastas", () => StoreScanners.ScanGameFolders(n =>
+        Time(L.T("Cli_Doctor_Scanner_Folders"), () => StoreScanners.ScanGameFolders(n =>
             known.Contains(MatchService.Normalize(n))
             || known.Contains(MatchService.Normalize(MatchService.StripEditionSuffix(n)))));
 
         var reshadeDir = Path.Combine(AppPaths.DataDir, "reshade");
-        Console.WriteLine($"\nreshade em cache: " + (Directory.Exists(reshadeDir)
+        Console.WriteLine();
+        Console.WriteLine(L.T("Cli_Doctor_ReShadeCache", Directory.Exists(reshadeDir)
             ? string.Join(", ", Directory.GetDirectories(reshadeDir).Select(Path.GetFileName))
-            : "nenhum"));
+            : L.T("Cli_Doctor_ReShadeCache_None")));
 
         var cfg = LauncherConfig.Load();
-        Console.WriteLine($"perfil:     pico={cfg.PeakNits:0} jogo={cfg.GameNits:0} ui={cfg.UiNits:0}");
-        Console.WriteLine($"exes fixados: {cfg.PinnedExes.Count} · pastas manuais: {cfg.ManualGameDirs.Count}");
+        Console.WriteLine($"{L.T("Cli_Doctor_Label_Profile"),-12}" +
+            L.T("Cli_Profile_Nits", cfg.PeakNits, cfg.GameNits, cfg.UiNits));
+        Console.WriteLine(L.T("Cli_Doctor_Pins", cfg.PinnedExes.Count, cfg.ManualGameDirs.Count));
         return 0;
     }
 

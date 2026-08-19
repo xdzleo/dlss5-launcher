@@ -1,7 +1,8 @@
 <Window x:Class="RenoDXLauncher.DialogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RenoDX Launcher" SizeToContent="Height" Width="520"
+        xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
+        Title="{loc:Tr App_Name}" SizeToContent="Height" Width="520"
         Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize" ShowInTaskbar="False" WindowStyle="None"
         AllowsTransparency="True">

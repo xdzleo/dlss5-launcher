@@ -1,131 +1,161 @@
+<div align="center">
+
+<img src="docs/icon.png" width="112" alt="">
+
 # RenoDX Launcher
 
-<img src="docs/icon.png" width="96" align="right" alt="">
+**Install, toggle and tune [RenoDX](https://github.com/clshortfuse/renodx) HDR mods for your PC games — without leaving the launcher.**
 
-Launcher de mods **[RenoDX](https://github.com/clshortfuse/renodx)** (HDR de verdade por jogo), inspirado no
-[DLSS Swapper](https://github.com/beeradmoore/dlss-swapper): detecta seus jogos instalados, mostra quais têm
-mod RenoDX disponível e deixa você **instalar, ativar/desativar e configurar** o mod de cada jogo — tudo pelo
-launcher, sem abrir o jogo.
+[![Release](https://img.shields.io/github/v/release/xdzleo/renodx-launcher?style=flat-square)](https://github.com/xdzleo/renodx-launcher/releases/latest)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=flat-square)](#install)
+
+[English](README.md) · [Português](README.pt-BR.md)
+
+</div>
 
 ![screenshot](docs/screenshot.png)
 
-## Download
+[**RenoDX**](https://github.com/clshortfuse/renodx) — short for "Renovation Engine for DirectX
+Games" — is [clshortfuse](https://github.com/clshortfuse)'s toolset for modding games through
+ReShade's add-on system, and the reason proper per-game HDR exists on PC for hundreds of titles.
+This project is not RenoDX. It is a launcher **for** RenoDX: it scans your installed games,
+matches them against the RenoDX catalogue, and handles the setup those mods otherwise need by
+hand — ReShade, the right addon, the right proxy DLL, and the mod's own brightness settings.
 
-Baixe o zip da [última release](https://github.com/xdzleo/renodx-launcher/releases/latest), extraia
-em qualquer pasta e rode `RenoDXLauncher.exe`. Build self-contained — não precisa instalar .NET.
+The mods, and the work that makes any of this worth using, are theirs.
 
-### Antivírus acusando (falso-positivo)
+## Install
 
-Até a assinatura digital entrar em vigor, os releases são **não assinados**, e o SmartScreen/Chrome
-e alguns antivírus (em especial o **360 Total Security**) podem acusar como suspeito. É
-**falso-positivo**: todo o código-fonte está aqui neste repo. O app baixa o ReShade e escreve DLLs
-em pastas de jogos (comportamento legítimo do que ele faz, mas que heurísticas confundem com malware).
-Opções enquanto isso:
+Download **`RenoDXLauncher-<version>-setup.exe`** from the
+[latest release](https://github.com/xdzleo/renodx-launcher/releases/latest) and run it.
 
-- Libere/whitelist o `RenoDXLauncher.exe` no seu antivírus, ou
-- Compile você mesmo: `dotnet publish -c Release -r win-x64 --self-contained -o app` na pasta `src`.
+Self-contained — no .NET runtime to install. Windows 10 or 11, x64. A portable `.zip` is
+published alongside the installer for people who prefer not to install anything, and every
+release ships `SHA256SUMS.txt`.
 
-**Assinatura de código:** os releases estão sendo migrados para assinatura via
-[SignPath Foundation](https://signpath.org/) (grátis para open-source). Detalhes em
-[docs/code-signing-policy.md](docs/code-signing-policy.md); setup em
-[docs/SIGNING-SETUP.md](docs/SIGNING-SETUP.md).
+## Features
 
-## O que ele faz
+**Game detection** across Steam, Epic, GOG, Xbox / Game Pass and Battle.net, plus any folder you
+add by hand — including folders that don't carry the game's name, which are resolved by the
+executable instead.
 
-- **Detecção de jogos** (algoritmos do DLSS Swapper reimplementados):
-  - **Steam** — registry `HKLM\SOFTWARE\Valve\Steam` → `libraryfolders.vdf` → `appmanifest_*.acf`
-  - **Epic** — `%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests\*.item`
-  - **GOG** — registry `HKLM\SOFTWARE\GOG.com\Games`
-  - **Xbox / Game Pass** — arquivos `.GamingRoot` + `MicrosoftGame.config` (alvo: `gamelaunchhelper.exe`)
-  - **Manual** — qualquer pasta
-- **Catálogo RenoDX em camadas** (~890 entradas):
-  1. [`games-index.json`](https://clshortfuse.github.io/renodx/games-index.json) oficial (com Steam AppID → matching exato)
-  2. Wiki [Mods.md](https://github.com/clshortfuse/renodx/wiki/Mods) (mods dos forks, Nexus-only, e as tabelas dos mods genéricos de **Unreal Engine** e **Unity**)
-  3. [`manifest.json` do RHI](https://github.com/RankFTW/RHI) (GPL-3.0, dados creditados): subpasta de instalação por jogo, API gráfica, nome da DLL, jogos com HDR nativo e notas curadas
-- **Instalação em 1 clique**:
-  - Baixa o **ReShade (addon support)** do reshade.me e extrai `ReShade64/32.dll` do ZIP embutido no instalador (sem rodar o setup)
-  - Detecta a API pelo import table do exe (PE) → instala como `dxgi.dll` / `d3d9.dll` / `opengl32.dll`
-  - **Não sobrescreve** DLL de outro mod (ENB/dxvk/SpecialK) — verifica o ProductName antes
-  - Baixa o `renodx-<jogo>.addon64/.addon32` do snapshot e coloca junto do exe
-- **Ativar/Desativar por jogo**: renomeia `renodx-*.addon64` ⇄ `.addon64.disabled` (o ReShade só carrega `*.addon64`)
-- **Configurações por jogo direto no launcher** — edita o `ReShade.ini` do jogo (`[renodx-preset1]`, a seção
-  que o mod carrega no boot):
-  - **Brilho máximo (nits)** — o pico real do monitor (app Calibração de HDR do Windows)
-  - **Brilho do jogo / paper white** — padrão 203 nits (ITU BT.2408)
-  - **Brilho da UI**, **tone mapper**, **correção de gamma**, e todos os sliders de color grading do mod
-  - Manifest embutido com as **6.698 settings de 294 jogos** extraídas do código-fonte do renodx
-    (chave exata com o case certo por mod — PascalCase vs camelCase)
-  - Perfil do monitor ("Meu monitor"): define os nits uma vez e aplica em qualquer jogo com 1 clique
-- **Guia HDR** embutido: checklist (Windows HDR ON, AutoHDR/RTX HDR OFF, HGIG, aviso de anti-cheat…)
+**A merged catalogue of ~890 games**, built from the official RenoDX index, the mods wiki (fork
+mods, Nexus-only mods, and the generic Unreal and Unity tables) and the RHI dataset for per-game
+install paths, graphics API and curated notes.
 
-## Regras de segurança que o launcher segue
+**One-click install.** Fetches ReShade with addon support, verifies its signature, reads the
+game executable's import table to pick the correct proxy DLL — `dxgi.dll`, `d3d9.dll`,
+`opengl32.dll` — and drops the matching `renodx-<game>.addon64` next to it.
 
-- Nunca escreve no `ReShade.ini` com o jogo aberto (o overlay sobrescreveria a seção inteira)
-- Preserva o case das chaves já existentes no ini (o mod lê case-sensitive)
-- Exatamente **um** addon renodx por pasta (dois addons brigam pelas mesmas chaves)
-- ReShade com addon support é **não assinado** → cuidado com anti-cheat em jogos online (aviso no app)
+**Enable and disable per game**, and update every installed mod in one pass when new builds ship.
 
-## Build
+**The mod's settings, in the launcher.** Peak brightness, paper white, UI brightness, tone
+mapper, gamma and the full colour grading set, written straight into the game's `ReShade.ini`.
+A bundled manifest of 6,698 settings across 294 games — extracted from the renodx source — means
+each key is written with the exact casing its mod expects.
 
-```
-cd src
-dotnet build          # debug
-dotnet publish -c Release -o ..\app
-```
+**A display profile.** Measure your monitor's peak nits once; apply it to any game in one click.
 
-Requisitos: .NET 10 SDK, Windows.
+**Built-in HDR checklist** covering the things that silently ruin HDR: Windows HDR on, AutoHDR
+and RTX HDR off, HGIG, and the anti-cheat warning for online games.
 
-## Testes
+**English and Brazilian Portuguese**, following your Windows language by default.
 
-`tests\SmokeTest` roda o pipeline inteiro contra um jogo **falso** (nunca toca jogos reais):
-catálogo → matching → download real do ReShade + extração → download do addon → toggle → escrita/leitura de settings.
+## Command line
 
-```
-cd tests\SmokeTest
-dotnet run
-```
-
-## Linha de comando
-
-Tudo que a interface faz também roda pelo terminal — útil para automatizar, diagnosticar e
-reportar bugs sem abrir a janela:
+Everything the interface does also runs headless — for scripting, for diagnostics, and for
+filing a useful bug report.
 
 ```bash
-RenoDXLauncher.exe list                       # jogos detectados + estado do mod
-RenoDXLauncher.exe check                      # quais mods têm versão nova
-RenoDXLauncher.exe verify                     # o mod carregou mesmo? (lê o ReShade.log)
-RenoDXLauncher.exe settings "dying light"     # configurações atuais do mod
+RenoDXLauncher.exe list                       # detected games and mod status
+RenoDXLauncher.exe check                      # which mods have a newer build
+RenoDXLauncher.exe verify                     # did the mod actually load? (reads ReShade.log)
+RenoDXLauncher.exe settings "dying light"     # current mod settings
 RenoDXLauncher.exe set "dying light" ToneMapPeakNits=1300 --dry-run
-RenoDXLauncher.exe profile --peak 1300        # perfil de nits do monitor
-RenoDXLauncher.exe install "elden ring"       # instala ReShade + addon
-RenoDXLauncher.exe enable/disable "sekiro"    # liga/desliga o mod
-RenoDXLauncher.exe doctor                     # diagnóstico completo
+RenoDXLauncher.exe profile --peak 1300        # display nits profile
+RenoDXLauncher.exe install "elden ring"       # install ReShade + addon
+RenoDXLauncher.exe enable "sekiro"            # enable / disable the mod
+RenoDXLauncher.exe add "C:\path\to\folder"    # register a folder the stores don't know
+RenoDXLauncher.exe doctor                     # full diagnostic
 ```
 
-`list` e `check` aceitam `--json`. `set` sempre mostra o arquivo-alvo e o antes→depois;
-com `--dry-run` não grava nada. Instalar por CLI **aborta** se detectar anti-cheat (a confirmação
-consciente de risco só existe na interface).
+Game names match on any substring, case-insensitively. `list` and `check` accept `--json`. `set`
+prints the target file and the before → after; `--dry-run` writes nothing. Installing from the
+CLI aborts when anti-cheat is detected — the informed-risk confirmation exists only in the UI.
 
-## Diagnóstico: "meu jogo não aparece"
+## How it handles your games
 
-`tests\ScanProbe` roda cada detector isoladamente e mostra quantos jogos cada um achou (e em
-quantos ms), mais o total após dedupe e quantos casaram com o catálogo:
+The launcher is deliberately conservative about other people's files:
 
-```bash
-cd tests\ScanProbe && dotnet run
+- it never writes `ReShade.ini` while the game is running, because the overlay rewrites the whole
+  section when the game exits;
+- it preserves the casing of keys already in the ini, since the mod reads them case-sensitively;
+- it refuses to overwrite a proxy DLL it cannot positively identify as ReShade, so ENB, dxvk and
+  Special K installs are left alone;
+- it keeps exactly one renodx addon per folder, because two addons fight over the same keys;
+- it verifies the ReShade download against the ReShade author's signing certificate before
+  extracting anything;
+- it detects anti-cheat and warns before installing, because addon-capable ReShade is an unsigned
+  build and that is a ban risk online.
+
+## Building
+
+Requires the .NET 10 SDK on Windows.
+
+```powershell
+dotnet build src\RenoDXLauncher.csproj          # debug
+pwsh tools\build-installer.ps1 -Zip             # publish + installer into dist\
 ```
 
-## Ferramentas
+`tests\SmokeTest` exercises the entire pipeline against a fake game — catalogue, matching, a real
+ReShade download and extraction, addon install, toggle, and settings round-trip. It never touches
+a real game folder.
 
-- `tools\extract_settings_manifest.py` — regenera `src\Assets\settings_manifest.json` a partir de clones do
-  renodx (repo principal + forks dos maintainers):
-  ```
-  python tools\extract_settings_manifest.py <renodx> <fork1> ... -o src\Assets\settings_manifest.json
-  ```
+```powershell
+cd tests\SmokeTest; dotnet run
+```
 
-## Créditos
+`tests\ScanProbe` runs each store detector in isolation and reports what it found and how long it
+took — the first thing to run when a game doesn't show up.
 
-- [clshortfuse/renodx](https://github.com/clshortfuse/renodx) e todos os maintainers dos mods
-- [beeradmoore/dlss-swapper](https://github.com/beeradmoore/dlss-swapper) — inspiração de UX e detecção de jogos
-- [RankFTW/RHI](https://github.com/RankFTW/RHI) — dados de instalação por jogo (manifest.json, GPL-3.0)
-- [crosire/reshade](https://github.com/crosire/reshade)
+## Translating
+
+Strings live in [`src/Localization/strings.json`](src/Localization/strings.json), all languages
+side by side so a translation can be reviewed in one place.
+
+1. add your `"<bcp-47-tag>"` entry to the strings you're translating;
+2. run `python tools/gen_resx.py`;
+3. register the tag in `L.Available` (`src/Localization/L.cs`) and in
+   `SatelliteResourceLanguages` (`src/RenoDXLauncher.csproj`).
+
+Untranslated keys fall back to Brazilian Portuguese, so a partial translation is still shippable.
+
+## Documentation
+
+- [Code signing policy](docs/code-signing-policy.md)
+- [Release signing setup](docs/SIGNING-SETUP.md)
+- [Antivirus false positives](docs/antivirus.md)
+- [Changelog](CHANGELOG.md)
+
+## Credits
+
+This launcher is a client for other people's work. All of it.
+
+- **[clshortfuse/renodx](https://github.com/clshortfuse/renodx)** — RenoDX itself, and every mod
+  maintainer who ports and tunes a game. The catalogue, the settings this launcher writes, and
+  the reason any of it looks right on screen come from them.
+  [Mods list](https://github.com/clshortfuse/renodx/wiki/Mods) ·
+  [Discord](https://discord.gg/F6AUTeWJHM)
+- **[crosire/reshade](https://github.com/crosire/reshade)** — the add-on runtime RenoDX is built
+  on, and which this launcher installs.
+- **[RankFTW/RHI](https://github.com/RankFTW/RHI)** — per-game install data (`manifest.json`,
+  GPL-3.0), used with credit.
+
+Bug reports about a *mod* belong upstream with the mod's maintainer, not here. Issues with the
+launcher itself — detection, installation, the settings UI — belong in
+[this repository](https://github.com/xdzleo/renodx-launcher/issues).
+
+## License
+
+MIT — see [LICENSE](LICENSE). Bundled Inter font under the SIL Open Font License 1.1.

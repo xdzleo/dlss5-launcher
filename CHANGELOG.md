@@ -1,5 +1,85 @@
 # Changelog
 
+## v1.12.0
+
+### O download passou a ser um instalador
+
+O release agora traz `RenoDXLauncher-<versao>-setup.exe`, feito com Inno Setup. Ele instala em
+`Program Files` (ou so para voce, se preferir na primeira tela), aparece em Aplicativos e
+Recursos, e atualiza por cima com o launcher aberto sem falhar com "arquivo em uso". Desinstalar
+nao apaga suas configuracoes: ele pergunta, e o padrao e manter.
+
+O motivo de trocar: zip extraido no Downloads e um `.exe` solto rodando de la e o pior caminho
+possivel para um binario sem assinatura. Varias versoes do 7-Zip nem propagam o Zone.Identifier
+para os arquivos extraidos, entao o Windows trata o resultado como arquivo local e nenhuma
+reputacao e acumulada. O zip continua publicado para quem prefere portatil.
+
+O `[Run]` que abre o app no fim usa `runasoriginaluser`. Sem essa flag, instalar como
+administrador abriria o launcher elevado, e ele gravaria config, perfil de nits e cache no
+`%LocalAppData%` do administrador — na abertura seguinte, normal, tudo apareceria vazio.
+
+### O ReShade e verificado por assinatura antes de ser usado
+
+A validacao do ReShade baixado era `ProductName.Contains("ReShade")`. `ProductName` e campo de
+recurso do PE, editavel por qualquer um — na pratica nao validava nada.
+
+Agora, antes de extrair, o launcher confere via `WinVerifyTrust` que o instalador esta assinado
+pelo certificado do autor do ReShade e que o conteudo esta integro. Falhou, o download e
+descartado.
+
+O que torna isso suficiente: o ZIP anexado ao instalador fica antes da tabela de certificado do
+PE, e o Authenticode faz digest de tudo menos dela — trocar um byte dentro do ZIP muda o status
+para `HashMismatch`. Validar o instalador prova as DLLs de dentro dele.
+
+E fixado o certificado, nao o hash do arquivo. Hash muda a cada versao, e uma versao nova sem
+hash cadastrado quebraria a instalacao para todo mundo; o certificado do ReShade vale ate 2039.
+O pino foi calibrado com o 6.7.3 e validou o 6.8.0 sem alteracao.
+
+### Idiomas
+
+A interface agora fala portugues do Brasil e ingles, seguindo o idioma do Windows, com troca
+manual dentro do app. Os textos ficam em `src/Localization/strings.json`, com os idiomas lado a
+lado; `python tools/gen_resx.py` regera os `.resx`. Adicionar um idioma nao exige mexer em codigo.
+
+Chave sem traducao cai no portugues, entao traducao parcial ja funciona.
+
+### Forma do binario
+
+- `app.manifest` proprio, declarando `supportedOS`. Sem ele o Windows trata o executavel como
+  legado e aplica shims de compatibilidade, que funcionam injetando DLL no processo.
+- `createdump.exe` sai do publish. O runtime pack traz esse utilitario de dump de memoria da
+  Microsoft; o launcher nunca o chama.
+- `PublishSingleFile`, `PublishTrimmed` e `PublishReadyToRun` travados em `false`, com o motivo
+  comentado no csproj. Ja eram o padrao — estao escritos para que uma otimizacao de startup
+  bem-intencionada no futuro nao reabra o problema.
+- O `.pdb` saiu do instalador e passou a ir anexado ao release.
+- Nada mais e escrito em `%TEMP%`. A varredura do Battle.net copiava o `product.db` para la com
+  nome aleatorio; foi para `%LocalAppData%\RenoDXLauncher\cache`.
+- O `User-Agent` deixou de comecar com `Mozilla/5.0`. O `Referer` do reshade.me fica: e exigido
+  pelo servidor.
+
+### Verificacao
+
+`tools/av-selfcheck.ps1` roda no CI a cada push e antes de cada release: forma do publish,
+executavel inesperado no payload, metadata de PE, Authenticode, entropia de secao, manifesto,
+varredura do Defender, VirusTotal, e hashes.
+
+Dois testes fazem trabalho de verdade: um instala silenciosamente numa pasta temporaria, roda o
+binario instalado e desinstala conferindo que nao sobrou nada; o outro varre o codigo-fonte
+atras de API de injecao ou persistencia (`WriteProcessMemory`, `CreateRemoteThread`,
+`SetWindowsHookEx`, servico, tarefa agendada) e reprova o build se alguma aparecer.
+
+O que nao pode ser verificado sai como `SKIP`, nunca `PASS`.
+
+### Release
+
+`publish` -> assina o `RenoDXLauncher.exe` -> monta o instalador -> assina o instalador. O
+instalador precisa ser montado depois do exe assinado, senao o binario que fica no disco do
+usuario — o que o antivirus dele escaneia todo dia — seria o nao assinado.
+
+O Inno Setup e baixado no CI com versao e SHA-256 fixados, e o `dotnet publish` recebe a versao
+da tag, para o PE nao divergir do que o instalador anuncia.
+
 ## v1.11.2
 
 ### Pasta adicionada a mao agora e reconhecida pelo jogo, nao pelo nome da pasta

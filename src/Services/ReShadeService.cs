@@ -2,6 +2,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using RenoDXLauncher.Localization;
 
 namespace RenoDXLauncher.Services;
 
@@ -16,6 +17,24 @@ public partial class ReShadeService
 {
     public const string PinnedVersion = "6.7.3";
     private static string StageDir(string version) => Path.Combine(AppPaths.DataDir, "reshade", version);
+
+    /// <summary>
+    /// SHA-256 do certificado que assina os instaladores do ReShade
+    /// (CN=ReShade, E=info@reshade.me — auto-assinado, valido de 2019 ate 2039).
+    ///
+    /// Fixamos o CERTIFICADO e nao o hash do arquivo: o hash muda a cada versao do ReShade
+    /// e viraria manutencao eterna; a identidade de quem assina nao muda.
+    ///
+    /// Isso funciona porque o ZIP que o instalador carrega anexado fica ANTES da tabela de
+    /// certificado do PE, e o Authenticode faz digest de tudo menos da propria tabela —
+    /// conferido na pratica: alterar um unico byte dentro do ZIP muda o status de
+    /// "raiz nao confiavel" para HashMismatch. Ou seja, validar a assinatura do setup.exe
+    /// prova tambem a integridade das DLLs extraidas de dentro dele.
+    /// </summary>
+    public const string ReShadeCertSha256 = "445802BCB04E18E4EE6AADC00FB79AC39A17CB5F57B2B34DD69FED9383395790";
+
+    private static readonly string ThisVersion =
+        System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0";
 
     [GeneratedRegex(@"/downloads/ReShade_Setup_([\d.]+)_Addon\.exe")]
     private static partial Regex SetupLinkRegex();
@@ -43,13 +62,20 @@ public partial class ReShadeService
         }
 
         using var http = new HttpClient();
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 RenoDXLauncher/1.0");
+        // User-Agent proprio, e nao "Mozilla/5.0 ...": se passar por navegador e browser
+        // impersonation, um sinal que analista de antivirus pontua, e nao compra nada —
+        // conferido que o reshade.me responde 200 ao download com este UA.
+        // O Referer, ao contrario, e exigido pelo servidor do reshade.me (protecao contra
+        // hotlink); sem ele o download e recusado. Fica, com o porque escrito aqui para
+        // ninguem ler como evasao.
+        http.DefaultRequestHeaders.UserAgent.ParseAdd(
+            $"RenoDXLauncher/{ThisVersion} (+https://github.com/xdzleo/renodx-launcher)");
         http.DefaultRequestHeaders.Referrer = new Uri("https://reshade.me");
 
         string version = PinnedVersion;
         try
         {
-            progress?.Report("Consultando versão do ReShade...");
+            progress?.Report(L.T("Install_ReShade_CheckingVersion"));
             var html = await http.GetStringAsync("https://reshade.me");
             var m = SetupLinkRegex().Match(html);
             if (m.Success) version = m.Groups[1].Value;
@@ -60,7 +86,7 @@ public partial class ReShadeService
         if (File.Exists(Path.Combine(stage, "ReShade64.dll"))
             && File.Exists(Path.Combine(stage, "ReShade32.dll"))) return version;
 
-        progress?.Report($"Baixando ReShade {version} (addon support)...");
+        progress?.Report(L.T("Install_ReShade_Downloading", version));
         var url = $"https://reshade.me/downloads/ReShade_Setup_{version}_Addon.exe";
         byte[] exe;
         try
@@ -72,16 +98,39 @@ public partial class ReShadeService
             exe = await http.GetByteArrayAsync($"https://static.reshade.me/downloads/ReShade_Setup_{version}_Addon.exe");
         }
         if (exe.Length < 1024 || exe[0] != 'M' || exe[1] != 'Z')
-            throw new InvalidOperationException("Download do ReShade inválido (não é um executável).");
+            throw new InvalidOperationException(L.T("Error_ReShade_NotExecutable"));
+
+        // Prova de origem ANTES de extrair qualquer coisa. Sem esta etapa, o que o launcher
+        // faz e "baixa um executavel da internet e usa o binario de dentro" — a descricao
+        // literal de um dropper. Com ela, e "instala um artefato assinado pelo autor do
+        // ReShade", que e verificavel por quem estiver do outro lado de uma disputa de
+        // falso-positivo. A checagem antiga (ProductName do PE) nao servia para isso:
+        // ProductName e campo de recurso editavel, qualquer um escreve "ReShade" nele.
+        // WinVerifyTrust precisa de caminho em disco, e o arquivo vai para a area do
+        // proprio app — nunca %TEMP%, que e onde regra de "binario suspeito" mora.
+        Directory.CreateDirectory(AppPaths.CacheDir);
+        var setupPath = Path.Combine(AppPaths.CacheDir, $"ReShade_Setup_{version}_Addon.exe");
+        await File.WriteAllBytesAsync(setupPath, exe);
+        try
+        {
+            progress?.Report(L.T("Install_ReShade_VerifyingSignature"));
+            if (!Authenticode.IsSignedBy(setupPath, ReShadeCertSha256, out var detail))
+                throw new InvalidOperationException(L.T("Error_ReShade_Signature", detail));
+            Log.Info($"ReShade {version}: assinatura conferida — {detail}");
+        }
+        finally
+        {
+            try { File.Delete(setupPath); } catch { }
+        }
 
         // The setup exe carries a plain ZIP appended after the PE image. Internal offsets are
         // relative to the ZIP's own start, so compute the base from the End-Of-Central-Directory
         // record instead of trusting the first local-header signature.
         long zipStart = FindZipBase(exe);
         if (zipStart < 0)
-            throw new InvalidOperationException("Assinatura ZIP não encontrada no instalador do ReShade.");
+            throw new InvalidOperationException(L.T("Error_ReShade_ArchiveNotFound"));
 
-        progress?.Report("Extraindo ReShade64.dll / ReShade32.dll...");
+        progress?.Report(L.T("Install_ReShade_Extracting"));
         // extract to a temp dir first so a failed run can never look like a valid stage
         var tempStage = stage + ".tmp";
         if (Directory.Exists(tempStage)) Directory.Delete(tempStage, recursive: true);
@@ -99,7 +148,7 @@ public partial class ReShadeService
             var product = File.Exists(path)
                 ? System.Diagnostics.FileVersionInfo.GetVersionInfo(path).ProductName : null;
             if (product?.Contains("ReShade", StringComparison.OrdinalIgnoreCase) != true)
-                throw new InvalidOperationException($"{dll} extraída não se identifica como ReShade — download descartado.");
+                throw new InvalidOperationException(L.T("Error_ReShade_DllNotReShade", dll));
         }
         if (Directory.Exists(stage)) Directory.Delete(stage, recursive: true);
         Directory.Move(tempStage, stage);
@@ -154,13 +203,13 @@ public partial class ReShadeService
         string? dllNameOverride, IProgress<string>? progress = null)
     {
         if (AddonService.IsGameRunning(targetDir))
-            return new DeployResult(false, "O jogo está aberto — feche-o antes de instalar.");
+            return new DeployResult(false, L.T("Error_GameRunning"));
         var pe = PeUtils.Inspect(exePath, readImports: false);
         bool is64 = pe?.Is64Bit ?? true;
         var version = await ProvisionAsync(progress);
         var source = Path.Combine(StageDir(version), is64 ? "ReShade64.dll" : "ReShade32.dll");
         if (!File.Exists(source))
-            return new DeployResult(false, $"ReShade{(is64 ? 64 : 32)}.dll não disponível no cache local.");
+            return new DeployResult(false, L.T("Error_ReShade_DllMissing", Path.GetFileName(source)));
 
         var dllName = PickDllName(exePath, apiOverride, dllNameOverride);
         var target = Path.Combine(targetDir, dllName);
@@ -173,11 +222,10 @@ public partial class ReShadeService
             var product = existing?.ProductName;
             if (product?.Contains("ReShade", StringComparison.OrdinalIgnoreCase) != true)
                 return new DeployResult(false,
-                    $"Já existe um {dllName} nessa pasta que não é ReShade ({product ?? "sem identificação"}). " +
-                    "Não vou sobrescrever — se for de outro mod (dxvk/ENB/wrapper), remova ou renomeie manualmente.");
+                    L.T("Error_ReShade_ProxyConflict", dllName, product ?? L.T("Common_Unidentified")));
         }
 
-        progress?.Report($"Instalando ReShade como {dllName}...");
+        progress?.Report(L.T("Install_ReShade_Deploying", dllName));
         File.Copy(source, target, overwrite: true);
 
         // minimal ReShade.ini (RHI template): disable built-in addons that cost perf, esp. DX12
@@ -188,7 +236,7 @@ public partial class ReShadeService
             ini.Set("OVERLAY", "TutorialProgress", "4");
         ini.Save();
 
-        return new DeployResult(true, $"ReShade {version} instalado como {dllName}.", dllName);
+        return new DeployResult(true, L.T("Install_ReShade_Done", version, dllName), dllName);
     }
 
     /// <summary>Detect a ReShade proxy DLL already present in a dir.</summary>

@@ -1,7 +1,8 @@
-<Window x:Class="RenoDXLauncher.ProfileWindow"
+﻿<Window x:Class="RenoDXLauncher.ProfileWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Meu monitor" Height="600" Width="560"
+        xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
+        Title="{loc:Tr Profile_Title}" Height="600" Width="560"
         Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True">
     <Border Background="{StaticResource PanelBrush}" CornerRadius="12" BorderThickness="1"
@@ -18,9 +19,7 @@
                               Stretch="Uniform" Width="19" Height="19"/>
                     </Border>
                     <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="Perfil HDR do seu monitor" Style="{StaticResource H1}" FontSize="17"/>
-                        <TextBlock Style="{StaticResource Caption}" Margin="0,2,0,0"
-                                   Text="Aplicado nos jogos ao instalar um mod, ou pelo botão “Meu perfil”."/>
+                        <TextBlock Text="{loc:Tr Profile_Header}" Style="{StaticResource H1}" FontSize="17"/>
                     </StackPanel>
                 </StackPanel>
                 <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,18,0,18"/>
@@ -29,10 +28,17 @@
             <!-- footer -->
             <StackPanel DockPanel.Dock="Bottom">
                 <CheckBox x:Name="ApplyOnInstall" Margin="0,18,0,0"
-                          Content="Aplicar este perfil automaticamente ao instalar um mod"/>
+                          Content="{loc:Tr Profile_ApplyOnInstall}"/>
+                <DockPanel Margin="0,16,0,0">
+                    <TextBlock Text="{loc:Tr Settings_Language}" Style="{StaticResource H2}"
+                               VerticalAlignment="Center"/>
+                    <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" MinWidth="168"
+                              HorizontalAlignment="Right" SelectionChanged="OnLanguageChanged"
+                              DisplayMemberPath="Nome" SelectedValuePath="Tag"/>
+                </DockPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
-                    <Button Content="Cancelar" MinWidth="100" Margin="0,0,8,0" Click="OnCancel"/>
-                    <Button Content="Salvar" MinWidth="118" Style="{StaticResource AccentButton}" Click="OnSave"/>
+                    <Button Content="{loc:Tr Common_Cancel}" MinWidth="100" Margin="0,0,8,0" Click="OnCancel"/>
+                    <Button Content="{loc:Tr Common_Save}" MinWidth="118" Style="{StaticResource AccentButton}" Click="OnSave"/>
                 </StackPanel>
             </StackPanel>
 
@@ -43,10 +49,9 @@
                         <TextBlock x:Name="PeakText" FontWeight="SemiBold" FontSize="12"
                                    Foreground="{StaticResource AccentBrush}"/>
                     </Border>
-                    <TextBlock Text="Brilho máximo do monitor" Style="{StaticResource H2}"/>
+                    <TextBlock Text="{loc:Tr Profile_PeakNits_Label}" Style="{StaticResource H2}"/>
                 </DockPanel>
-                <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0"
-                           Text="Não é gosto: use o ponto de clipping do app Calibração de HDR do Windows."/>
+                <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0" TextWrapping="Wrap" Text="{loc:Tr Profile_PeakNits_Hint}"/>
                 <Slider x:Name="PeakSlider" Minimum="48" Maximum="4000" TickFrequency="10"
                         IsSnapToTickEnabled="True" ValueChanged="OnAnyValueChanged" Margin="0,8,0,6"/>
                 <UniformGrid Columns="7">
@@ -66,10 +71,9 @@
                         <TextBlock x:Name="GameText" FontWeight="SemiBold" FontSize="12"
                                    Foreground="{StaticResource AccentBrush}"/>
                     </Border>
-                    <TextBlock Text="Brilho do jogo (paper white)" Style="{StaticResource H2}"/>
+                    <TextBlock Text="{loc:Tr Profile_GameNits_Label}" Style="{StaticResource H2}"/>
                 </DockPanel>
-                <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0"
-                           Text="Padrão 203 nits (norma BT.2408). Sala clara: 250–300. Sala escura: 100–200."/>
+                <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0" TextWrapping="Wrap" Text="{loc:Tr Profile_GameNits_Hint}"/>
                 <Slider x:Name="GameSlider" Minimum="48" Maximum="500" TickFrequency="1"
                         IsSnapToTickEnabled="True" ValueChanged="OnAnyValueChanged" Margin="0,8,0,0"/>
 
@@ -80,10 +84,8 @@
                         <TextBlock x:Name="UiText" FontWeight="SemiBold" FontSize="12"
                                    Foreground="{StaticResource AccentBrush}"/>
                     </Border>
-                    <TextBlock Text="Brilho da interface (HUD)" Style="{StaticResource H2}"/>
+                    <TextBlock Text="{loc:Tr Profile_UiNits_Label}" Style="{StaticResource H2}"/>
                 </DockPanel>
-                <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0"
-                           Text="Recomendado: igual ao brilho do jogo (203)."/>
                 <Slider x:Name="UiSlider" Minimum="48" Maximum="500" TickFrequency="1"
                         IsSnapToTickEnabled="True" ValueChanged="OnAnyValueChanged" Margin="0,8,0,0"/>
             </StackPanel>

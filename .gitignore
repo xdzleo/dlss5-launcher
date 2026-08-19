@@ -2,4 +2,7 @@ bin/
 obj/
 app/
 out/
+dist/
+publish/
 *.user
+__pycache__/

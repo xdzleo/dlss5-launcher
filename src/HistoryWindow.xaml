@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:svc="clr-namespace:RenoDXLauncher.Services"
-        Title="Histórico do mod" Height="640" Width="720" MinWidth="520" MinHeight="420"
+        xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
+        Title="{loc:Tr History_Title}" Height="640" Width="720" MinWidth="520" MinHeight="420"
         Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
         Icon="Assets/app.png">
     <DockPanel>
@@ -10,12 +11,12 @@
                 BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,0,0,1">
             <DockPanel>
                 <Button DockPanel.Dock="Right" Padding="12,8" Click="OnOpenWeb" VerticalAlignment="Center"
-                        ToolTip="Abrir o histórico completo no GitHub"
-                        AutomationProperties.Name="Abrir no GitHub">
+                        ToolTip="{loc:Tr History_OpenWeb_Tooltip}"
+                        AutomationProperties.Name="{loc:Tr History_OpenWeb_Button}">
                     <StackPanel Orientation="Horizontal">
                         <Path Data="{StaticResource IconGlobe}" Fill="{StaticResource TextBrush}"
                               Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
-                        <TextBlock Text="Ver no GitHub" Margin="7,0,0,0" FontSize="12"
+                        <TextBlock Text="{loc:Tr History_OpenWeb_Button}" Margin="7,0,0,0" FontSize="12"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -29,8 +30,8 @@
         <Border DockPanel.Dock="Bottom" Background="{StaticResource PanelBrush}" Padding="22,12"
                 BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,1,0,0">
             <DockPanel>
-                <Button DockPanel.Dock="Right" Content="Fechar" MinWidth="100" Padding="14,8"
-                        Click="OnClose" AutomationProperties.Name="Fechar historico"/>
+                <Button DockPanel.Dock="Right" Content="{loc:Tr Common_Close}" MinWidth="100" Padding="14,8"
+                        Click="OnClose" AutomationProperties.Name="{loc:Tr History_Close_AutomationName}"/>
                 <TextBlock x:Name="FooterText" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>

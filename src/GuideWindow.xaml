@@ -1,7 +1,8 @@
 <Window x:Class="RenoDXLauncher.GuideWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Guia HDR" Height="740" Width="660" MinWidth="520"
+        xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
+        Title="{loc:Tr Guide_Window_Title}" Height="740" Width="660" MinWidth="520"
         Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner">
     <Window.Resources>
         <Style x:Key="StepNum" TargetType="Border">
@@ -29,9 +30,9 @@
                           Stretch="Uniform" Width="20" Height="20"/>
                 </Border>
                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="Checklist HDR" Style="{StaticResource H1}"/>
+                    <TextBlock Text="{loc:Tr Guide_Header_Title}" Style="{StaticResource H1}"/>
                     <TextBlock Style="{StaticResource Caption}" Margin="0,2,0,0"
-                               Text="Faça isso uma vez e todos os jogos ficam certos."/>
+                               Text="{loc:Tr Guide_Header_Subtitle}"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -45,9 +46,9 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Margin="14,0,0,0" MaxWidth="520">
-                        <TextBlock Text="Ligue o HDR do Windows ANTES de abrir o jogo" Style="{StaticResource H2}"/>
+                        <TextBlock Text="{loc:Tr Guide_Step1_Title}" Style="{StaticResource H2}"/>
                         <TextBlock Style="{StaticResource StepBody}"
-                                   Text="Atalho: Win + Alt + B. A troca automática não funciona com alguns mods."/>
+                                   Text="{loc:Tr Guide_Step1_Body}"/>
                     </StackPanel>
                 </StackPanel>
                 <!-- 2 -->
@@ -57,9 +58,9 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Margin="14,0,0,0" MaxWidth="520">
-                        <TextBlock Text="Desligue AutoHDR e RTX HDR" Style="{StaticResource H2}"/>
+                        <TextBlock Text="{loc:Tr Guide_Step2_Title}" Style="{StaticResource H2}"/>
                         <TextBlock Style="{StaticResource StepBody}"
-                                   Text="Imagem lavada ou estourada é tonemapping duplo. AutoHDR: Configurações → Sistema → Vídeo → HDR. RTX HDR: NVIDIA App → Graphics."/>
+                                   Text="{loc:Tr Guide_Step2_Body}"/>
                     </StackPanel>
                 </StackPanel>
                 <!-- 3 -->
@@ -69,9 +70,9 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Margin="14,0,0,0" MaxWidth="520">
-                        <TextBlock Text="Rode o app “Calibração de HDR do Windows” uma vez" Style="{StaticResource H2}"/>
+                        <TextBlock Text="{loc:Tr Guide_Step3_Title}" Style="{StaticResource H2}"/>
                         <TextBlock Style="{StaticResource StepBody}"
-                                   Text="O ponto onde o padrão desaparece é o brilho máximo real do seu monitor — use esse número em “Meu monitor”. Em TVs: modo HGIG ligado e Dynamic Tone Mapping desligado."/>
+                                   Text="{loc:Tr Guide_Step3_Body}"/>
                     </StackPanel>
                 </StackPanel>
                 <!-- 4 -->
@@ -81,9 +82,9 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Margin="14,0,0,0" MaxWidth="520">
-                        <TextBlock Text="Valores recomendados" Style="{StaticResource H2}"/>
+                        <TextBlock Text="{loc:Tr Guide_Step4_Title}" Style="{StaticResource H2}"/>
                         <TextBlock Style="{StaticResource StepBody}"
-                                   Text="Brilho máximo: o valor real do monitor (OLED ~800–1000, miniLED 1000–1500).&#10;Brilho do jogo (paper white): 203 nits; 100–300 conforme a luz do ambiente.&#10;Brilho da interface: 203, igual ao do jogo.&#10;Tone mapper e gamma: deixe no padrão do mod — foi calibrado por jogo."/>
+                                   Text="{loc:Tr Guide_Step4_Body}"/>
                     </StackPanel>
                 </StackPanel>
                 <!-- 5 -->
@@ -93,9 +94,9 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel Margin="14,0,0,0" MaxWidth="520">
-                        <TextBlock Text="Dentro do jogo" Style="{StaticResource H2}"/>
+                        <TextBlock Text="{loc:Tr Guide_Step5_Title}" Style="{StaticResource H2}"/>
                         <TextBlock Style="{StaticResource StepBody}"
-                                   Text="O overlay do ReShade abre com a tecla Home; o RenoDX fica na aba Add-ons. Se editar aqui no launcher com o jogo aberto, mova o slider “Preset” para 2 e volte para 1 no overlay para recarregar."/>
+                                   Text="{loc:Tr Guide_Step5_Body}"/>
                     </StackPanel>
                 </StackPanel>
 
@@ -106,9 +107,9 @@
                         <Path Data="{StaticResource IconBlock}" Fill="#FF9E9E" Stretch="Uniform"
                               Width="18" Height="18" VerticalAlignment="Top" Margin="0,2,0,0"/>
                         <StackPanel Margin="12,0,0,0" MaxWidth="520">
-                            <TextBlock Text="Anti-cheat (jogos online)" Style="{StaticResource H2}" Foreground="#FFC9C9"/>
+                            <TextBlock Text="{loc:Tr Guide_AntiCheat_Title}" Style="{StaticResource H2}" Foreground="#FFC9C9"/>
                             <TextBlock Style="{StaticResource StepBody}" Foreground="#F0B5B5"
-                                       Text="O ReShade com suporte a add-ons é uma build NÃO assinada. Em jogos com EAC/BattlEye (Elden Ring, GTA Online...) pode dar banimento. Jogue offline nesses casos — o launcher detecta e avisa antes de instalar."/>
+                                       Text="{loc:Tr Guide_AntiCheat_Body}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -117,15 +118,15 @@
                 <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush2}"
                         BorderThickness="1" CornerRadius="10" Padding="14,12">
                     <StackPanel>
-                        <TextBlock Text="Conflitos conhecidos" Style="{StaticResource H2}"/>
+                        <TextBlock Text="{loc:Tr Guide_Conflicts_Title}" Style="{StaticResource H2}"/>
                         <TextBlock Style="{StaticResource StepBody}"
-                                   Text="Special K não é suportado junto com RenoDX.&#10;Outro dxgi.dll na pasta (ENB, dxvk...): o launcher detecta e não sobrescreve.&#10;Mods genéricos (Unreal/Unity): evite fullscreen exclusivo; ajustes de “Upgrade” podem exigir reiniciar o jogo."/>
+                                   Text="{loc:Tr Guide_Conflicts_Body}"/>
                     </StackPanel>
                 </Border>
 
                 <TextBlock Style="{StaticResource Caption}" Margin="0,18,0,0" FontSize="11"
                            Foreground="{StaticResource TextFaintBrush}"
-                           Text="Fontes: wiki do RenoDX · hdrmods.com · dados por jogo do projeto RHI (GPL-3.0) · ITU-R BT.2408."/>
+                           Text="{loc:Tr Guide_Sources}"/>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

@@ -1,0 +1,1737 @@
+{
+  "App_Name": {
+    "en": "RenoDX Launcher",
+    "note": "Nome do produto: nao traduzir.",
+    "pt-BR": "RenoDX Launcher"
+  },
+  "Cli_Add_AlreadyRegistered": {
+    "en": "Folder was already registered: {0}",
+    "note": "pt: \"Pasta já estava registrada: {0}\".",
+    "pt-BR": "Pasta já estava registrada: {0}"
+  },
+  "Cli_Add_FolderMissing": {
+    "en": "Folder does not exist: {0}",
+    "note": "pt: \"Pasta não existe: {0}\".",
+    "pt-BR": "Pasta não existe: {0}"
+  },
+  "Cli_Add_ModFound": {
+    "en": "Mod: {0} (slug {1}, by {2})",
+    "note": "slug e termo tecnico, mantido nos dois idiomas.",
+    "pt-BR": "Mod: {0} (slug {1}, por {2})"
+  },
+  "Cli_Add_NamesTried": {
+    "en": "Names tried: {0}",
+    "pt-BR": "Nomes tentados: {0}"
+  },
+  "Cli_Add_NoModMatch": {
+    "en": "No mod in the RenoDX catalog matches this name.",
+    "note": "pt: \"Nenhum mod do catálogo RenoDX casa com esse nome.\"",
+    "pt-BR": "Nenhum mod do catalogo RenoDX casa com esse nome."
+  },
+  "Cli_Add_RecognizedAs": {
+    "en": "Recognized as: {0}",
+    "pt-BR": "Reconhecida como: {0}"
+  },
+  "Cli_Add_Registered": {
+    "en": "Folder registered: {0}",
+    "pt-BR": "Pasta registrada: {0}"
+  },
+  "Cli_Arg_Folder": {
+    "en": "<folder>",
+    "note": "Metavariavel.",
+    "pt-BR": "<pasta>"
+  },
+  "Cli_Arg_Game": {
+    "en": "<game>",
+    "note": "Metavariavel do help e das mensagens de uso. Montada em codigo junto do nome do comando, que fica literal.",
+    "pt-BR": "<jogo>"
+  },
+  "Cli_Arg_KeyValue": {
+    "en": "key=value",
+    "note": "Metavariavel.",
+    "pt-BR": "chave=valor"
+  },
+  "Cli_Check_Summary": {
+    "en": "installed: {0} · updates available: {1}",
+    "note": "pt: \"instalados: {0} · com atualização: {1}\". Rotulo antes do numero, imune a plural.",
+    "pt-BR": "instalados: {0} · com atualização: {1}"
+  },
+  "Cli_Check_Unknown": {
+    "en": "cannot check",
+    "note": "pt: \"não dá para verificar\".",
+    "pt-BR": "não dá para verificar"
+  },
+  "Cli_Check_UpToDate": {
+    "en": "up to date",
+    "pt-BR": "atualizado"
+  },
+  "Cli_Check_UpdateAvailable": {
+    "en": "update available",
+    "note": "pt: \"atualização disponível\".",
+    "pt-BR": "atualização disponível"
+  },
+  "Cli_Doctor_Catalog_Summary": {
+    "en": "{0} entries ({1} ms), {2} with download, {3} with Steam appid",
+    "note": "Steam appid e termo tecnico.",
+    "pt-BR": "{0} entradas ({1} ms), {2} com download, {3} com Steam appid"
+  },
+  "Cli_Doctor_Header": {
+    "en": "=== {0} · diagnostics ===",
+    "note": "pt: \"=== {0} · diagnóstico ===\". {0} = App_Name.",
+    "pt-BR": "=== {0} · diagnóstico ==="
+  },
+  "Cli_Doctor_Label_Catalog": {
+    "en": "catalog:",
+    "note": "pt: \"catálogo:\". Alinhado em 12.",
+    "pt-BR": "catalogo:"
+  },
+  "Cli_Doctor_Label_Data": {
+    "en": "data:",
+    "note": "Rotulo de coluna, alinhado em 12.",
+    "pt-BR": "dados:"
+  },
+  "Cli_Doctor_Label_Log": {
+    "en": "log:",
+    "note": "Alinhado em 12.",
+    "pt-BR": "log:"
+  },
+  "Cli_Doctor_Label_Profile": {
+    "en": "profile:",
+    "note": "Alinhado em 12.",
+    "pt-BR": "perfil:"
+  },
+  "Cli_Doctor_Label_Scanners": {
+    "en": "scanners:",
+    "note": "Termo tecnico, igual nos dois idiomas.",
+    "pt-BR": "scanners:"
+  },
+  "Cli_Doctor_Pins": {
+    "en": "pinned exes: {0} · manual folders: {1}",
+    "pt-BR": "exes fixados: {0} · pastas manuais: {1}"
+  },
+  "Cli_Doctor_ReShadeCache": {
+    "en": "ReShade in cache: {0}",
+    "pt-BR": "ReShade em cache: {0}"
+  },
+  "Cli_Doctor_ReShadeCache_None": {
+    "en": "none",
+    "pt-BR": "nenhum"
+  },
+  "Cli_Doctor_ScannerRow": {
+    "en": "{0,3} games  ({1} ms)",
+    "note": "O \",3\" e alinhamento do string.Format, preserve.",
+    "pt-BR": "{0,3} jogos  ({1} ms)"
+  },
+  "Cli_Doctor_Scanner_Folders": {
+    "en": "Folders",
+    "note": "Unico nome de scanner traduzivel; Steam, Epic, GOG, Xbox, Ubisoft, EA, Battle.net e Rockstar sao nomes proprios.",
+    "pt-BR": "Pastas"
+  },
+  "Cli_Error_ExeNotFound": {
+    "en": "Could not find the game executable. Run exe {0} to see the candidates.",
+    "note": "pt: \"Não encontrei o executável do jogo...\". exe e nome de comando; {0} = Cli_Arg_Game.",
+    "pt-BR": "Não encontrei o executável do jogo. Rode exe {0} para ver os candidatos."
+  },
+  "Cli_Error_GameAmbiguous": {
+    "en": "\"{0}\" is ambiguous: {1}. Use a more specific part of the name.",
+    "note": "pt: \"\\\"{0}\\\" é ambíguo: {1}. Use um trecho mais específico do nome.\" {1} = lista de nomes.",
+    "pt-BR": "\"{0}\" e ambiguo: {1}. Use um trecho mais especifico do nome."
+  },
+  "Cli_Error_GameNotFound": {
+    "en": "No game matches \"{0}\". Run list to see what was detected.",
+    "note": "list e nome de comando, nao traduzir.",
+    "pt-BR": "Nenhum jogo casa com \"{0}\". Rode list para ver os detectados."
+  },
+  "Cli_Error_GameRequired": {
+    "en": "Specify the game name.",
+    "pt-BR": "Informe o nome do jogo."
+  },
+  "Cli_Error_ModNotInstalled": {
+    "en": "No mod installed for this game. Run install first.",
+    "note": "pt: \"Mod não instalado nesse jogo. Rode install antes.\" Usada em settings, set e enable/disable.",
+    "pt-BR": "Mod não instalado nesse jogo. Rode install antes."
+  },
+  "Cli_Error_NoSettings": {
+    "en": "Mod {0} has no settings the launcher can adjust.",
+    "note": "pt: \"O mod {0} não tem configurações ajustáveis pelo launcher.\" Substitui \"sem manifesto de configuracoes\", que nao dizia nada ao usuario.",
+    "pt-BR": "O mod {0} não tem configurações ajustáveis pelo launcher."
+  },
+  "Cli_Error_Unhandled": {
+    "en": "Error: {0}",
+    "pt-BR": "Erro: {0}"
+  },
+  "Cli_Error_UnknownCommand": {
+    "en": "Unknown command: {0}",
+    "note": "O help e impresso logo abaixo, entao a mensagem nao repete a instrucao.",
+    "pt-BR": "Comando desconhecido: {0}"
+  },
+  "Cli_Exe_NoCandidates": {
+    "en": "No candidate .exe in this folder.",
+    "pt-BR": "Nenhum .exe candidato nessa pasta."
+  },
+  "Cli_Exe_NoneFound": {
+    "en": "(no .exe found)",
+    "pt-BR": "(nenhum .exe encontrado)"
+  },
+  "Cli_Help_Add": {
+    "en": "Register a game folder the stores do not know about",
+    "note": "pt: \"que as lojas não conhecem\".",
+    "pt-BR": "Registra uma pasta de jogo que as lojas não conhecem"
+  },
+  "Cli_Help_Check": {
+    "en": "Check for updates to installed mods",
+    "note": "pt com acento no resx: \"Verifica atualização dos mods instalados\".",
+    "pt-BR": "Verifica atualização dos mods instalados"
+  },
+  "Cli_Help_Disable": {
+    "en": "Disable the mod",
+    "pt-BR": "Desativa o mod"
+  },
+  "Cli_Help_Doctor": {
+    "en": "Full diagnostics: why a game is not showing up",
+    "note": "pt: \"Diagnóstico completo: por que um jogo não aparece\".",
+    "pt-BR": "Diagnóstico completo: por que um jogo não aparece"
+  },
+  "Cli_Help_Enable": {
+    "en": "Enable the mod",
+    "pt-BR": "Ativa o mod"
+  },
+  "Cli_Help_Exe": {
+    "en": "List candidate .exe files in pick order, with bitness and size",
+    "pt-BR": "Lista os .exe candidatos na ordem de escolha, com bits e tamanho"
+  },
+  "Cli_Help_Header": {
+    "en": "{0} — command line mode",
+    "note": "{0} = App_Name (reuso da chave existente).",
+    "pt-BR": "{0} — modo linha de comando"
+  },
+  "Cli_Help_Install": {
+    "en": "Install or update ReShade and the addon",
+    "pt-BR": "Instala ou atualiza o ReShade e o addon"
+  },
+  "Cli_Help_List": {
+    "en": "List detected games and their mod state",
+    "pt-BR": "Lista os jogos detectados e o estado do mod"
+  },
+  "Cli_Help_Match": {
+    "en": "{0} matches any part of the name, case-insensitive. Example:",
+    "note": "pt: \"...sem diferenciar maiúsculas. Exemplo:\". {0} = Cli_Arg_Game.",
+    "pt-BR": "{0} casa com qualquer parte do nome, sem diferenciar maiusculas. Exemplo:"
+  },
+  "Cli_Help_Profile": {
+    "en": "Show or set the monitor nits profile",
+    "note": "nits e termo tecnico, mantido.",
+    "pt-BR": "Mostra ou define o perfil de nits do monitor"
+  },
+  "Cli_Help_Set": {
+    "en": "Write settings; close the game first",
+    "note": "pt: \"Grava configurações; feche o jogo antes\".",
+    "pt-BR": "Grava configurações; feche o jogo antes"
+  },
+  "Cli_Help_Settings": {
+    "en": "Show the mod settings read from ReShade.ini",
+    "note": "pt: \"Mostra as configurações do mod, lidas do ReShade.ini\". ReShade.ini e nome de arquivo.",
+    "pt-BR": "Mostra as configurações do mod, lidas do ReShade.ini"
+  },
+  "Cli_Help_Verify": {
+    "en": "Read ReShade.log and report whether the mod loaded",
+    "note": "pt com acento: \"Lê o ReShade.log e diz se o mod carregou\". ReShade.log e nome de arquivo, nao traduzir.",
+    "pt-BR": "Lê o ReShade.log e diz se o mod carregou"
+  },
+  "Cli_Install_AntiCheat_Abort": {
+    "en": "Aborted: {0} detected. Installing can get your account banned in online play.",
+    "note": "{0} = nome do anticheat (EAC, BattlEye...), vem do scanner, nao traduzir.",
+    "pt-BR": "Cancelado: {0} detectado. Instalar pode banir sua conta em jogo online."
+  },
+  "Cli_Install_AntiCheat_UseGui": {
+    "en": "To take that risk anyway, install from the app window.",
+    "pt-BR": "Se quiser assumir o risco, instale pela janela do aplicativo."
+  },
+  "Cli_Install_Done": {
+    "en": "{0} installed in {1}",
+    "note": "{0} = slug do mod, {1} = pasta.",
+    "pt-BR": "{0} instalado em {1}"
+  },
+  "Cli_Install_NoDirectDownload": {
+    "en": "This game has no mod with a direct download. See the mod page.",
+    "note": "pt: \"Esse jogo não tem mod com download direto. Veja a página do mod.\"",
+    "pt-BR": "Esse jogo não tem mod com download direto. Veja a página do mod."
+  },
+  "Cli_List_Col_Game": {
+    "en": "GAME",
+    "note": "Cabecalho de coluna, largura 42.",
+    "pt-BR": "JOGO"
+  },
+  "Cli_List_Col_Mod": {
+    "en": "MOD",
+    "note": "Ultima coluna, sem largura fixa.",
+    "pt-BR": "MOD"
+  },
+  "Cli_List_Col_Status": {
+    "en": "STATUS",
+    "note": "Largura 11.",
+    "pt-BR": "STATUS"
+  },
+  "Cli_List_Col_Store": {
+    "en": "STORE",
+    "note": "Largura 10.",
+    "pt-BR": "LOJA"
+  },
+  "Cli_List_Summary": {
+    "en": "detected: {0} · with mod: {1} · installed: {2}",
+    "note": "Escrito com rotulo antes do numero para nao quebrar no singular.",
+    "pt-BR": "detectados: {0} · com mod: {1} · instalados: {2}"
+  },
+  "Cli_Loading": {
+    "en": "Loading catalog and scanning for games...",
+    "note": "pt: \"Carregando catálogo e procurando jogos...\". Vai para stderr.",
+    "pt-BR": "Carregando catalogo e procurando jogos..."
+  },
+  "Cli_Mod_DirectDownload": {
+    "en": "direct download available",
+    "note": "pt: \"download direto disponível\". Fragmento juntado por \" · \" em codigo.",
+    "pt-BR": "download direto disponível"
+  },
+  "Cli_Mod_NoDirectDownload": {
+    "en": "no direct download; see the mod page",
+    "note": "pt: \"sem download direto: veja a página do mod\" — acento em \"página\" estava faltando no texto original.",
+    "pt-BR": "sem download direto: veja a página do mod"
+  },
+  "Cli_Mod_Stable": {
+    "en": "stable",
+    "note": "pt: \"estável\".",
+    "pt-BR": "estável"
+  },
+  "Cli_Mod_Wip": {
+    "en": "work in progress",
+    "note": "pt: \"em construção\". Estava em caixa alta (\"EM CONSTRUÇÃO\"); baixado para o mesmo registro do par \"estável\".",
+    "pt-BR": "em construção"
+  },
+  "Cli_Profile_Current": {
+    "en": "{0}  apply-on-install: {1}",
+    "note": "{0} = Cli_Profile_Nits, {1} = Common_Yes/Common_No.",
+    "pt-BR": "{0}  aplicar-ao-instalar: {1}"
+  },
+  "Cli_Profile_Nits": {
+    "en": "peak={0:0} game={1:0} ui={2:0}",
+    "note": "Reusada no comando profile e no doctor. Os {n:0} sao especificadores de formato, preserve-os.",
+    "pt-BR": "pico={0:0} jogo={1:0} ui={2:0}"
+  },
+  "Cli_Profile_Saved": {
+    "en": "Profile saved: {0}",
+    "note": "{0} = Cli_Profile_Nits.",
+    "pt-BR": "Perfil salvo: {0}"
+  },
+  "Cli_Set_DryRun": {
+    "en": "(--dry-run: nothing was written)",
+    "note": "--dry-run e flag, nao traduzir.",
+    "pt-BR": "(--dry-run: nada foi gravado)"
+  },
+  "Cli_Set_InvalidValue": {
+    "en": "Invalid value: {0}. Use a number with a decimal point.",
+    "note": "pt: \"Valor inválido: {0}. Use número com ponto decimal.\" O parse e InvariantCulture, entao o ponto e mesmo obrigatorio.",
+    "pt-BR": "Valor inválido: {0}. Use número com ponto decimal."
+  },
+  "Cli_Set_NothingToWrite": {
+    "en": "Nothing to write. Pass {0} pairs.",
+    "note": "{0} = Cli_Arg_KeyValue.",
+    "pt-BR": "Nada para gravar. Passe pares {0}."
+  },
+  "Cli_Set_UnknownKey": {
+    "en": "Unknown key for this mod: {0}. Run settings to list the valid ones.",
+    "note": "pt: \"...para ver as válidas.\" settings e nome de comando.",
+    "pt-BR": "Chave desconhecida nesse mod: {0}. Rode settings para ver as validas."
+  },
+  "Cli_Set_Written": {
+    "en": "Written.",
+    "pt-BR": "Gravado."
+  },
+  "Cli_Settings_Default": {
+    "en": "(default)",
+    "note": "pt: \"(padrão)\".",
+    "pt-BR": "(padrão)"
+  },
+  "Cli_Settings_DefaultColumn": {
+    "en": "default={0}",
+    "note": "pt: \"padrão={0}\". Coluna alinhada em 16 no codigo.",
+    "pt-BR": "padrão={0}"
+  },
+  "Cli_Status_Available": {
+    "en": "available",
+    "note": "pt com acento no resx: \"disponível\". So rotulo de tela; o token cru \"disponivel\" continua no --json.",
+    "pt-BR": "disponível"
+  },
+  "Cli_Status_Disabled": {
+    "en": "disabled",
+    "pt-BR": "desativado"
+  },
+  "Cli_Status_Enabled": {
+    "en": "enabled",
+    "pt-BR": "ativado"
+  },
+  "Cli_Status_NoMod": {
+    "en": "no mod",
+    "pt-BR": "sem mod"
+  },
+  "Cli_Target": {
+    "en": "Target: {0}",
+    "note": "Usada no add e no set; no set o {0} recebe \"jogo  ->  caminho.ini\" montado em codigo.",
+    "pt-BR": "Alvo: {0}"
+  },
+  "Cli_Toggle_Disabled": {
+    "en": "{0}: mod disabled",
+    "pt-BR": "{0}: mod desativado"
+  },
+  "Cli_Toggle_Enabled": {
+    "en": "{0}: mod enabled",
+    "note": "Estava em caixa alta (ATIVADO); normalizado.",
+    "pt-BR": "{0}: mod ativado"
+  },
+  "Cli_Usage": {
+    "en": "Usage: {0}",
+    "note": "{0} = sintaxe montada em codigo, com o nome do comando literal.",
+    "pt-BR": "Uso: {0}"
+  },
+  "Cli_Verify_LastRun": {
+    "en": "(last entry: {0})",
+    "note": "pt: \"(último registro: {0})\". {0} ja vem formatado como dd/MM/yyyy HH:mm em codigo — o formato de data nao foi traduzido.",
+    "pt-BR": "(último registro: {0})"
+  },
+  "Cli_Verify_NothingInstalled": {
+    "en": "No mod installed to verify. Use install to add one.",
+    "note": "install e nome de comando.",
+    "pt-BR": "Nenhum mod instalado para verificar. Use install para instalar um."
+  },
+  "Common_Add": {
+    "en": "Add",
+    "pt-BR": "Adicionar"
+  },
+  "Common_Cancel": {
+    "en": "Cancel",
+    "note": "Chave Common_* reutilizavel. Provavelmente criada tambem por outro agente — mesmo nome, mesmo texto, nao duplicar no strings.json.",
+    "pt-BR": "Cancelar"
+  },
+  "Common_Close": {
+    "en": "Close",
+    "note": "Chave Common_* porque 'Fechar' se repete em várias janelas. Usada no botão do rodapé.",
+    "pt-BR": "Fechar"
+  },
+  "Common_Continue": {
+    "en": "Continue",
+    "note": "Rotulo padrao do botao de confirmacao quando quem chama nao passa um proprio.",
+    "pt-BR": "Continuar"
+  },
+  "Common_Default": {
+    "en": "Default",
+    "pt-BR": "Padrão"
+  },
+  "Common_DoNot_Prefix": {
+    "en": "DO NOT:",
+    "note": "Substitui os simbolos ⛔ e 🚫 dentro do texto de nota. Antes ficava fixo em pt no dicionario Meaningful; agora resolve por chamada em AdviceService.StripSymbols.",
+    "pt-BR": "NÃO:"
+  },
+  "Common_Enabled": {
+    "en": "Enabled",
+    "note": "Content do CheckBox de opcao booleana do mod (template SettingRow).",
+    "pt-BR": "Ativo"
+  },
+  "Common_GotIt": {
+    "en": "Got it",
+    "note": "Botao unico do aviso so-OK. DialogWindow.Show. Em ingles usei sentence case ('Got it'), que e o que o proprio Windows 11 usa nesse botao de reconhecimento; Title Case ('Got It') soa errado em botao que nao e comando.",
+    "pt-BR": "Entendi"
+  },
+  "Common_History": {
+    "en": "History",
+    "pt-BR": "Histórico"
+  },
+  "Common_NitsValue": {
+    "en": "{0} nits",
+    "note": "Leitura dos tres sliders do ProfileWindow. 'nits' nao traduz; a chave existe so para o idioma poder mudar a posicao/espacamento da unidade. Numero ja vem arredondado do codigo ('0'), entao nada de formato numerico dentro do recurso.",
+    "pt-BR": "{0} nits"
+  },
+  "Common_No": {
+    "en": "No",
+    "note": "pt: \"Não\". Mesma observacao de chave compartilhada.",
+    "pt-BR": "Não"
+  },
+  "Common_Note_Important": {
+    "en": "Important",
+    "note": "Título de callout [!IMPORTANT].",
+    "pt-BR": "Importante"
+  },
+  "Common_Note_Info": {
+    "en": "Note",
+    "note": "Título de callout [!NOTE] e fallback.",
+    "pt-BR": "Nota"
+  },
+  "Common_Note_Tip": {
+    "en": "Tip",
+    "note": "Título de callout [!TIP].",
+    "pt-BR": "Dica"
+  },
+  "Common_Note_Warning": {
+    "en": "Warning",
+    "note": "Título de callout [!WARNING]/[!CAUTION] da wiki. CatalogService.CalloutBlocks.",
+    "pt-BR": "Atenção"
+  },
+  "Common_Open": {
+    "en": "Open",
+    "note": "Rotulo de link de fallback em FillNotes, quando o manifesto nao traz notesUrlLabel.",
+    "pt-BR": "Abrir"
+  },
+  "Common_RecommendedValues": {
+    "en": "Recommended Values",
+    "note": "Common_* porque o mesmo texto aparece em GuideWindow.xaml:84, que e de outro agente: reusar esta chave la.",
+    "pt-BR": "Valores recomendados"
+  },
+  "Common_Refresh": {
+    "en": "Refresh",
+    "note": "IMPORTANTE: em pt e a mesma palavra de Common_Update, mas em en NAO. Esta e recarregar a lista (Refresh).",
+    "pt-BR": "Atualizar"
+  },
+  "Common_Save": {
+    "en": "Save",
+    "note": "Chave Common_* reutilizavel. Mesma observacao de duplicidade que Common_Cancel.",
+    "pt-BR": "Salvar"
+  },
+  "Common_SelectToCopy": {
+    "en": "Select to copy",
+    "note": "ToolTip do bloco monoespacado de nota (trecho de ini, argumento de linha de comando).",
+    "pt-BR": "Selecione para copiar"
+  },
+  "Common_Unidentified": {
+    "en": "unidentified",
+    "note": "Fragmento inline: entra como {1} de Error_ReShade_ProxyConflict quando o PE nao tem ProductName. Minusculo de proposito, aparece dentro de parenteses no meio da frase.",
+    "pt-BR": "sem identificação"
+  },
+  "Common_Update": {
+    "en": "Update",
+    "note": "IMPORTANTE: par da anterior. Esta e atualizar o mod (Update). Se as duas virarem uma chave so, o en quebra.",
+    "pt-BR": "Atualizar"
+  },
+  "Common_Yes": {
+    "en": "Yes",
+    "note": "Chave Common_* — pode ja estar sendo criada por outro arquivo; deve existir uma definicao so.",
+    "pt-BR": "Sim"
+  },
+  "Dialog_Advice_Label": {
+    "en": "RECOMMENDED FOR THIS GAME",
+    "pt-BR": "RECOMENDADO PARA ESTE JOGO"
+  },
+  "Dialog_ApplyProfile_Name": {
+    "en": "Apply My Profile",
+    "pt-BR": "Aplicar meu perfil"
+  },
+  "Dialog_ApplyProfile_Text": {
+    "en": "My Profile",
+    "note": "Rotulo curto do botao; cabe em 1/3 do UniformGrid.",
+    "pt-BR": "Meu perfil"
+  },
+  "Dialog_ApplyProfile_Tooltip": {
+    "en": "Writes your monitor's nits into this game's settings.",
+    "pt-BR": "Escreve os nits do seu monitor nas configurações deste jogo."
+  },
+  "Dialog_DlssFix_Desc": {
+    "en": "Apply only if you see flicker or artifacts.",
+    "pt-BR": "Só use se notar piscadas ou artefatos."
+  },
+  "Dialog_DlssFix_Name": {
+    "en": "DLSS Frame Generation Fix",
+    "pt-BR": "Correção do DLSS Frame Generation"
+  },
+  "Dialog_DlssFix_Title": {
+    "en": "DLSS Frame Generation flickering?",
+    "pt-BR": "DLSS Frame Generation piscando?"
+  },
+  "Dialog_EngineNotes_Desc": {
+    "en": "Rules from the RenoDX wiki that apply to every game on this engine, even when the game's own note does not repeat them.",
+    "note": "O cabecalho do Expander continua vindo do VM (EngineNotesHeader).",
+    "pt-BR": "Regras da wiki do RenoDX que valem para todo jogo deste motor, mesmo quando a nota do jogo não as repete."
+  },
+  "Dialog_Exe_Label": {
+    "en": "GAME EXECUTABLE",
+    "pt-BR": "EXECUTÁVEL DO JOGO"
+  },
+  "Dialog_History_Name": {
+    "en": "Mod History",
+    "pt-BR": "Histórico do mod"
+  },
+  "Dialog_History_Tooltip": {
+    "en": "Every version of this mod, with dates.",
+    "pt-BR": "Todas as versões deste mod, com data."
+  },
+  "Dialog_InstallDir_Label": {
+    "en": "INSTALL FOLDER",
+    "note": "Corrige o \"PASTA DE INSTALACAO\" sem cedilha nem til citado no briefing. Caixa alta e do estilo SectionLabel.",
+    "pt-BR": "PASTA DE INSTALAÇÃO"
+  },
+  "Dialog_Install_Desc": {
+    "en": "Copies ReShade and the RenoDX addon into the folder of the executable above.",
+    "note": "Virou frase, com verbo, no lugar do \"ReShade + addon do RenoDX ...\".",
+    "pt-BR": "Copia o ReShade e o addon do RenoDX para a pasta do executável acima."
+  },
+  "Dialog_Install_Title": {
+    "en": "Install HDR Mod",
+    "note": "Uma chave para o titulo do botao e para o AutomationProperties.Name, que antes divergiam (\"Instalar mod HDR\" x \"Instalar mod\").",
+    "pt-BR": "Instalar mod HDR"
+  },
+  "Dialog_Maintainer_Label": {
+    "en": "CREATED BY",
+    "pt-BR": "CRIADO POR"
+  },
+  "Dialog_Maintainer_Tooltip": {
+    "en": "Opens the author's GitHub profile.",
+    "pt-BR": "Abre o perfil do autor no GitHub."
+  },
+  "Dialog_ModPage": {
+    "en": "Open the mod page",
+    "note": "Corrige o \"Pagina do mod\" sem acento citado no briefing. Comando e OpenNexusCommand, mas nem todo mod e do Nexus, entao o texto continua generico.",
+    "pt-BR": "Abrir a página do mod"
+  },
+  "Dialog_Mod_Stable": {
+    "en": "Stable",
+    "pt-BR": "Estável"
+  },
+  "Dialog_Mod_Unstable": {
+    "en": "Unstable",
+    "pt-BR": "Instável"
+  },
+  "Dialog_Notes_Label": {
+    "en": "HOW TO SET UP THIS GAME",
+    "pt-BR": "COMO AJUSTAR ESTE JOGO"
+  },
+  "Dialog_OpenFolder": {
+    "en": "Open the game folder",
+    "note": "Botao so de icone: a mesma chave serve de ToolTip e de AutomationProperties.Name.",
+    "pt-BR": "Abrir a pasta do jogo"
+  },
+  "Dialog_Prereq_Label": {
+    "en": "BEFORE INSTALLING",
+    "pt-BR": "ANTES DE INSTALAR"
+  },
+  "Dialog_Remove_Desc": {
+    "en": "Deletes the addon from the game folder. Your settings stay in ReShade.ini.",
+    "pt-BR": "Apaga o addon da pasta do jogo. Suas configurações continuam no ReShade.ini."
+  },
+  "Dialog_Remove_Title": {
+    "en": "Remove Mod",
+    "note": "Titulo do botao e AutomationProperties.Name.",
+    "pt-BR": "Remover mod"
+  },
+  "Dialog_Repair_Desc": {
+    "en": "The ReShade build in this folder has no addon support, so the mod cannot load.",
+    "note": "Padronizei \"add-ons\" para \"addon\", termo do glossario.",
+    "pt-BR": "A build do ReShade nesta pasta não tem suporte a addon: o mod não carrega."
+  },
+  "Dialog_Repair_Title": {
+    "en": "Reinstall ReShade",
+    "note": "Titulo do botao e AutomationProperties.Name.",
+    "pt-BR": "Reinstalar o ReShade"
+  },
+  "Dialog_ResetSettings_Name": {
+    "en": "Restore Defaults",
+    "pt-BR": "Restaurar os valores padrão"
+  },
+  "Dialog_SaveSettings_Name": {
+    "en": "Save Settings",
+    "pt-BR": "Salvar configurações"
+  },
+  "Dialog_Settings_Desc": {
+    "en": "Written to the game's ReShade.ini. Close the game before saving.",
+    "note": "Troquei \"Salve com o jogo FECHADO\" (caixa alta gritada) por instrucao na ordem em que a pessoa age.",
+    "pt-BR": "Gravadas no ReShade.ini do jogo. Feche o jogo antes de salvar."
+  },
+  "Dialog_Settings_Title": {
+    "en": "Mod Settings",
+    "pt-BR": "Configurações do mod"
+  },
+  "Dialog_Toggle_Disable_Tooltip": {
+    "en": "Disables without removing: renames the addon.",
+    "pt-BR": "Desativa sem remover: renomeia o addon."
+  },
+  "Dialog_Toggle_Enable_Tooltip": {
+    "en": "Enables the mod in this game.",
+    "note": "Vai num Setter dentro de Style; o estado desativado usa a chave abaixo.",
+    "pt-BR": "Ativa o mod neste jogo."
+  },
+  "Dialog_Toggle_Name": {
+    "en": "Enable or disable the mod",
+    "pt-BR": "Ativar ou desativar o mod"
+  },
+  "Dialog_Update_Action_Name": {
+    "en": "Update Mod",
+    "note": "Botao ambar do cartao de atualizacao. O original dizia \"Instalar ou atualizar mod\", mas esse botao so aparece quando ha update.",
+    "pt-BR": "Atualizar o mod"
+  },
+  "Dialog_Update_Desc": {
+    "en": "The author published a newer build. Updating keeps your settings.",
+    "note": "Cortei \"deste mod\" (redundante dentro do modal do mod) e \"na atualização\".",
+    "pt-BR": "O autor publicou uma build mais nova. Atualizar mantém suas configurações."
+  },
+  "Dialog_Update_Title": {
+    "en": "Update Available",
+    "note": "Title Case no en por ser titulo curto, conforme a regra de maiuscula.",
+    "pt-BR": "Atualização disponível"
+  },
+  "Error_CheckUpdates": {
+    "en": "Update check failed: {0}. Check your connection and try again.",
+    "note": "{0} = ex.Message.",
+    "pt-BR": "Falha ao verificar atualizações: {0}. Verifique a conexão e tente de novo."
+  },
+  "Error_DetailLoad": {
+    "en": "Failed to load this game's details: {0}. Select the game again.",
+    "note": "{0} = ex.Message.",
+    "pt-BR": "Falha ao carregar os detalhes deste jogo: {0}. Selecione o jogo de novo."
+  },
+  "Error_DlssFix_DownloadCorrupt": {
+    "en": "The DLSS fix download is corrupted. Try applying it again.",
+    "pt-BR": "O download da correção do DLSS veio corrompido. Tente aplicar de novo."
+  },
+  "Error_GameRunning": {
+    "en": "The game is running. Close it before continuing.",
+    "note": "Compartilhada: substitui 6 variantes (instalar / instalar-atualizar / ativar-desativar / remover mod / aplicar correcao / remover correcao) nos tres arquivos. O usuario ja sabe o que clicou, entao a cauda por acao nao carregava informacao.",
+    "pt-BR": "O jogo está aberto. Feche-o antes de continuar."
+  },
+  "Error_GameRunning_Reset": {
+    "en": "The game is open. Close it to restore the default values.",
+    "note": "SettingsService.Reset.",
+    "pt-BR": "O jogo está aberto. Feche o jogo para restaurar os valores padrão."
+  },
+  "Error_GameRunning_Save": {
+    "en": "The game is open: the overlay would overwrite your changes. Close the game and try again.",
+    "note": "SettingsService.Write. Chega na tela via DetailStatus e via Cli.cs.",
+    "pt-BR": "O jogo está aberto: o overlay sobrescreveria as alterações. Feche o jogo e tente de novo."
+  },
+  "Error_Install": {
+    "en": "Install failed: {0}. Close the game and try again.",
+    "note": "{0} = ex.Message. Substitui o 'Erro: {msg}' que nao dizia o que fazer.",
+    "pt-BR": "Falha ao instalar: {0}. Feche o jogo e tente de novo."
+  },
+  "Error_Launch": {
+    "en": "Couldn't start the game: {0}. Launch it from the store or run the .exe directly.",
+    "note": "{0} = ex.Message.",
+    "pt-BR": "Falha ao iniciar o jogo: {0}. Abra pela loja ou execute o .exe direto."
+  },
+  "Error_Load": {
+    "en": "Load failed: {0}. Check your connection and click Refresh.",
+    "note": "{0} = ex.Message.",
+    "pt-BR": "Falha ao carregar: {0}. Verifique a conexão e clique em Atualizar."
+  },
+  "Error_Mod_DownloadCorrupt": {
+    "en": "The download of {0} is corrupted. Try installing again.",
+    "note": "{0} = nome do arquivo. Cortei o '(nao e um addon valido)', que so reformulava 'corrompido'.",
+    "pt-BR": "O download de {0} veio corrompido. Tente instalar de novo."
+  },
+  "Error_Mod_NoDirectDownload": {
+    "en": "This mod has no direct download. Get it from its Nexus page.",
+    "note": "Nexus e nome proprio.",
+    "pt-BR": "Este mod não tem download direto. Baixe pela página dele no Nexus."
+  },
+  "Error_Mod_NotInstalled": {
+    "en": "No addon is installed for this game. Install the mod first.",
+    "pt-BR": "Nenhum addon instalado neste jogo. Instale o mod primeiro."
+  },
+  "Error_ReShade_ArchiveNotFound": {
+    "en": "The ReShade installer does not contain the expected files. Try installing again.",
+    "note": "Original dizia 'Assinatura ZIP nao encontrada' — jargao de bytes PK, sem sentido para o usuario final.",
+    "pt-BR": "O instalador do ReShade não contém os arquivos esperados. Tente instalar de novo."
+  },
+  "Error_ReShade_DllMissing": {
+    "en": "{0} is not in the local cache. Try installing again.",
+    "note": "{0} = ReShade64.dll ou ReShade32.dll.",
+    "pt-BR": "{0} não está no cache local. Tente instalar de novo."
+  },
+  "Error_ReShade_DllNotReShade": {
+    "en": "The file {0} extracted from the installer is not from ReShade. Nothing was installed; try again.",
+    "note": "{0} = ReShade64.dll ou ReShade32.dll. Escrito como 'O arquivo {0}' para nao depender do genero do placeholder.",
+    "pt-BR": "O arquivo {0} extraído do instalador não é do ReShade. Nada foi instalado; tente de novo."
+  },
+  "Error_ReShade_NotExecutable": {
+    "en": "The ReShade download is not an executable. Try installing again.",
+    "note": "Antes so dizia o que houve; agora diz o que fazer.",
+    "pt-BR": "O download do ReShade não é um executável. Tente instalar de novo."
+  },
+  "Error_ReShade_ProxyConflict": {
+    "en": "This folder already has a {0} that is not ReShade ({1}) — probably from another mod such as dxvk or ENB. Remove or rename it before installing.",
+    "note": "{0} = nome do dll proxy, {1} = ProductName do PE ou Common_Unidentified. dxvk/ENB sao nomes proprios. Cortei o 'Nao vou sobrescrever', que so repetia o efeito ja implicito.",
+    "pt-BR": "Já existe um {0} nessa pasta que não é ReShade ({1}) — provavelmente de outro mod, como dxvk ou ENB. Remova ou renomeie o arquivo antes de instalar."
+  },
+  "Error_ReShade_Signature": {
+    "en": "The ReShade installer signature does not match ({0}). Nothing was installed. If this persists, check whether an antivirus or proxy is altering the download.",
+    "note": "{0} = detalhe tecnico vindo do Authenticode.IsSignedBy, nao traduzido.",
+    "pt-BR": "A assinatura do instalador do ReShade não confere ({0}). Nada foi instalado. Se persistir, verifique se um antivírus ou proxy está alterando o download."
+  },
+  "Guide_AntiCheat_Body": {
+    "en": "The add-on build of ReShade is unsigned. In games with EAC/BattlEye (Elden Ring, GTA Online) it risks a ban, so play offline. The launcher detects those games and warns you before installing.",
+    "note": "No resx: 'é uma build não assinada' e 'o risco é banimento'. Tirei o NAO em caixa alta e as reticencias depois de GTA Online. Nome de jogo, EAC e BattlEye ficam como estao.",
+    "pt-BR": "O ReShade com suporte a add-ons é uma build não assinada. Em jogos com EAC/BattlEye (Elden Ring, GTA Online) o risco é banimento: jogue offline. O launcher detecta esses jogos e avisa antes de instalar."
+  },
+  "Guide_AntiCheat_Title": {
+    "en": "Anti-cheat (online games)",
+    "pt-BR": "Anti-cheat (jogos online)"
+  },
+  "Guide_Conflicts_Body": {
+    "en": "Special K is not supported alongside RenoDX.\nAnother dxgi.dll in the folder (ENB, dxvk): the launcher detects it and does not overwrite.\nGeneric mods (Unreal/Unity): avoid exclusive fullscreen; \"Upgrade\" changes may require restarting the game.",
+    "note": "Tres linhas, mesma observacao do Guide_Step4_Body: xml:space=\"preserve\" e quebra real. No resx: 'não funciona', 'não sobrescreve', 'genéricos', aspas curvas “Upgrade”. Special K, ENB, dxvk, dxgi.dll, Unreal, Unity e o nome da secao Upgrade nao traduzem.",
+    "pt-BR": "Special K não funciona junto com o RenoDX.\nOutro dxgi.dll na pasta (ENB, dxvk): o launcher detecta e não sobrescreve.\nMods genéricos (Unreal/Unity): evite fullscreen exclusivo; ajustes de “Upgrade” podem exigir reiniciar o jogo."
+  },
+  "Guide_Conflicts_Title": {
+    "en": "Known conflicts",
+    "pt-BR": "Conflitos conhecidos"
+  },
+  "Guide_Header_Subtitle": {
+    "en": "Set this up once; it applies to every game.",
+    "note": "Era 'Faca isso uma vez e todos os jogos ficam certos.' — cortado o 'ficam certos', que nao informa nada.",
+    "pt-BR": "Ajuste uma vez; vale para todos os jogos."
+  },
+  "Guide_Header_Title": {
+    "en": "HDR Checklist",
+    "note": "Cabecalho da janela, estilo H1.",
+    "pt-BR": "Checklist HDR"
+  },
+  "Guide_Sources": {
+    "en": "Sources: RenoDX wiki - hdrmods.com - per-game data from the RHI project (GPL-3.0) - ITU-R BT.2408.",
+    "note": "No resx usar o separador U+00B7 ( · ) no lugar dos hifens, como no original. hdrmods.com, RHI, GPL-3.0 e ITU-R BT.2408 ficam como estao.",
+    "pt-BR": "Fontes: wiki do RenoDX - hdrmods.com - dados por jogo do projeto RHI (GPL-3.0) - ITU-R BT.2408."
+  },
+  "Guide_Step1_Body": {
+    "en": "Shortcut: Win + Alt + B. Automatic switching fails with some mods.",
+    "note": "pt real com acento: 'automatica' -> 'automática'. 'falha' no lugar de 'nao funciona', mais curto.",
+    "pt-BR": "Atalho: Win + Alt + B. A troca automática falha com alguns mods."
+  },
+  "Guide_Step1_Title": {
+    "en": "Turn on Windows HDR before launching the game",
+    "note": "Tirei o ANTES em caixa alta: sentence case, o mesmo registro dos outros passos.",
+    "pt-BR": "Ligue o HDR do Windows antes de abrir o jogo"
+  },
+  "Guide_Step2_Body": {
+    "en": "A washed-out or blown-out image means double tone mapping. AutoHDR: Settings > System > Display > HDR. RTX HDR: NVIDIA App > Graphics.",
+    "note": "IMPORTANTE ao gravar no resx: usar acento e a seta U+2192 no lugar de '>': pt 'Configurações → Sistema → Vídeo → HDR', en 'Settings → System → Display → HDR'. O caminho do menu muda de idioma junto com o Windows; 'NVIDIA App → Graphics' nao muda (a NVIDIA App e so em ingles). 'tonemapping' -> 'tone mapping'.",
+    "pt-BR": "Imagem lavada ou estourada é tone mapping duplo. AutoHDR: Configurações → Sistema → Vídeo → HDR. RTX HDR: NVIDIA App → Graphics."
+  },
+  "Guide_Step2_Title": {
+    "en": "Turn off AutoHDR and RTX HDR",
+    "note": "AutoHDR e RTX HDR sao nomes de recurso, ficam iguais nos dois idiomas.",
+    "pt-BR": "Desligue AutoHDR e RTX HDR"
+  },
+  "Guide_Step3_Body": {
+    "en": "The point where the pattern disappears is your display's real peak brightness; use that number in \"My display\". On a TV, enable HGIG and disable Dynamic Tone Mapping.",
+    "note": "No resx: acentos (padrão, é, máximo, número) e aspas curvas “Meu monitor” / “My display”. \"Meu monitor\" e o rotulo do botao da MainWindow — se o outro agente traduzir aquele botao com outro texto em en, alinhar os dois. Troquei 'modo HGIG ligado e Dynamic Tone Mapping desligado' por imperativo.",
+    "pt-BR": "O ponto onde o padrão some é o brilho máximo real do monitor: use esse número em “Meu monitor”. Em TV, ligue o HGIG e desligue o Dynamic Tone Mapping."
+  },
+  "Guide_Step3_Title": {
+    "en": "Run the Windows HDR Calibration app once",
+    "note": "No resx usar aspas curvas e acento: pt 'Rode uma vez o app “Calibração de HDR do Windows”'. O nome do app e o nome oficial dele em cada idioma.",
+    "pt-BR": "Rode uma vez o app “Calibração de HDR do Windows”"
+  },
+  "Guide_Step4_Body": {
+    "en": "Peak brightness: your display's real value (OLED ~800-1000, miniLED 1000-1500).\nGame brightness (paper white): 203 nits; 100-300 depending on room light.\nUI brightness: 203, same as the game.\nTone mapper and gamma: leave the mod's default, calibrated per game.",
+    "note": "Quatro linhas. No resx: <data ... xml:space=\"preserve\"> com quebra de linha real (o XAML antigo usava &#10;). Usar meia-risca U+2013 nas faixas (800–1000, 100–300, 1000–1500) e acento no pt (máximo, padrão). Ultima linha era 'deixe no padrao do mod — foi calibrado por jogo'; virou virgula, mesma informacao com menos palavra.",
+    "pt-BR": "Brilho máximo: o valor real do monitor (OLED ~800–1000, miniLED 1000–1500).\nBrilho do jogo (paper white): 203 nits; 100–300 conforme a luz do ambiente.\nBrilho da interface: 203, igual ao do jogo.\nTone mapper e gamma: deixe no padrão do mod, calibrado por jogo."
+  },
+  "Guide_Step4_Title": {
+    "en": "Recommended values",
+    "pt-BR": "Valores recomendados"
+  },
+  "Guide_Step5_Body": {
+    "en": "Press Home to open the ReShade overlay; RenoDX is on the Add-ons tab. After editing in the launcher with the game running, move the \"Preset\" slider to 2 and back to 1 in the overlay to reload.",
+    "note": "No resx: aspas curvas em “Preset”. 'Preset' e o nome do slider no overlay do ReShade, nao traduz. 'a tecla Home' -> 'Home'.",
+    "pt-BR": "O overlay do ReShade abre com Home; o RenoDX fica na aba Add-ons. Ao editar no launcher com o jogo aberto, mova o slider \"Preset\" para 2 e volte para 1 no overlay para recarregar."
+  },
+  "Guide_Step5_Title": {
+    "en": "In game",
+    "pt-BR": "Dentro do jogo"
+  },
+  "Guide_Window_Title": {
+    "en": "HDR Guide",
+    "note": "Titulo da janela (Window.Title). Binding em Window.Title funciona: e DependencyProperty.",
+    "pt-BR": "Guia HDR"
+  },
+  "History_Close_AutomationName": {
+    "en": "Close history",
+    "note": "Nome acessível do botão Fechar, dá o contexto que o rótulo sozinho não dá. Corrige o acento faltando no original ('Fechar historico'). Começa pelo rótulo visível, como manda a convenção de acessibilidade do Windows.",
+    "pt-BR": "Fechar histórico"
+  },
+  "History_Empty_NoRepo": {
+    "en": "This mod doesn't come from a repository with public history — it's likely only on Nexus or Discord.",
+    "note": "Antes: 'Este mod não é publicado por um repositório que eu saiba consultar (provavelmente só Nexus/Discord).' Cortei o 'que eu saiba consultar' e o parenteses, e apontei onde procurar.",
+    "pt-BR": "Este mod não vem de um repositório com histórico público — deve estar só no Nexus ou no Discord do autor."
+  },
+  "History_Empty_RateLimited": {
+    "en": "Couldn't load right now: GitHub limits anonymous requests to 60 per hour. Try again later, or use “View on GitHub”.",
+    "note": "Cita o rotulo do botao que vive em HistoryWindow.xaml (arquivo de outro agente) — os dois textos precisam casar.",
+    "pt-BR": "Não deu para carregar agora: o GitHub limita consultas sem login a 60 por hora. Tente mais tarde ou use “Ver no GitHub”."
+  },
+  "History_Footer": {
+    "en": "{0} changes · latest on {1}",
+    "note": "{0} contagem, {1} data ja formatada em dd/MM/yyyy no codigo. Plural: veja History_Footer_One.",
+    "pt-BR": "{0} alterações · última em {1}"
+  },
+  "History_Footer_One": {
+    "en": "1 change · on {0}",
+    "note": "Chave separada para singular, senao sai '1 alterações'. HistoryWindow.xaml.cs:50.",
+    "pt-BR": "1 alteração · em {0}"
+  },
+  "History_Loading": {
+    "en": "Loading history…",
+    "note": "Rodape enquanto a consulta corre. HistoryWindow.xaml.cs:32.",
+    "pt-BR": "Carregando histórico…"
+  },
+  "History_OpenWeb_Button": {
+    "en": "View on GitHub",
+    "note": "Rótulo do botão e também o AutomationProperties.Name dele (o Content é um StackPanel, então o nome acessível precisa ser explícito). Antes o rótulo visível dizia 'Ver no GitHub' e o nome acessível dizia 'Abrir no GitHub'; unificados na mesma chave para o leitor de tela bater com o que está na tela. 'GitHub' é nome próprio, não traduz.",
+    "pt-BR": "Ver no GitHub"
+  },
+  "History_OpenWeb_Tooltip": {
+    "en": "Open the full history on GitHub",
+    "note": "Tooltip do mesmo botão. Sentence case em en por ser frase.",
+    "pt-BR": "Abrir o histórico completo no GitHub"
+  },
+  "History_Subtitle": {
+    "en": "Mod {0} · maintained by {1} in {2}",
+    "note": "{0} slug, {1} mantenedor, {2} owner/repo. HistoryWindow.xaml.cs:24. 'Mod' fica como esta: termo tecnico.",
+    "pt-BR": "Mod {0} · mantido por {1} em {2}"
+  },
+  "History_Subtitle_NoRepo": {
+    "en": "Mod {0}",
+    "note": "Ramo sem repositorio conhecido. HistoryWindow.xaml.cs:25.",
+    "pt-BR": "Mod {0}"
+  },
+  "History_Title": {
+    "en": "Mod History",
+    "note": "Título da janela HistoryWindow. Title Case em en por ser título curto.",
+    "pt-BR": "Histórico do mod"
+  },
+  "Install_Advice_Deprecated": {
+    "en": "Mod is deprecated. It may not work with current versions of the game or ReShade.",
+    "note": "Antes: \"descontinuado/abandonado\" — barra redundante removida.",
+    "pt-BR": "Mod descontinuado. Pode não funcionar com as versões atuais do jogo e do ReShade."
+  },
+  "Install_Advice_HdrOff": {
+    "en": "In-game HDR: OFF. The mod does the HDR; running both blows out the image.",
+    "note": "Chip de recomendacao. Parenteses viraram frase; verbo no valor de configuracao (DESLIGADO/OFF) em vez de infinitivo.",
+    "pt-BR": "HDR do jogo: DESLIGADO. O mod faz o HDR; os dois ligados estouram a imagem."
+  },
+  "Install_Advice_HdrOn": {
+    "en": "In-game HDR: ON. The mod fixes the native HDR and needs it enabled.",
+    "pt-BR": "HDR do jogo: LIGADO. O mod corrige o HDR nativo e precisa dele ativo."
+  },
+  "Install_Advice_Renderer": {
+    "en": "Launch the game in {0}. The mod requires that graphics API.",
+    "note": "{0} = renderer ja em maiuscula e sem espaco (DX11, DIRECTX12, VULKAN, D3D12). Antes era interpolacao $\"...\".",
+    "pt-BR": "Inicie o jogo em {0}. O mod exige essa API gráfica."
+  },
+  "Install_AntiCheat_Advice": {
+    "en": "{0} detected in this game. Using the mod ONLINE can get your account banned: play offline.",
+    "note": "{0} = nome do anti-cheat (EAC, BattlEye...). Card de aviso no detalhe.",
+    "pt-BR": "{0} detectado neste jogo. Usar o mod ONLINE pode banir sua conta: jogue offline."
+  },
+  "Install_AntiCheat_Confirm": {
+    "en": "Install Anyway",
+    "note": "Botao de confirmacao do dialogo.",
+    "pt-BR": "Instalar mesmo assim"
+  },
+  "Install_AntiCheat_Modal": {
+    "en": "This game uses {0}.\n\nReShade with add-on support is NOT signed. In online games protected by anti-cheat, loading an unsigned mod can get your account permanently banned.\n\nOnly continue if you are going to play OFFLINE.",
+    "note": "Modal de confirmacao antes de instalar. {0} = nome do anti-cheat detectado.",
+    "pt-BR": "Este jogo usa {0}.\n\nO ReShade com suporte a add-ons NÃO é assinado. Em jogos online protegidos por anti-cheat, carregar um mod não assinado pode resultar em banimento permanente da sua conta.\n\nSó continue se você for jogar OFFLINE."
+  },
+  "Install_AntiCheat_Title": {
+    "en": "{0} detected — risk of a ban",
+    "note": "{0} = nome do anti-cheat. Titulo de dialogo.",
+    "pt-BR": "{0} detectado — risco de banimento"
+  },
+  "Install_AntiCheat_Warning": {
+    "en": "Anti-cheat: risk of a ban in online play. Play offline or disable the anti-cheat.",
+    "note": "Antes so dizia \"risco em online\"; agora nomeia a consequencia (banimento) e mantem as duas saidas.",
+    "pt-BR": "Anti-cheat: risco de banimento em partidas online. Jogue offline ou desative o anti-cheat."
+  },
+  "Install_Architecture_Text": {
+    "en": "This game uses the {0}-bit build of the mod.",
+    "note": "{0} = 32 ou 64, inteiro.",
+    "pt-BR": "Este jogo usa a build {0}-bit do mod."
+  },
+  "Install_Architecture_Title": {
+    "en": "Architecture",
+    "pt-BR": "Arquitetura"
+  },
+  "Install_BitnessMismatch": {
+    "en": "Install blocked: the mod is {0}-bit and the selected executable is {1}-bit. Pick the {0}-bit executable from the list above.",
+    "note": "{0} = bits do addon, {1} = bits do exe. {0} aparece duas vezes de proposito.",
+    "pt-BR": "Instalação bloqueada: o mod é {0}-bit e o executável escolhido é {1}-bit. Selecione o executável {0}-bit na lista acima."
+  },
+  "Install_Cancelled_AntiCheat": {
+    "en": "Install cancelled: {0} detected.",
+    "note": "{0} = nome do anti-cheat.",
+    "pt-BR": "Instalação cancelada: {0} detectado."
+  },
+  "Install_DlssFix_Applied": {
+    "en": "DLSS fix applied.",
+    "note": "progress?.Report no fim de ApplyAsync; a MainViewModel sobrescreve depois com a mensagem dela, mas a chave e necessaria enquanto o passo roda.",
+    "pt-BR": "Correção do DLSS aplicada."
+  },
+  "Install_DlssFix_Downloading": {
+    "en": "Downloading the DLSS fix...",
+    "note": "DLSS e termo tecnico, mantido.",
+    "pt-BR": "Baixando a correção do DLSS..."
+  },
+  "Install_IniOverrides_Text": {
+    "en": "The RenoDX index recommends these values:",
+    "note": "Cortado o 'para este jogo' redundante; o card ja esta no contexto do jogo.",
+    "pt-BR": "O indice do RenoDX recomenda estes valores:"
+  },
+  "Install_ModPage_Link": {
+    "en": "Open the Mod Page",
+    "note": "So o rotulo de fallback. Quando o manifesto traz 'label', o valor do manifesto continua ganhando.",
+    "pt-BR": "Abrir a página do mod"
+  },
+  "Install_ModPage_Text": {
+    "en": "The author keeps a dedicated page for this mod, with their own instructions.",
+    "note": "Corpo da nota cujo TITULO ficou literal por ser comparado em MainViewModel.cs:548.",
+    "pt-BR": "O autor mantém uma página própria do mod, com as instruções dele."
+  },
+  "Install_ModPage_Title": {
+    "en": "Mod page",
+    "pt-BR": "Página do mod"
+  },
+  "Install_Mod_Done": {
+    "en": "{0} installed.",
+    "note": "{0} = nome do arquivo do addon.",
+    "pt-BR": "{0} instalado."
+  },
+  "Install_Mod_Downloading": {
+    "en": "Downloading {0}...",
+    "note": "{0} = nome do arquivo do addon.",
+    "pt-BR": "Baixando {0}..."
+  },
+  "Install_NoExe": {
+    "en": "Choose the game's executable from the list above.",
+    "pt-BR": "Escolha o executável do jogo na lista acima."
+  },
+  "Install_Note_DxvkTitle": {
+    "en": "Note (DXVK)",
+    "note": "DXVK e termo tecnico, mantido.",
+    "pt-BR": "Nota (DXVK)"
+  },
+  "Install_Note_IndexTitle": {
+    "en": "Index note",
+    "note": "Titulo de card de nota vindo de gameNotes.",
+    "pt-BR": "Nota do indice"
+  },
+  "Install_Note_LumaTitle": {
+    "en": "Note (Luma Mod)",
+    "note": "Luma e nome de mod, mantido.",
+    "pt-BR": "Nota (mod Luma)"
+  },
+  "Install_Note_ReShadeTitle": {
+    "en": "ReShade in This Game",
+    "note": "Cortado o 'Sobre o' inicial, que nao carregava informacao.",
+    "pt-BR": "ReShade neste jogo"
+  },
+  "Install_ProfileApplied": {
+    "en": "Display profile applied ({0:0} nits).",
+    "note": "{0} = Config.PeakNits (double). O formato :0 e obrigatorio. O espaco que separa da frase anterior fica no codigo.",
+    "pt-BR": "Perfil do monitor aplicado ({0:0} nits)."
+  },
+  "Install_ProfileFailed": {
+    "en": "The mod installed, but the nits profile wasn't applied. Use My profile afterwards.",
+    "note": "Cita o botao 'Meu perfil' do MainWindow.xaml (linha 838). O texto original citava 'Usar meu perfil', que nao existe na tela — corrigido.",
+    "pt-BR": "O mod instalou, mas o perfil de nits não foi aplicado. Use Meu perfil depois."
+  },
+  "Install_ProfileNoNits": {
+    "en": "(This mod has no nits settings: native HDR.)",
+    "note": "Parenteses fazem parte do texto; espaco separador fica no codigo.",
+    "pt-BR": "(Este mod não tem ajustes de nits: HDR nativo.)"
+  },
+  "Install_ReShadeVersion_Text": {
+    "en": "This game requires ReShade {0}. Newer versions may not work with the mod.",
+    "note": "{0} = numero de versao do manifesto.",
+    "pt-BR": "Este jogo exige o ReShade {0}. Versões mais novas podem não funcionar com o mod."
+  },
+  "Install_ReShadeVersion_Title": {
+    "en": "ReShade Version",
+    "pt-BR": "Versão do ReShade"
+  },
+  "Install_ReShade_CheckingVersion": {
+    "en": "Checking the ReShade version...",
+    "note": "ReShadeService.ProvisionAsync — progress?.Report, vai para DetailStatus.",
+    "pt-BR": "Consultando a versão do ReShade..."
+  },
+  "Install_ReShade_Deploying": {
+    "en": "Installing ReShade as {0}...",
+    "note": "{0} = nome do dll proxy (dxgi.dll, d3d9.dll...).",
+    "pt-BR": "Instalando o ReShade como {0}..."
+  },
+  "Install_ReShade_Done": {
+    "en": "ReShade {0} installed as {1}.",
+    "note": "{0} = versao, {1} = nome do dll proxy. Concatenada pela MainViewModel na frase de sucesso do install.",
+    "pt-BR": "ReShade {0} instalado como {1}."
+  },
+  "Install_ReShade_Downloading": {
+    "en": "Downloading ReShade {0} (addon support)...",
+    "note": "{0} = versao (ex. 6.7.3). 'addon' e termo tecnico, mantido.",
+    "pt-BR": "Baixando o ReShade {0} (com suporte a addon)..."
+  },
+  "Install_ReShade_Extracting": {
+    "en": "Extracting ReShade64.dll / ReShade32.dll...",
+    "note": "Nomes de arquivo ficam literais no recurso; so o verbo muda entre idiomas.",
+    "pt-BR": "Extraindo ReShade64.dll / ReShade32.dll..."
+  },
+  "Install_ReShade_VerifyingSignature": {
+    "en": "Verifying the ReShade signature...",
+    "pt-BR": "Conferindo a assinatura do ReShade..."
+  },
+  "Install_Rollback_Done": {
+    "en": "The mod download failed. The ReShade just installed was removed, so the game is as it was. Try again.",
+    "note": "Tirei a primeira pessoa ('que eu tinha acabado de instalar').",
+    "pt-BR": "Falha ao baixar o mod. O ReShade recém-instalado foi removido e o jogo ficou como estava. Tente de novo."
+  },
+  "Install_Section_BeforeInstalling": {
+    "en": "BEFORE INSTALLING",
+    "pt-BR": "ANTES DE INSTALAR"
+  },
+  "Install_Success": {
+    "en": "Mod installed and enabled. {0}{1} Launch the game and press Home to open the overlay.",
+    "note": "{0} = mensagem do deploy do ReShade (nao traduzida aqui, vem do ReShadeService). {1} = trecho do perfil, ja com espaco a esquerda ou vazio.",
+    "pt-BR": "Mod instalado e ativado. {0}{1} Abra o jogo e pressione Home para abrir o overlay."
+  },
+  "Install_Verify_Failed": {
+    "en": "ReShade found the mod but could not load it. Reinstall the mod. Detail: {0}",
+    "note": "{0} = linha crua do ReShade.log, em ingles, fica por ultimo justamente por ser texto tecnico nao traduzivel.",
+    "pt-BR": "O ReShade encontrou o mod mas não conseguiu carregá-lo. Reinstale o mod. Detalhe: {0}"
+  },
+  "Install_Verify_LimitedBuild": {
+    "en": "This ReShade is the build without add-on support. Reinstall ReShade to switch to the correct build.",
+    "note": "Deixou de citar o rotulo do botao entre aspas; o botao Reinstalar fica ao lado da mensagem.",
+    "pt-BR": "Este ReShade e a build sem suporte a add-ons. Reinstale o ReShade para trocar pela build correta."
+  },
+  "Install_Verify_Loaded": {
+    "en": "The mod loaded in the game.",
+    "note": "ReShadeLogService. Veredito quando o log confirma o carregamento mas nao trouxe o nome do addon.",
+    "pt-BR": "O mod carregou no jogo."
+  },
+  "Install_Verify_Loaded_Addon": {
+    "en": "The mod loaded in the game ({0}).",
+    "note": "{0} = identificador do addon montado no C# (nome + ' v' + versao), como o ReShade escreveu no log. Nao traduzir o conteudo.",
+    "pt-BR": "O mod carregou no jogo ({0})."
+  },
+  "Install_Verify_NoAddonSupport": {
+    "en": "The ReShade installed here has no add-on support: the game ran and it never looked for mods. Reinstall ReShade to switch to the add-on build.",
+    "pt-BR": "O ReShade instalado aqui não tem suporte a add-ons: o jogo rodou e ele nem procurou por mods. Reinstale o ReShade para trocar pela build com add-ons."
+  },
+  "Install_Verify_NoLog": {
+    "en": "No log yet. Run the game once to check whether the mod loads.",
+    "note": "Tirado o 'para eu verificar' da versao antiga: o app nao fala na primeira pessoa.",
+    "pt-BR": "Sem registro ainda. Abra o jogo uma vez para verificar se o mod carrega."
+  },
+  "Install_Verify_NotLoaded": {
+    "en": "The game ran with ReShade, but the RenoDX mod did not load. Check that the addon is enabled and in the game folder.",
+    "pt-BR": "O jogo rodou com ReShade, mas o mod RenoDX não carregou. Confira se o addon está ativado e na pasta do jogo."
+  },
+  "Install_Warning_Title": {
+    "en": "Install Warning ({0})",
+    "note": "{0} = familia do mod vinda crua do manifesto (renodx / reshade / luma). Nome proprio, nao traduzir.",
+    "pt-BR": "Aviso de instalação ({0})"
+  },
+  "Main_AddGame_FolderPickerTitle": {
+    "en": "Choose the game folder",
+    "note": "Titulo do OpenFolderDialog.",
+    "pt-BR": "Escolha a pasta do jogo"
+  },
+  "Main_AddGame_Name": {
+    "en": "Add Game",
+    "pt-BR": "Adicionar jogo"
+  },
+  "Main_Badge_Available": {
+    "en": "MOD AVAILABLE",
+    "pt-BR": "MOD DISPONÍVEL"
+  },
+  "Main_Badge_Disabled": {
+    "en": "DISABLED",
+    "pt-BR": "DESATIVADO"
+  },
+  "Main_Badge_Enabled": {
+    "en": "ENABLED",
+    "pt-BR": "ATIVADO"
+  },
+  "Main_Badge_NexusOnly": {
+    "en": "MOD ON NEXUS",
+    "note": "Nexus e nome proprio.",
+    "pt-BR": "MOD NO NEXUS"
+  },
+  "Main_Badge_None": {
+    "en": "NO MOD",
+    "pt-BR": "SEM MOD"
+  },
+  "Main_Badge_UpdateAvailable": {
+    "en": "UPDATE",
+    "note": "Selo do tile. A caixa alta esta no recurso porque o XAML nao aplica transformacao de texto.",
+    "pt-BR": "ATUALIZAÇÃO"
+  },
+  "Main_CheckUpdates": {
+    "en": "Check for Updates",
+    "note": "Usada no texto do botao e no AutomationProperties.Name.",
+    "pt-BR": "Ver atualizações"
+  },
+  "Main_Detail_ModInPreviousFolder": {
+    "en": "A mod is still installed in the previous folder ({0}). Remove it there, or switch back to that executable.",
+    "note": "{0} = caminho da pasta anterior.",
+    "pt-BR": "Ainda há um mod instalado na pasta anterior ({0}). Remova-o de lá ou volte para aquele executável."
+  },
+  "Main_Detail_UpdateAvailable": {
+    "en": "A newer version of this mod is available. Use the Update button above.",
+    "note": "O '\\n\\n' que precede ficou no codigo, nao no recurso.",
+    "pt-BR": "Existe uma versão mais nova deste mod. Use o botão Atualizar, acima."
+  },
+  "Main_DlssFix_Applied": {
+    "en": "Fix applied. Restart the game.",
+    "pt-BR": "Correção aplicada. Reinicie o jogo."
+  },
+  "Main_DlssFix_Apply": {
+    "en": "Apply Fix",
+    "note": "Rotulo de botao. Title Case no en.",
+    "pt-BR": "Aplicar correção"
+  },
+  "Main_DlssFix_Remove": {
+    "en": "Remove Fix",
+    "note": "Rotulo de botao. Title Case no en.",
+    "pt-BR": "Remover correção"
+  },
+  "Main_DlssFix_Removed": {
+    "en": "DLSS fix removed.",
+    "pt-BR": "Correção de DLSS removida."
+  },
+  "Main_Empty_Hint": {
+    "en": "Change the search or the filter.",
+    "note": "Tirei as aspas curvas e o travessao do original. \"Adicionar\"/\"Add\" cita o rotulo do botao, entao muda junto com o idioma.",
+    "pt-BR": "Mude a busca ou o filtro."
+  },
+  "Main_Empty_Title": {
+    "en": "No games here",
+    "pt-BR": "Nenhum jogo aqui"
+  },
+  "Main_EngineNotes_Header": {
+    "en": "GENERIC MOD RULES ({0}) — {1}",
+    "note": "{0} = UNITY ou UNREAL (nome tecnico, nao traduzido, vem do codigo). {1} = numero de notas.",
+    "pt-BR": "REGRAS DO MOD GENÉRICO ({0}) — {1}"
+  },
+  "Main_Filter_All": {
+    "en": "All games",
+    "note": "Item 0 do combo de filtro. A ORDEM define FilterIndex — nao reordene.",
+    "pt-BR": "Todos os jogos"
+  },
+  "Main_Filter_HasMod": {
+    "en": "Mod available",
+    "note": "Item 1 do combo de filtro. Valor real no resx: 'Com mod disponível'.",
+    "pt-BR": "Com mod disponível"
+  },
+  "Main_Filter_Installed": {
+    "en": "Mod installed",
+    "note": "Item 2 do combo de filtro.",
+    "pt-BR": "Mod instalado"
+  },
+  "Main_Filter_NoMod": {
+    "en": "No mod",
+    "note": "Item 3 do combo de filtro.",
+    "pt-BR": "Sem mod"
+  },
+  "Main_Guide": {
+    "en": "HDR Guide",
+    "note": "Texto do botao e AutomationProperties.Name.",
+    "pt-BR": "Guia HDR"
+  },
+  "Main_Launch_NoExe": {
+    "en": "No executable selected. Pick one from the list above.",
+    "note": "Tirei a primeira pessoa ('Nao sei qual executavel iniciar').",
+    "pt-BR": "Nenhum executável escolhido. Selecione um na lista acima."
+  },
+  "Main_Launch_Started": {
+    "en": "Game started.",
+    "pt-BR": "Jogo iniciado."
+  },
+  "Main_Launch_ViaStore": {
+    "en": "Opening through the store...",
+    "pt-BR": "Abrindo pela loja..."
+  },
+  "Main_Maintainer_Community": {
+    "en": "RenoDX community",
+    "note": "Credito quando o catalogo nao nomeia um mantenedor. MaintainerInitial usa a 1a letra: R nos dois idiomas.",
+    "pt-BR": "Comunidade RenoDX"
+  },
+  "Main_Maintainer_UnityGeneric": {
+    "en": "Generic Unity mod",
+    "pt-BR": "Mod genérico Unity"
+  },
+  "Main_Maintainer_UnrealGeneric": {
+    "en": "Generic Unreal mod",
+    "note": "Aparece no lugar do nome do autor (GameItemVm.MaintainerName).",
+    "pt-BR": "Mod genérico Unreal"
+  },
+  "Main_ModStatus_Stable": {
+    "en": "Stable",
+    "pt-BR": "Estável"
+  },
+  "Main_ModStatus_Stable_Tooltip": {
+    "en": "The RenoDX wiki lists this mod as working.",
+    "pt-BR": "A wiki do RenoDX marca este mod como funcional."
+  },
+  "Main_ModStatus_Unstable": {
+    "en": "Unstable",
+    "pt-BR": "Instável"
+  },
+  "Main_ModStatus_Unstable_Tooltip": {
+    "en": "The RenoDX wiki lists this mod as work in progress: it may have visual glitches or crash.",
+    "note": "\"pode ter problemas\" nao dizia nada; agora diz o que esperar.",
+    "pt-BR": "A wiki do RenoDX marca este mod como em construção: pode ter defeitos visuais ou travar."
+  },
+  "Main_Mod_Disabled": {
+    "en": "Mod disabled: the file was renamed to .disabled.",
+    "note": "'.disabled' e extensao de arquivo, nao traduzir.",
+    "pt-BR": "Mod desativado: o arquivo foi renomeado para .disabled."
+  },
+  "Main_Mod_Enabled": {
+    "en": "Mod enabled.",
+    "note": "Era 'Mod ATIVADO.' — caixa alta sem motivo, virou sentence case.",
+    "pt-BR": "Mod ativado."
+  },
+  "Main_Monitor": {
+    "en": "My Monitor",
+    "note": "Texto do botao e AutomationProperties.Name.",
+    "pt-BR": "Meu monitor"
+  },
+  "Main_NoSettings_ExternalMod": {
+    "en": "This mod is distributed only through Nexus/Discord, so the launcher doesn't know its settings. Adjust them in the ReShade overlay in-game (Home key).",
+    "pt-BR": "Este mod é distribuído só pelo Nexus/Discord e o launcher não conhece as configurações dele. Ajuste pelo overlay do ReShade no jogo (tecla Home)."
+  },
+  "Main_NoSettings_Fetching": {
+    "en": "Looking up the settings for {0}...",
+    "note": "{0} = slug do mod (identificador tecnico, nao traduzir o valor).",
+    "pt-BR": "Procurando as configurações de {0}..."
+  },
+  "Main_NoSettings_Fixed": {
+    "en": "This mod has no adjustments: the author fixed the values. Just install and enable it.",
+    "note": "Reescrita pedida no briefing.",
+    "pt-BR": "Este mod não tem ajustes: o autor fixou os valores. Basta instalar e ativar."
+  },
+  "Main_NoSettings_InGameOnly": {
+    "en": "This mod has no sliders: you adjust it inside the game, as the author described under HOW TO ADJUST THIS GAME, above.",
+    "note": "Cita o rotulo de secao do MainWindow.xaml (linha 778). Se o outro agente traduzir aquele rotulo, o en tem que casar com a traducao dele.",
+    "pt-BR": "Este mod não tem sliders: o ajuste é feito dentro do jogo, como o autor descreveu em COMO AJUSTAR ESTE JOGO, acima."
+  },
+  "Main_NoSettings_Unavailable": {
+    "en": "Couldn't retrieve the settings for {0}. Installing still works: adjust them in the ReShade overlay in-game (Home key).",
+    "note": "{0} = slug do mod.",
+    "pt-BR": "Não foi possível obter as configurações de {0}. A instalação funciona normalmente: ajuste pelo overlay do ReShade no jogo (tecla Home)."
+  },
+  "Main_Note_AuthorInstruction": {
+    "en": "Author's instruction",
+    "note": "Titulo de card de nota.",
+    "pt-BR": "Instrução do autor"
+  },
+  "Main_Note_AuthorPreset": {
+    "en": "Author's preset: {0}",
+    "note": "{0} = rotulo do preset, vindo do mod. Titulo de card de nota.",
+    "pt-BR": "Preset do autor: {0}"
+  },
+  "Main_Note_AuthorSteps_Nexus": {
+    "en": "Game-specific instructions may be on the NexusMods page. Read it before installing.",
+    "note": "Antes comecava com \"A wiki avisa que...\" — meta-informacao sem valor pro usuario. Agora termina com a acao.",
+    "pt-BR": "As instruções específicas deste jogo podem estar na página do NexusMods. Leia antes de instalar."
+  },
+  "Main_Note_AuthorSteps_Title": {
+    "en": "Author Instructions",
+    "pt-BR": "Instruções do autor"
+  },
+  "Main_Note_Deprecated_Body": {
+    "en": "The RenoDX wiki marks this mod as deprecated: it may not work with the current version of the game.",
+    "pt-BR": "A wiki do RenoDX marca este mod como descontinuado: pode não funcionar com a versão atual do jogo."
+  },
+  "Main_Note_Deprecated_Title": {
+    "en": "Deprecated",
+    "pt-BR": "Descontinuado"
+  },
+  "Main_Note_Discussion_Body": {
+    "en": "The author documented this mod in a GitHub discussion. The prerequisites are there.",
+    "pt-BR": "O autor documentou este mod numa discussão no GitHub. Os pré-requisitos estão lá."
+  },
+  "Main_Note_Discussion_Link": {
+    "en": "Open the GitHub discussion",
+    "note": "Rotulo de NoteLink.",
+    "pt-BR": "Abrir a discussão no GitHub"
+  },
+  "Main_Note_Discussion_Title": {
+    "en": "Mod Discussion",
+    "pt-BR": "Discussão deste mod"
+  },
+  "Main_Note_GameTweak_Title": {
+    "en": "Game-Specific Tweak",
+    "note": "Titulo da nota vinda da coluna Notes das tabelas Unreal/Unity.",
+    "pt-BR": "Ajuste deste jogo"
+  },
+  "Main_Note_NativeHdr_Text": {
+    "en": "This game has its own HDR and the mod corrects it. Leave HDR on in the game's options.",
+    "note": "Cortei 'normalmente' e '/melhora' — nao mudavam a acao.",
+    "pt-BR": "Este jogo tem HDR próprio e o mod corrige esse HDR. Deixe o HDR ligado nas opções do jogo."
+  },
+  "Main_Note_NativeHdr_Title": {
+    "en": "Native HDR",
+    "note": "Titulo de card de nota.",
+    "pt-BR": "HDR nativo"
+  },
+  "Main_Note_Nexus_Link": {
+    "en": "Open the NexusMods page",
+    "note": "Rotulo de NoteLink.",
+    "pt-BR": "Abrir a página no NexusMods"
+  },
+  "Main_Note_WikiHover_Title": {
+    "en": "Wiki Note",
+    "pt-BR": "Nota da wiki"
+  },
+  "Main_Note_WikiStatus_InProgress": {
+    "en": "The RenoDX wiki marks this mod as work in progress. Expect bugs.",
+    "note": "Antes: \"...o mod ainda está sendo trabalhado e pode ter problemas.\" — gerundismo e hedge cortados.",
+    "pt-BR": "A wiki do RenoDX marca este mod como em construção. Espere falhas."
+  },
+  "Main_Note_WikiStatus_Indexed": {
+    "en": "Published in the official RenoDX index.",
+    "pt-BR": "Publicado no índice oficial do RenoDX."
+  },
+  "Main_Note_WikiStatus_Title": {
+    "en": "Wiki Status",
+    "note": "Usado em 3 lugares (games-index, mod dedicado, mod generico).",
+    "pt-BR": "Status na wiki"
+  },
+  "Main_Note_WikiStatus_Working": {
+    "en": "The RenoDX wiki marks this mod as working.",
+    "note": "Antes: \"Marcado como FUNCIONANDO pela wiki do RenoDX.\" — voz passiva trocada por sujeito explicito.",
+    "pt-BR": "A wiki do RenoDX marca este mod como funcionando."
+  },
+  "Main_Play": {
+    "en": "Play",
+    "note": "Texto do botao e AutomationProperties.Name.",
+    "pt-BR": "Jogar"
+  },
+  "Main_Profile_Applied": {
+    "en": "Profile applied: peak {0:0} / game {1:0} / UI {2:0} nits.",
+    "note": "{0} PeakNits, {1} GameNits, {2} UiNits (doubles). Os tres formatos :0 sao obrigatorios.",
+    "pt-BR": "Perfil aplicado: pico {0:0} / jogo {1:0} / UI {2:0} nits."
+  },
+  "Main_Profile_NoNits": {
+    "en": "This mod exposes no nits settings (native HDR). Nothing changed.",
+    "pt-BR": "Este mod não expõe ajustes de nits (HDR nativo). Nada foi alterado."
+  },
+  "Main_Refresh_Name": {
+    "en": "Refresh List",
+    "note": "Name mais especifico que o rotulo curto do botao, que e Common_Refresh.",
+    "pt-BR": "Atualizar a lista"
+  },
+  "Main_Remove_All": {
+    "en": "Remove All",
+    "note": "Botao do dialogo.",
+    "pt-BR": "Remover tudo"
+  },
+  "Main_Remove_Body": {
+    "en": "Remove the RenoDX mod from \"{0}\"?\n\nRemove all: deletes the addon and ReShade too, if no other addon uses it.\nMod only: keeps ReShade installed.",
+    "note": "{0} = nome do jogo. As duas linhas explicam os dois botoes — os rotulos tem que casar com Main_Remove_All e Main_Remove_ModOnly.",
+    "pt-BR": "Remover o mod RenoDX de \"{0}\"?\n\nRemover tudo: apaga o addon e também o ReShade, se nenhum outro addon usar.\nSó o mod: mantém o ReShade instalado."
+  },
+  "Main_Remove_Done": {
+    "en": "Mod removed. Your settings are still saved in ReShade.ini.",
+    "note": "ReShade.ini e nome de arquivo, nao traduzir.",
+    "pt-BR": "Mod removido. As configurações continuam salvas no ReShade.ini."
+  },
+  "Main_Remove_ModOnly": {
+    "en": "Mod Only",
+    "note": "Botao do dialogo.",
+    "pt-BR": "Só o mod"
+  },
+  "Main_Remove_Title": {
+    "en": "Remove Mod",
+    "note": "Titulo de dialogo.",
+    "pt-BR": "Remover mod"
+  },
+  "Main_SearchPlaceholder": {
+    "en": "Search games",
+    "pt-BR": "Pesquisar jogo"
+  },
+  "Main_Settings_NothingToSave": {
+    "en": "Nothing to save.",
+    "pt-BR": "Nada para salvar."
+  },
+  "Main_Settings_Reset": {
+    "en": "Settings restored to the mod's defaults: the keys were removed from the ini.",
+    "note": "'resetadas' virou 'restauradas'.",
+    "pt-BR": "Configurações restauradas para o padrão do mod: as chaves foram removidas do ini."
+  },
+  "Main_Settings_Saved": {
+    "en": "Changes saved: {0}. File: {1}. With the game running, move the Preset slider to 2 and back to 1 in the overlay (Home) to apply without restarting.",
+    "note": "{0} = quantidade alterada, {1} = caminho do ini. Numero depois do dois-pontos para nao quebrar no singular. 'Preset' e nome do slider no mod.",
+    "pt-BR": "Alterações salvas: {0}. Arquivo: {1}. Com o jogo aberto, mova o slider Preset para 2 e volte para 1 no overlay (Home) para aplicar sem reiniciar."
+  },
+  "Main_Status_GamesFound": {
+    "en": "Games found: {0}. With a RenoDX mod: {1}.",
+    "note": "Forma de rotulo (numero depois do dois-pontos) para funcionar em singular e plural sem chave extra.",
+    "pt-BR": "Jogos encontrados: {0}. Com mod RenoDX: {1}."
+  },
+  "Main_Status_LoadingCatalog": {
+    "en": "Loading the RenoDX catalog...",
+    "pt-BR": "Carregando o catálogo RenoDX..."
+  },
+  "Main_Status_Ready": {
+    "en": "Ready.",
+    "note": "Status inicial da barra de status.",
+    "pt-BR": "Pronto."
+  },
+  "Main_Status_ScanningGames": {
+    "en": "Scanning for installed games...",
+    "pt-BR": "Procurando jogos instalados..."
+  },
+  "Main_Store_Folder": {
+    "en": "Folder",
+    "note": "GameItemVm.StoreLabel para GameStore.Folder (jogo achado por pasta avulsa).",
+    "pt-BR": "Pasta"
+  },
+  "Main_Store_Manual": {
+    "en": "Manual",
+    "note": "Fallback do StoreLabel: jogo adicionado a mao.",
+    "pt-BR": "Manual"
+  },
+  "Main_Tile_UpdateBadge": {
+    "en": "UPDATE",
+    "note": "Selo no canto da capa. Caixa alta de proposito, espaco de ~60px.",
+    "pt-BR": "ATUALIZAR"
+  },
+  "Main_Tile_Update_Tooltip": {
+    "en": "A newer build of this mod is available",
+    "pt-BR": "Há uma build mais nova deste mod"
+  },
+  "Main_UpdateAll_Body": {
+    "en": "Update to the newest version? Mods selected: {0}.\n\nYour settings (nits, tone mapper) are preserved: only the mod file is replaced.",
+    "note": "{0} = quantidade. Reescrito para nao precisar de 'mod(s)'.",
+    "pt-BR": "Atualizar para a versão mais nova? Mods selecionados: {0}.\n\nSuas configurações (nits, tone mapper) são preservadas: só o arquivo do mod é trocado."
+  },
+  "Main_UpdateAll_Button": {
+    "en": "Update All ({0})",
+    "note": "{0} = quantidade de mods com atualizacao. Botao da barra de ferramentas.",
+    "pt-BR": "Atualizar todos ({0})"
+  },
+  "Main_UpdateAll_Name": {
+    "en": "Update All Mods",
+    "note": "AutomationProperties.Name; o texto visivel do botao vem do VM (UpdateAllText).",
+    "pt-BR": "Atualizar todos os mods"
+  },
+  "Main_UpdateAll_Title": {
+    "en": "Update Mods",
+    "note": "Titulo de dialogo.",
+    "pt-BR": "Atualizar mods"
+  },
+  "Main_Updates_AllCurrent": {
+    "en": "All installed mods are up to date.",
+    "pt-BR": "Todos os mods instalados estão atualizados."
+  },
+  "Main_Updates_Available": {
+    "en": "Updates available: {0}.",
+    "note": "{0} = quantidade. Concatenado com Main_Updates_Unverified quando houver.",
+    "pt-BR": "Atualizações disponíveis: {0}."
+  },
+  "Main_Updates_Checking": {
+    "en": "Checking for updates ({0})...",
+    "note": "{0} = quantidade de mods. Substitui o 'mod(s)' do original.",
+    "pt-BR": "Verificando atualizações ({0})..."
+  },
+  "Main_Updates_Done": {
+    "en": "Mods updated: {0}.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "Mods atualizados: {0}."
+  },
+  "Main_Updates_DonePartial": {
+    "en": "Updated: {0}. Failed: {1} — {2}",
+    "note": "{0} = sucessos, {1} = falhas, {2} = lista 'Jogo (motivo)' ja formatada, no maximo 3.",
+    "pt-BR": "Atualizados: {0}. Falharam: {1} — {2}"
+  },
+  "Main_Updates_NoneInstalled": {
+    "en": "No installed mods to check.",
+    "pt-BR": "Nenhum mod instalado para verificar."
+  },
+  "Main_Updates_Unverified": {
+    "en": "(not checked: {0})",
+    "note": "{0} = quantidade. Sufixo: o espaco a esquerda e adicionado no codigo.",
+    "pt-BR": "(não verificados: {0})"
+  },
+  "Main_Updates_Updating": {
+    "en": "Updating {0}...",
+    "note": "{0} = nome do jogo.",
+    "pt-BR": "Atualizando {0}..."
+  },
+  "Profile_ApplyOnInstall": {
+    "en": "Apply automatically when installing a mod",
+    "note": "CheckBox. Cortado 'este perfil' — a janela inteira e o perfil. Sentence case.",
+    "pt-BR": "Aplicar automaticamente ao instalar um mod"
+  },
+  "Profile_GameNits_Hint": {
+    "en": "203 by default.",
+    "note": "Cortado 'norma' antes de BT.2408 — a sigla ja diz. Usa travessao curto U+2013 nos intervalos; conferir que o gen_resx.py preserva UTF-8.",
+    "pt-BR": "Padrão 203."
+  },
+  "Profile_GameNits_Label": {
+    "en": "Game Brightness (paper white)",
+    "note": "'paper white' fica minusculo nos dois idiomas: e termo tecnico da lista de nao-traduzir, preservado literal mesmo dentro de Title Case.",
+    "pt-BR": "Brilho do jogo (paper white)"
+  },
+  "Profile_Header": {
+    "en": "Display HDR Profile",
+    "note": "H1 do cabecalho. Cortado o 'seu' de 'do seu monitor' — nao carrega informacao, o titulo da janela ja diz de quem e.",
+    "pt-BR": "Perfil HDR do monitor"
+  },
+  "Profile_PeakNits_Hint": {
+    "en": "Measure it in the Windows HDR Calibration app.",
+    "note": "Reescrito para dizer O QUE fazer (medir), nao so o que nao fazer. 'Calibração de HDR do Windows' / 'Windows HDR Calibration' sao os nomes reais do app da Microsoft em cada idioma — nao inventar traducao.",
+    "pt-BR": "Meça no app Calibração de HDR do Windows."
+  },
+  "Profile_PeakNits_Label": {
+    "en": "Peak Display Brightness",
+    "note": "H2. Title Case no en por ser titulo curto.",
+    "pt-BR": "Brilho máximo do monitor"
+  },
+  "Profile_Title": {
+    "en": "My Display",
+    "note": "Window.Title. WindowStyle=None, entao so aparece na barra de tarefas e no Alt-Tab. Espelha o rotulo do botao que abre a janela em MainWindow.xaml.",
+    "pt-BR": "Meu monitor"
+  },
+  "Profile_UiNits_Label": {
+    "en": "UI Brightness (HUD)",
+    "note": "H2.",
+    "pt-BR": "Brilho da interface (HUD)"
+  },
+  "Settings_Bloom_Label": {
+    "en": "Bloom",
+    "note": "Termo tecnico.",
+    "pt-BR": "Bloom"
+  },
+  "Settings_Blowout_Label": {
+    "en": "Blowout (highlight desaturation)",
+    "note": "Blowout e termo do mod; o parenteses explica o efeito.",
+    "pt-BR": "Blowout (dessatura realces)"
+  },
+  "Settings_ColorGradeStrength_Label": {
+    "en": "Color grade strength",
+    "note": "Ficou paralelo ao de cena; antes era so \"Intensidade da gradação\".",
+    "pt-BR": "Intensidade da gradação de cor"
+  },
+  "Settings_Contrast_Label": {
+    "en": "Contrast",
+    "pt-BR": "Contraste"
+  },
+  "Settings_Exposure_Label": {
+    "en": "Exposure",
+    "pt-BR": "Exposição"
+  },
+  "Settings_FilmGrain_Label": {
+    "en": "Film grain",
+    "pt-BR": "Granulação de filme"
+  },
+  "Settings_Flare_Label": {
+    "en": "Flare (diffuse glow)",
+    "note": "Antes era \"Flare / brilho difuso\"; a barra virou parenteses.",
+    "pt-BR": "Flare (brilho difuso)"
+  },
+  "Settings_GameBrightness_Label": {
+    "en": "Game brightness (nits)",
+    "pt-BR": "Brilho do jogo (nits)"
+  },
+  "Settings_GameBrightness_Tooltip": {
+    "en": "Paper white. 203 by default.",
+    "note": "\"branco de papel\" virou \"paper white\" (termo da lista a preservar); \"faixa saudavel\" virou instrucao direta.",
+    "pt-BR": "Paper white. Padrão 203."
+  },
+  "Settings_GammaCorrection_Label": {
+    "en": "Gamma correction",
+    "pt-BR": "Correção de gamma"
+  },
+  "Settings_GammaCorrection_Tooltip": {
+    "en": "Leave the mod's default.",
+    "note": "\"lavadas/acinzentadas\" tinha as duas palavras para a mesma coisa; sobrou uma em cada frase, cada uma com um papel.",
+    "pt-BR": "Deixe no padrão do mod."
+  },
+  "Settings_HighlightSaturation_Label": {
+    "en": "Highlight saturation",
+    "pt-BR": "Saturação dos realces"
+  },
+  "Settings_Highlights_Label": {
+    "en": "Highlights",
+    "pt-BR": "Realces"
+  },
+  "Settings_HueCorrection_Label": {
+    "en": "Hue correction",
+    "pt-BR": "Correção de matiz"
+  },
+  "Settings_HueProcessor_Label": {
+    "en": "Hue processor",
+    "pt-BR": "Processador de matiz"
+  },
+  "Settings_Language": {
+    "en": "Language",
+    "pt-BR": "Idioma"
+  },
+  "Settings_Language_System": {
+    "en": "Same as Windows",
+    "pt-BR": "Igual ao Windows"
+  },
+  "Settings_LutStrength_Label": {
+    "en": "LUT strength",
+    "pt-BR": "Intensidade do LUT"
+  },
+  "Settings_PeakBrightness_Label": {
+    "en": "Peak brightness (nits)",
+    "pt-BR": "Brilho máximo (nits)"
+  },
+  "Settings_PeakBrightness_Tooltip": {
+    "en": "Display peak, in nits. Measured, not chosen.",
+    "note": "Saiu o \"SEU\" em caixa alta e o \"nao e gosto\"; o texto agora diz onde medir logo na segunda frase.",
+    "pt-BR": "Pico do monitor, em nits. Medido, não escolhido."
+  },
+  "Settings_Saturation_Label": {
+    "en": "Saturation",
+    "pt-BR": "Saturação"
+  },
+  "Settings_SceneGradeStrength_Label": {
+    "en": "Scene grade strength",
+    "pt-BR": "Intensidade da gradação da cena"
+  },
+  "Settings_Section_Other": {
+    "en": "Other",
+    "note": "SettingVm.SectionName: cabecalho de grupo quando o manifesto nao traz Section.",
+    "pt-BR": "Outros"
+  },
+  "Settings_SettingsMode_Label": {
+    "en": "Overlay mode",
+    "pt-BR": "Modo do overlay"
+  },
+  "Settings_Shadows_Label": {
+    "en": "Shadows",
+    "pt-BR": "Sombras"
+  },
+  "Settings_ToneMapper_Label": {
+    "en": "Tone mapper",
+    "note": "Termo tecnico: igual nos dois idiomas.",
+    "pt-BR": "Tone mapper"
+  },
+  "Settings_ToneMapper_Tooltip": {
+    "en": "Tone curve. Leave the mod's default.",
+    "note": "RenoDRT, ACES e None sao valores do mod: nao traduzir dentro do texto.",
+    "pt-BR": "Curva de tons. Deixe no padrão do mod."
+  },
+  "Settings_UiBrightness_Label": {
+    "en": "UI brightness (nits)",
+    "pt-BR": "Brilho da interface (nits)"
+  },
+  "Settings_UiBrightness_Tooltip": {
+    "en": "HUD and menus. Same as game brightness.",
+    "note": "\"Recomendado:\" virou imperativo.",
+    "pt-BR": "HUD e menus. Igual ao brilho do jogo."
+  },
+  "Settings_Vignette_Label": {
+    "en": "Vignette",
+    "pt-BR": "Vinheta"
+  }
+}

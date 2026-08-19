@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 
 namespace RenoDXLauncher.Services;
@@ -50,8 +51,7 @@ public class SettingsService
     {
         var dir = Path.GetDirectoryName(iniPath)!;
         if (AddonService.IsGameRunning(dir))
-            throw new InvalidOperationException(
-                "O jogo está aberto — as configurações seriam sobrescritas pelo overlay. Feche o jogo primeiro.");
+            throw new InvalidOperationException(L.T("Error_GameRunning_Save"));
         var ini = new IniFile(iniPath);
         foreach (var (def, value) in changes)
         {
@@ -69,7 +69,7 @@ public class SettingsService
     {
         var dir = Path.GetDirectoryName(iniPath)!;
         if (AddonService.IsGameRunning(dir))
-            throw new InvalidOperationException("O jogo está aberto — feche-o antes de resetar.");
+            throw new InvalidOperationException(L.T("Error_GameRunning_Reset"));
         var ini = new IniFile(iniPath);
         foreach (var def in defs)
         {

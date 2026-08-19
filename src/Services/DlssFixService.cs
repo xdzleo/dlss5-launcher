@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 
 namespace RenoDXLauncher.Services;
@@ -74,17 +75,17 @@ public static class DlssFixService
         IProgress<string>? progress = null)
     {
         if (AddonService.IsGameRunning(targetDir))
-            throw new InvalidOperationException("O jogo está aberto — feche-o antes de aplicar a correção.");
+            throw new InvalidOperationException(L.T("Error_GameRunning"));
 
         var target = Path.Combine(targetDir, AddonFile);
         if (!File.Exists(target))
         {
-            progress?.Report("Baixando a correção de DLSS...");
+            progress?.Report(L.T("Install_DlssFix_Downloading"));
             using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
             http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
             var bytes = await http.GetByteArrayAsync(AddonUrl);
             if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
-                throw new InvalidOperationException("Download da correção veio corrompido.");
+                throw new InvalidOperationException(L.T("Error_DlssFix_DownloadCorrupt"));
             await File.WriteAllBytesAsync(target, bytes);
         }
 
@@ -101,14 +102,14 @@ public static class DlssFixService
         if (detection.DlssPath != null) ini.Set(Section, "DLSSPath", detection.DlssPath);
         if (detection.StreamlinePath != null) ini.Set(Section, "StreamlinePath", detection.StreamlinePath);
         ini.Save();
-        progress?.Report("Correção de DLSS aplicada.");
+        progress?.Report(L.T("Install_DlssFix_Applied"));
     }
 
     /// <summary>Undo: remove the addon file and its ReShade.ini entries.</summary>
     public static void Remove(string targetDir)
     {
         if (AddonService.IsGameRunning(targetDir))
-            throw new InvalidOperationException("O jogo está aberto — feche-o antes de remover a correção.");
+            throw new InvalidOperationException(L.T("Error_GameRunning"));
 
         var target = Path.Combine(targetDir, AddonFile);
         if (File.Exists(target)) File.Delete(target);

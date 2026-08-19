@@ -1,3 +1,4 @@
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
@@ -38,7 +39,7 @@ public class SettingVm : ObservableObject
 
     public string Label => Translate(Def.Label ?? Def.Key);
     public string? Tooltip => TooltipFor(Def);
-    public string SectionName => Def.Section ?? "Outros";
+    public string SectionName => Def.Section ?? L.T("Settings_Section_Other");
 
     public bool IsCombo => Def.Type is "int" or "bool" && Def.Labels is { Count: > 0 };
     public bool IsCheck => Def.Type == "bool" && !IsCombo;
@@ -86,52 +87,53 @@ public class SettingVm : ObservableObject
 
     public bool WasSetInIni => _originalValue != null;
 
-    /// <summary>PT-BR labels for the settings every mod shares; passthrough for the rest.</summary>
-    private static string Translate(string label) => label switch
+    /// <summary>Translated label for the settings every mod shares; passthrough for the rest.
+    /// The label the manifest carries is data written by the mod author, always in English —
+    /// it is the lookup key here, never screen text, so it must NOT be localized.</summary>
+    private static string Translate(string label) =>
+        LabelKey(label) is { } resKey ? L.T(resKey) : label;
+
+    private static string? LabelKey(string label) => label switch
     {
-        "Peak Brightness" => "Brilho máximo (nits)",
-        "Game Brightness" => "Brilho do jogo (nits)",
-        "UI Brightness" => "Brilho da interface (nits)",
-        "Tone Mapper" => "Tone mapper",
-        "Gamma Correction" => "Correção de gamma",
-        "Hue Correction" => "Correção de matiz",
-        "Hue Processor" => "Processador de matiz",
-        "Exposure" => "Exposição",
-        "Highlights" => "Realces",
-        "Shadows" => "Sombras",
-        "Contrast" => "Contraste",
-        "Saturation" => "Saturação",
-        "Highlight Saturation" => "Saturação dos realces",
-        "Blowout" => "Blowout (dessaturar realces)",
-        "Flare" => "Flare / brilho difuso",
-        "LUT Strength" => "Intensidade do LUT",
-        "Color Grade Strength" => "Intensidade da gradação",
-        "Scene Grade Strength" => "Gradação da cena",
-        "Bloom" => "Bloom",
-        "Vignette" => "Vinheta",
-        "Film Grain" => "Granulação de filme",
-        "Settings Mode" => "Modo do overlay",
-        _ => label,
+        "Peak Brightness" => "Settings_PeakBrightness_Label",
+        "Game Brightness" => "Settings_GameBrightness_Label",
+        "UI Brightness" => "Settings_UiBrightness_Label",
+        "Tone Mapper" => "Settings_ToneMapper_Label",
+        "Gamma Correction" => "Settings_GammaCorrection_Label",
+        "Hue Correction" => "Settings_HueCorrection_Label",
+        "Hue Processor" => "Settings_HueProcessor_Label",
+        "Exposure" => "Settings_Exposure_Label",
+        "Highlights" => "Settings_Highlights_Label",
+        "Shadows" => "Settings_Shadows_Label",
+        "Contrast" => "Settings_Contrast_Label",
+        "Saturation" => "Settings_Saturation_Label",
+        "Highlight Saturation" => "Settings_HighlightSaturation_Label",
+        "Blowout" => "Settings_Blowout_Label",
+        "Flare" => "Settings_Flare_Label",
+        "LUT Strength" => "Settings_LutStrength_Label",
+        "Color Grade Strength" => "Settings_ColorGradeStrength_Label",
+        "Scene Grade Strength" => "Settings_SceneGradeStrength_Label",
+        "Bloom" => "Settings_Bloom_Label",
+        "Vignette" => "Settings_Vignette_Label",
+        "Film Grain" => "Settings_FilmGrain_Label",
+        "Settings Mode" => "Settings_SettingsMode_Label",
+        _ => null,
     };
 
     private static string? TooltipFor(SettingDef def)
     {
-        var key = def.Key.ToLowerInvariant();
-        var extra = key switch
+        // Casa pela chave do ini (dado do mod, nunca traduzida). Quando o launcher tem texto
+        // proprio para o ajuste, ele ganha do tooltip do manifesto: e escrito para quem esta
+        // calibrando pela primeira vez, e o do manifesto pressupoe o overlay aberto.
+        var resKey = def.Key.ToLowerInvariant() switch
         {
-            "tonemappeaknits" =>
-                "Pico de brilho do SEU monitor em nits — não é gosto. Descubra no app Calibração de HDR do Windows (ponto onde o padrão some) ou na certificação VESA (400/600/1000...). Valores típicos: OLED 800–1000, miniLED 1000–1500.",
-            "tonemapgamenits" =>
-                "Brilho do \"branco de papel\" (100% branco difuso). Padrão 203 nits (norma ITU BT.2408). Faixa saudável: 100–300 conforme a claridade do ambiente. Nunca acima do brilho máximo.",
-            "tonemapuinits" =>
-                "Brilho de HUD e menus. Recomendado: 203 (igual ao brilho do jogo). Aumente só se a interface parecer apagada.",
-            "tonemaptype" =>
-                "Curva de tons. Mantenha o padrão do mod (geralmente RenoDRT: visual original com HDR e preservação de matiz). ACES muda bastante a imagem; None não faz tonemap (pode estourar).",
-            "tonemapgammacorrection" or "gammacorrection" =>
-                "Corrige sombras lavadas/acinzentadas (jogos SDR masterizados em gamma 2.2). Mantenha o padrão do mod; ligue se o preto parecer elevado.",
+            "tonemappeaknits" => "Settings_PeakBrightness_Tooltip",
+            "tonemapgamenits" => "Settings_GameBrightness_Tooltip",
+            "tonemapuinits" => "Settings_UiBrightness_Tooltip",
+            "tonemaptype" => "Settings_ToneMapper_Tooltip",
+            "tonemapgammacorrection" or "gammacorrection" => "Settings_GammaCorrection_Tooltip",
             _ => null,
         };
-        if (extra != null && def.Tooltip != null) return extra;
-        return extra ?? def.Tooltip;
+        return resKey != null ? L.T(resKey) : def.Tooltip;
     }
 }

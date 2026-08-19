@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
@@ -20,15 +21,15 @@ public partial class HistoryWindow : Window
         TitleText.Text = gameName;
         var repo = ModHistoryService.RepoOf(entry);
         SubtitleText.Text = repo is var (owner, name)
-            ? $"Mod {entry.Slug} · mantido por {entry.Maintainer ?? owner} em {owner}/{name}"
-            : $"Mod {entry.Slug}";
+            ? L.T("History_Subtitle", entry.Slug, entry.Maintainer ?? owner, $"{owner}/{name}")
+            : L.T("History_Subtitle_NoRepo", entry.Slug);
         Loaded += async (_, _) => await LoadAsync();
         KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) Close(); };
     }
 
     private async Task LoadAsync()
     {
-        FooterText.Text = "Carregando histórico...";
+        FooterText.Text = L.T("History_Loading");
         var revisions = await ModHistoryService.GetAsync(_entry);
         List.ItemsSource = revisions;
 
@@ -36,16 +37,18 @@ public partial class HistoryWindow : Window
         {
             EmptyState.Visibility = Visibility.Visible;
             EmptyText.Text = ModHistoryService.WebUrl(_entry) is null
-                ? "Este mod não é publicado por um repositório que eu saiba consultar (provavelmente só Nexus/Discord)."
-                : "Não consegui carregar agora — o GitHub limita consultas sem login a 60 por hora. "
-                  + "Tente de novo mais tarde ou use “Ver no GitHub”.";
+                ? L.T("History_Empty_NoRepo")
+                : L.T("History_Empty_RateLimited");
             FooterText.Text = "";
             return;
         }
 
         EmptyState.Visibility = Visibility.Collapsed;
         var newest = revisions[0].Date.ToLocalTime();
-        FooterText.Text = $"{revisions.Count} alterações · última em {newest:dd/MM/yyyy}";
+        var date = newest.ToString("dd/MM/yyyy");
+        FooterText.Text = revisions.Count == 1
+            ? L.T("History_Footer_One", date)
+            : L.T("History_Footer", revisions.Count, date);
     }
 
     private void OnOpenWeb(object sender, RoutedEventArgs e)

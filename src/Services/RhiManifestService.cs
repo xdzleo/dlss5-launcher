@@ -1,6 +1,7 @@
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Text.Json;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 
 namespace RenoDXLauncher.Services;
@@ -13,6 +14,9 @@ namespace RenoDXLauncher.Services;
 /// </summary>
 public class RhiManifestService
 {
+    /// <summary>Id da nota "pagina do mod". Codigo compara por este valor, nunca pelo titulo.</summary>
+    public const string ModPageNoteId = "rhi:mod-page";
+
     private const string Url = "https://raw.githubusercontent.com/RankFTW/RHI/main/manifest.json";
     private static readonly TimeSpan CacheTtl = TimeSpan.FromDays(3);
 
@@ -77,10 +81,12 @@ public class RhiManifestService
 
         // The manifest carries 64 top-level keys and this service used to read five. Everything
         // below is per-game guidance that already existed in the file the app downloads.
-        FillNotes(root, "gameNotes", "Nota do índice", null);
-        FillNotes(root, "reshadeGameInfo", "Sobre o ReShade neste jogo", "ANTES DE INSTALAR");
-        FillNotes(root, "lumaGameNotes", "Nota (mod Luma)", null);
-        FillNotes(root, "dxvkGameNotes", "Nota (DXVK)", null);
+        // The location string ("ANTES DE INSTALAR") is a sentinel MainViewModel.BuildNotes
+        // compares with ==, not screen text — it stays in one language on purpose.
+        FillNotes(root, "gameNotes", L.T("Install_Note_IndexTitle"), null);
+        FillNotes(root, "reshadeGameInfo", L.T("Install_Note_ReShadeTitle"), "ANTES DE INSTALAR");
+        FillNotes(root, "lumaGameNotes", L.T("Install_Note_LumaTitle"), null);
+        FillNotes(root, "dxvkGameNotes", L.T("Install_Note_DxvkTitle"), null);
 
         // installWarnings is keyed by game and then by mod family (renodx / reshade / luma)
         if (root.TryGetProperty("installWarnings", out var warn) && warn.ValueKind == JsonValueKind.Object)
@@ -88,7 +94,8 @@ public class RhiManifestService
                 foreach (var sub in p.Value.EnumerateObject())
                     if (sub.Value.GetString() is { Length: > 0 } text)
                         Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Warning,
-                            $"Aviso de instalação ({sub.Name})",
+                            // sub.Name is the mod family key (renodx / reshade / luma), kept raw
+                            L.T("Install_Warning_Title", sub.Name),
                             AdviceService.StripSymbols(FirstParagraph(text)), null,
                             RestParagraphs(text), "ANTES DE INSTALAR"));
 
@@ -98,8 +105,9 @@ public class RhiManifestService
                 if (p.Value.GetString() is { Length: > 0 } ver)
                 {
                     _reshadeVersion[MatchService.Normalize(p.Name)] = ver;
-                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Warning, "Versão do ReShade",
-                        $"Este jogo exige o ReShade {ver} — versões mais novas podem não funcionar com o mod.",
+                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Warning,
+                        L.T("Install_ReShadeVersion_Title"),
+                        L.T("Install_ReShadeVersion_Text", ver),
                         null, null, "ANTES DE INSTALAR"));
                 }
 
@@ -113,10 +121,14 @@ public class RhiManifestService
                     // Worded as an offer, not as a fact about distribution: several of these games
                     // DO have a working snapshot in the wiki, and the old wording contradicted the
                     // app's own enabled Install button. BuildNotes decides which one to show.
-                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Step, "Página do mod",
-                        "O autor mantém uma página própria deste mod, com as instruções dele.",
-                        new[] { new NoteLink(label is { Length: > 0 } ? label : "Abrir a página do mod", url) },
-                        null, "ANTES DE INSTALAR"));
+                    // O Id (ModPageNoteId) e o que a BuildNotes usa para reconhecer esta nota.
+                    // Antes ela comparava o Title, que agora e traduzido — a comparacao teria
+                    // quebrado no primeiro idioma diferente do portugues.
+                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Step, L.T("Install_ModPage_Title"),
+                        L.T("Install_ModPage_Text"),
+                        // label comes from the manifest (already English there); ours is the fallback
+                        new[] { new NoteLink(label is { Length: > 0 } ? label : L.T("Install_ModPage_Link"), url) },
+                        null, L.T("Install_Section_BeforeInstalling"), ModPageNoteId));
             }
 
         // Values the index says to force in ReShade.ini for this game.
@@ -127,8 +139,9 @@ public class RhiManifestService
                     .Select(kv => $"{kv.Name}={kv.Value.ToString()}")
                     .ToList();
                 if (lines.Count > 0)
-                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Step, "Valores recomendados",
-                        "O índice do RenoDX recomenda estes valores para este jogo:", null,
+                    Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Step,
+                        L.T("Common_RecommendedValues"),
+                        L.T("Install_IniOverrides_Text"), null,
                         string.Join("\n", lines), "OVERLAY RENODX (Home)"));
             }
 
@@ -158,7 +171,7 @@ public class RhiManifestService
             if (p.Value.TryGetProperty("notesUrl", out var u) && u.GetString() is { Length: > 0 } url)
             {
                 var label = p.Value.TryGetProperty("notesUrlLabel", out var lb)
-                    && lb.GetString() is { Length: > 0 } lv ? lv : "Abrir";
+                    && lb.GetString() is { Length: > 0 } lv ? lv : L.T("Common_Open");
                 links = new List<NoteLink> { new(label, url) };
             }
             Add(p.Name, new ModNote(NoteSource.Rhi,
@@ -174,8 +187,9 @@ public class RhiManifestService
         if (!root.TryGetProperty(prop, out var el) || el.ValueKind != JsonValueKind.Array) return;
         foreach (var g in el.EnumerateArray())
             if (g.GetString() is { Length: > 0 } name)
-                Add(name, new ModNote(NoteSource.Rhi, NoteKind.Info, "Arquitetura",
-                    $"Este jogo usa a build {bits}-bit do mod."));
+                Add(name, new ModNote(NoteSource.Rhi, NoteKind.Info,
+                    L.T("Install_Architecture_Title"),
+                    L.T("Install_Architecture_Text", bits)));
     }
 
     /// <summary>Sentences describing the RHI app's OWN interface. Copied verbatim they become a

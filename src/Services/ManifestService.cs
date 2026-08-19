@@ -12,6 +12,10 @@ public static class AppPaths
     public static string CoversDir { get; } = Path.Combine(DataDir, "covers");
     public static string DownloadsDir { get; } = Path.Combine(DataDir, "downloads");
     public static string ConfigPath { get; } = Path.Combine(DataDir, "config.json");
+    /// <summary>Arquivos temporarios do app. Regra do projeto: NADA e escrito em %TEMP%.
+    /// Arquivo de nome aleatorio em %TEMP% e o par de atributos que as regras de "binario
+    /// suspeito" dos antivirus pontuam, e nao ha razao para pagar esse custo.</summary>
+    public static string CacheDir { get; } = Path.Combine(DataDir, "cache");
 }
 
 /// <summary>

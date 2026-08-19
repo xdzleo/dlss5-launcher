@@ -349,7 +349,11 @@ public static partial class StoreScanners
             if (!File.Exists(db)) return games;
             // product.db is protobuf; install paths are plain length-prefixed UTF-8 strings
             // inside it, so a raw string sweep avoids a protobuf dependency
-            var temp = Path.Combine(Path.GetTempPath(), $"renodx_bnet_{Guid.NewGuid():N}.db");
+            // Copia para a area do proprio app, e nao para %TEMP%: nome aleatorio em %TEMP%
+            // e exatamente o padrao que regra de "arquivo suspeito" procura, e nao custa nada
+            // evitar. Nome fixo porque o arquivo e apagado logo abaixo, no finally.
+            Directory.CreateDirectory(AppPaths.CacheDir);
+            var temp = Path.Combine(AppPaths.CacheDir, "bnet-product.db");
             File.Copy(db, temp, overwrite: true);
             string raw;
             try { raw = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(temp)); }

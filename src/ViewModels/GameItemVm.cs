@@ -1,4 +1,5 @@
 using System.IO;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
@@ -33,8 +34,8 @@ public class GameItemVm : ObservableObject
         GameStore.EA => "EA",
         GameStore.BattleNet => "Battle.net",
         GameStore.Rockstar => "Rockstar",
-        GameStore.Folder => "Pasta",
-        _ => "Manual",
+        GameStore.Folder => L.T("Main_Store_Folder"),
+        _ => L.T("Main_Store_Manual"),
     };
 
     public string Key => $"{Game.Store}_{Game.AppId ?? Game.InstallDir}";
@@ -43,7 +44,7 @@ public class GameItemVm : ObservableObject
 
     /// <summary>Quem mantém o mod deste jogo (crédito em destaque no modal).</summary>
     public string MaintainerName => string.IsNullOrWhiteSpace(Mod?.Maintainer)
-        ? "Comunidade RenoDX" : Mod!.Maintainer!;
+        ? L.T("Main_Maintainer_Community") : Mod!.Maintainer!;
 
     public string MaintainerInitial
     {
@@ -58,10 +59,10 @@ public class GameItemVm : ObservableObject
     /// <summary>Selo de status da wiki: estavel (check verde) x em construcao (aviso).</summary>
     public bool ModIsStable => Mod?.Working == true;
     public bool ModIsUnstable => Mod != null && !Mod.Working;
-    public string ModStatusText => ModIsStable ? "Estável" : "Instável";
-    public string ModStatusTooltip => ModIsStable
-        ? "A wiki do RenoDX marca este mod como funcionando"
-        : "A wiki do RenoDX marca este mod como em construção — pode ter problemas";
+    public string ModStatusText => L.T(ModIsStable ? "Main_ModStatus_Stable" : "Main_ModStatus_Unstable");
+    public string ModStatusTooltip => L.T(ModIsStable
+        ? "Main_ModStatus_Stable_Tooltip"
+        : "Main_ModStatus_Unstable_Tooltip");
 
     public string? CoverPath { get => _coverPath; set { if (Set(ref _coverPath, value)) OnPropertyChanged(nameof(HasCover)); } }
     public bool HasCover => _coverPath != null;
@@ -130,15 +131,15 @@ public class GameItemVm : ObservableObject
             : Mod.DownloadUrl != null ? ModBadge.Available
             : ModBadge.NexusOnly;
 
-    public string BadgeText => Badge switch
+    public string BadgeText => L.T(Badge switch
     {
-        ModBadge.UpdateAvailable => "ATUALIZAÇÃO",
-        ModBadge.Enabled => "ATIVADO",
-        ModBadge.Disabled => "DESATIVADO",
-        ModBadge.Available => "MOD DISPONÍVEL",
-        ModBadge.NexusOnly => "MOD NO NEXUS",
-        _ => "SEM MOD",
-    };
+        ModBadge.UpdateAvailable => "Main_Badge_UpdateAvailable",
+        ModBadge.Enabled => "Main_Badge_Enabled",
+        ModBadge.Disabled => "Main_Badge_Disabled",
+        ModBadge.Available => "Main_Badge_Available",
+        ModBadge.NexusOnly => "Main_Badge_NexusOnly",
+        _ => "Main_Badge_None",
+    });
 
     public void RefreshState()
     {

@@ -1,4 +1,4 @@
-namespace RenoDXLauncher.Models;
+﻿namespace RenoDXLauncher.Models;
 
 public enum GameStore { Steam, Epic, Gog, Xbox, Ubisoft, EA, BattleNet, Rockstar, Folder, Manual }
 
@@ -71,7 +71,10 @@ public record ModNote(
     string? Preformatted = null,
     /// <summary>WHERE the user has to act: "NO JOGO", "OVERLAY RENODX (Home)", "PASTA DO JOGO".
     /// Without this every instruction reads as if it happened in the same place.</summary>
-    string? Location = null)
+    string? Location = null,
+    /// <summary>Identificador estavel, nunca exibido. Existe para o codigo reconhecer uma nota
+    /// especifica sem comparar o Title, que e texto traduzido e muda com o idioma.</summary>
+    string? Id = null)
 {
     /// <summary>Text with layout collapsed, for dedup against other sources. Symbols that change
     /// the MEANING stay: dropping them made "Vanilla+ SDR" collide with "Vanilla SDR" and one of

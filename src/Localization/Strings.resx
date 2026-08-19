@@ -1,0 +1,1445 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    GERADO por tools/gen_resx.py a partir de src/Localization/strings.json.
+    Nao edite este arquivo a mao: edite o JSON e rode o gerador de novo.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Name" xml:space="preserve">
+    <value>RenoDX Launcher</value>
+    <comment>Nome do produto: nao traduzir.</comment>
+  </data>
+  <data name="Cli_Add_AlreadyRegistered" xml:space="preserve">
+    <value>Pasta já estava registrada: {0}</value>
+    <comment>pt: "Pasta já estava registrada: {0}".</comment>
+  </data>
+  <data name="Cli_Add_FolderMissing" xml:space="preserve">
+    <value>Pasta não existe: {0}</value>
+    <comment>pt: "Pasta não existe: {0}".</comment>
+  </data>
+  <data name="Cli_Add_ModFound" xml:space="preserve">
+    <value>Mod: {0} (slug {1}, por {2})</value>
+    <comment>slug e termo tecnico, mantido nos dois idiomas.</comment>
+  </data>
+  <data name="Cli_Add_NamesTried" xml:space="preserve">
+    <value>Nomes tentados: {0}</value>
+  </data>
+  <data name="Cli_Add_NoModMatch" xml:space="preserve">
+    <value>Nenhum mod do catalogo RenoDX casa com esse nome.</value>
+    <comment>pt: "Nenhum mod do catálogo RenoDX casa com esse nome."</comment>
+  </data>
+  <data name="Cli_Add_RecognizedAs" xml:space="preserve">
+    <value>Reconhecida como: {0}</value>
+  </data>
+  <data name="Cli_Add_Registered" xml:space="preserve">
+    <value>Pasta registrada: {0}</value>
+  </data>
+  <data name="Cli_Arg_Folder" xml:space="preserve">
+    <value>&lt;pasta&gt;</value>
+    <comment>Metavariavel.</comment>
+  </data>
+  <data name="Cli_Arg_Game" xml:space="preserve">
+    <value>&lt;jogo&gt;</value>
+    <comment>Metavariavel do help e das mensagens de uso. Montada em codigo junto do nome do comando, que fica literal.</comment>
+  </data>
+  <data name="Cli_Arg_KeyValue" xml:space="preserve">
+    <value>chave=valor</value>
+    <comment>Metavariavel.</comment>
+  </data>
+  <data name="Cli_Check_Summary" xml:space="preserve">
+    <value>instalados: {0} · com atualização: {1}</value>
+    <comment>pt: "instalados: {0} · com atualização: {1}". Rotulo antes do numero, imune a plural.</comment>
+  </data>
+  <data name="Cli_Check_Unknown" xml:space="preserve">
+    <value>não dá para verificar</value>
+    <comment>pt: "não dá para verificar".</comment>
+  </data>
+  <data name="Cli_Check_UpToDate" xml:space="preserve">
+    <value>atualizado</value>
+  </data>
+  <data name="Cli_Check_UpdateAvailable" xml:space="preserve">
+    <value>atualização disponível</value>
+    <comment>pt: "atualização disponível".</comment>
+  </data>
+  <data name="Cli_Doctor_Catalog_Summary" xml:space="preserve">
+    <value>{0} entradas ({1} ms), {2} com download, {3} com Steam appid</value>
+    <comment>Steam appid e termo tecnico.</comment>
+  </data>
+  <data name="Cli_Doctor_Header" xml:space="preserve">
+    <value>=== {0} · diagnóstico ===</value>
+    <comment>pt: "=== {0} · diagnóstico ===". {0} = App_Name.</comment>
+  </data>
+  <data name="Cli_Doctor_Label_Catalog" xml:space="preserve">
+    <value>catalogo:</value>
+    <comment>pt: "catálogo:". Alinhado em 12.</comment>
+  </data>
+  <data name="Cli_Doctor_Label_Data" xml:space="preserve">
+    <value>dados:</value>
+    <comment>Rotulo de coluna, alinhado em 12.</comment>
+  </data>
+  <data name="Cli_Doctor_Label_Log" xml:space="preserve">
+    <value>log:</value>
+    <comment>Alinhado em 12.</comment>
+  </data>
+  <data name="Cli_Doctor_Label_Profile" xml:space="preserve">
+    <value>perfil:</value>
+    <comment>Alinhado em 12.</comment>
+  </data>
+  <data name="Cli_Doctor_Label_Scanners" xml:space="preserve">
+    <value>scanners:</value>
+    <comment>Termo tecnico, igual nos dois idiomas.</comment>
+  </data>
+  <data name="Cli_Doctor_Pins" xml:space="preserve">
+    <value>exes fixados: {0} · pastas manuais: {1}</value>
+  </data>
+  <data name="Cli_Doctor_ReShadeCache" xml:space="preserve">
+    <value>ReShade em cache: {0}</value>
+  </data>
+  <data name="Cli_Doctor_ReShadeCache_None" xml:space="preserve">
+    <value>nenhum</value>
+  </data>
+  <data name="Cli_Doctor_ScannerRow" xml:space="preserve">
+    <value>{0,3} jogos  ({1} ms)</value>
+    <comment>O ",3" e alinhamento do string.Format, preserve.</comment>
+  </data>
+  <data name="Cli_Doctor_Scanner_Folders" xml:space="preserve">
+    <value>Pastas</value>
+    <comment>Unico nome de scanner traduzivel; Steam, Epic, GOG, Xbox, Ubisoft, EA, Battle.net e Rockstar sao nomes proprios.</comment>
+  </data>
+  <data name="Cli_Error_ExeNotFound" xml:space="preserve">
+    <value>Não encontrei o executável do jogo. Rode exe {0} para ver os candidatos.</value>
+    <comment>pt: "Não encontrei o executável do jogo...". exe e nome de comando; {0} = Cli_Arg_Game.</comment>
+  </data>
+  <data name="Cli_Error_GameAmbiguous" xml:space="preserve">
+    <value>"{0}" e ambiguo: {1}. Use um trecho mais especifico do nome.</value>
+    <comment>pt: "\"{0}\" é ambíguo: {1}. Use um trecho mais específico do nome." {1} = lista de nomes.</comment>
+  </data>
+  <data name="Cli_Error_GameNotFound" xml:space="preserve">
+    <value>Nenhum jogo casa com "{0}". Rode list para ver os detectados.</value>
+    <comment>list e nome de comando, nao traduzir.</comment>
+  </data>
+  <data name="Cli_Error_GameRequired" xml:space="preserve">
+    <value>Informe o nome do jogo.</value>
+  </data>
+  <data name="Cli_Error_ModNotInstalled" xml:space="preserve">
+    <value>Mod não instalado nesse jogo. Rode install antes.</value>
+    <comment>pt: "Mod não instalado nesse jogo. Rode install antes." Usada em settings, set e enable/disable.</comment>
+  </data>
+  <data name="Cli_Error_NoSettings" xml:space="preserve">
+    <value>O mod {0} não tem configurações ajustáveis pelo launcher.</value>
+    <comment>pt: "O mod {0} não tem configurações ajustáveis pelo launcher." Substitui "sem manifesto de configuracoes", que nao dizia nada ao usuario.</comment>
+  </data>
+  <data name="Cli_Error_Unhandled" xml:space="preserve">
+    <value>Erro: {0}</value>
+  </data>
+  <data name="Cli_Error_UnknownCommand" xml:space="preserve">
+    <value>Comando desconhecido: {0}</value>
+    <comment>O help e impresso logo abaixo, entao a mensagem nao repete a instrucao.</comment>
+  </data>
+  <data name="Cli_Exe_NoCandidates" xml:space="preserve">
+    <value>Nenhum .exe candidato nessa pasta.</value>
+  </data>
+  <data name="Cli_Exe_NoneFound" xml:space="preserve">
+    <value>(nenhum .exe encontrado)</value>
+  </data>
+  <data name="Cli_Help_Add" xml:space="preserve">
+    <value>Registra uma pasta de jogo que as lojas não conhecem</value>
+    <comment>pt: "que as lojas não conhecem".</comment>
+  </data>
+  <data name="Cli_Help_Check" xml:space="preserve">
+    <value>Verifica atualização dos mods instalados</value>
+    <comment>pt com acento no resx: "Verifica atualização dos mods instalados".</comment>
+  </data>
+  <data name="Cli_Help_Disable" xml:space="preserve">
+    <value>Desativa o mod</value>
+  </data>
+  <data name="Cli_Help_Doctor" xml:space="preserve">
+    <value>Diagnóstico completo: por que um jogo não aparece</value>
+    <comment>pt: "Diagnóstico completo: por que um jogo não aparece".</comment>
+  </data>
+  <data name="Cli_Help_Enable" xml:space="preserve">
+    <value>Ativa o mod</value>
+  </data>
+  <data name="Cli_Help_Exe" xml:space="preserve">
+    <value>Lista os .exe candidatos na ordem de escolha, com bits e tamanho</value>
+  </data>
+  <data name="Cli_Help_Header" xml:space="preserve">
+    <value>{0} — modo linha de comando</value>
+    <comment>{0} = App_Name (reuso da chave existente).</comment>
+  </data>
+  <data name="Cli_Help_Install" xml:space="preserve">
+    <value>Instala ou atualiza o ReShade e o addon</value>
+  </data>
+  <data name="Cli_Help_List" xml:space="preserve">
+    <value>Lista os jogos detectados e o estado do mod</value>
+  </data>
+  <data name="Cli_Help_Match" xml:space="preserve">
+    <value>{0} casa com qualquer parte do nome, sem diferenciar maiusculas. Exemplo:</value>
+    <comment>pt: "...sem diferenciar maiúsculas. Exemplo:". {0} = Cli_Arg_Game.</comment>
+  </data>
+  <data name="Cli_Help_Profile" xml:space="preserve">
+    <value>Mostra ou define o perfil de nits do monitor</value>
+    <comment>nits e termo tecnico, mantido.</comment>
+  </data>
+  <data name="Cli_Help_Set" xml:space="preserve">
+    <value>Grava configurações; feche o jogo antes</value>
+    <comment>pt: "Grava configurações; feche o jogo antes".</comment>
+  </data>
+  <data name="Cli_Help_Settings" xml:space="preserve">
+    <value>Mostra as configurações do mod, lidas do ReShade.ini</value>
+    <comment>pt: "Mostra as configurações do mod, lidas do ReShade.ini". ReShade.ini e nome de arquivo.</comment>
+  </data>
+  <data name="Cli_Help_Verify" xml:space="preserve">
+    <value>Lê o ReShade.log e diz se o mod carregou</value>
+    <comment>pt com acento: "Lê o ReShade.log e diz se o mod carregou". ReShade.log e nome de arquivo, nao traduzir.</comment>
+  </data>
+  <data name="Cli_Install_AntiCheat_Abort" xml:space="preserve">
+    <value>Cancelado: {0} detectado. Instalar pode banir sua conta em jogo online.</value>
+    <comment>{0} = nome do anticheat (EAC, BattlEye...), vem do scanner, nao traduzir.</comment>
+  </data>
+  <data name="Cli_Install_AntiCheat_UseGui" xml:space="preserve">
+    <value>Se quiser assumir o risco, instale pela janela do aplicativo.</value>
+  </data>
+  <data name="Cli_Install_Done" xml:space="preserve">
+    <value>{0} instalado em {1}</value>
+    <comment>{0} = slug do mod, {1} = pasta.</comment>
+  </data>
+  <data name="Cli_Install_NoDirectDownload" xml:space="preserve">
+    <value>Esse jogo não tem mod com download direto. Veja a página do mod.</value>
+    <comment>pt: "Esse jogo não tem mod com download direto. Veja a página do mod."</comment>
+  </data>
+  <data name="Cli_List_Col_Game" xml:space="preserve">
+    <value>JOGO</value>
+    <comment>Cabecalho de coluna, largura 42.</comment>
+  </data>
+  <data name="Cli_List_Col_Mod" xml:space="preserve">
+    <value>MOD</value>
+    <comment>Ultima coluna, sem largura fixa.</comment>
+  </data>
+  <data name="Cli_List_Col_Status" xml:space="preserve">
+    <value>STATUS</value>
+    <comment>Largura 11.</comment>
+  </data>
+  <data name="Cli_List_Col_Store" xml:space="preserve">
+    <value>LOJA</value>
+    <comment>Largura 10.</comment>
+  </data>
+  <data name="Cli_List_Summary" xml:space="preserve">
+    <value>detectados: {0} · com mod: {1} · instalados: {2}</value>
+    <comment>Escrito com rotulo antes do numero para nao quebrar no singular.</comment>
+  </data>
+  <data name="Cli_Loading" xml:space="preserve">
+    <value>Carregando catalogo e procurando jogos...</value>
+    <comment>pt: "Carregando catálogo e procurando jogos...". Vai para stderr.</comment>
+  </data>
+  <data name="Cli_Mod_DirectDownload" xml:space="preserve">
+    <value>download direto disponível</value>
+    <comment>pt: "download direto disponível". Fragmento juntado por " · " em codigo.</comment>
+  </data>
+  <data name="Cli_Mod_NoDirectDownload" xml:space="preserve">
+    <value>sem download direto: veja a página do mod</value>
+    <comment>pt: "sem download direto: veja a página do mod" — acento em "página" estava faltando no texto original.</comment>
+  </data>
+  <data name="Cli_Mod_Stable" xml:space="preserve">
+    <value>estável</value>
+    <comment>pt: "estável".</comment>
+  </data>
+  <data name="Cli_Mod_Wip" xml:space="preserve">
+    <value>em construção</value>
+    <comment>pt: "em construção". Estava em caixa alta ("EM CONSTRUÇÃO"); baixado para o mesmo registro do par "estável".</comment>
+  </data>
+  <data name="Cli_Profile_Current" xml:space="preserve">
+    <value>{0}  aplicar-ao-instalar: {1}</value>
+    <comment>{0} = Cli_Profile_Nits, {1} = Common_Yes/Common_No.</comment>
+  </data>
+  <data name="Cli_Profile_Nits" xml:space="preserve">
+    <value>pico={0:0} jogo={1:0} ui={2:0}</value>
+    <comment>Reusada no comando profile e no doctor. Os {n:0} sao especificadores de formato, preserve-os.</comment>
+  </data>
+  <data name="Cli_Profile_Saved" xml:space="preserve">
+    <value>Perfil salvo: {0}</value>
+    <comment>{0} = Cli_Profile_Nits.</comment>
+  </data>
+  <data name="Cli_Set_DryRun" xml:space="preserve">
+    <value>(--dry-run: nada foi gravado)</value>
+    <comment>--dry-run e flag, nao traduzir.</comment>
+  </data>
+  <data name="Cli_Set_InvalidValue" xml:space="preserve">
+    <value>Valor inválido: {0}. Use número com ponto decimal.</value>
+    <comment>pt: "Valor inválido: {0}. Use número com ponto decimal." O parse e InvariantCulture, entao o ponto e mesmo obrigatorio.</comment>
+  </data>
+  <data name="Cli_Set_NothingToWrite" xml:space="preserve">
+    <value>Nada para gravar. Passe pares {0}.</value>
+    <comment>{0} = Cli_Arg_KeyValue.</comment>
+  </data>
+  <data name="Cli_Set_UnknownKey" xml:space="preserve">
+    <value>Chave desconhecida nesse mod: {0}. Rode settings para ver as validas.</value>
+    <comment>pt: "...para ver as válidas." settings e nome de comando.</comment>
+  </data>
+  <data name="Cli_Set_Written" xml:space="preserve">
+    <value>Gravado.</value>
+  </data>
+  <data name="Cli_Settings_Default" xml:space="preserve">
+    <value>(padrão)</value>
+    <comment>pt: "(padrão)".</comment>
+  </data>
+  <data name="Cli_Settings_DefaultColumn" xml:space="preserve">
+    <value>padrão={0}</value>
+    <comment>pt: "padrão={0}". Coluna alinhada em 16 no codigo.</comment>
+  </data>
+  <data name="Cli_Status_Available" xml:space="preserve">
+    <value>disponível</value>
+    <comment>pt com acento no resx: "disponível". So rotulo de tela; o token cru "disponivel" continua no --json.</comment>
+  </data>
+  <data name="Cli_Status_Disabled" xml:space="preserve">
+    <value>desativado</value>
+  </data>
+  <data name="Cli_Status_Enabled" xml:space="preserve">
+    <value>ativado</value>
+  </data>
+  <data name="Cli_Status_NoMod" xml:space="preserve">
+    <value>sem mod</value>
+  </data>
+  <data name="Cli_Target" xml:space="preserve">
+    <value>Alvo: {0}</value>
+    <comment>Usada no add e no set; no set o {0} recebe "jogo  -&gt;  caminho.ini" montado em codigo.</comment>
+  </data>
+  <data name="Cli_Toggle_Disabled" xml:space="preserve">
+    <value>{0}: mod desativado</value>
+  </data>
+  <data name="Cli_Toggle_Enabled" xml:space="preserve">
+    <value>{0}: mod ativado</value>
+    <comment>Estava em caixa alta (ATIVADO); normalizado.</comment>
+  </data>
+  <data name="Cli_Usage" xml:space="preserve">
+    <value>Uso: {0}</value>
+    <comment>{0} = sintaxe montada em codigo, com o nome do comando literal.</comment>
+  </data>
+  <data name="Cli_Verify_LastRun" xml:space="preserve">
+    <value>(último registro: {0})</value>
+    <comment>pt: "(último registro: {0})". {0} ja vem formatado como dd/MM/yyyy HH:mm em codigo — o formato de data nao foi traduzido.</comment>
+  </data>
+  <data name="Cli_Verify_NothingInstalled" xml:space="preserve">
+    <value>Nenhum mod instalado para verificar. Use install para instalar um.</value>
+    <comment>install e nome de comando.</comment>
+  </data>
+  <data name="Common_Add" xml:space="preserve">
+    <value>Adicionar</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+    <comment>Chave Common_* reutilizavel. Provavelmente criada tambem por outro agente — mesmo nome, mesmo texto, nao duplicar no strings.json.</comment>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Fechar</value>
+    <comment>Chave Common_* porque 'Fechar' se repete em várias janelas. Usada no botão do rodapé.</comment>
+  </data>
+  <data name="Common_Continue" xml:space="preserve">
+    <value>Continuar</value>
+    <comment>Rotulo padrao do botao de confirmacao quando quem chama nao passa um proprio.</comment>
+  </data>
+  <data name="Common_Default" xml:space="preserve">
+    <value>Padrão</value>
+  </data>
+  <data name="Common_DoNot_Prefix" xml:space="preserve">
+    <value>NÃO:</value>
+    <comment>Substitui os simbolos ⛔ e 🚫 dentro do texto de nota. Antes ficava fixo em pt no dicionario Meaningful; agora resolve por chamada em AdviceService.StripSymbols.</comment>
+  </data>
+  <data name="Common_Enabled" xml:space="preserve">
+    <value>Ativo</value>
+    <comment>Content do CheckBox de opcao booleana do mod (template SettingRow).</comment>
+  </data>
+  <data name="Common_GotIt" xml:space="preserve">
+    <value>Entendi</value>
+    <comment>Botao unico do aviso so-OK. DialogWindow.Show. Em ingles usei sentence case ('Got it'), que e o que o proprio Windows 11 usa nesse botao de reconhecimento; Title Case ('Got It') soa errado em botao que nao e comando.</comment>
+  </data>
+  <data name="Common_History" xml:space="preserve">
+    <value>Histórico</value>
+  </data>
+  <data name="Common_NitsValue" xml:space="preserve">
+    <value>{0} nits</value>
+    <comment>Leitura dos tres sliders do ProfileWindow. 'nits' nao traduz; a chave existe so para o idioma poder mudar a posicao/espacamento da unidade. Numero ja vem arredondado do codigo ('0'), entao nada de formato numerico dentro do recurso.</comment>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>Não</value>
+    <comment>pt: "Não". Mesma observacao de chave compartilhada.</comment>
+  </data>
+  <data name="Common_Note_Important" xml:space="preserve">
+    <value>Importante</value>
+    <comment>Título de callout [!IMPORTANT].</comment>
+  </data>
+  <data name="Common_Note_Info" xml:space="preserve">
+    <value>Nota</value>
+    <comment>Título de callout [!NOTE] e fallback.</comment>
+  </data>
+  <data name="Common_Note_Tip" xml:space="preserve">
+    <value>Dica</value>
+    <comment>Título de callout [!TIP].</comment>
+  </data>
+  <data name="Common_Note_Warning" xml:space="preserve">
+    <value>Atenção</value>
+    <comment>Título de callout [!WARNING]/[!CAUTION] da wiki. CatalogService.CalloutBlocks.</comment>
+  </data>
+  <data name="Common_Open" xml:space="preserve">
+    <value>Abrir</value>
+    <comment>Rotulo de link de fallback em FillNotes, quando o manifesto nao traz notesUrlLabel.</comment>
+  </data>
+  <data name="Common_RecommendedValues" xml:space="preserve">
+    <value>Valores recomendados</value>
+    <comment>Common_* porque o mesmo texto aparece em GuideWindow.xaml:84, que e de outro agente: reusar esta chave la.</comment>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Atualizar</value>
+    <comment>IMPORTANTE: em pt e a mesma palavra de Common_Update, mas em en NAO. Esta e recarregar a lista (Refresh).</comment>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Salvar</value>
+    <comment>Chave Common_* reutilizavel. Mesma observacao de duplicidade que Common_Cancel.</comment>
+  </data>
+  <data name="Common_SelectToCopy" xml:space="preserve">
+    <value>Selecione para copiar</value>
+    <comment>ToolTip do bloco monoespacado de nota (trecho de ini, argumento de linha de comando).</comment>
+  </data>
+  <data name="Common_Unidentified" xml:space="preserve">
+    <value>sem identificação</value>
+    <comment>Fragmento inline: entra como {1} de Error_ReShade_ProxyConflict quando o PE nao tem ProductName. Minusculo de proposito, aparece dentro de parenteses no meio da frase.</comment>
+  </data>
+  <data name="Common_Update" xml:space="preserve">
+    <value>Atualizar</value>
+    <comment>IMPORTANTE: par da anterior. Esta e atualizar o mod (Update). Se as duas virarem uma chave so, o en quebra.</comment>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>Sim</value>
+    <comment>Chave Common_* — pode ja estar sendo criada por outro arquivo; deve existir uma definicao so.</comment>
+  </data>
+  <data name="Dialog_Advice_Label" xml:space="preserve">
+    <value>RECOMENDADO PARA ESTE JOGO</value>
+  </data>
+  <data name="Dialog_ApplyProfile_Name" xml:space="preserve">
+    <value>Aplicar meu perfil</value>
+  </data>
+  <data name="Dialog_ApplyProfile_Text" xml:space="preserve">
+    <value>Meu perfil</value>
+    <comment>Rotulo curto do botao; cabe em 1/3 do UniformGrid.</comment>
+  </data>
+  <data name="Dialog_ApplyProfile_Tooltip" xml:space="preserve">
+    <value>Escreve os nits do seu monitor nas configurações deste jogo.</value>
+  </data>
+  <data name="Dialog_DlssFix_Desc" xml:space="preserve">
+    <value>Só use se notar piscadas ou artefatos.</value>
+  </data>
+  <data name="Dialog_DlssFix_Name" xml:space="preserve">
+    <value>Correção do DLSS Frame Generation</value>
+  </data>
+  <data name="Dialog_DlssFix_Title" xml:space="preserve">
+    <value>DLSS Frame Generation piscando?</value>
+  </data>
+  <data name="Dialog_EngineNotes_Desc" xml:space="preserve">
+    <value>Regras da wiki do RenoDX que valem para todo jogo deste motor, mesmo quando a nota do jogo não as repete.</value>
+    <comment>O cabecalho do Expander continua vindo do VM (EngineNotesHeader).</comment>
+  </data>
+  <data name="Dialog_Exe_Label" xml:space="preserve">
+    <value>EXECUTÁVEL DO JOGO</value>
+  </data>
+  <data name="Dialog_History_Name" xml:space="preserve">
+    <value>Histórico do mod</value>
+  </data>
+  <data name="Dialog_History_Tooltip" xml:space="preserve">
+    <value>Todas as versões deste mod, com data.</value>
+  </data>
+  <data name="Dialog_InstallDir_Label" xml:space="preserve">
+    <value>PASTA DE INSTALAÇÃO</value>
+    <comment>Corrige o "PASTA DE INSTALACAO" sem cedilha nem til citado no briefing. Caixa alta e do estilo SectionLabel.</comment>
+  </data>
+  <data name="Dialog_Install_Desc" xml:space="preserve">
+    <value>Copia o ReShade e o addon do RenoDX para a pasta do executável acima.</value>
+    <comment>Virou frase, com verbo, no lugar do "ReShade + addon do RenoDX ...".</comment>
+  </data>
+  <data name="Dialog_Install_Title" xml:space="preserve">
+    <value>Instalar mod HDR</value>
+    <comment>Uma chave para o titulo do botao e para o AutomationProperties.Name, que antes divergiam ("Instalar mod HDR" x "Instalar mod").</comment>
+  </data>
+  <data name="Dialog_Maintainer_Label" xml:space="preserve">
+    <value>CRIADO POR</value>
+  </data>
+  <data name="Dialog_Maintainer_Tooltip" xml:space="preserve">
+    <value>Abre o perfil do autor no GitHub.</value>
+  </data>
+  <data name="Dialog_ModPage" xml:space="preserve">
+    <value>Abrir a página do mod</value>
+    <comment>Corrige o "Pagina do mod" sem acento citado no briefing. Comando e OpenNexusCommand, mas nem todo mod e do Nexus, entao o texto continua generico.</comment>
+  </data>
+  <data name="Dialog_Mod_Stable" xml:space="preserve">
+    <value>Estável</value>
+  </data>
+  <data name="Dialog_Mod_Unstable" xml:space="preserve">
+    <value>Instável</value>
+  </data>
+  <data name="Dialog_Notes_Label" xml:space="preserve">
+    <value>COMO AJUSTAR ESTE JOGO</value>
+  </data>
+  <data name="Dialog_OpenFolder" xml:space="preserve">
+    <value>Abrir a pasta do jogo</value>
+    <comment>Botao so de icone: a mesma chave serve de ToolTip e de AutomationProperties.Name.</comment>
+  </data>
+  <data name="Dialog_Prereq_Label" xml:space="preserve">
+    <value>ANTES DE INSTALAR</value>
+  </data>
+  <data name="Dialog_Remove_Desc" xml:space="preserve">
+    <value>Apaga o addon da pasta do jogo. Suas configurações continuam no ReShade.ini.</value>
+  </data>
+  <data name="Dialog_Remove_Title" xml:space="preserve">
+    <value>Remover mod</value>
+    <comment>Titulo do botao e AutomationProperties.Name.</comment>
+  </data>
+  <data name="Dialog_Repair_Desc" xml:space="preserve">
+    <value>A build do ReShade nesta pasta não tem suporte a addon: o mod não carrega.</value>
+    <comment>Padronizei "add-ons" para "addon", termo do glossario.</comment>
+  </data>
+  <data name="Dialog_Repair_Title" xml:space="preserve">
+    <value>Reinstalar o ReShade</value>
+    <comment>Titulo do botao e AutomationProperties.Name.</comment>
+  </data>
+  <data name="Dialog_ResetSettings_Name" xml:space="preserve">
+    <value>Restaurar os valores padrão</value>
+  </data>
+  <data name="Dialog_SaveSettings_Name" xml:space="preserve">
+    <value>Salvar configurações</value>
+  </data>
+  <data name="Dialog_Settings_Desc" xml:space="preserve">
+    <value>Gravadas no ReShade.ini do jogo. Feche o jogo antes de salvar.</value>
+    <comment>Troquei "Salve com o jogo FECHADO" (caixa alta gritada) por instrucao na ordem em que a pessoa age.</comment>
+  </data>
+  <data name="Dialog_Settings_Title" xml:space="preserve">
+    <value>Configurações do mod</value>
+  </data>
+  <data name="Dialog_Toggle_Disable_Tooltip" xml:space="preserve">
+    <value>Desativa sem remover: renomeia o addon.</value>
+  </data>
+  <data name="Dialog_Toggle_Enable_Tooltip" xml:space="preserve">
+    <value>Ativa o mod neste jogo.</value>
+    <comment>Vai num Setter dentro de Style; o estado desativado usa a chave abaixo.</comment>
+  </data>
+  <data name="Dialog_Toggle_Name" xml:space="preserve">
+    <value>Ativar ou desativar o mod</value>
+  </data>
+  <data name="Dialog_Update_Action_Name" xml:space="preserve">
+    <value>Atualizar o mod</value>
+    <comment>Botao ambar do cartao de atualizacao. O original dizia "Instalar ou atualizar mod", mas esse botao so aparece quando ha update.</comment>
+  </data>
+  <data name="Dialog_Update_Desc" xml:space="preserve">
+    <value>O autor publicou uma build mais nova. Atualizar mantém suas configurações.</value>
+    <comment>Cortei "deste mod" (redundante dentro do modal do mod) e "na atualização".</comment>
+  </data>
+  <data name="Dialog_Update_Title" xml:space="preserve">
+    <value>Atualização disponível</value>
+    <comment>Title Case no en por ser titulo curto, conforme a regra de maiuscula.</comment>
+  </data>
+  <data name="Error_CheckUpdates" xml:space="preserve">
+    <value>Falha ao verificar atualizações: {0}. Verifique a conexão e tente de novo.</value>
+    <comment>{0} = ex.Message.</comment>
+  </data>
+  <data name="Error_DetailLoad" xml:space="preserve">
+    <value>Falha ao carregar os detalhes deste jogo: {0}. Selecione o jogo de novo.</value>
+    <comment>{0} = ex.Message.</comment>
+  </data>
+  <data name="Error_DlssFix_DownloadCorrupt" xml:space="preserve">
+    <value>O download da correção do DLSS veio corrompido. Tente aplicar de novo.</value>
+  </data>
+  <data name="Error_GameRunning" xml:space="preserve">
+    <value>O jogo está aberto. Feche-o antes de continuar.</value>
+    <comment>Compartilhada: substitui 6 variantes (instalar / instalar-atualizar / ativar-desativar / remover mod / aplicar correcao / remover correcao) nos tres arquivos. O usuario ja sabe o que clicou, entao a cauda por acao nao carregava informacao.</comment>
+  </data>
+  <data name="Error_GameRunning_Reset" xml:space="preserve">
+    <value>O jogo está aberto. Feche o jogo para restaurar os valores padrão.</value>
+    <comment>SettingsService.Reset.</comment>
+  </data>
+  <data name="Error_GameRunning_Save" xml:space="preserve">
+    <value>O jogo está aberto: o overlay sobrescreveria as alterações. Feche o jogo e tente de novo.</value>
+    <comment>SettingsService.Write. Chega na tela via DetailStatus e via Cli.cs.</comment>
+  </data>
+  <data name="Error_Install" xml:space="preserve">
+    <value>Falha ao instalar: {0}. Feche o jogo e tente de novo.</value>
+    <comment>{0} = ex.Message. Substitui o 'Erro: {msg}' que nao dizia o que fazer.</comment>
+  </data>
+  <data name="Error_Launch" xml:space="preserve">
+    <value>Falha ao iniciar o jogo: {0}. Abra pela loja ou execute o .exe direto.</value>
+    <comment>{0} = ex.Message.</comment>
+  </data>
+  <data name="Error_Load" xml:space="preserve">
+    <value>Falha ao carregar: {0}. Verifique a conexão e clique em Atualizar.</value>
+    <comment>{0} = ex.Message.</comment>
+  </data>
+  <data name="Error_Mod_DownloadCorrupt" xml:space="preserve">
+    <value>O download de {0} veio corrompido. Tente instalar de novo.</value>
+    <comment>{0} = nome do arquivo. Cortei o '(nao e um addon valido)', que so reformulava 'corrompido'.</comment>
+  </data>
+  <data name="Error_Mod_NoDirectDownload" xml:space="preserve">
+    <value>Este mod não tem download direto. Baixe pela página dele no Nexus.</value>
+    <comment>Nexus e nome proprio.</comment>
+  </data>
+  <data name="Error_Mod_NotInstalled" xml:space="preserve">
+    <value>Nenhum addon instalado neste jogo. Instale o mod primeiro.</value>
+  </data>
+  <data name="Error_ReShade_ArchiveNotFound" xml:space="preserve">
+    <value>O instalador do ReShade não contém os arquivos esperados. Tente instalar de novo.</value>
+    <comment>Original dizia 'Assinatura ZIP nao encontrada' — jargao de bytes PK, sem sentido para o usuario final.</comment>
+  </data>
+  <data name="Error_ReShade_DllMissing" xml:space="preserve">
+    <value>{0} não está no cache local. Tente instalar de novo.</value>
+    <comment>{0} = ReShade64.dll ou ReShade32.dll.</comment>
+  </data>
+  <data name="Error_ReShade_DllNotReShade" xml:space="preserve">
+    <value>O arquivo {0} extraído do instalador não é do ReShade. Nada foi instalado; tente de novo.</value>
+    <comment>{0} = ReShade64.dll ou ReShade32.dll. Escrito como 'O arquivo {0}' para nao depender do genero do placeholder.</comment>
+  </data>
+  <data name="Error_ReShade_NotExecutable" xml:space="preserve">
+    <value>O download do ReShade não é um executável. Tente instalar de novo.</value>
+    <comment>Antes so dizia o que houve; agora diz o que fazer.</comment>
+  </data>
+  <data name="Error_ReShade_ProxyConflict" xml:space="preserve">
+    <value>Já existe um {0} nessa pasta que não é ReShade ({1}) — provavelmente de outro mod, como dxvk ou ENB. Remova ou renomeie o arquivo antes de instalar.</value>
+    <comment>{0} = nome do dll proxy, {1} = ProductName do PE ou Common_Unidentified. dxvk/ENB sao nomes proprios. Cortei o 'Nao vou sobrescrever', que so repetia o efeito ja implicito.</comment>
+  </data>
+  <data name="Error_ReShade_Signature" xml:space="preserve">
+    <value>A assinatura do instalador do ReShade não confere ({0}). Nada foi instalado. Se persistir, verifique se um antivírus ou proxy está alterando o download.</value>
+    <comment>{0} = detalhe tecnico vindo do Authenticode.IsSignedBy, nao traduzido.</comment>
+  </data>
+  <data name="Guide_AntiCheat_Body" xml:space="preserve">
+    <value>O ReShade com suporte a add-ons é uma build não assinada. Em jogos com EAC/BattlEye (Elden Ring, GTA Online) o risco é banimento: jogue offline. O launcher detecta esses jogos e avisa antes de instalar.</value>
+    <comment>No resx: 'é uma build não assinada' e 'o risco é banimento'. Tirei o NAO em caixa alta e as reticencias depois de GTA Online. Nome de jogo, EAC e BattlEye ficam como estao.</comment>
+  </data>
+  <data name="Guide_AntiCheat_Title" xml:space="preserve">
+    <value>Anti-cheat (jogos online)</value>
+  </data>
+  <data name="Guide_Conflicts_Body" xml:space="preserve">
+    <value>Special K não funciona junto com o RenoDX.
+Outro dxgi.dll na pasta (ENB, dxvk): o launcher detecta e não sobrescreve.
+Mods genéricos (Unreal/Unity): evite fullscreen exclusivo; ajustes de “Upgrade” podem exigir reiniciar o jogo.</value>
+    <comment>Tres linhas, mesma observacao do Guide_Step4_Body: xml:space="preserve" e quebra real. No resx: 'não funciona', 'não sobrescreve', 'genéricos', aspas curvas “Upgrade”. Special K, ENB, dxvk, dxgi.dll, Unreal, Unity e o nome da secao Upgrade nao traduzem.</comment>
+  </data>
+  <data name="Guide_Conflicts_Title" xml:space="preserve">
+    <value>Conflitos conhecidos</value>
+  </data>
+  <data name="Guide_Header_Subtitle" xml:space="preserve">
+    <value>Ajuste uma vez; vale para todos os jogos.</value>
+    <comment>Era 'Faca isso uma vez e todos os jogos ficam certos.' — cortado o 'ficam certos', que nao informa nada.</comment>
+  </data>
+  <data name="Guide_Header_Title" xml:space="preserve">
+    <value>Checklist HDR</value>
+    <comment>Cabecalho da janela, estilo H1.</comment>
+  </data>
+  <data name="Guide_Sources" xml:space="preserve">
+    <value>Fontes: wiki do RenoDX - hdrmods.com - dados por jogo do projeto RHI (GPL-3.0) - ITU-R BT.2408.</value>
+    <comment>No resx usar o separador U+00B7 ( · ) no lugar dos hifens, como no original. hdrmods.com, RHI, GPL-3.0 e ITU-R BT.2408 ficam como estao.</comment>
+  </data>
+  <data name="Guide_Step1_Body" xml:space="preserve">
+    <value>Atalho: Win + Alt + B. A troca automática falha com alguns mods.</value>
+    <comment>pt real com acento: 'automatica' -&gt; 'automática'. 'falha' no lugar de 'nao funciona', mais curto.</comment>
+  </data>
+  <data name="Guide_Step1_Title" xml:space="preserve">
+    <value>Ligue o HDR do Windows antes de abrir o jogo</value>
+    <comment>Tirei o ANTES em caixa alta: sentence case, o mesmo registro dos outros passos.</comment>
+  </data>
+  <data name="Guide_Step2_Body" xml:space="preserve">
+    <value>Imagem lavada ou estourada é tone mapping duplo. AutoHDR: Configurações → Sistema → Vídeo → HDR. RTX HDR: NVIDIA App → Graphics.</value>
+    <comment>IMPORTANTE ao gravar no resx: usar acento e a seta U+2192 no lugar de '&gt;': pt 'Configurações → Sistema → Vídeo → HDR', en 'Settings → System → Display → HDR'. O caminho do menu muda de idioma junto com o Windows; 'NVIDIA App → Graphics' nao muda (a NVIDIA App e so em ingles). 'tonemapping' -&gt; 'tone mapping'.</comment>
+  </data>
+  <data name="Guide_Step2_Title" xml:space="preserve">
+    <value>Desligue AutoHDR e RTX HDR</value>
+    <comment>AutoHDR e RTX HDR sao nomes de recurso, ficam iguais nos dois idiomas.</comment>
+  </data>
+  <data name="Guide_Step3_Body" xml:space="preserve">
+    <value>O ponto onde o padrão some é o brilho máximo real do monitor: use esse número em “Meu monitor”. Em TV, ligue o HGIG e desligue o Dynamic Tone Mapping.</value>
+    <comment>No resx: acentos (padrão, é, máximo, número) e aspas curvas “Meu monitor” / “My display”. "Meu monitor" e o rotulo do botao da MainWindow — se o outro agente traduzir aquele botao com outro texto em en, alinhar os dois. Troquei 'modo HGIG ligado e Dynamic Tone Mapping desligado' por imperativo.</comment>
+  </data>
+  <data name="Guide_Step3_Title" xml:space="preserve">
+    <value>Rode uma vez o app “Calibração de HDR do Windows”</value>
+    <comment>No resx usar aspas curvas e acento: pt 'Rode uma vez o app “Calibração de HDR do Windows”'. O nome do app e o nome oficial dele em cada idioma.</comment>
+  </data>
+  <data name="Guide_Step4_Body" xml:space="preserve">
+    <value>Brilho máximo: o valor real do monitor (OLED ~800–1000, miniLED 1000–1500).
+Brilho do jogo (paper white): 203 nits; 100–300 conforme a luz do ambiente.
+Brilho da interface: 203, igual ao do jogo.
+Tone mapper e gamma: deixe no padrão do mod, calibrado por jogo.</value>
+    <comment>Quatro linhas. No resx: &lt;data ... xml:space="preserve"&gt; com quebra de linha real (o XAML antigo usava &amp;#10;). Usar meia-risca U+2013 nas faixas (800–1000, 100–300, 1000–1500) e acento no pt (máximo, padrão). Ultima linha era 'deixe no padrao do mod — foi calibrado por jogo'; virou virgula, mesma informacao com menos palavra.</comment>
+  </data>
+  <data name="Guide_Step4_Title" xml:space="preserve">
+    <value>Valores recomendados</value>
+  </data>
+  <data name="Guide_Step5_Body" xml:space="preserve">
+    <value>O overlay do ReShade abre com Home; o RenoDX fica na aba Add-ons. Ao editar no launcher com o jogo aberto, mova o slider "Preset" para 2 e volte para 1 no overlay para recarregar.</value>
+    <comment>No resx: aspas curvas em “Preset”. 'Preset' e o nome do slider no overlay do ReShade, nao traduz. 'a tecla Home' -&gt; 'Home'.</comment>
+  </data>
+  <data name="Guide_Step5_Title" xml:space="preserve">
+    <value>Dentro do jogo</value>
+  </data>
+  <data name="Guide_Window_Title" xml:space="preserve">
+    <value>Guia HDR</value>
+    <comment>Titulo da janela (Window.Title). Binding em Window.Title funciona: e DependencyProperty.</comment>
+  </data>
+  <data name="History_Close_AutomationName" xml:space="preserve">
+    <value>Fechar histórico</value>
+    <comment>Nome acessível do botão Fechar, dá o contexto que o rótulo sozinho não dá. Corrige o acento faltando no original ('Fechar historico'). Começa pelo rótulo visível, como manda a convenção de acessibilidade do Windows.</comment>
+  </data>
+  <data name="History_Empty_NoRepo" xml:space="preserve">
+    <value>Este mod não vem de um repositório com histórico público — deve estar só no Nexus ou no Discord do autor.</value>
+    <comment>Antes: 'Este mod não é publicado por um repositório que eu saiba consultar (provavelmente só Nexus/Discord).' Cortei o 'que eu saiba consultar' e o parenteses, e apontei onde procurar.</comment>
+  </data>
+  <data name="History_Empty_RateLimited" xml:space="preserve">
+    <value>Não deu para carregar agora: o GitHub limita consultas sem login a 60 por hora. Tente mais tarde ou use “Ver no GitHub”.</value>
+    <comment>Cita o rotulo do botao que vive em HistoryWindow.xaml (arquivo de outro agente) — os dois textos precisam casar.</comment>
+  </data>
+  <data name="History_Footer" xml:space="preserve">
+    <value>{0} alterações · última em {1}</value>
+    <comment>{0} contagem, {1} data ja formatada em dd/MM/yyyy no codigo. Plural: veja History_Footer_One.</comment>
+  </data>
+  <data name="History_Footer_One" xml:space="preserve">
+    <value>1 alteração · em {0}</value>
+    <comment>Chave separada para singular, senao sai '1 alterações'. HistoryWindow.xaml.cs:50.</comment>
+  </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>Carregando histórico…</value>
+    <comment>Rodape enquanto a consulta corre. HistoryWindow.xaml.cs:32.</comment>
+  </data>
+  <data name="History_OpenWeb_Button" xml:space="preserve">
+    <value>Ver no GitHub</value>
+    <comment>Rótulo do botão e também o AutomationProperties.Name dele (o Content é um StackPanel, então o nome acessível precisa ser explícito). Antes o rótulo visível dizia 'Ver no GitHub' e o nome acessível dizia 'Abrir no GitHub'; unificados na mesma chave para o leitor de tela bater com o que está na tela. 'GitHub' é nome próprio, não traduz.</comment>
+  </data>
+  <data name="History_OpenWeb_Tooltip" xml:space="preserve">
+    <value>Abrir o histórico completo no GitHub</value>
+    <comment>Tooltip do mesmo botão. Sentence case em en por ser frase.</comment>
+  </data>
+  <data name="History_Subtitle" xml:space="preserve">
+    <value>Mod {0} · mantido por {1} em {2}</value>
+    <comment>{0} slug, {1} mantenedor, {2} owner/repo. HistoryWindow.xaml.cs:24. 'Mod' fica como esta: termo tecnico.</comment>
+  </data>
+  <data name="History_Subtitle_NoRepo" xml:space="preserve">
+    <value>Mod {0}</value>
+    <comment>Ramo sem repositorio conhecido. HistoryWindow.xaml.cs:25.</comment>
+  </data>
+  <data name="History_Title" xml:space="preserve">
+    <value>Histórico do mod</value>
+    <comment>Título da janela HistoryWindow. Title Case em en por ser título curto.</comment>
+  </data>
+  <data name="Install_Advice_Deprecated" xml:space="preserve">
+    <value>Mod descontinuado. Pode não funcionar com as versões atuais do jogo e do ReShade.</value>
+    <comment>Antes: "descontinuado/abandonado" — barra redundante removida.</comment>
+  </data>
+  <data name="Install_Advice_HdrOff" xml:space="preserve">
+    <value>HDR do jogo: DESLIGADO. O mod faz o HDR; os dois ligados estouram a imagem.</value>
+    <comment>Chip de recomendacao. Parenteses viraram frase; verbo no valor de configuracao (DESLIGADO/OFF) em vez de infinitivo.</comment>
+  </data>
+  <data name="Install_Advice_HdrOn" xml:space="preserve">
+    <value>HDR do jogo: LIGADO. O mod corrige o HDR nativo e precisa dele ativo.</value>
+  </data>
+  <data name="Install_Advice_Renderer" xml:space="preserve">
+    <value>Inicie o jogo em {0}. O mod exige essa API gráfica.</value>
+    <comment>{0} = renderer ja em maiuscula e sem espaco (DX11, DIRECTX12, VULKAN, D3D12). Antes era interpolacao $"...".</comment>
+  </data>
+  <data name="Install_AntiCheat_Advice" xml:space="preserve">
+    <value>{0} detectado neste jogo. Usar o mod ONLINE pode banir sua conta: jogue offline.</value>
+    <comment>{0} = nome do anti-cheat (EAC, BattlEye...). Card de aviso no detalhe.</comment>
+  </data>
+  <data name="Install_AntiCheat_Confirm" xml:space="preserve">
+    <value>Instalar mesmo assim</value>
+    <comment>Botao de confirmacao do dialogo.</comment>
+  </data>
+  <data name="Install_AntiCheat_Modal" xml:space="preserve">
+    <value>Este jogo usa {0}.
+
+O ReShade com suporte a add-ons NÃO é assinado. Em jogos online protegidos por anti-cheat, carregar um mod não assinado pode resultar em banimento permanente da sua conta.
+
+Só continue se você for jogar OFFLINE.</value>
+    <comment>Modal de confirmacao antes de instalar. {0} = nome do anti-cheat detectado.</comment>
+  </data>
+  <data name="Install_AntiCheat_Title" xml:space="preserve">
+    <value>{0} detectado — risco de banimento</value>
+    <comment>{0} = nome do anti-cheat. Titulo de dialogo.</comment>
+  </data>
+  <data name="Install_AntiCheat_Warning" xml:space="preserve">
+    <value>Anti-cheat: risco de banimento em partidas online. Jogue offline ou desative o anti-cheat.</value>
+    <comment>Antes so dizia "risco em online"; agora nomeia a consequencia (banimento) e mantem as duas saidas.</comment>
+  </data>
+  <data name="Install_Architecture_Text" xml:space="preserve">
+    <value>Este jogo usa a build {0}-bit do mod.</value>
+    <comment>{0} = 32 ou 64, inteiro.</comment>
+  </data>
+  <data name="Install_Architecture_Title" xml:space="preserve">
+    <value>Arquitetura</value>
+  </data>
+  <data name="Install_BitnessMismatch" xml:space="preserve">
+    <value>Instalação bloqueada: o mod é {0}-bit e o executável escolhido é {1}-bit. Selecione o executável {0}-bit na lista acima.</value>
+    <comment>{0} = bits do addon, {1} = bits do exe. {0} aparece duas vezes de proposito.</comment>
+  </data>
+  <data name="Install_Cancelled_AntiCheat" xml:space="preserve">
+    <value>Instalação cancelada: {0} detectado.</value>
+    <comment>{0} = nome do anti-cheat.</comment>
+  </data>
+  <data name="Install_DlssFix_Applied" xml:space="preserve">
+    <value>Correção do DLSS aplicada.</value>
+    <comment>progress?.Report no fim de ApplyAsync; a MainViewModel sobrescreve depois com a mensagem dela, mas a chave e necessaria enquanto o passo roda.</comment>
+  </data>
+  <data name="Install_DlssFix_Downloading" xml:space="preserve">
+    <value>Baixando a correção do DLSS...</value>
+    <comment>DLSS e termo tecnico, mantido.</comment>
+  </data>
+  <data name="Install_IniOverrides_Text" xml:space="preserve">
+    <value>O indice do RenoDX recomenda estes valores:</value>
+    <comment>Cortado o 'para este jogo' redundante; o card ja esta no contexto do jogo.</comment>
+  </data>
+  <data name="Install_ModPage_Link" xml:space="preserve">
+    <value>Abrir a página do mod</value>
+    <comment>So o rotulo de fallback. Quando o manifesto traz 'label', o valor do manifesto continua ganhando.</comment>
+  </data>
+  <data name="Install_ModPage_Text" xml:space="preserve">
+    <value>O autor mantém uma página própria do mod, com as instruções dele.</value>
+    <comment>Corpo da nota cujo TITULO ficou literal por ser comparado em MainViewModel.cs:548.</comment>
+  </data>
+  <data name="Install_ModPage_Title" xml:space="preserve">
+    <value>Página do mod</value>
+  </data>
+  <data name="Install_Mod_Done" xml:space="preserve">
+    <value>{0} instalado.</value>
+    <comment>{0} = nome do arquivo do addon.</comment>
+  </data>
+  <data name="Install_Mod_Downloading" xml:space="preserve">
+    <value>Baixando {0}...</value>
+    <comment>{0} = nome do arquivo do addon.</comment>
+  </data>
+  <data name="Install_NoExe" xml:space="preserve">
+    <value>Escolha o executável do jogo na lista acima.</value>
+  </data>
+  <data name="Install_Note_DxvkTitle" xml:space="preserve">
+    <value>Nota (DXVK)</value>
+    <comment>DXVK e termo tecnico, mantido.</comment>
+  </data>
+  <data name="Install_Note_IndexTitle" xml:space="preserve">
+    <value>Nota do indice</value>
+    <comment>Titulo de card de nota vindo de gameNotes.</comment>
+  </data>
+  <data name="Install_Note_LumaTitle" xml:space="preserve">
+    <value>Nota (mod Luma)</value>
+    <comment>Luma e nome de mod, mantido.</comment>
+  </data>
+  <data name="Install_Note_ReShadeTitle" xml:space="preserve">
+    <value>ReShade neste jogo</value>
+    <comment>Cortado o 'Sobre o' inicial, que nao carregava informacao.</comment>
+  </data>
+  <data name="Install_ProfileApplied" xml:space="preserve">
+    <value>Perfil do monitor aplicado ({0:0} nits).</value>
+    <comment>{0} = Config.PeakNits (double). O formato :0 e obrigatorio. O espaco que separa da frase anterior fica no codigo.</comment>
+  </data>
+  <data name="Install_ProfileFailed" xml:space="preserve">
+    <value>O mod instalou, mas o perfil de nits não foi aplicado. Use Meu perfil depois.</value>
+    <comment>Cita o botao 'Meu perfil' do MainWindow.xaml (linha 838). O texto original citava 'Usar meu perfil', que nao existe na tela — corrigido.</comment>
+  </data>
+  <data name="Install_ProfileNoNits" xml:space="preserve">
+    <value>(Este mod não tem ajustes de nits: HDR nativo.)</value>
+    <comment>Parenteses fazem parte do texto; espaco separador fica no codigo.</comment>
+  </data>
+  <data name="Install_ReShadeVersion_Text" xml:space="preserve">
+    <value>Este jogo exige o ReShade {0}. Versões mais novas podem não funcionar com o mod.</value>
+    <comment>{0} = numero de versao do manifesto.</comment>
+  </data>
+  <data name="Install_ReShadeVersion_Title" xml:space="preserve">
+    <value>Versão do ReShade</value>
+  </data>
+  <data name="Install_ReShade_CheckingVersion" xml:space="preserve">
+    <value>Consultando a versão do ReShade...</value>
+    <comment>ReShadeService.ProvisionAsync — progress?.Report, vai para DetailStatus.</comment>
+  </data>
+  <data name="Install_ReShade_Deploying" xml:space="preserve">
+    <value>Instalando o ReShade como {0}...</value>
+    <comment>{0} = nome do dll proxy (dxgi.dll, d3d9.dll...).</comment>
+  </data>
+  <data name="Install_ReShade_Done" xml:space="preserve">
+    <value>ReShade {0} instalado como {1}.</value>
+    <comment>{0} = versao, {1} = nome do dll proxy. Concatenada pela MainViewModel na frase de sucesso do install.</comment>
+  </data>
+  <data name="Install_ReShade_Downloading" xml:space="preserve">
+    <value>Baixando o ReShade {0} (com suporte a addon)...</value>
+    <comment>{0} = versao (ex. 6.7.3). 'addon' e termo tecnico, mantido.</comment>
+  </data>
+  <data name="Install_ReShade_Extracting" xml:space="preserve">
+    <value>Extraindo ReShade64.dll / ReShade32.dll...</value>
+    <comment>Nomes de arquivo ficam literais no recurso; so o verbo muda entre idiomas.</comment>
+  </data>
+  <data name="Install_ReShade_VerifyingSignature" xml:space="preserve">
+    <value>Conferindo a assinatura do ReShade...</value>
+  </data>
+  <data name="Install_Rollback_Done" xml:space="preserve">
+    <value>Falha ao baixar o mod. O ReShade recém-instalado foi removido e o jogo ficou como estava. Tente de novo.</value>
+    <comment>Tirei a primeira pessoa ('que eu tinha acabado de instalar').</comment>
+  </data>
+  <data name="Install_Section_BeforeInstalling" xml:space="preserve">
+    <value>ANTES DE INSTALAR</value>
+  </data>
+  <data name="Install_Success" xml:space="preserve">
+    <value>Mod instalado e ativado. {0}{1} Abra o jogo e pressione Home para abrir o overlay.</value>
+    <comment>{0} = mensagem do deploy do ReShade (nao traduzida aqui, vem do ReShadeService). {1} = trecho do perfil, ja com espaco a esquerda ou vazio.</comment>
+  </data>
+  <data name="Install_Verify_Failed" xml:space="preserve">
+    <value>O ReShade encontrou o mod mas não conseguiu carregá-lo. Reinstale o mod. Detalhe: {0}</value>
+    <comment>{0} = linha crua do ReShade.log, em ingles, fica por ultimo justamente por ser texto tecnico nao traduzivel.</comment>
+  </data>
+  <data name="Install_Verify_LimitedBuild" xml:space="preserve">
+    <value>Este ReShade e a build sem suporte a add-ons. Reinstale o ReShade para trocar pela build correta.</value>
+    <comment>Deixou de citar o rotulo do botao entre aspas; o botao Reinstalar fica ao lado da mensagem.</comment>
+  </data>
+  <data name="Install_Verify_Loaded" xml:space="preserve">
+    <value>O mod carregou no jogo.</value>
+    <comment>ReShadeLogService. Veredito quando o log confirma o carregamento mas nao trouxe o nome do addon.</comment>
+  </data>
+  <data name="Install_Verify_Loaded_Addon" xml:space="preserve">
+    <value>O mod carregou no jogo ({0}).</value>
+    <comment>{0} = identificador do addon montado no C# (nome + ' v' + versao), como o ReShade escreveu no log. Nao traduzir o conteudo.</comment>
+  </data>
+  <data name="Install_Verify_NoAddonSupport" xml:space="preserve">
+    <value>O ReShade instalado aqui não tem suporte a add-ons: o jogo rodou e ele nem procurou por mods. Reinstale o ReShade para trocar pela build com add-ons.</value>
+  </data>
+  <data name="Install_Verify_NoLog" xml:space="preserve">
+    <value>Sem registro ainda. Abra o jogo uma vez para verificar se o mod carrega.</value>
+    <comment>Tirado o 'para eu verificar' da versao antiga: o app nao fala na primeira pessoa.</comment>
+  </data>
+  <data name="Install_Verify_NotLoaded" xml:space="preserve">
+    <value>O jogo rodou com ReShade, mas o mod RenoDX não carregou. Confira se o addon está ativado e na pasta do jogo.</value>
+  </data>
+  <data name="Install_Warning_Title" xml:space="preserve">
+    <value>Aviso de instalação ({0})</value>
+    <comment>{0} = familia do mod vinda crua do manifesto (renodx / reshade / luma). Nome proprio, nao traduzir.</comment>
+  </data>
+  <data name="Main_AddGame_FolderPickerTitle" xml:space="preserve">
+    <value>Escolha a pasta do jogo</value>
+    <comment>Titulo do OpenFolderDialog.</comment>
+  </data>
+  <data name="Main_AddGame_Name" xml:space="preserve">
+    <value>Adicionar jogo</value>
+  </data>
+  <data name="Main_Badge_Available" xml:space="preserve">
+    <value>MOD DISPONÍVEL</value>
+  </data>
+  <data name="Main_Badge_Disabled" xml:space="preserve">
+    <value>DESATIVADO</value>
+  </data>
+  <data name="Main_Badge_Enabled" xml:space="preserve">
+    <value>ATIVADO</value>
+  </data>
+  <data name="Main_Badge_NexusOnly" xml:space="preserve">
+    <value>MOD NO NEXUS</value>
+    <comment>Nexus e nome proprio.</comment>
+  </data>
+  <data name="Main_Badge_None" xml:space="preserve">
+    <value>SEM MOD</value>
+  </data>
+  <data name="Main_Badge_UpdateAvailable" xml:space="preserve">
+    <value>ATUALIZAÇÃO</value>
+    <comment>Selo do tile. A caixa alta esta no recurso porque o XAML nao aplica transformacao de texto.</comment>
+  </data>
+  <data name="Main_CheckUpdates" xml:space="preserve">
+    <value>Ver atualizações</value>
+    <comment>Usada no texto do botao e no AutomationProperties.Name.</comment>
+  </data>
+  <data name="Main_Detail_ModInPreviousFolder" xml:space="preserve">
+    <value>Ainda há um mod instalado na pasta anterior ({0}). Remova-o de lá ou volte para aquele executável.</value>
+    <comment>{0} = caminho da pasta anterior.</comment>
+  </data>
+  <data name="Main_Detail_UpdateAvailable" xml:space="preserve">
+    <value>Existe uma versão mais nova deste mod. Use o botão Atualizar, acima.</value>
+    <comment>O '\n\n' que precede ficou no codigo, nao no recurso.</comment>
+  </data>
+  <data name="Main_DlssFix_Applied" xml:space="preserve">
+    <value>Correção aplicada. Reinicie o jogo.</value>
+  </data>
+  <data name="Main_DlssFix_Apply" xml:space="preserve">
+    <value>Aplicar correção</value>
+    <comment>Rotulo de botao. Title Case no en.</comment>
+  </data>
+  <data name="Main_DlssFix_Remove" xml:space="preserve">
+    <value>Remover correção</value>
+    <comment>Rotulo de botao. Title Case no en.</comment>
+  </data>
+  <data name="Main_DlssFix_Removed" xml:space="preserve">
+    <value>Correção de DLSS removida.</value>
+  </data>
+  <data name="Main_Empty_Hint" xml:space="preserve">
+    <value>Mude a busca ou o filtro.</value>
+    <comment>Tirei as aspas curvas e o travessao do original. "Adicionar"/"Add" cita o rotulo do botao, entao muda junto com o idioma.</comment>
+  </data>
+  <data name="Main_Empty_Title" xml:space="preserve">
+    <value>Nenhum jogo aqui</value>
+  </data>
+  <data name="Main_EngineNotes_Header" xml:space="preserve">
+    <value>REGRAS DO MOD GENÉRICO ({0}) — {1}</value>
+    <comment>{0} = UNITY ou UNREAL (nome tecnico, nao traduzido, vem do codigo). {1} = numero de notas.</comment>
+  </data>
+  <data name="Main_Filter_All" xml:space="preserve">
+    <value>Todos os jogos</value>
+    <comment>Item 0 do combo de filtro. A ORDEM define FilterIndex — nao reordene.</comment>
+  </data>
+  <data name="Main_Filter_HasMod" xml:space="preserve">
+    <value>Com mod disponível</value>
+    <comment>Item 1 do combo de filtro. Valor real no resx: 'Com mod disponível'.</comment>
+  </data>
+  <data name="Main_Filter_Installed" xml:space="preserve">
+    <value>Mod instalado</value>
+    <comment>Item 2 do combo de filtro.</comment>
+  </data>
+  <data name="Main_Filter_NoMod" xml:space="preserve">
+    <value>Sem mod</value>
+    <comment>Item 3 do combo de filtro.</comment>
+  </data>
+  <data name="Main_Guide" xml:space="preserve">
+    <value>Guia HDR</value>
+    <comment>Texto do botao e AutomationProperties.Name.</comment>
+  </data>
+  <data name="Main_Launch_NoExe" xml:space="preserve">
+    <value>Nenhum executável escolhido. Selecione um na lista acima.</value>
+    <comment>Tirei a primeira pessoa ('Nao sei qual executavel iniciar').</comment>
+  </data>
+  <data name="Main_Launch_Started" xml:space="preserve">
+    <value>Jogo iniciado.</value>
+  </data>
+  <data name="Main_Launch_ViaStore" xml:space="preserve">
+    <value>Abrindo pela loja...</value>
+  </data>
+  <data name="Main_Maintainer_Community" xml:space="preserve">
+    <value>Comunidade RenoDX</value>
+    <comment>Credito quando o catalogo nao nomeia um mantenedor. MaintainerInitial usa a 1a letra: R nos dois idiomas.</comment>
+  </data>
+  <data name="Main_Maintainer_UnityGeneric" xml:space="preserve">
+    <value>Mod genérico Unity</value>
+  </data>
+  <data name="Main_Maintainer_UnrealGeneric" xml:space="preserve">
+    <value>Mod genérico Unreal</value>
+    <comment>Aparece no lugar do nome do autor (GameItemVm.MaintainerName).</comment>
+  </data>
+  <data name="Main_ModStatus_Stable" xml:space="preserve">
+    <value>Estável</value>
+  </data>
+  <data name="Main_ModStatus_Stable_Tooltip" xml:space="preserve">
+    <value>A wiki do RenoDX marca este mod como funcional.</value>
+  </data>
+  <data name="Main_ModStatus_Unstable" xml:space="preserve">
+    <value>Instável</value>
+  </data>
+  <data name="Main_ModStatus_Unstable_Tooltip" xml:space="preserve">
+    <value>A wiki do RenoDX marca este mod como em construção: pode ter defeitos visuais ou travar.</value>
+    <comment>"pode ter problemas" nao dizia nada; agora diz o que esperar.</comment>
+  </data>
+  <data name="Main_Mod_Disabled" xml:space="preserve">
+    <value>Mod desativado: o arquivo foi renomeado para .disabled.</value>
+    <comment>'.disabled' e extensao de arquivo, nao traduzir.</comment>
+  </data>
+  <data name="Main_Mod_Enabled" xml:space="preserve">
+    <value>Mod ativado.</value>
+    <comment>Era 'Mod ATIVADO.' — caixa alta sem motivo, virou sentence case.</comment>
+  </data>
+  <data name="Main_Monitor" xml:space="preserve">
+    <value>Meu monitor</value>
+    <comment>Texto do botao e AutomationProperties.Name.</comment>
+  </data>
+  <data name="Main_NoSettings_ExternalMod" xml:space="preserve">
+    <value>Este mod é distribuído só pelo Nexus/Discord e o launcher não conhece as configurações dele. Ajuste pelo overlay do ReShade no jogo (tecla Home).</value>
+  </data>
+  <data name="Main_NoSettings_Fetching" xml:space="preserve">
+    <value>Procurando as configurações de {0}...</value>
+    <comment>{0} = slug do mod (identificador tecnico, nao traduzir o valor).</comment>
+  </data>
+  <data name="Main_NoSettings_Fixed" xml:space="preserve">
+    <value>Este mod não tem ajustes: o autor fixou os valores. Basta instalar e ativar.</value>
+    <comment>Reescrita pedida no briefing.</comment>
+  </data>
+  <data name="Main_NoSettings_InGameOnly" xml:space="preserve">
+    <value>Este mod não tem sliders: o ajuste é feito dentro do jogo, como o autor descreveu em COMO AJUSTAR ESTE JOGO, acima.</value>
+    <comment>Cita o rotulo de secao do MainWindow.xaml (linha 778). Se o outro agente traduzir aquele rotulo, o en tem que casar com a traducao dele.</comment>
+  </data>
+  <data name="Main_NoSettings_Unavailable" xml:space="preserve">
+    <value>Não foi possível obter as configurações de {0}. A instalação funciona normalmente: ajuste pelo overlay do ReShade no jogo (tecla Home).</value>
+    <comment>{0} = slug do mod.</comment>
+  </data>
+  <data name="Main_Note_AuthorInstruction" xml:space="preserve">
+    <value>Instrução do autor</value>
+    <comment>Titulo de card de nota.</comment>
+  </data>
+  <data name="Main_Note_AuthorPreset" xml:space="preserve">
+    <value>Preset do autor: {0}</value>
+    <comment>{0} = rotulo do preset, vindo do mod. Titulo de card de nota.</comment>
+  </data>
+  <data name="Main_Note_AuthorSteps_Nexus" xml:space="preserve">
+    <value>As instruções específicas deste jogo podem estar na página do NexusMods. Leia antes de instalar.</value>
+    <comment>Antes comecava com "A wiki avisa que..." — meta-informacao sem valor pro usuario. Agora termina com a acao.</comment>
+  </data>
+  <data name="Main_Note_AuthorSteps_Title" xml:space="preserve">
+    <value>Instruções do autor</value>
+  </data>
+  <data name="Main_Note_Deprecated_Body" xml:space="preserve">
+    <value>A wiki do RenoDX marca este mod como descontinuado: pode não funcionar com a versão atual do jogo.</value>
+  </data>
+  <data name="Main_Note_Deprecated_Title" xml:space="preserve">
+    <value>Descontinuado</value>
+  </data>
+  <data name="Main_Note_Discussion_Body" xml:space="preserve">
+    <value>O autor documentou este mod numa discussão no GitHub. Os pré-requisitos estão lá.</value>
+  </data>
+  <data name="Main_Note_Discussion_Link" xml:space="preserve">
+    <value>Abrir a discussão no GitHub</value>
+    <comment>Rotulo de NoteLink.</comment>
+  </data>
+  <data name="Main_Note_Discussion_Title" xml:space="preserve">
+    <value>Discussão deste mod</value>
+  </data>
+  <data name="Main_Note_GameTweak_Title" xml:space="preserve">
+    <value>Ajuste deste jogo</value>
+    <comment>Titulo da nota vinda da coluna Notes das tabelas Unreal/Unity.</comment>
+  </data>
+  <data name="Main_Note_NativeHdr_Text" xml:space="preserve">
+    <value>Este jogo tem HDR próprio e o mod corrige esse HDR. Deixe o HDR ligado nas opções do jogo.</value>
+    <comment>Cortei 'normalmente' e '/melhora' — nao mudavam a acao.</comment>
+  </data>
+  <data name="Main_Note_NativeHdr_Title" xml:space="preserve">
+    <value>HDR nativo</value>
+    <comment>Titulo de card de nota.</comment>
+  </data>
+  <data name="Main_Note_Nexus_Link" xml:space="preserve">
+    <value>Abrir a página no NexusMods</value>
+    <comment>Rotulo de NoteLink.</comment>
+  </data>
+  <data name="Main_Note_WikiHover_Title" xml:space="preserve">
+    <value>Nota da wiki</value>
+  </data>
+  <data name="Main_Note_WikiStatus_InProgress" xml:space="preserve">
+    <value>A wiki do RenoDX marca este mod como em construção. Espere falhas.</value>
+    <comment>Antes: "...o mod ainda está sendo trabalhado e pode ter problemas." — gerundismo e hedge cortados.</comment>
+  </data>
+  <data name="Main_Note_WikiStatus_Indexed" xml:space="preserve">
+    <value>Publicado no índice oficial do RenoDX.</value>
+  </data>
+  <data name="Main_Note_WikiStatus_Title" xml:space="preserve">
+    <value>Status na wiki</value>
+    <comment>Usado em 3 lugares (games-index, mod dedicado, mod generico).</comment>
+  </data>
+  <data name="Main_Note_WikiStatus_Working" xml:space="preserve">
+    <value>A wiki do RenoDX marca este mod como funcionando.</value>
+    <comment>Antes: "Marcado como FUNCIONANDO pela wiki do RenoDX." — voz passiva trocada por sujeito explicito.</comment>
+  </data>
+  <data name="Main_Play" xml:space="preserve">
+    <value>Jogar</value>
+    <comment>Texto do botao e AutomationProperties.Name.</comment>
+  </data>
+  <data name="Main_Profile_Applied" xml:space="preserve">
+    <value>Perfil aplicado: pico {0:0} / jogo {1:0} / UI {2:0} nits.</value>
+    <comment>{0} PeakNits, {1} GameNits, {2} UiNits (doubles). Os tres formatos :0 sao obrigatorios.</comment>
+  </data>
+  <data name="Main_Profile_NoNits" xml:space="preserve">
+    <value>Este mod não expõe ajustes de nits (HDR nativo). Nada foi alterado.</value>
+  </data>
+  <data name="Main_Refresh_Name" xml:space="preserve">
+    <value>Atualizar a lista</value>
+    <comment>Name mais especifico que o rotulo curto do botao, que e Common_Refresh.</comment>
+  </data>
+  <data name="Main_Remove_All" xml:space="preserve">
+    <value>Remover tudo</value>
+    <comment>Botao do dialogo.</comment>
+  </data>
+  <data name="Main_Remove_Body" xml:space="preserve">
+    <value>Remover o mod RenoDX de "{0}"?
+
+Remover tudo: apaga o addon e também o ReShade, se nenhum outro addon usar.
+Só o mod: mantém o ReShade instalado.</value>
+    <comment>{0} = nome do jogo. As duas linhas explicam os dois botoes — os rotulos tem que casar com Main_Remove_All e Main_Remove_ModOnly.</comment>
+  </data>
+  <data name="Main_Remove_Done" xml:space="preserve">
+    <value>Mod removido. As configurações continuam salvas no ReShade.ini.</value>
+    <comment>ReShade.ini e nome de arquivo, nao traduzir.</comment>
+  </data>
+  <data name="Main_Remove_ModOnly" xml:space="preserve">
+    <value>Só o mod</value>
+    <comment>Botao do dialogo.</comment>
+  </data>
+  <data name="Main_Remove_Title" xml:space="preserve">
+    <value>Remover mod</value>
+    <comment>Titulo de dialogo.</comment>
+  </data>
+  <data name="Main_SearchPlaceholder" xml:space="preserve">
+    <value>Pesquisar jogo</value>
+  </data>
+  <data name="Main_Settings_NothingToSave" xml:space="preserve">
+    <value>Nada para salvar.</value>
+  </data>
+  <data name="Main_Settings_Reset" xml:space="preserve">
+    <value>Configurações restauradas para o padrão do mod: as chaves foram removidas do ini.</value>
+    <comment>'resetadas' virou 'restauradas'.</comment>
+  </data>
+  <data name="Main_Settings_Saved" xml:space="preserve">
+    <value>Alterações salvas: {0}. Arquivo: {1}. Com o jogo aberto, mova o slider Preset para 2 e volte para 1 no overlay (Home) para aplicar sem reiniciar.</value>
+    <comment>{0} = quantidade alterada, {1} = caminho do ini. Numero depois do dois-pontos para nao quebrar no singular. 'Preset' e nome do slider no mod.</comment>
+  </data>
+  <data name="Main_Status_GamesFound" xml:space="preserve">
+    <value>Jogos encontrados: {0}. Com mod RenoDX: {1}.</value>
+    <comment>Forma de rotulo (numero depois do dois-pontos) para funcionar em singular e plural sem chave extra.</comment>
+  </data>
+  <data name="Main_Status_LoadingCatalog" xml:space="preserve">
+    <value>Carregando o catálogo RenoDX...</value>
+  </data>
+  <data name="Main_Status_Ready" xml:space="preserve">
+    <value>Pronto.</value>
+    <comment>Status inicial da barra de status.</comment>
+  </data>
+  <data name="Main_Status_ScanningGames" xml:space="preserve">
+    <value>Procurando jogos instalados...</value>
+  </data>
+  <data name="Main_Store_Folder" xml:space="preserve">
+    <value>Pasta</value>
+    <comment>GameItemVm.StoreLabel para GameStore.Folder (jogo achado por pasta avulsa).</comment>
+  </data>
+  <data name="Main_Store_Manual" xml:space="preserve">
+    <value>Manual</value>
+    <comment>Fallback do StoreLabel: jogo adicionado a mao.</comment>
+  </data>
+  <data name="Main_Tile_UpdateBadge" xml:space="preserve">
+    <value>ATUALIZAR</value>
+    <comment>Selo no canto da capa. Caixa alta de proposito, espaco de ~60px.</comment>
+  </data>
+  <data name="Main_Tile_Update_Tooltip" xml:space="preserve">
+    <value>Há uma build mais nova deste mod</value>
+  </data>
+  <data name="Main_UpdateAll_Body" xml:space="preserve">
+    <value>Atualizar para a versão mais nova? Mods selecionados: {0}.
+
+Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod é trocado.</value>
+    <comment>{0} = quantidade. Reescrito para nao precisar de 'mod(s)'.</comment>
+  </data>
+  <data name="Main_UpdateAll_Button" xml:space="preserve">
+    <value>Atualizar todos ({0})</value>
+    <comment>{0} = quantidade de mods com atualizacao. Botao da barra de ferramentas.</comment>
+  </data>
+  <data name="Main_UpdateAll_Name" xml:space="preserve">
+    <value>Atualizar todos os mods</value>
+    <comment>AutomationProperties.Name; o texto visivel do botao vem do VM (UpdateAllText).</comment>
+  </data>
+  <data name="Main_UpdateAll_Title" xml:space="preserve">
+    <value>Atualizar mods</value>
+    <comment>Titulo de dialogo.</comment>
+  </data>
+  <data name="Main_Updates_AllCurrent" xml:space="preserve">
+    <value>Todos os mods instalados estão atualizados.</value>
+  </data>
+  <data name="Main_Updates_Available" xml:space="preserve">
+    <value>Atualizações disponíveis: {0}.</value>
+    <comment>{0} = quantidade. Concatenado com Main_Updates_Unverified quando houver.</comment>
+  </data>
+  <data name="Main_Updates_Checking" xml:space="preserve">
+    <value>Verificando atualizações ({0})...</value>
+    <comment>{0} = quantidade de mods. Substitui o 'mod(s)' do original.</comment>
+  </data>
+  <data name="Main_Updates_Done" xml:space="preserve">
+    <value>Mods atualizados: {0}.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Main_Updates_DonePartial" xml:space="preserve">
+    <value>Atualizados: {0}. Falharam: {1} — {2}</value>
+    <comment>{0} = sucessos, {1} = falhas, {2} = lista 'Jogo (motivo)' ja formatada, no maximo 3.</comment>
+  </data>
+  <data name="Main_Updates_NoneInstalled" xml:space="preserve">
+    <value>Nenhum mod instalado para verificar.</value>
+  </data>
+  <data name="Main_Updates_Unverified" xml:space="preserve">
+    <value>(não verificados: {0})</value>
+    <comment>{0} = quantidade. Sufixo: o espaco a esquerda e adicionado no codigo.</comment>
+  </data>
+  <data name="Main_Updates_Updating" xml:space="preserve">
+    <value>Atualizando {0}...</value>
+    <comment>{0} = nome do jogo.</comment>
+  </data>
+  <data name="Profile_ApplyOnInstall" xml:space="preserve">
+    <value>Aplicar automaticamente ao instalar um mod</value>
+    <comment>CheckBox. Cortado 'este perfil' — a janela inteira e o perfil. Sentence case.</comment>
+  </data>
+  <data name="Profile_GameNits_Hint" xml:space="preserve">
+    <value>Padrão 203.</value>
+    <comment>Cortado 'norma' antes de BT.2408 — a sigla ja diz. Usa travessao curto U+2013 nos intervalos; conferir que o gen_resx.py preserva UTF-8.</comment>
+  </data>
+  <data name="Profile_GameNits_Label" xml:space="preserve">
+    <value>Brilho do jogo (paper white)</value>
+    <comment>'paper white' fica minusculo nos dois idiomas: e termo tecnico da lista de nao-traduzir, preservado literal mesmo dentro de Title Case.</comment>
+  </data>
+  <data name="Profile_Header" xml:space="preserve">
+    <value>Perfil HDR do monitor</value>
+    <comment>H1 do cabecalho. Cortado o 'seu' de 'do seu monitor' — nao carrega informacao, o titulo da janela ja diz de quem e.</comment>
+  </data>
+  <data name="Profile_PeakNits_Hint" xml:space="preserve">
+    <value>Meça no app Calibração de HDR do Windows.</value>
+    <comment>Reescrito para dizer O QUE fazer (medir), nao so o que nao fazer. 'Calibração de HDR do Windows' / 'Windows HDR Calibration' sao os nomes reais do app da Microsoft em cada idioma — nao inventar traducao.</comment>
+  </data>
+  <data name="Profile_PeakNits_Label" xml:space="preserve">
+    <value>Brilho máximo do monitor</value>
+    <comment>H2. Title Case no en por ser titulo curto.</comment>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Meu monitor</value>
+    <comment>Window.Title. WindowStyle=None, entao so aparece na barra de tarefas e no Alt-Tab. Espelha o rotulo do botao que abre a janela em MainWindow.xaml.</comment>
+  </data>
+  <data name="Profile_UiNits_Label" xml:space="preserve">
+    <value>Brilho da interface (HUD)</value>
+    <comment>H2.</comment>
+  </data>
+  <data name="Settings_Bloom_Label" xml:space="preserve">
+    <value>Bloom</value>
+    <comment>Termo tecnico.</comment>
+  </data>
+  <data name="Settings_Blowout_Label" xml:space="preserve">
+    <value>Blowout (dessatura realces)</value>
+    <comment>Blowout e termo do mod; o parenteses explica o efeito.</comment>
+  </data>
+  <data name="Settings_ColorGradeStrength_Label" xml:space="preserve">
+    <value>Intensidade da gradação de cor</value>
+    <comment>Ficou paralelo ao de cena; antes era so "Intensidade da gradação".</comment>
+  </data>
+  <data name="Settings_Contrast_Label" xml:space="preserve">
+    <value>Contraste</value>
+  </data>
+  <data name="Settings_Exposure_Label" xml:space="preserve">
+    <value>Exposição</value>
+  </data>
+  <data name="Settings_FilmGrain_Label" xml:space="preserve">
+    <value>Granulação de filme</value>
+  </data>
+  <data name="Settings_Flare_Label" xml:space="preserve">
+    <value>Flare (brilho difuso)</value>
+    <comment>Antes era "Flare / brilho difuso"; a barra virou parenteses.</comment>
+  </data>
+  <data name="Settings_GameBrightness_Label" xml:space="preserve">
+    <value>Brilho do jogo (nits)</value>
+  </data>
+  <data name="Settings_GameBrightness_Tooltip" xml:space="preserve">
+    <value>Paper white. Padrão 203.</value>
+    <comment>"branco de papel" virou "paper white" (termo da lista a preservar); "faixa saudavel" virou instrucao direta.</comment>
+  </data>
+  <data name="Settings_GammaCorrection_Label" xml:space="preserve">
+    <value>Correção de gamma</value>
+  </data>
+  <data name="Settings_GammaCorrection_Tooltip" xml:space="preserve">
+    <value>Deixe no padrão do mod.</value>
+    <comment>"lavadas/acinzentadas" tinha as duas palavras para a mesma coisa; sobrou uma em cada frase, cada uma com um papel.</comment>
+  </data>
+  <data name="Settings_HighlightSaturation_Label" xml:space="preserve">
+    <value>Saturação dos realces</value>
+  </data>
+  <data name="Settings_Highlights_Label" xml:space="preserve">
+    <value>Realces</value>
+  </data>
+  <data name="Settings_HueCorrection_Label" xml:space="preserve">
+    <value>Correção de matiz</value>
+  </data>
+  <data name="Settings_HueProcessor_Label" xml:space="preserve">
+    <value>Processador de matiz</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="Settings_Language_System" xml:space="preserve">
+    <value>Igual ao Windows</value>
+  </data>
+  <data name="Settings_LutStrength_Label" xml:space="preserve">
+    <value>Intensidade do LUT</value>
+  </data>
+  <data name="Settings_PeakBrightness_Label" xml:space="preserve">
+    <value>Brilho máximo (nits)</value>
+  </data>
+  <data name="Settings_PeakBrightness_Tooltip" xml:space="preserve">
+    <value>Pico do monitor, em nits. Medido, não escolhido.</value>
+    <comment>Saiu o "SEU" em caixa alta e o "nao e gosto"; o texto agora diz onde medir logo na segunda frase.</comment>
+  </data>
+  <data name="Settings_Saturation_Label" xml:space="preserve">
+    <value>Saturação</value>
+  </data>
+  <data name="Settings_SceneGradeStrength_Label" xml:space="preserve">
+    <value>Intensidade da gradação da cena</value>
+  </data>
+  <data name="Settings_Section_Other" xml:space="preserve">
+    <value>Outros</value>
+    <comment>SettingVm.SectionName: cabecalho de grupo quando o manifesto nao traz Section.</comment>
+  </data>
+  <data name="Settings_SettingsMode_Label" xml:space="preserve">
+    <value>Modo do overlay</value>
+  </data>
+  <data name="Settings_Shadows_Label" xml:space="preserve">
+    <value>Sombras</value>
+  </data>
+  <data name="Settings_ToneMapper_Label" xml:space="preserve">
+    <value>Tone mapper</value>
+    <comment>Termo tecnico: igual nos dois idiomas.</comment>
+  </data>
+  <data name="Settings_ToneMapper_Tooltip" xml:space="preserve">
+    <value>Curva de tons. Deixe no padrão do mod.</value>
+    <comment>RenoDRT, ACES e None sao valores do mod: nao traduzir dentro do texto.</comment>
+  </data>
+  <data name="Settings_UiBrightness_Label" xml:space="preserve">
+    <value>Brilho da interface (nits)</value>
+  </data>
+  <data name="Settings_UiBrightness_Tooltip" xml:space="preserve">
+    <value>HUD e menus. Igual ao brilho do jogo.</value>
+    <comment>"Recomendado:" virou imperativo.</comment>
+  </data>
+  <data name="Settings_Vignette_Label" xml:space="preserve">
+    <value>Vinheta</value>
+  </data>
+</root>

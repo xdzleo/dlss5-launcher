@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 
 namespace RenoDXLauncher.Services;
@@ -87,11 +88,11 @@ public class AddonService
         IProgress<string>? progress = null)
     {
         if (entry.DownloadUrl is null)
-            throw new InvalidOperationException("Este mod não tem download direto (só página no Nexus).");
+            throw new InvalidOperationException(L.T("Error_Mod_NoDirectDownload"));
         if (IsGameRunning(targetDir))
-            throw new InvalidOperationException("O jogo está aberto — feche-o antes de instalar/atualizar o mod.");
+            throw new InvalidOperationException(L.T("Error_GameRunning"));
         var fileName = Path.GetFileName(new Uri(entry.DownloadUrl).LocalPath);
-        progress?.Report($"Baixando {fileName}...");
+        progress?.Report(L.T("Install_Mod_Downloading", fileName));
 
         Directory.CreateDirectory(AppPaths.DownloadsDir);
         var cached = Path.Combine(AppPaths.DownloadsDir, fileName);
@@ -106,7 +107,7 @@ public class AddonService
             var bytes = await resp.Content.ReadAsByteArrayAsync();
             // addons are PE DLLs — reject HTML error pages and truncated downloads
             if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
-                throw new InvalidOperationException($"Download de {fileName} veio corrompido (não é um addon válido).");
+                throw new InvalidOperationException(L.T("Error_Mod_DownloadCorrupt", fileName));
             await File.WriteAllBytesAsync(cached, bytes);
             size = bytes.LongLength;
         }
@@ -138,16 +139,16 @@ public class AddonService
             Size = size,
             DownloadedUtc = DateTime.UtcNow,
         });
-        progress?.Report($"{fileName} instalado.");
+        progress?.Report(L.T("Install_Mod_Done", fileName));
         return target;
     }
 
     /// <summary>Enable/disable by renaming the extension. Returns the new path.</summary>
     public static string SetEnabled(ModState state, bool enable)
     {
-        if (state.AddonPath is null) throw new InvalidOperationException("Nenhum addon instalado.");
+        if (state.AddonPath is null) throw new InvalidOperationException(L.T("Error_Mod_NotInstalled"));
         if (IsGameRunning(state.TargetDir))
-            throw new InvalidOperationException("O jogo está aberto — feche-o antes de ativar/desativar o mod.");
+            throw new InvalidOperationException(L.T("Error_GameRunning"));
         var path = state.AddonPath;
         if (enable && path.EndsWith(DisabledSuffix, StringComparison.OrdinalIgnoreCase))
         {
@@ -185,7 +186,7 @@ public class AddonService
     public static void Remove(ModState state, bool alsoReShade)
     {
         if (IsGameRunning(state.TargetDir))
-            throw new InvalidOperationException("O jogo está aberto — feche-o antes de remover o mod.");
+            throw new InvalidOperationException(L.T("Error_GameRunning"));
         if (state.AddonPath != null && File.Exists(state.AddonPath))
             File.Delete(state.AddonPath);
         if (alsoReShade && state.ReShadeDllName != null)

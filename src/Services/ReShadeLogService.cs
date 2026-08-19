@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.RegularExpressions;
+using RenoDXLauncher.Localization;
 
 namespace RenoDXLauncher.Services;
 
@@ -13,16 +14,20 @@ public record LoadReport(
     string? Detail,
     DateTime? LastRun)
 {
-    /// <summary>Short PT-BR verdict shown in the detail panel.</summary>
+    /// <summary>Short verdict shown in the detail panel, in the language currently selected.
+    /// Computed on every read, so switching language re-renders it without a reload.</summary>
     public string Message => Result switch
     {
-        LoadResult.Loaded => $"Confirmado: o mod carregou no jogo{(AddonName is null ? "" : $" ({AddonName}{(AddonVersion is null ? "" : " v" + AddonVersion)})")}.",
-        LoadResult.Failed => $"Falhou: o ReShade tentou carregar o mod e FALHOU: {Detail}",
-        LoadResult.LimitedBuild => "Atenção: este ReShade é a build SEM suporte a add-ons — clique em \"Reinstalar o ReShade\" que eu troco pela versão certa.",
-        LoadResult.NoAddonSupport => "Atenção: o ReShade instalado aqui NÃO tem suporte a add-ons (o jogo rodou e ele nem procurou por mods). "
-            + "Clique em \"Reinstalar o ReShade\" que eu substituo pela build com suporte a add-ons.",
-        LoadResult.NotLoaded => "Atenção: o jogo rodou com ReShade, mas o mod RenoDX não foi carregado. Confira se o addon está ativado e na pasta certa.",
-        _ => "Ainda não há registro: abra o jogo uma vez para eu verificar se o mod carregou.",
+        // the addon id stays verbatim: it is the name ReShade itself logged
+        LoadResult.Loaded => AddonName is null
+            ? L.T("Install_Verify_Loaded")
+            : L.T("Install_Verify_Loaded_Addon",
+                AddonVersion is null ? AddonName : $"{AddonName} v{AddonVersion}"),
+        LoadResult.Failed => L.T("Install_Verify_Failed", Detail),
+        LoadResult.LimitedBuild => L.T("Install_Verify_LimitedBuild"),
+        LoadResult.NoAddonSupport => L.T("Install_Verify_NoAddonSupport"),
+        LoadResult.NotLoaded => L.T("Install_Verify_NotLoaded"),
+        _ => L.T("Install_Verify_NoLog"),
     };
 }
 

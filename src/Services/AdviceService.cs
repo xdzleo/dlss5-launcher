@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using RenoDXLauncher.Localization;
 
 namespace RenoDXLauncher.Services;
 
@@ -101,7 +102,8 @@ public static partial class AdviceService
         [0x2192] = "->", [0x2190] = "<-", [0x2194] = "<->", [0x21D2] = "=>",
         [0x2264] = "<=", [0x2265] = ">=", [0x2260] = "!=", [0x00D7] = "x",
         [0x2022] = "-",  [0x2013] = "-",  [0x2014] = "—",
-        [0x26D4] = "NÃO:", [0x1F6AB] = "NÃO:",
+        // ⛔ and 🚫 are handled in StripSymbols: their replacement is WORDS, so it has to be
+        // resolved per call against the current language, not baked into this static table.
         [0x2705] = "[OK]", [0x2714] = "[OK]", [0x274C] = "[X]", [0x2716] = "[X]",
         // ⚠ and ℹ are decoration next to a note that ALREADY says "Atenção"/"Nota" — translating
         // them produced "ATENÇÃO: ATENÇÃO: UNREAL ENGINE MOD WARNINGS ATENÇÃO: ATENÇÃO:".
@@ -123,6 +125,12 @@ public static partial class AdviceService
         foreach (var rune in text.EnumerateRunes())
         {
             int v = rune.Value;
+            // the only meaningful symbol whose replacement is a translated word
+            if (v is 0x26D4 or 0x1F6AB)
+            {
+                sb.Append(L.T("Common_DoNot_Prefix"));
+                continue;
+            }
             if (Meaningful.TryGetValue(v, out var replacement))
             {
                 sb.Append(replacement);
@@ -225,20 +233,21 @@ public static partial class AdviceService
         if (hdr == InGameHdr.Unknown && isNativeHdr) hdr = InGameHdr.Enable;
 
         if (hdr == InGameHdr.Disable)
-            result.Add(new Advice("", "HDR do jogo: DESLIGAR (o mod faz o HDR; ligar os dois estoura a imagem)", AdviceKind.HdrOff));
+            result.Add(new Advice("", L.T("Install_Advice_HdrOff"), AdviceKind.HdrOff));
         else if (hdr == InGameHdr.Enable)
-            result.Add(new Advice("", "HDR do jogo: LIGAR (o mod corrige o HDR nativo — precisa dele ligado)", AdviceKind.HdrOn));
+            result.Add(new Advice("", L.T("Install_Advice_HdrOn"), AdviceKind.HdrOn));
 
         if (DeprecatedRegex().IsMatch(text))
-            result.Add(new Advice("", "Mod descontinuado/abandonado — pode não funcionar com o jogo/ReShade atuais", AdviceKind.Deprecated));
+            result.Add(new Advice("", L.T("Install_Advice_Deprecated"), AdviceKind.Deprecated));
 
         if (AntiCheatRegex().IsMatch(text))
-            result.Add(new Advice("", "Anti-cheat: risco em online — jogue offline ou desative o anti-cheat", AdviceKind.AntiCheat));
+            result.Add(new Advice("", L.T("Install_AntiCheat_Warning"), AdviceKind.AntiCheat));
 
         // surface a required renderer only when the note says it "must"/"requires"/"only" run in one
         var rm = RendererRegex().Match(text);
         if (rm.Success && Regex.IsMatch(text, @"\b(must|requires?|only|needs? to)\b", RegexOptions.IgnoreCase))
-            result.Add(new Advice("", $"Rode o jogo em {rm.Value.ToUpperInvariant().Replace(" ", "")} (exigido pelo mod)", AdviceKind.Renderer));
+            result.Add(new Advice("", L.T("Install_Advice_Renderer",
+                rm.Value.ToUpperInvariant().Replace(" ", "")), AdviceKind.Renderer));
 
         return result;
     }

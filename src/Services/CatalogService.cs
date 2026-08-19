@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 
 namespace RenoDXLauncher.Services;
@@ -162,6 +163,9 @@ public partial class CatalogService
                         AddonBits = bits,
                         SteamAppId = steamAppId,
                         Working = !deprecatedSlugs.Contains(slug),
+                        // NOT localized on purpose: Note is never rendered — it is the raw text
+                        // AdviceService runs its (English) regexes over. Translating it would make
+                        // the advice chips differ by UI language. What the user READS is Notes below.
                         Note = deprecatedSlugs.Contains(slug)
                             ? "Marcado como DESCONTINUADO na wiki do RenoDX — pode não funcionar mais."
                             : null,
@@ -171,15 +175,15 @@ public partial class CatalogService
                     // these come from the machine index, not from a wiki row, so they would
                     // otherwise reach the user with an empty guidance panel
                     if (deprecatedSlugs.Contains(slug))
-                        entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Warning, "Descontinuado",
-                            "Marcado como DESCONTINUADO na wiki do RenoDX — pode não funcionar mais."));
+                        entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Warning,
+                            L.T("Main_Note_Deprecated_Title"), L.T("Main_Note_Deprecated_Body")));
                     else
-                        entry.Notes.Add(new ModNote(NoteSource.WikiLegend, NoteKind.Info, "Status na wiki",
-                            "Publicado no índice oficial do RenoDX."));
+                        entry.Notes.Add(new ModNote(NoteSource.WikiLegend, NoteKind.Info,
+                            L.T("Main_Note_WikiStatus_Title"), L.T("Main_Note_WikiStatus_Indexed")));
                     if (entry.NexusUrl is { Length: > 0 } nx)
-                        entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Instruções do autor",
-                            "A wiki avisa que instruções de instalação específicas deste jogo podem estar na página do NexusMods.",
-                            new[] { new NoteLink("Abrir a página no NexusMods", nx) }, null, "ANTES DE INSTALAR"));
+                        entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step,
+                            L.T("Main_Note_AuthorSteps_Title"), L.T("Main_Note_AuthorSteps_Nexus"),
+                            new[] { new NoteLink(L.T("Main_Note_Nexus_Link"), nx) }, null, "ANTES DE INSTALAR"));
 
                     SeedAliases(entry);
                     foreach (var a in aliases) entry.NormalizedAliases.Add(MatchService.Normalize(a));
@@ -284,10 +288,10 @@ public partial class CatalogService
                 kind = tag is "WARNING" or "CAUTION" or "IMPORTANT" ? NoteKind.Warning : NoteKind.Info;
                 title = tag switch
                 {
-                    "WARNING" or "CAUTION" => "Atenção",
-                    "IMPORTANT" => "Importante",
-                    "TIP" => "Dica",
-                    _ => "Nota",
+                    "WARNING" or "CAUTION" => L.T("Common_Note_Warning"),
+                    "IMPORTANT" => L.T("Common_Note_Important"),
+                    "TIP" => L.T("Common_Note_Tip"),
+                    _ => L.T("Common_Note_Info"),
                 };
                 body.RemoveAt(0);
             }
@@ -394,24 +398,22 @@ public partial class CatalogService
         // 9 of every 10 dedicated mods have no hover note, and the panel used to collapse to
         // nothing for them. Everything below already exists in the row — it was just discarded.
         if (hoverText is { Length: > 0 })
-            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Info, "Nota da wiki",
-                AdviceService.StripSymbols(hoverText)));
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Info,
+                L.T("Main_Note_WikiHover_Title"), AdviceService.StripSymbols(hoverText)));
 
         entry.Notes.Add(new ModNote(NoteSource.WikiLegend,
-            entry.Working ? NoteKind.Info : NoteKind.Warning, "Status na wiki",
-            entry.Working
-                ? "Marcado como FUNCIONANDO pela wiki do RenoDX."
-                : "Marcado como EM CONSTRUÇÃO: o mod ainda está sendo trabalhado e pode ter problemas."));
+            entry.Working ? NoteKind.Info : NoteKind.Warning, L.T("Main_Note_WikiStatus_Title"),
+            L.T(entry.Working ? "Main_Note_WikiStatus_Working" : "Main_Note_WikiStatus_InProgress")));
 
         if (nexus != null)
-            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Instruções do autor",
-                "A wiki avisa que instruções de instalação específicas deste jogo podem estar na página do NexusMods.",
-                new[] { new NoteLink("Abrir a página no NexusMods", nexus) }, null, "ANTES DE INSTALAR"));
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step,
+                L.T("Main_Note_AuthorSteps_Title"), L.T("Main_Note_AuthorSteps_Nexus"),
+                new[] { new NoteLink(L.T("Main_Note_Nexus_Link"), nexus) }, null, "ANTES DE INSTALAR"));
 
         if (discussion != null)
-            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Discussão deste mod",
-                "O autor documentou este mod numa discussão no GitHub — é onde ficam os pré-requisitos.",
-                new[] { new NoteLink("Abrir a discussão no GitHub", discussion) }, null, "ANTES DE INSTALAR"));
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step,
+                L.T("Main_Note_Discussion_Title"), L.T("Main_Note_Discussion_Body"),
+                new[] { new NoteLink(L.T("Main_Note_Discussion_Link"), discussion) }, null, "ANTES DE INSTALAR"));
 
         entries.Add(entry);
     }
@@ -427,7 +429,8 @@ public partial class CatalogService
         {
             GameName = name,
             Kind = kind,
-            Maintainer = kind == ModKind.UnrealEngine ? "Mod genérico Unreal" : "Mod genérico Unity",
+            Maintainer = L.T(kind == ModKind.UnrealEngine
+                ? "Main_Maintainer_UnrealGeneric" : "Main_Maintainer_UnityGeneric"),
             DownloadUrl = kind == ModKind.UnrealEngine ? UnrealAddonUrl : (is32 ? UnityAddon32Url : UnityAddon64Url),
             Slug = kind == ModKind.UnrealEngine ? "unrealengine" : "unityengine",
             AddonBits = kind == ModKind.UnrealEngine ? 64 : (is32 ? 32 : 64),
@@ -437,14 +440,13 @@ public partial class CatalogService
         if (note is { Length: > 0 })
         {
             var clean = AdviceService.StripSymbols(note);
-            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step, "Ajuste deste jogo",
+            entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step,
+                L.T("Main_Note_GameTweak_Title"),
                 clean, noteLinks, null, AdviceService.GuessLocation(clean)));
         }
         entry.Notes.Add(new ModNote(NoteSource.WikiLegend,
-            entry.Working ? NoteKind.Info : NoteKind.Warning, "Status na wiki",
-            entry.Working
-                ? "Marcado como FUNCIONANDO pela wiki do RenoDX."
-                : "Marcado como EM CONSTRUÇÃO: o mod ainda está sendo trabalhado e pode ter problemas."));
+            entry.Working ? NoteKind.Info : NoteKind.Warning, L.T("Main_Note_WikiStatus_Title"),
+            L.T(entry.Working ? "Main_Note_WikiStatus_Working" : "Main_Note_WikiStatus_InProgress")));
         entries.Add(entry);
     }
 

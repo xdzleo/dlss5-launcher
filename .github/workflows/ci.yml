@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  INNO_URL: 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe'
+  INNO_SHA256: '9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732'
+
 jobs:
   build:
     runs-on: windows-latest
@@ -16,3 +20,72 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build
         run: dotnet build src/RenoDXLauncher.csproj -c Release --nologo
+
+      # Texto de tela em portugues sem acento passa despercebido na revisao e chega ao
+      # usuario. Confere tambem que os placeholders {0} sao os mesmos em todos os idiomas:
+      # um {1} sobrando so estoura em runtime, no idioma que ninguem testou.
+      - name: Conferir os textos traduzidos
+        run: python tools/check_strings.py
+
+      - name: Os .resx estao em dia com o strings.json?
+        shell: bash
+        run: |
+          python tools/gen_resx.py
+          if ! git diff --quiet -- src/Localization; then
+            echo "::error::Os .resx nao batem com o strings.json. Rode: python tools/gen_resx.py"
+            git diff --stat -- src/Localization
+            exit 1
+          fi
+
+  # O instalador e o que o usuario baixa, entao ele e montado e testado a cada push -
+  # nao so na hora do release. O runner do GitHub tem o Windows Defender ativo, entao
+  # a varredura do av-selfcheck roda de verdade aqui (na maquina do dev costuma ficar
+  # SKIP quando o Defender esta desligado ou substituido).
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish (self-contained, em pasta)
+        run: >
+          dotnet publish src/RenoDXLauncher.csproj -c Release -r win-x64
+          --self-contained true -p:PublishSingleFile=false -o publish --nologo
+
+      - name: Instala o Inno Setup (versao e hash fixados)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            $ProgressPreference = 'SilentlyContinue'
+            Invoke-WebRequest -Uri $env:INNO_URL -OutFile inno.exe -UseBasicParsing
+            $sha = (Get-FileHash inno.exe -Algorithm SHA256).Hash.ToLower()
+            if ($sha -ne $env:INNO_SHA256) { throw "SHA-256 do Inno Setup nao confere: $sha" }
+            ./inno.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- | Out-Null
+          }
+          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Compila o instalador
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          & $env:ISCC_PATH installer/RenoDXLauncher.iss `
+            "/DSourceDir=$(Resolve-Path publish)" "/DOutputDir=$(Resolve-Path dist)" /Q
+          if ($LASTEXITCODE -ne 0) { throw "ISCC falhou ($LASTEXITCODE)" }
+
+      # Instala de verdade, roda o binario instalado, desinstala, e escaneia com o
+      # Defender. Assinatura vira WARN (so o release e assinado), entao sem -FailOnWarn.
+      - name: Bateria de verificacao antivirus
+        shell: pwsh
+        env:
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        run: ./tools/av-selfcheck.ps1
+
+      - name: Guarda o instalador para inspecao
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ github.sha }}
+          path: dist/*setup.exe
+          retention-days: 14

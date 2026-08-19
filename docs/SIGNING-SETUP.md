@@ -22,16 +22,40 @@ Depois de aprovado, no dashboard em <https://app.signpath.io>:
 
 1. Anote o **Organization ID** (fica em *Settings*).
 2. Crie um **Project** com o slug exato **`renodx-launcher`**.
-3. No projeto, crie uma **Artifact Configuration** que descreva o zip:
-   um `.zip` contendo `RenoDXLauncher.exe`, com Authenticode signing. (Pode deixar como
-   configuração padrão do projeto.)
+3. No projeto, crie **duas Artifact Configurations** — o release assina em duas rodadas
+   (o porquê está logo abaixo):
+   - slug **`app-zip`** — um `.zip` contendo `RenoDXLauncher.exe`, com Authenticode
+     signing no `.exe` de dentro;
+   - slug **`installer`** — um `.exe` solto (o `RenoDXLauncher-<versão>-setup.exe`), com
+     Authenticode signing.
 4. Crie uma **Signing Policy** com o slug exato **`release-signing`** usando o
    certificado da SignPath Foundation, com **aprovação manual** ligada.
 5. Conecte o **Trusted Build System = GitHub Actions** e autorize o repositório.
 6. Gere um **API Token** (guarde — você vai colar no passo 3).
 
-> Se você usar slugs diferentes de `renodx-launcher` / `release-signing`, edite esses dois
-> valores em `.github/workflows/release.yml`.
+> Se você usar slugs diferentes de `renodx-launcher` / `release-signing` / `app-zip` /
+> `installer`, edite esses valores em `.github/workflows/release.yml`.
+
+### Por que duas rodadas de assinatura
+
+O release faz, nesta ordem:
+
+```
+publish  →  assina RenoDXLauncher.exe  →  monta o instalador  →  assina o instalador
+```
+
+O instalador precisa ser montado **depois** que o `.exe` já está assinado. Assinar só o
+`setup.exe` deixaria, no disco do usuário, um `RenoDXLauncher.exe` sem assinatura — e é
+justamente esse binário instalado, não o instalador que rodou uma vez, que o antivírus dele
+vai escanear todo dia e que o Smart App Control avalia a cada execução.
+
+Na prática isso significa **duas aprovações manuais** por release, uma para cada rodada.
+Chega notificação das duas. Se ficar incômodo, a alternativa é configurar a Signing Policy
+para aprovação automática em builds de tag — mas aí você perde o passo de revisão humana
+que a política de assinatura publicada promete.
+
+O workflow valida o retorno de cada rodada com `Get-AuthenticodeSignature` e falha o
+release se algum artefato voltar sem assinatura válida.
 
 ## 3. Colocar os segredos no GitHub
 
