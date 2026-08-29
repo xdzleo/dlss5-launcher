@@ -364,6 +364,25 @@
             </DockPanel>
         </Border>
 
+        <!-- Runtimes trocados em algum jogo. Uma troca so aparece quando o jogo abre errado, e
+             quem mexeu em varios nao lembra em quais - o launcher sabe, entao avisa. -->
+        <Border DockPanel.Dock="Top" CornerRadius="8" Padding="13,10" Margin="10,10,10,0"
+                Background="#3A2E1B" BorderBrush="#7A6030" BorderThickness="1"
+                Visibility="{Binding HasSwappedGames, Converter={StaticResource BoolToVis}}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Padding="12,7" VerticalAlignment="Center" Margin="10,0,0,0"
+                        Command="{Binding RestoreAllDlssCommand}">
+                    <TextBlock Text="{loc:Tr Dlss_Sweep_Button}" FontSize="11.5"/>
+                </Button>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{loc:Tr Dlss_Sweep_Title}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#F0D0A0"/>
+                    <TextBlock Text="{Binding SwappedGames}" FontSize="11" TextWrapping="Wrap"
+                               Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
         <Grid>
             <ListBox ItemsSource="{Binding GamesView}" SelectedItem="{Binding Selected}"
                      Background="Transparent" BorderThickness="0" Margin="10"
@@ -630,11 +649,6 @@
                                 </DockPanel>
                             </Border>
 
-                            <!-- exe picker -->
-                            <TextBlock Text="{loc:Tr Dialog_Exe_Label}" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
-                            <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
-                                      FontSize="11.5"/>
-
                             <!-- PRE-REQUISITOS: acima do botao de instalar de proposito. Embaixo,
                                  ficavam fora da area visivel e a pessoa clicava em instalar sem
                                  nunca ver que o jogo exige outra versao do ReShade. -->
@@ -645,45 +659,17 @@
                                               ItemTemplate="{StaticResource NoteCard}"/>
                             </StackPanel>
 
-                            <!-- BANNER DE INSTALAR: existe apenas enquanto NAO ha mod instalado.
-                                 Depois de instalado ele nao tem o que oferecer, e atualizacao e
-                                 assunto do cartao ambar la em cima. Some tambem em jogo sem mod. -->
-                            <Button Padding="14,13" Margin="0,14,0,0" Command="{Binding InstallCommand}"
-                                    AutomationProperties.Name="{loc:Tr Dialog_Install_Title}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding Selected.IsInstalled}" Value="False"/>
-                                                    <Condition Binding="{Binding Selected.HasMod}" Value="True"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </MultiDataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                                <DockPanel>
-                                    <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="10"
-                                            Background="#38000000" VerticalAlignment="Center">
-                                        <Path Data="{StaticResource IconDownload}" Fill="#241805" Stretch="Uniform"
-                                              Width="17" Height="17"/>
-                                    </Border>
-                                    <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="{loc:Tr Dialog_Install_Title}" FontSize="14" FontWeight="SemiBold"
-                                                   Foreground="#1A1206"/>
-                                        <TextBlock Text="{loc:Tr Dialog_Install_Desc}"
-                                                   FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"
-                                                   Foreground="#5A3A14"/>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Button>
+                            <!-- O banner de INSTALAR saiu daqui.
+                                 Instalar e ligar eram dois controles para uma decisao so ("quero
+                                 este mod valendo"), em dois lugares diferentes da tela, e o
+                                 banner ainda sumia depois de instalado — entao o mesmo gesto
+                                 mudava de lugar conforme o estado. O interruptor do cartao
+                                 RenoDX HDR faz as duas coisas e fica sempre no mesmo lugar. -->
 
                             <!-- REPARO: o ReShade da pasta e a build sem suporte a add-ons, entao o
                                  mod nunca vai carregar. Como o banner de instalar some depois de
                                  instalado, sem isto o usuario ficaria sem nenhum caminho de volta. -->
-                            <Button Padding="14,13" Margin="0,14,0,0" Command="{Binding InstallCommand}"
+                            <Button Padding="14,13" Margin="0,14,0,0" Command="{Binding RepairReShadeCommand}"
                                     AutomationProperties.Name="{loc:Tr Dialog_Repair_Title}"
                                     Visibility="{Binding NeedsRepair, Converter={StaticResource BoolToVis}}">
                                 <Button.Style>
@@ -705,37 +691,12 @@
                                 </DockPanel>
                             </Button>
 
-                            <!-- REMOVER: onde antes ficava "desativar". Desativar so renomeia o
-                                 arquivo e nao e o que se quer 9 em cada 10 vezes; virou o botao de
-                                 energia na barra de baixo, para quem quiser comparar HDR ligado e
-                                 desligado sem perder a instalacao. -->
-                            <Button Margin="0,10,0,0" AutomationProperties.Name="{loc:Tr Dialog_Remove_Title}"
-                                    Command="{Binding RemoveCommand}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource ToggleCard}">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Selected.IsInstalled}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                                <DockPanel>
-                                    <Border DockPanel.Dock="Left" Width="30" Height="30" CornerRadius="9"
-                                            Background="#3A2024" VerticalAlignment="Center">
-                                        <Path Data="{StaticResource IconTrash}" Fill="#EE9A9A" Stretch="Uniform"
-                                              Width="15" Height="15"/>
-                                    </Border>
-                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="{loc:Tr Dialog_Remove_Title}" FontSize="12.5" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextBrush}"/>
-                                        <TextBlock Text="{loc:Tr Dialog_Remove_Desc}"
-                                                   FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
-                                                   Foreground="{StaticResource TextFaintBrush}"/>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Button>
+                            <!-- O botao REMOVER saiu daqui.
+                                 Desligar o interruptor do RenoDX HDR remove. Manter os dois era
+                                 pedir que a pessoa escolhesse entre "desativar" e "remover" sem
+                                 nada na tela explicando a diferenca — e a diferenca era so onde
+                                 os bytes ficam guardados, que nao e problema de quem usa. -->
+
 
                             <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0" Background="#2A2415"
                                     BorderBrush="#5E4E1E" BorderThickness="1"
@@ -769,6 +730,186 @@
                                 </ItemsControl>
                             </StackPanel>
 
+                            <!-- RenoDX HDR: o mod do jogo, no mesmo formato do cartao de DLSS 5.
+                                 Um interruptor, tres estados por baixo (ausente / instalado e
+                                 ligado / instalado e desligado) e um so em cima: esta valendo ou
+                                 nao. Os controles finos vivem no overlay do jogo, com Home. -->
+                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
+                                    Background="#1F2A20" BorderBrush="#33543A" BorderThickness="1"
+                                    Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
+                                                HorizontalAlignment="Right">
+                                        <ToggleButton Style="{StaticResource Switch}"
+                                                      IsChecked="{Binding ModReady, Mode=OneWay}"
+                                                      Command="{Binding ModCommand}"
+                                                      HorizontalAlignment="Right"
+                                                      AutomationProperties.Name="{loc:Tr Dialog_Toggle_Name}"/>
+                                        <TextBlock Text="{Binding ModStateText}" FontSize="10.5"
+                                                   HorizontalAlignment="Right" Margin="0,4,0,0"
+                                                   Foreground="{StaticResource TextDimBrush}"/>
+                                    </StackPanel>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <TextBlock Text="{loc:Tr Dialog_Mod_Title}" FontSize="12.5"
+                                                   FontWeight="SemiBold" Foreground="#8FE0A8"/>
+                                        <TextBlock Text="{loc:Tr Dialog_Mod_Desc}" FontSize="11"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                                        <!-- Aplicar o perfil de monitor ficou sem caminho quando a
+                                             lista de settings saiu daqui: o valor de nits so era
+                                             escrito durante a instalacao, entao mudar o monitor
+                                             depois exigia desinstalar e instalar de novo. -->
+                                        <Button HorizontalAlignment="Left" Margin="0,8,0,0" Padding="9,5"
+                                                Command="{Binding ApplyProfileCommand}"
+                                                ToolTip="{loc:Tr Dialog_ApplyProfile_Tooltip}"
+                                                Visibility="{Binding Selected.IsInstalled, Converter={StaticResource BoolToVis}}"
+                                                AutomationProperties.Name="{loc:Tr Dialog_ApplyProfile_Name}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"
+                                                      Width="13" Height="13"/>
+                                                <TextBlock Text="{loc:Tr Dialog_ApplyProfile_Text}" Margin="6,0,0,0"
+                                                           FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+
+                            <!-- Neural Uplift (DLSS-NR): so aparece quando o addon instalado sabe
+                                 acionar a feature e o jogo tem DLSS. O requisito de maquina nao
+                                 esconde o cartao - vira o aviso NeuralHasBlocker aqui dentro. -->
+                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
+                                    Background="#241B33" BorderBrush="#4A2F5E" BorderThickness="1"
+                                    Visibility="{Binding ShowNeural, Converter={StaticResource BoolToVis}}">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <!-- Interruptor unico: liga a cadeia INTEIRA (ReShade, addon,
+                                             os dois runtimes, carga antecipada e a chave) pelo mesmo
+                                             instalador que o comando `dlss5` usa. -->
+                                        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
+                                                    HorizontalAlignment="Right">
+                                            <ToggleButton Style="{StaticResource Switch}"
+                                                          IsChecked="{Binding Dlss5Ready, Mode=OneWay}"
+                                                          Command="{Binding Dlss5Command}"
+                                                          HorizontalAlignment="Right"
+                                                          AutomationProperties.Name="{loc:Tr Dialog_Neural_Name}"/>
+                                            <TextBlock Text="{Binding Dlss5StateText}" FontSize="10.5"
+                                                       HorizontalAlignment="Right" Margin="0,4,0,0"
+                                                       Foreground="{StaticResource TextDimBrush}"/>
+                                        </StackPanel>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <TextBlock Text="{loc:Tr Dialog_Neural_Title}" FontSize="12.5"
+                                                       FontWeight="SemiBold" Foreground="#D0A8F0"/>
+                                            <TextBlock Text="{loc:Tr Dialog_Neural_Desc}" FontSize="11"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <!-- Os elos, um a um. Todo elo quebrado da o MESMO sintoma de
+                                         fora — o jogo abre e nada acontece — entao um unico
+                                         ligado/desligado nao diz a ninguem o que fazer. -->
+                                    <ItemsControl ItemsSource="{Binding Dlss5Chain}" Margin="0,10,0,0">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource ChainChip}"
+                                                        Background="#2E2438" BorderBrush="#5A4270">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                                                                 Margin="0,0,6,0">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="{StaticResource RedBrush}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Ok}" Value="True">
+                                                                            <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                        <TextBlock Text="{Binding Label}" FontSize="11"
+                                                                   Foreground="{StaticResource TextDimBrush}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- por que esta maquina nao pode ligar -->
+                                    <Border CornerRadius="7" Padding="9,7" Margin="0,9,0,0"
+                                            Background="#2E2438" BorderBrush="#5A4270" BorderThickness="1"
+                                            Visibility="{Binding NeuralHasBlocker, Converter={StaticResource BoolToVis}}">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Padding="10,6" VerticalAlignment="Center"
+                                                    Margin="8,0,0,0"
+                                                    Command="{Binding ImportNeuralRuntimeCommand}"
+                                                    Visibility="{Binding NeuralNeedsRuntime, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{loc:Tr Main_Neural_Import}" FontSize="11.5"/>
+                                            </Button>
+                                            <TextBlock Text="{Binding NeuralBlocker}" FontSize="11"
+                                                       TextWrapping="Wrap" VerticalAlignment="Center"
+                                                       Foreground="{StaticResource TextFaintBrush}"/>
+                                        </DockPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Runtimes de DLSS: independente do neural. Aparece em qualquer jogo
+                                 que carregue um runtime NGX, mostrando a versao atual e para onde
+                                 ela subiria. Os originais ficam num .renodx-bak ao lado. -->
+                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
+                                    Background="#1B2733" BorderBrush="#2F4A5E" BorderThickness="1"
+                                    Visibility="{Binding ShowDlss, Converter={StaticResource BoolToVis}}">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Padding="12,8" VerticalAlignment="Center"
+                                                Command="{Binding DlssCommand}"
+                                                AutomationProperties.Name="{loc:Tr Dialog_Dlss_Title}">
+                                            <TextBlock Text="{Binding DlssButtonText}" FontSize="12"/>
+                                        </Button>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <TextBlock Text="{loc:Tr Dialog_Dlss_Title}" FontSize="12.5"
+                                                       FontWeight="SemiBold" Foreground="#8FD0F0"/>
+                                            <TextBlock Text="{loc:Tr Dialog_Dlss_Desc}" FontSize="11"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <!-- o que o jogo tem hoje, e para onde subiria -->
+                                    <TextBlock Text="{Binding DlssSummary}" FontSize="11.5" Margin="0,9,0,0"
+                                               TextWrapping="Wrap" FontFamily="Consolas"
+                                               Foreground="#B8D8EC"/>
+
+                                    <!-- Estado comprovadamente quebrado. Aparece venha de onde vier
+                                         (este launcher, DLSS Swapper, troca manual): so reporta,
+                                         porque de fora nao da para saber qual versao o jogo aceita. -->
+                                    <Border CornerRadius="7" Padding="9,7" Margin="0,9,0,0"
+                                            Background="#3A2424" BorderBrush="#7A4242" BorderThickness="1"
+                                            Visibility="{Binding DlssHasIssue, Converter={StaticResource BoolToVis}}">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Padding="10,6" Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Command="{Binding DlssRepairCommand}">
+                                                <TextBlock Text="{loc:Tr Main_Dlss_Repair}" FontSize="11.5"/>
+                                            </Button>
+                                            <TextBlock Text="{Binding DlssHealth}" FontSize="11" TextWrapping="Wrap"
+                                                       VerticalAlignment="Center" Foreground="#F0B8B8"/>
+                                        </DockPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- exe picker -->
+                            <TextBlock Text="{loc:Tr Dialog_Exe_Label}" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
+                            <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
+                                      FontSize="11.5"/>
+
+
                             <StackPanel Margin="0,8,0,0"
                                         Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
                                 <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"/>
@@ -793,58 +934,12 @@
                                 </StackPanel>
                             </Expander>
 
-                            <StackPanel Visibility="{Binding Selected.IsInstalled, Converter={StaticResource BoolToVis}}">
-                                <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,20,0,16"/>
-                                <TextBlock Text="{loc:Tr Dialog_Settings_Title}" Style="{StaticResource H2}"/>
-                                <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0"
-                                           Text="{loc:Tr Dialog_Settings_Desc}"/>
-
-                                <Border CornerRadius="9" Padding="12,10" Margin="0,10,0,0" Background="#2A2415"
-                                        BorderBrush="#5E4E1E" BorderThickness="1"
-                                        Visibility="{Binding HasNoSettingsReason, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="{Binding NoSettingsReason}" TextWrapping="Wrap" FontSize="11.5"
-                                               LineHeight="17" Foreground="#F0D9A0"/>
-                                </Border>
-
-                                <ItemsControl ItemsSource="{Binding Settings}" ItemTemplate="{StaticResource SettingRow}"
-                                              Margin="0,8,0,0">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
-
-                                <UniformGrid Columns="3" Margin="0,12,0,0"
-                                             Visibility="{Binding Settings.Count, Converter={StaticResource CountToVis}}">
-                                    <Button Style="{StaticResource AccentButton}" Margin="0,0,4,0"
-                                            AutomationProperties.Name="{loc:Tr Dialog_SaveSettings_Name}" Command="{Binding SaveSettingsCommand}">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSave}"
-                                                  Fill="#14100A" Width="14" Height="14"/>
-                                            <TextBlock Text="{loc:Tr Common_Save}" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="#14100A" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Margin="2,0" AutomationProperties.Name="{loc:Tr Dialog_ApplyProfile_Name}" Command="{Binding ApplyProfileCommand}"
-                                            ToolTip="{loc:Tr Dialog_ApplyProfile_Tooltip}">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"
-                                                  Width="14" Height="14"/>
-                                            <TextBlock Text="{loc:Tr Dialog_ApplyProfile_Text}" Margin="6,0,0,0" FontSize="12"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Margin="4,0,0,0" AutomationProperties.Name="{loc:Tr Dialog_ResetSettings_Name}" Command="{Binding ResetSettingsCommand}">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconReset}"
-                                                  Width="14" Height="14"/>
-                                            <TextBlock Text="{loc:Tr Common_Default}" Margin="6,0,0,0" FontSize="12"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </UniformGrid>
-                            </StackPanel>
+                            <!-- Os controles do mod NAO ficam aqui.
+                                 Eles vivem no overlay do proprio jogo, onde a pessoa ve o efeito
+                                 de cada valor na hora em que mexe. Duplicar a lista aqui pedia que
+                                 ela ajustasse HDR olhando para numeros, com o jogo fechado, e
+                                 depois abrisse para descobrir o resultado. Home, dentro do jogo,
+                                 sempre foi o lugar certo. -->
                         </StackPanel>
                         </ScrollViewer>
                     </Grid>

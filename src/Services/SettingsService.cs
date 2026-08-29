@@ -34,7 +34,7 @@ public class SettingsService
         var result = new List<SettingValue>(defs.Count);
         foreach (var def in defs)
         {
-            var section = def.IsGlobal ? GlobalSection : PresetSection;
+            var section = def.IniSection ?? (def.IsGlobal ? GlobalSection : PresetSection);
             var key = ResolveKey(ini, section, def.Key);
             var raw = ini.Get(section, key);
             double? current = null;
@@ -55,7 +55,7 @@ public class SettingsService
         var ini = new IniFile(iniPath);
         foreach (var (def, value) in changes)
         {
-            var section = def.IsGlobal ? GlobalSection : PresetSection;
+            var section = def.IniSection ?? (def.IsGlobal ? GlobalSection : PresetSection);
             var key = ResolveKey(ini, section, def.Key);
             string text = def.Type == "float"
                 ? value.ToString("0.####", CultureInfo.InvariantCulture)
@@ -73,7 +73,7 @@ public class SettingsService
         var ini = new IniFile(iniPath);
         foreach (var def in defs)
         {
-            var section = def.IsGlobal ? GlobalSection : PresetSection;
+            var section = def.IniSection ?? (def.IsGlobal ? GlobalSection : PresetSection);
             ini.RemoveKey(section, ResolveKey(ini, section, def.Key));
         }
         ini.Save();

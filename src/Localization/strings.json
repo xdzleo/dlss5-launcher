@@ -187,6 +187,10 @@
     "en": "Disable the mod",
     "pt-BR": "Desativa o mod"
   },
+  "Cli_Help_Dlss5": {
+    "en": "Install the whole DLSS 5 chain in one go (--all for every eligible game)",
+    "pt-BR": "Instala a cadeia inteira do DLSS 5 de uma vez (--all para todos os jogos elegíveis)"
+  },
   "Cli_Help_Doctor": {
     "en": "Full diagnostics: why a game is not showing up",
     "note": "pt: \"Diagnóstico completo: por que um jogo não aparece\".",
@@ -217,6 +221,11 @@
     "en": "{0} matches any part of the name, case-insensitive. Example:",
     "note": "pt: \"...sem diferenciar maiúsculas. Exemplo:\". {0} = Cli_Arg_Game.",
     "pt-BR": "{0} casa com qualquer parte do nome, sem diferenciar maiusculas. Exemplo:"
+  },
+  "Cli_Help_Neural": {
+    "en": "Read the DLSS 5 neural chain link by link, writing nothing",
+    "note": "pt: \"Lê a cadeia do neural DLSS 5 elo a elo, sem gravar nada\".",
+    "pt-BR": "Lê a cadeia do neural DLSS 5 elo a elo, sem gravar nada"
   },
   "Cli_Help_Profile": {
     "en": "Show or set the monitor nits profile",
@@ -543,6 +552,14 @@
     "en": "DLSS Frame Generation flickering?",
     "pt-BR": "DLSS Frame Generation piscando?"
   },
+  "Dialog_Dlss_Desc": {
+    "en": "A game runs whatever DLSS build it shipped with. Newer runtimes are drop-in and usually fix the artefacts of an old one. The originals are kept and can be put back.",
+    "pt-BR": "O jogo roda a versão de DLSS com que foi lançado. Runtimes mais novos entram no lugar direto e costumam corrigir artefatos da versão antiga. Os originais ficam guardados e dá para voltar."
+  },
+  "Dialog_Dlss_Title": {
+    "en": "DLSS runtimes",
+    "pt-BR": "Runtimes de DLSS"
+  },
   "Dialog_EngineNotes_Desc": {
     "en": "Rules from the RenoDX wiki that apply to every game on this engine, even when the game's own note does not repeat them.",
     "note": "O cabecalho do Expander continua vindo do VM (EngineNotesHeader).",
@@ -588,13 +605,36 @@
     "note": "Corrige o \"Pagina do mod\" sem acento citado no briefing. Comando e OpenNexusCommand, mas nem todo mod e do Nexus, entao o texto continua generico.",
     "pt-BR": "Abrir a página do mod"
   },
+  "Dialog_Mod_Desc": {
+    "en": "The game's HDR mod. Fine controls live in the game's own overlay — press Home while playing.",
+    "pt-BR": "O mod de HDR do jogo. Os controles finos ficam no overlay do próprio jogo — aperte Home jogando."
+  },
   "Dialog_Mod_Stable": {
     "en": "Stable",
     "pt-BR": "Estável"
   },
+  "Dialog_Mod_Title": {
+    "en": "RenoDX HDR",
+    "pt-BR": "RenoDX HDR"
+  },
   "Dialog_Mod_Unstable": {
     "en": "Unstable",
     "pt-BR": "Instável"
+  },
+  "Dialog_Neural_Desc": {
+    "en": "Runs the DLSS 5 neural post-process over the finished frame, one frame late. Mostly improves skin and faces. Experimental.",
+    "note": "Descricao do cartao. DLSS e termo tecnico, mantido.",
+    "pt-BR": "Roda o pós-processamento neural do DLSS 5 sobre o quadro pronto, um quadro atrasado. Melhora principalmente pele e rosto. Experimental."
+  },
+  "Dialog_Neural_Name": {
+    "en": "Neural Uplift (DLSS-NR)",
+    "note": "Nome acessivel do botao. Nome da feature: nao traduzir.",
+    "pt-BR": "Neural Uplift (DLSS-NR)"
+  },
+  "Dialog_Neural_Title": {
+    "en": "Neural Uplift (DLSS-NR) available",
+    "note": "Titulo do cartao.",
+    "pt-BR": "Neural Uplift (DLSS-NR) disponível"
   },
   "Dialog_Notes_Label": {
     "en": "HOW TO SET UP THIS GAME",
@@ -672,6 +712,202 @@
     "en": "Update Available",
     "note": "Title Case no en por ser titulo curto, conforme a regra de maiuscula.",
     "pt-BR": "Atualização disponível"
+  },
+  "Dlss5_Blocked_NoDlss": {
+    "en": "This game ships no DLSS runtime. The neural filter reads the buffers the game hands to DLSS, so there is nothing for it to read here.",
+    "pt-BR": "Este jogo não tem DLSS. O filtro neural lê os buffers que o jogo entrega ao DLSS, então aqui não há o que ler."
+  },
+  "Dlss5_Blocked_NoExe": {
+    "en": "No game executable was found to install ReShade against.",
+    "pt-BR": "Nenhum executável do jogo foi encontrado para instalar o ReShade."
+  },
+  "Dlss5_Blocked_Skip": {
+    "en": "The curated index says to leave this game's DLSS alone.",
+    "pt-BR": "O índice curado diz para não mexer no DLSS deste jogo."
+  },
+  "Dlss5_Blocked_Unknown": {
+    "en": "Everything was written, but the state still does not read as on. See the steps above.",
+    "pt-BR": "Tudo foi gravado, mas o estado ainda não lê como ligado. Veja os passos acima."
+  },
+  "Dlss5_Link_Addon": {
+    "en": "Addon",
+    "pt-BR": "Addon"
+  },
+  "Dlss5_Link_EarlyLoad": {
+    "en": "Early load",
+    "pt-BR": "Carga antecipada"
+  },
+  "Dlss5_Link_Neural": {
+    "en": "Neural runtime",
+    "pt-BR": "Runtime neural"
+  },
+  "Dlss5_Link_Rr": {
+    "en": "Ray Reconstruction",
+    "pt-BR": "Ray Reconstruction"
+  },
+  "Dlss5_Link_Switch": {
+    "en": "Switch",
+    "pt-BR": "Chave"
+  },
+  "Dlss5_Manual_EnableDlss": {
+    "en": "Turn DLSS on in the game's graphics settings — the filter reads the buffers DLSS produces.",
+    "pt-BR": "Ligue o DLSS nas opções gráficas do jogo — o filtro lê os buffers que o DLSS produz."
+  },
+  "Dlss5_Manual_Overlay": {
+    "en": "Press Home in the game to open the overlay and check that the state reads ACTIVE.",
+    "pt-BR": "Aperte Home no jogo para abrir o overlay e conferir se o estado diz ATIVO."
+  },
+  "Dlss5_State_Off": {
+    "en": "Off",
+    "pt-BR": "Desligado"
+  },
+  "Dlss5_State_On": {
+    "en": "Installed",
+    "pt-BR": "Instalado"
+  },
+  "Dlss5_Step_AddonFetchFailed": {
+    "en": "Could not fetch the addon: {0}",
+    "pt-BR": "Não deu para buscar o addon: {0}"
+  },
+  "Dlss5_Step_AddonGame": {
+    "en": "The game's own mod drives the filter; runtimes and the key are in place.",
+    "pt-BR": "O mod do próprio jogo aciona o filtro; runtimes e a chave no lugar."
+  },
+  "Dlss5_Step_AddonGeneric": {
+    "en": "Generic addon, both runtimes and the early-load key are in place.",
+    "pt-BR": "Addon genérico, os dois runtimes e a chave de carga antecipada no lugar."
+  },
+  "Dlss5_Step_ReShade": {
+    "en": "ReShade installed as {0}.",
+    "pt-BR": "ReShade instalado como {0}."
+  },
+  "Dlss5_Step_ReShadeAlready": {
+    "en": "ReShade already present ({0}).",
+    "pt-BR": "ReShade já presente ({0})."
+  },
+  "Dlss5_Step_RuntimeFetched": {
+    "en": "Neural runtime {0} downloaded and verified.",
+    "pt-BR": "Runtime neural {0} baixado e verificado."
+  },
+  "Dlss5_Step_StreamlineFailed": {
+    "en": "Could not repair the Streamline set: {0}",
+    "pt-BR": "Não deu para consertar o conjunto Streamline: {0}"
+  },
+  "Dlss5_Step_StreamlineFixed": {
+    "en": "Streamline set repaired.",
+    "pt-BR": "Conjunto Streamline consertado."
+  },
+  "Dlss5_Step_StreamlineLeft": {
+    "en": "Streamline set still has {0} problem(s).",
+    "pt-BR": "O conjunto Streamline ainda tem {0} problema(s)."
+  },
+  "Dlss_Failed": {
+    "en": "Could not update {0}: {1}",
+    "note": "{0} = nome do arquivo, {1} = mensagem do erro.",
+    "pt-BR": "Não deu para atualizar {0}: {1}"
+  },
+  "Dlss_Fg_Done": {
+    "en": "{0} file(s) of the Streamline set updated.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "{0} arquivo(s) do conjunto Streamline atualizado(s)."
+  },
+  "Dlss_Fg_Incomplete": {
+    "en": "The source folder is missing {0}. Frame Generation only works if the whole set moves together - a partial swap is what crashes the game.",
+    "note": "{0} = arquivo faltando.",
+    "pt-BR": "Falta o {0} na pasta de origem. Frame Generation só funciona se o conjunto inteiro for junto — troca pela metade é o que trava o jogo."
+  },
+  "Dlss_Fg_NoSource": {
+    "en": "Folder not found: {0}",
+    "note": "{0} = caminho.",
+    "pt-BR": "Pasta não encontrada: {0}"
+  },
+  "Dlss_Fg_NoStreamline": {
+    "en": "This game has no Streamline runtime, so there is no Frame Generation to upgrade.",
+    "pt-BR": "Este jogo não tem runtime do Streamline, então não há Frame Generation para atualizar."
+  },
+  "Dlss_Health_NotSigned": {
+    "en": "{0} is not a genuine NVIDIA runtime ({1}). Replace it with the game's original file.",
+    "note": "{0} = arquivo, {1} = detalhe da verificacao.",
+    "pt-BR": "{0} não é um runtime legítimo da NVIDIA ({1}). Troque pelo arquivo original do jogo."
+  },
+  "Dlss_Health_SlMismatch": {
+    "en": "The Streamline plugins are from different builds: {0}. They ship as one set - a partial swap is what crashes the game on launch. Use Restore, or reinstall the game files.",
+    "note": "{0} = versoes e arquivos encontrados.",
+    "pt-BR": "Os plugins do Streamline são de builds diferentes: {0}. Eles saem como um conjunto só — troca pela metade é o que trava o jogo na abertura. Use Restaurar, ou verifique os arquivos do jogo."
+  },
+  "Dlss_Index_Downloading": {
+    "en": "Downloading {0} {1}…",
+    "note": "{0} = tipo (dlssnr, streamline), {1} = versão.",
+    "pt-BR": "Baixando {0} {1}…"
+  },
+  "Dlss_Index_Extracting": {
+    "en": "Extracting {0}…",
+    "note": "{0} = tipo (dlssnr, streamline).",
+    "pt-BR": "Extraindo {0}…"
+  },
+  "Dlss_Library_Empty": {
+    "en": "No DLSS runtime in the library yet. Scan for runtimes first — every game with DLSS carries one.",
+    "pt-BR": "Nenhum runtime de DLSS na biblioteca ainda. Faça a varredura primeiro — todo jogo com DLSS carrega um."
+  },
+  "Dlss_NotNvidia": {
+    "en": "Not signed by NVIDIA (signer: {0}). Skipped.",
+    "note": "{0} = subject do certificado encontrado.",
+    "pt-BR": "Não é assinado pela NVIDIA (assinante: {0}). Ignorado."
+  },
+  "Dlss_NotSwapped": {
+    "en": "not swapped - moves with Streamline",
+    "pt-BR": "não é trocado — anda junto com o Streamline"
+  },
+  "Dlss_Repair_Applying": {
+    "en": "Applying the matched Streamline set...",
+    "pt-BR": "Aplicando o conjunto Streamline casado..."
+  },
+  "Dlss_Repair_NoReference": {
+    "en": "No complete Streamline set in the library and no backup to fall back on. Point the launcher at a folder holding a matched set (the sl.* plugins and nvngx_dlssg.dll from the same build).",
+    "pt-BR": "Não há conjunto Streamline completo na biblioteca nem backup para voltar. Aponte o launcher para uma pasta com um conjunto casado (os sl.* e o nvngx_dlssg.dll do mesmo build)."
+  },
+  "Dlss_Repair_Partial": {
+    "en": "{0} file(s) restored, but problems remain - check the game files.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "{0} arquivo(s) restaurado(s), mas ainda ha problemas - verifique os arquivos do jogo."
+  },
+  "Dlss_Repair_Restored": {
+    "en": "{0} file(s) put back to the game's original.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "{0} arquivo(s) devolvido(s) ao original do jogo."
+  },
+  "Dlss_Searching": {
+    "en": "Looking for DLSS runtimes in {0}...",
+    "note": "{0} = nome da pasta sendo varrida.",
+    "pt-BR": "Procurando runtimes de DLSS em {0}..."
+  },
+  "Dlss_Sweep_Button": {
+    "en": "Restore all",
+    "pt-BR": "Restaurar tudo"
+  },
+  "Dlss_Sweep_Done": {
+    "en": "{0} file(s) put back to the game's original.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "{0} arquivo(s) devolvido(s) ao original do jogo."
+  },
+  "Dlss_Sweep_Game": {
+    "en": "Restoring {0}...",
+    "note": "{0} = nome do jogo.",
+    "pt-BR": "Restaurando {0}..."
+  },
+  "Dlss_Sweep_Locked": {
+    "en": "{0} restored. Still in use (close the game and try again): {1}",
+    "note": "{0} = quantidade, {1} = lista.",
+    "pt-BR": "{0} restaurado(s). Ainda em uso (feche o jogo e repita): {1}"
+  },
+  "Dlss_Sweep_Title": {
+    "en": "These games are running a DLSS runtime this launcher replaced:",
+    "pt-BR": "Estes jogos estão com um runtime de DLSS que este launcher trocou:"
+  },
+  "Dlss_Updating": {
+    "en": "{0}: {1} -> {2}",
+    "note": "{0} = feature (Super Resolution etc), {1} = versao atual, {2} = versao nova.",
+    "pt-BR": "{0}: {1} -> {2}"
   },
   "Error_CheckUpdates": {
     "en": "Update check failed: {0}. Check your connection and try again.",
@@ -994,6 +1230,11 @@
     "en": "Mod page",
     "pt-BR": "Página do mod"
   },
+  "Install_Mod_Cached": {
+    "en": "{0} is already downloaded — reusing it.",
+    "note": "{0} = nome do arquivo.",
+    "pt-BR": "{0} já estava baixado — reaproveitando."
+  },
   "Install_Mod_Done": {
     "en": "{0} installed.",
     "note": "{0} = nome do arquivo do addon.",
@@ -1201,6 +1442,33 @@
     "en": "DLSS fix removed.",
     "pt-BR": "Correção de DLSS removida."
   },
+  "Main_Dlss_AlreadyCurrent": {
+    "en": "Already current — the game has {0} runtime(s) at or above the library's version.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "Já está em dia — o jogo tem {0} runtime(s) na mesma versão da biblioteca ou acima."
+  },
+  "Main_Dlss_Repair": {
+    "en": "Fix",
+    "pt-BR": "Corrigir"
+  },
+  "Main_Dlss_Restore": {
+    "en": "Restore originals",
+    "pt-BR": "Restaurar originais"
+  },
+  "Main_Dlss_Restored": {
+    "en": "{0} original runtime(s) restored.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "{0} runtime(s) original(is) restaurado(s)."
+  },
+  "Main_Dlss_Update": {
+    "en": "Update",
+    "pt-BR": "Atualizar"
+  },
+  "Main_Dlss_Updated": {
+    "en": "{0} runtime(s) updated.",
+    "note": "{0} = quantidade.",
+    "pt-BR": "{0} runtime(s) atualizado(s)."
+  },
   "Main_Empty_Hint": {
     "en": "Change the search or the filter.",
     "note": "Tirei as aspas curvas e o travessao do original. \"Adicionar\"/\"Add\" cita o rotulo do botao, entao muda junto com o idioma.",
@@ -1298,6 +1566,42 @@
     "en": "My Monitor",
     "note": "Texto do botao e AutomationProperties.Name.",
     "pt-BR": "Meu monitor"
+  },
+  "Main_Neural_Applied": {
+    "en": "Neural Uplift on. Restart the game.",
+    "pt-BR": "Neural Uplift ligado. Reinicie o jogo."
+  },
+  "Main_Neural_Apply": {
+    "en": "Turn On",
+    "note": "Rotulo de botao. Title Case no en.",
+    "pt-BR": "Ligar"
+  },
+  "Main_Neural_Import": {
+    "en": "Choose File",
+    "note": "Rotulo de botao. Title Case no en.",
+    "pt-BR": "Escolher arquivo"
+  },
+  "Main_Neural_ImportTitle": {
+    "en": "Select nvngx_dlssnr.dll",
+    "note": "Titulo do seletor de arquivo. Nome de arquivo: nao traduzir.",
+    "pt-BR": "Selecione o nvngx_dlssnr.dll"
+  },
+  "Main_Neural_Imported": {
+    "en": "Runtime in the library. You can now turn it on in any compatible game.",
+    "pt-BR": "Runtime na biblioteca. Agora dá para ligar em qualquer jogo compatível."
+  },
+  "Main_Neural_Importing": {
+    "en": "Copying the runtime to the library...",
+    "pt-BR": "Copiando o runtime para a biblioteca..."
+  },
+  "Main_Neural_Remove": {
+    "en": "Turn Off",
+    "note": "Rotulo de botao. Title Case no en.",
+    "pt-BR": "Desligar"
+  },
+  "Main_Neural_Removed": {
+    "en": "Neural Uplift off, runtime removed from the game.",
+    "pt-BR": "Neural Uplift desligado e runtime removido do jogo."
   },
   "Main_NoSettings_ExternalMod": {
     "en": "This mod is distributed only through Nexus/Discord, so the launcher doesn't know its settings. Adjust them in the ReShade overlay in-game (Home key).",
@@ -1562,6 +1866,101 @@
     "en": "Updating {0}...",
     "note": "{0} = nome do jogo.",
     "pt-BR": "Atualizando {0}..."
+  },
+  "Neural_Applied": {
+    "en": "Neural Uplift on.",
+    "pt-BR": "Neural Uplift ligado."
+  },
+  "Neural_AutoFound": {
+    "en": "Neural runtime found and added to the library: {0}",
+    "note": "{0} = caminho de onde foi importado.",
+    "pt-BR": "Runtime neural encontrado e adicionado à biblioteca: {0}"
+  },
+  "Neural_Blocked_Addon": {
+    "en": "Missing {0} in the library. Import the generic neural addon once and every game with DLSS can use it.",
+    "note": "{0} = nome do arquivo do addon.",
+    "pt-BR": "Falta o {0} na biblioteca. Importe o addon neural genérico uma vez e todo jogo com DLSS passa a poder usá-lo."
+  },
+  "Neural_Blocked_Driver": {
+    "en": "Needs driver {1} or newer. This one is {0}.",
+    "note": "{0} = branch instalado, {1} = branch minimo.",
+    "pt-BR": "Precisa do driver {1} ou mais novo. Este é o {0}."
+  },
+  "Neural_Blocked_Gpu": {
+    "en": "Needs a GeForce RTX 50 series. The adapter found here is: {0}. The model kernels only ship compiled for Blackwell (sm_120) — a newer driver will not change that.",
+    "note": "{0} = nome da placa.",
+    "pt-BR": "Precisa de uma GeForce RTX série 50. A placa encontrada aqui foi: {0}. Os kernels do modelo só existem compilados para Blackwell (sm_120) — driver novo não resolve."
+  },
+  "Neural_Blocked_ReShade": {
+    "en": "ReShade is not installed in this game. The neural addon is a ReShade addon, so it needs that host to load.",
+    "pt-BR": "O ReShade não está instalado neste jogo. O addon neural é um addon do ReShade, então precisa desse host para carregar."
+  },
+  "Neural_Blocked_Runtime": {
+    "en": "Missing {0}. It ships in no driver and no public NVIDIA SDK, so it is taken from a game that bundles it or downloaded from the RHI index — either way it is only installed if NVIDIA signed it.",
+    "note": "{0} = nome do arquivo.",
+    "pt-BR": "Falta o {0}. Ele não vem em driver nem no SDK público da NVIDIA, então é tirado de um jogo que o distribui ou baixado do índice do RHI — nos dois casos só é instalado se a NVIDIA assinou."
+  },
+  "Neural_Deploying": {
+    "en": "Copying the runtime into the game folder (158 MB)...",
+    "pt-BR": "Copiando o runtime para a pasta do jogo (158 MB)..."
+  },
+  "Neural_DeployingAddon": {
+    "en": "Installing the generic neural addon...",
+    "pt-BR": "Instalando o addon neural genérico..."
+  },
+  "Neural_DeployingRR": {
+    "en": "Copying the Ray Reconstruction runtime…",
+    "pt-BR": "Copiando o runtime de Ray Reconstruction…"
+  },
+  "Neural_Fetch_BadAddon": {
+    "en": "The downloaded addon does not match the expected bytes ({0}). It was not installed.",
+    "note": "{0} = hash ou tamanho recebido.",
+    "pt-BR": "O addon baixado não corresponde aos bytes esperados ({0}). Ele não foi instalado."
+  },
+  "Neural_Fetch_NotGenuine": {
+    "en": "The downloaded runtime is not signed by NVIDIA with an intact digest ({0}). It was not installed.",
+    "note": "{0} = detalhe da verificação de assinatura.",
+    "pt-BR": "O runtime baixado não está assinado pela NVIDIA com o digest intacto ({0}). Ele não foi instalado."
+  },
+  "Neural_Fetched": {
+    "en": "Neural runtime {0} downloaded and verified.",
+    "note": "{0} = versão, ex. 310.8.0.",
+    "pt-BR": "Runtime neural {0} baixado e verificado."
+  },
+  "Neural_FetchingAddon": {
+    "en": "Downloading the neural addon…",
+    "pt-BR": "Baixando o addon neural…"
+  },
+  "Neural_Import_NotNrAddon": {
+    "en": "This addon does not drive neural rendering (no DLSSNR parameters inside). Pick a build that supports it.",
+    "pt-BR": "Este addon não controla o neural rendering (sem os parâmetros DLSSNR dentro). Escolha um build que suporte."
+  },
+  "Neural_Import_TooSmall": {
+    "en": "File is too small to be the runtime (the real one is around 158 MB). It is probably a stub or a truncated download.",
+    "pt-BR": "Arquivo pequeno demais para ser o runtime (o real tem cerca de 158 MB). Provavelmente é um stub ou um download incompleto."
+  },
+  "Neural_Import_WrongName": {
+    "en": "The file must be named {0}. The addon looks it up by that exact name.",
+    "note": "{0} = nome do arquivo.",
+    "pt-BR": "O arquivo precisa se chamar {0}. O addon procura por esse nome exato."
+  },
+  "Neural_InstallingReShade": {
+    "en": "Installing ReShade...",
+    "pt-BR": "Instalando o ReShade..."
+  },
+  "Neural_ReShadeInstalled": {
+    "en": "ReShade installed.",
+    "pt-BR": "ReShade instalado."
+  },
+  "Neural_Remove_Locked": {
+    "en": "Could not delete {0} — the file is in use. Close the game and try again; until it is gone the feature is still live in the game.",
+    "note": "{0} = nomes dos arquivos travados.",
+    "pt-BR": "Não deu para apagar {0} — o arquivo está em uso. Feche o jogo e tente de novo; enquanto ele estiver lá a feature continua ativa no jogo."
+  },
+  "Neural_Searching": {
+    "en": "Looking for the neural runtime in {0}...",
+    "note": "{0} = nome da pasta sendo varrida.",
+    "pt-BR": "Procurando o runtime neural em {0}..."
   },
   "Profile_ApplyOnInstall": {
     "en": "Apply automatically when installing a mod",

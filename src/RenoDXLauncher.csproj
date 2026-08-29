@@ -9,7 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.12.0</Version>
+    <Version>1.38.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Idiomas que o app fala. Sem esta lista o SDK descarta os satelites de recurso,
          e so o idioma neutro (pt-BR, que fica no proprio assembly) sobreviveria.
@@ -75,6 +75,10 @@
     <EmbeddedResource Include="Assets\Mods.fallback.md" />
     <EmbeddedResource Include="Assets\games-index.fallback.json" />
     <EmbeddedResource Include="Assets\rhi_manifest.fallback.json" />
+    <!-- O addon de Neural Rendering NAO vai embutido. O build proprio foi tentado e nao e
+         distribuivel: ele instala os ganchos de dentro do callback de present, com a thread de
+         render ja dentro das funcoes sendo patcheadas, e o jogo abre em tela preta. O launcher
+         busca o build da comunidade, fixado por hash - ver NeuralUpliftService. -->
   </ItemGroup>
 
   <!-- O runtime pack traz createdump.exe, o utilitario de dump de processo da Microsoft.
@@ -93,3 +97,6 @@
   </Target>
 
 </Project>
+
+
+

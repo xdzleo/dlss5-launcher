@@ -60,6 +60,15 @@ public class GameItemVm : ObservableObject
     public bool ModIsStable => Mod?.Working == true;
     public bool ModIsUnstable => Mod != null && !Mod.Working;
     public string ModStatusText => L.T(ModIsStable ? "Main_ModStatus_Stable" : "Main_ModStatus_Unstable");
+
+    /// <summary>Reavalia os textos que este item traduz por conta propria. Chamado na troca de
+    /// idioma — essas propriedades nao passam por {loc:Tr}, entao nada mais as reavaliaria.</summary>
+    public void RaiseLocalizedText()
+    {
+        OnPropertyChanged(nameof(BadgeText));
+        OnPropertyChanged(nameof(StoreLabel));
+        OnPropertyChanged(nameof(ModStatusText));
+    }
     public string ModStatusTooltip => L.T(ModIsStable
         ? "Main_ModStatus_Stable_Tooltip"
         : "Main_ModStatus_Unstable_Tooltip");

@@ -1,5 +1,643 @@
 # Changelog
 
+## v1.37.0
+
+Caçada a bugs com dois revisores independentes, um na camada de serviços e outro na de interface.
+Dezoito achados; onze corrigidos aqui. Vários eram regressões introduzidas nas versões 1.21–1.35,
+o que era de esperar: aquela sequência mexeu em quase tudo que escreve arquivo dentro de pasta de
+jogo.
+
+### Dois que destruíam arquivo do usuário
+
+**`Remove` apagava o `nvngx_dlssnr.dll` mesmo sem tê-lo instalado.** O comentário dizia "só o que
+este launcher colocou aqui" e o código não cumpria: o runtime era apagado incondicionalmente. Como
+o próprio `AutoDiscoverRuntime` documenta, as pastas que já contêm esse arquivo são exatamente onde
+vivem as únicas cópias que existem numa máquina — e a NVIDIA não o distribui em driver nem em SDK.
+Desligar a feature numa dessas pastas apagava 158 MB irrecuperáveis.
+
+Agora o launcher marca o que ele mesmo escreveu e só apaga isso; substituir uma cópia alheia passa
+a fazer backup antes, como todo outro runtime.
+
+**`Restore` e `RestoreAll` varriam `*.renodx-bak`, incluindo o backup do addon.** O `IsApplied`
+tinha sido estreitado para contar só backup de runtime; os dois caminhos de reversão não. Reverter
+o runtime de um jogo revertia o addon de DLSS 5 junto, para um build antigo, sem ninguém pedir. No
+`RestoreAll` era pior: ele **apaga o backup depois de restaurar**, então destruía a única cópia do
+build substituído.
+
+### O "instala e não funciona"
+
+`AddonSupportsNr` significava duas coisas ao mesmo tempo: "o mod do jogo sabe acionar NR" e "existe
+algum addon genérico nesta pasta". Com as duas grudadas, uma pasta que **já tinha** o addon genérico
+era tratada como "o mod próprio dirige", e a chave mestra ia para `[renodx-preset1]` — seção que o
+addon genérico não lê.
+
+Encontrado no disco: um jogo com `[RenoDX.DLSS5] NeuralUplift=0` e `[renodx-preset1]
+NeuralUplift=1.000000`. Addon carregado, desligado, e o "ligado" do launcher onde ninguém consulta.
+Instalar reportava falha depois de fazer todo o trabalho.
+
+A separação em duas perguntas não bastou na primeira tentativa: `AddonService.GetState` devolve
+qualquer `renodx-*.addon64` da pasta, e o genérico casa com esse padrão — então "esse arquivo tem o
+marcador de NR?" respondia sim para ele mesmo. Agora o addon do jogo não pode ser um dos genéricos.
+
+### O resto das correções
+
+- **Instalação parcial sem retorno.** `NeuralUpliftService.Apply` era chamado fora de `try` dentro
+  do instalador. Uma exceção ali descartava a lista de passos e deixava a pasta com o conjunto
+  Streamline já trocado e o proxy do ReShade já instalado, para uma feature que não foi instalada.
+- **O runtime de Ray Reconstruction nunca era atualizado depois da primeira vez.** O backup usava
+  `overwrite: false`, que lança quando o backup já existe; o `catch` externo engolia a exceção e
+  levava junto a cópia da linha seguinte. Único sinal: um `Log.Warn`.
+- **158 MB rebaixados a cada tentativa.** A checagem de "já descompactado" olhava só o nível
+  superior, enquanto o consumidor procura recursivamente.
+- **O interruptor mostrava estado velho.** `RaiseModState` era chamado em 2 dos 10 caminhos que
+  mudam o estado do addon — o botão de energia da barra inferior desativava o mod e deixava o
+  interruptor acima dele dizendo LIGADO. Centralizado no `RaiseCommands()`.
+- **O interruptor ficava na posição errada quando a instalação falhava.** Um `ToggleButton` move a
+  si mesmo ao ser clicado; só uma notificação da origem o traz de volta, e a notificação era
+  suprimida por igualdade quando o valor recalculado era o mesmo. Como o modal é reaproveitado, a
+  posição errada acompanhava o próximo jogo aberto.
+
+### Achados registrados e ainda abertos
+
+- Um `Repair` disparado por "arquivo não assinado" faz troca completa de Frame Generation em todas
+  as pastas. Efeito medido: nove arquivos Streamline **criados** na raiz do The Witcher 3, sem
+  backup, numa pasta que nunca teve conjunto — permanentes.
+- `AutoDiscoverStreamlineSet` não aplica a guarda de pré-release que o caminho por arquivo aplica.
+- O botão Reparo liga em `InstallCommand`, desabilitado justamente nos jogos que alcançam o estado
+  que ele existe para consertar.
+- O interruptor do mod perdeu a guarda de `DownloadUrl`: num mod só-Nexus ele instala o ReShade e
+  só então falha, em vez de apontar a página.
+- Os pré-requisitos passaram a renderizar abaixo do controle de instalar, reintroduzindo o problema
+  que o comentário no código descreve.
+- Propriedades calculadas com `L.T(...)` não notificam na troca de idioma.
+- Aplicar perfil de monitor num jogo já instalado ficou sem caminho na interface.
+
+## v1.28.0
+
+### Faltava o runtime de Ray Reconstruction ao lado do addon
+
+O controle de denoiser do addon oferece Ray Reconstruction, e RR é um runtime **diferente** do
+Super Resolution — `nvngx_dlssd.dll`. O guia da comunidade lista os três como necessários
+(`nvngx_dlss`, `nvngx_dlssd`, `nvngx_dlssnr`); o launcher só instalava o neural. A opção ficava na
+tela e morta.
+
+Medido nesta máquina: **oito de onze** jogos com o addon não tinham `nvngx_dlssd.dll` ao lado dele.
+Ter o arquivo em outro lugar da instalação não conta — o addon carrega pelo nome, da pasta do
+executável, o mesmo lugar onde procura o runtime neural.
+
+Aplicar agora copia o RR junto, com a mesma exigência de assinatura da NVIDIA de qualquer runtime
+que este launcher grava. É inerte num jogo que nunca pede RR: o NGX só carrega um runtime quando a
+feature é criada.
+
+### Um addon já instalado agora é atualizado
+
+Uma pasta que já tinha o addon contava como "sabe acionar NR", então aplicar pulava a cópia e o
+jogo ficava travado no build que chegou primeiro. Ficar uma versão atrás sem meio de avançar é pior
+que não ter a função — a 3.3.4 corrigiu um frame totalmente preto em HDR.
+
+A comparação é byte a byte, não por tamanho, e o build anterior fica como `.renodx-bak`.
+
+## v1.25.0
+
+### Instalar um mod apagava o addon neural — em todos os jogos
+
+A regra "um addon RenoDX por pasta" varria `renodx-*.addon*`. Isso não é "um mod de jogo por
+pasta", que é o conflito real — dois mods do mesmo jogo brigam pelos mesmos shaders. Ela pegava
+junto:
+
+- **os addons companheiros**, que existem justamente para ficar AO LADO do mod do jogo. O
+  instalador da comunidade do DLSS 5 deposita o mod do jogo e o addon neural lado a lado, e essa é
+  a configuração documentada dele. Instalar um mod apagava o addon neural naquele jogo — e uma
+  atualização em lote apagava em todos de uma vez;
+- **arquivos `.bak`**, porque `.addon*` casa com `.addon64.bak` também. Um backup do qual uma troca
+  depende para ser desfeita era removido por uma instalação que não tinha nada a ver com ele.
+
+Medido no log desta máquina: uma sequência de instalação às 15:45 removeu o addon neural de cinco
+jogos (Black Myth, Stellar Blade, PRAGMATA, Red Dead Redemption 2, S.T.A.L.K.E.R. 2), o
+`renodx-ue-extended` de dois, e um backup.
+
+Agora a varredura só considera arquivo que termina exatamente em `.addon64`/`.addon32` (com ou sem
+`.disabled`), e pula os companheiros conhecidos — neural/dlss5, dlssfix, ue-extended, fpslimiter.
+Casados por prefixo, porque esses builds são renomeados a cada versão.
+
+## v1.24.0
+
+### Corrigir escrevia na pasta errada e o diagnóstico continuava vermelho
+
+Um jogo Unreal carrega **dois** conjuntos Streamline: um em `Binaries\Win64`, ao lado do
+executável, e outro em `Engine\Plugins\Runtime\Nvidia\Streamline\...\Win64`. A busca pelo destino
+parava no primeiro interposer que encontrasse — que costuma ser justamente o que já estava bom. O
+conjunto realmente quebrado ficava intocado, e clicar em Corrigir não mudava nada, sem nada no log
+dizendo por quê.
+
+Medido no Black Myth: `Binaries\Win64` inteiro em 2.13.0.0, e a pasta do Engine com três arquivos
+em 2.13.0.0 e cinco em 2.7.4.0. Agora todas as pastas com interposer são destino, e o log lista
+quais são.
+
+O pulo de "arquivo já idêntico" também passou a comparar versão, não só tamanho — duas builds do
+mesmo plugin podem ter o mesmo tamanho, e pular ali deixaria exatamente o arquivo divergente que
+se veio consertar.
+
+### A mensagem de conjunto incoerente não dizia qual pasta
+
+Ela comparava os dois conjuntos do jogo como se fossem um, e o resultado listava o **mesmo nome de
+arquivo nas duas versões** — verdadeiro e inútil, porque não dizia onde mexer.
+
+O que quebra o jogo é a incoerência DENTRO de um conjunto: o interposer e os plugins que ele
+carrega têm que vir do mesmo build. A verificação passou a ser por pasta, e a mensagem nomeia a
+pasta.
+
+## v1.23.0
+
+### O launcher instala o addon da comunidade, não um nosso
+
+O build próprio foi tentado num jogo e **não é distribuível**: o Black Myth abre em tela preta com
+ele. O log mostra onde para — os dois ganchos são instalados, a linha seguinte nunca vem:
+
+    hook: exports do NGX enganchados
+    streamline: interposer enganchado
+    [fim]
+
+Nenhuma captura, nenhum `init:`. Trava antes de qualquer trabalho por frame, quando só os ganchos
+rodaram. E numa execução anterior, com o mesmo código de gancho, o jogo abriu — o que faz disso uma
+corrida, não um defeito determinístico: os hooks são instalados de dentro do callback de present,
+com `MH_EnableHook(MH_ALL_HOOKS)`, enquanto a thread de render já está dentro de
+`slEvaluateFeature`/`slSetTag`. Sobrescrever os primeiros bytes de uma função que outra thread está
+executando trava assim.
+
+Um addon que não faz nada com segurança vale mais que um nosso que trava. O launcher passa a buscar
+o build da comunidade (`renodx-dlss5-v2.5`), e o binário próprio saiu do instalador.
+
+O arquivo não é assinado por ninguém — não há certificado para conferir — então ele é **fixado por
+hash de conteúdo**. Isso é mais forte que uma URL: o host pode mudar, a release pode ser
+re-tagueada, e os bytes ainda têm que ser os que isto foi testado contra, ou nada é instalado.
+
+Uma cópia já presente na máquina continua tendo precedência: quem seguiu as instruções do Discord
+pode ter uma mais nova que a que sabemos buscar.
+
+## v1.22.0
+
+### O addon agora engancha o Streamline, não só o NGX
+
+Um jogo que usa Streamline chama `slEvaluateFeature`, e o Streamline é quem chama o NGX lá dentro.
+Quando essa chamada interna não passa pelo módulo que enganchamos, o gancho de NGX nunca dispara e
+o addon fica calado num jogo que tem DLSS rodando na tela. Enganchar o nível do jogo cobre esse
+caso — e é a diferença entre "roda em alguns" e "roda nos que têm DLSS".
+
+`slSetTag` / `slSetTagForFrame` / `slEvaluateFeature`, com o SDK público do Streamline vendorizado
+em `external/streamline` (o que importa é o LAYOUT das structs que o jogo passa; escrever uma
+versão "mínima" à mão é como um ponteiro dentro de `sl::ResourceTag` acaba apontando para o lugar
+errado).
+
+A deduplicação com o NGX não é heurística de tempo: o gancho de NGX dispara DENTRO da chamada real
+do Streamline, então zerar uma flag antes e lê-la depois responde exatamente "o NGX deu conta desta
+avaliação".
+
+De brinde, as tags trazem o que os parâmetros do NGX não trazem: o **estado D3D12** de cada buffer
+e a região válida de cada um. Pelo lado do NGX isso só dava para supor, e as barreiras eram
+emitidas a partir de um estado adivinhado.
+
+### A rede pode fazer o upscale ela mesma
+
+A feature aceita ler numa resolução e escrever noutra. Ligado `NREnableUpscaling`, ela lê na
+resolução de RENDER — a mesma grade em que profundidade e motion vectors já vivem, sem reamostrar
+nada — e escreve na resolução final. Desligado, continua 1:1 sobre a saída pronta do DLSS.
+
+Isso obrigou a separar o que era uma coisa só: "a resolução da rede" ora significava a grade de
+leitura, ora a de escrita, e a composição amostrava a errada. Agora são três grades explícitas.
+
+### Estado visível e botão de reiniciar
+
+Cada elo quebrado produz o mesmo sintoma de fora — nada acontece. O overlay agora diz em qual o
+addon está: `ESPERANDO O NGX`, `ESPERANDO O DLSS DO JOGO`, `PARADO / FALHOU`, `ATIVO`. E tem um
+botão que solta o travamento de falha.
+
+Sem ele, uma recusa do runtime era definitiva até fechar o jogo: o travamento existe para não
+martelar uma criação que já falhou a cada frame, e o efeito colateral era que qualquer ajuste que
+consertasse a situação só valia no próximo processo.
+
+### Convenção de profundidade e escala de movimento no controle do usuário
+
+`NRDepthMode` força profundidade normal ou invertida em vez de confiar na flag do jogo, e
+`NRMVecScaleX/Y` multiplicam a escala de motion vector calculada. Os dois existem para o mesmo tipo
+de defeito: quando a declaração do jogo está errada, o filtro produz um resultado errado **sem
+falhar em nada** — não há erro para ler, só imagem estranha ou borrão em movimento.
+
+O eixo invertido que o jogo declara (`DLSS.Indicator.Invert.X/Y.Axis`) passou a ser lido também.
+
+## v1.21.0
+
+### Ligar upscaling quebrava a imagem
+
+O filtro neural le quatro buffers, e a feature e criada com UM tamanho — todos os quatro tem que
+estar nessa grade. Cor e saida vem DEPOIS do upscale do DLSS; profundidade e motion vectors vem
+ANTES, na resolucao de render. Enquanto o jogo roda em DLAA as duas resolucoes sao a mesma e nada
+aparece. Ligar Qualidade, Equilibrado ou Desempenho faz a rede ler dois buffers com a grade
+errada, e a imagem inteira vira lixo.
+
+O addon agora traz profundidade e motion vectors para a grade da rede antes de avaliar, e ajusta a
+escala dos motion vectors pela razao entre as duas — um vetor de movimento so significa alguma
+coisa junto com a escala que o converte em pixels. Amostragem por ponto de proposito: media entre
+o que esta perto e o que esta longe e uma superficie que nao existe.
+
+O mesmo defeito pela outra ponta: baixar "resolucao da rede" em SDR entregava a cena em resolucao
+CHEIA para uma feature criada menor, porque o pass que muda a grade da cor so rodava em HDR. Ele
+roda sempre agora.
+
+### A superfície de trabalho passou a ser FP16
+
+O retrato que entra no modelo e a resposta que sai dele viviam em 8 bits por canal. O domínio
+continua sendo o retrato SDR que o modelo espera — o que muda é a precisão com que ele é guardado.
+A composição final é uma **razão** entre a resposta e o retrato, e razão entre dois números de 8
+bits quantiza muito antes do frame em resolução cheia precisar. O addon de referência declara a
+mesma escolha nas próprias strings ("FP16 working surface").
+
+Fica atrás de uma chave (`NRFp16Surface`, ligada por padrão) porque isso é a leitura de uma string
+do binário deles, não um contrato documentado. Se este runtime recusar formato float nessas
+entradas o filtro simplesmente para de rodar — e nesse caso a saída é desligar a chave, sem
+recompilar nada. O overlay diz onde olhar: se "Avaliações" parar de subir, é isto.
+
+### Trocar a resolucao do jogo derrubava o frame seguinte
+
+As texturas do addon sao recriadas quando a resolucao muda, e eram soltas na hora. Como o pass e
+gravado na command list do JOGO, que so executa depois, a GPU ficava lendo memoria ja devolvida.
+Textura e feature agora ficam alguns frames em quarentena antes de serem liberadas de fato.
+
+### Os controles do launcher nao chegavam no addon
+
+O launcher grava `[RenoDX.DLSS5]`; o addon lia `[RENODX-NEURAL]`. Nenhum dos dois lados errava
+sozinho — eles simplesmente nao se falavam. A chave mestra so parecia funcionar porque o padrao
+interno do addon ja era ligado, e nenhum slider tinha efeito nenhum.
+
+`[RenoDX.DLSS5]` passa a ser a secao canonica dos dois lados, com os mesmos nomes de chave que o
+addon de referencia usa — quem configurou por la nao precisa reconfigurar aqui. A secao antiga
+continua sendo lida.
+
+### O launcher dizia "desligado" para um jogo que estava ligado
+
+A leitura do estado escolhia a secao a partir de qual ARQUIVO de addon estava na pasta, e so
+conhecia o nome do nosso. Num jogo rodando o build da comunidade (`renodx-dlss5.addon64`) ela caia
+na secao errada, nao achava nada e reportava desligado — com o ini do jogo dizendo
+`NeuralUplift=1` na cara. Agora a chave e lida de onde ela vive, seja qual for o addon que a
+dirige, e um addon generico ja instalado na pasta conta como capaz de acionar o filtro.
+
+### O instalador automatico comecava com um passo manual
+
+O addon generico so chegava na biblioteca por importacao manual, e nada no app oferecia essa
+importacao. Sem ele, `Offerable` dava falso e o cartao nunca aparecia — justamente no caso para o
+qual ele existe: um jogo sem mod RenoDX proprio. O launcher agora carrega o addon dentro de si e o
+instala na biblioteca sozinho. Uma copia que o usuario importou na mao nao e sobrescrita.
+
+### Parametros que o runtime aceita e o addon nao mandava
+
+Os subrects estavam com nomes que nao existem (`SubrectBaseX` em vez de
+`DLSSNR.ColorSubrectBaseX`). `Set()` de um nome desconhecido nao falha — so nao chega em lugar
+nenhum, entao a regiao valida de cada buffer nunca era declarada. Os quatro conjuntos, as
+dimensoes de entrada/saida e a correcao de UI agora sao declarados.
+
+### O addon era carregado tarde demais em metade dos jogos
+
+Vários jogos sobem o SDK do DLSS **antes** de criar o device D3D — o interposer do Streamline
+carrega na abertura do processo. Quando o ReShade carrega um addon do jeito normal, na criação do
+device, o NGX já está de pé e os ganchos do addon chegam atrasados. O ReShade 6.8 tem uma chave
+para isso, `[ADDON] LoadFromDllMain`, que manda o proxy carregar o addon do próprio `DllMain`.
+
+O launcher nunca escrevia essa chave. O instalador do build da comunidade tem um passo de INI
+inteiro que existe só para isso, e a falha tem até número lá: "erro 225". Medido nos jogos desta
+máquina: nenhum dos dois que já rodam o filtro tinha a chave.
+
+Aplicar agora acrescenta o addon à lista, preservando o que já estava nela — `renodx-dlssfix` vive
+na mesma chave. Remover tira só o nome do nosso.
+
+### O runtime neural agora tem de onde vir
+
+A biblioteca só podia ser preenchida com cópias que já estavam nesta máquina, e o motivo estava
+escrito no próprio código: puxar um binário da NVIDIA de "algum espelho" não é coisa que um
+instalador faça pelo usuário. Esse raciocínio vale para um espelho qualquer — não vale para um
+índice curado e versionado que este launcher **já baixa e já confia** para configuração por jogo.
+
+O projeto RHI mantém um `dlss_manifest.json` com uma entrada `dlssnr` apontando para o runtime
+310.8.0. Quem não tinha nenhum jogo que distribui o arquivo ficava travado num bloqueio sem saída:
+sair para caçar um DLL de 158 MB. Era o único passo manual que sobrava.
+
+O que torna isso seguro não é a origem: é que todo arquivo que sai dali passa pela mesma
+verificação de Authenticode da NVIDIA que qualquer runtime que este launcher grava. Espelho
+adulterado vira recusa, não uma DLL trocada dentro de um jogo. As URLs do índice também são
+recusadas se apontarem para fora do repositório do próprio projeto — uma entrada de manifesto é
+dado, não instrução.
+
+### O addon da comunidade que você já tem passa na frente do nosso
+
+Quem seguiu as instruções do Discord já tem o build em `%LocalAppData%\RHI\Custom\Addons`, ou
+dentro de um jogo configurado à mão. É um build mais novo e mais testado que o embutido, e mandar
+o usuário procurar um arquivo que ele já tem é um passo manual como qualquer outro. A varredura
+aceita qualquer nome — o build é renomeado a cada versão (`renodx-dlss5-v2.5.addon64`) — e decide
+pelos bytes, não pelo nome.
+
+### Comando `neural` na linha de comando
+
+    RenoDXLauncher.exe neural <jogo>
+
+Le a cadeia elo a elo sem gravar nada. Todo elo quebrado da o mesmo sintoma — o jogo abre e nada
+acontece — entao "nao funciona" nunca diz qual peca falta. Foi lendo essa saida contra o ini de um
+jogo real que os dois defeitos de deteccao acima apareceram, e e ela que mostra a carga
+antecipada faltando.
+
+### O indice RHI decide onde nao mexer
+
+`dlssSkipGames` do manifesto do RHI passa a ser respeitado: nesses titulos o launcher nao oferece
+troca de runtime nem neural. E uma lista mantida contra relato real, que vale mais do que qualquer
+heuristica local.
+
+## v1.20.0
+
+### Corrigir agora refaz a cadeia inteira, nao so as DLLs
+
+Cada elo quebrado produz o MESMO sintoma: o jogo abre e nada acontece. Runtime errado, ReShade
+ausente, addon que nao sabe fazer neural, chave desligada — de fora sao indistinguiveis. Consertar
+so os runtimes deixava metade do problema de pe, e quem clicou em Corrigir ficava sem saber por que
+continuava sem funcionar.
+
+O botao agora percorre a cadeia toda: conjunto de runtimes, ReShade (instala se faltar), addon
+capaz de acionar o neural, e a chave. Cada elo e verificado antes de ser tocado, entao rodar de
+novo num jogo saudavel nao mexe em nada.
+
+Verificado quebrando os quatro elos de uma vez num jogo — ReShade removido, addon removido, chave
+zerada — e rodando o comando: a cadeia voltou inteira.
+
+### Comando `fix` na linha de comando
+
+    RenoDXLauncher.exe fix <jogo>
+
+Espelha o botao Corrigir e imprime o que foi refeito elo a elo. Como todos os defeitos se parecem
+de fora, poder ler qual elo estava quebrado e o que separa diagnostico de chute.
+
+
+## v1.19.0
+
+### O conjunto era gravado pela metade: faltava o plugin que da acesso ao neural
+
+A gravacao do conjunto Streamline substituia apenas os arquivos que o jogo JA TINHA. Nenhum jogo
+lancado traz `sl.dlss_nr.dll` — o plugin de Neural Rendering do Streamline so existe no pacote
+pre-release — entao ele nunca chegava ao jogo. O resultado era um conjunto "atualizado" que
+continuava sem ter por onde expor a feature. `sl.dlss.dll` e `sl.nis.dll` faltavam pelo mesmo
+motivo em varios titulos.
+
+Agora grava o conjunto INTEIRO da origem: os oito plugins do Streamline, os runtimes NGX e o
+runtime neural, existindo antes no jogo ou nao. E grava nos DOIS destinos, porque sao dois
+carregadores diferentes — o jogo carrega os plugins de onde vive o interposer, e o addon neural
+procura o runtime ao lado do executavel.
+
+Arquivo ja identico e pulado, para nao recopiar os 158 MB do runtime neural a cada clique. Os
+termos de licenca que a NVIDIA distribui com os binarios acompanham a copia.
+
+Verificado removendo `sl.dlss_nr.dll` e `sl.nis.dll` de um jogo e rodando o comando: os dois
+voltaram e o conjunto ficou coerente.
+
+### Comando `dlss-set` na linha de comando
+
+    RenoDXLauncher.exe dlss-set <jogo> [pasta-de-origem]
+
+E a operacao que mais precisa ser verificavel: escreve varios arquivos em pastas de sistema. Poder
+rodar e conferir o resultado sem abrir a interface e o que permite provar que o conjunto ficou
+completo.
+
+## v1.18.0
+
+### Nada mais fica trocado sem o usuario saber
+
+Trocar um runtime nao aparece em lugar nenhum ate o jogo abrir errado, e quem mexeu em varios nao
+tem como lembrar quais. Isso deixava a ferramenta pela metade: ela sabe exatamente onde mexeu.
+
+Na abertura, o launcher varre os jogos detectados e mostra uma faixa no topo com os que estao com
+runtime trocado, e um botao Restaurar tudo que devolve todos de uma vez. Arquivo em uso nao e
+apagado nem silenciado - volta na lista com o nome do jogo, para fechar e repetir.
+
+A varredura tambem recolhe backup cujo conteudo e identico ao arquivo atual. Sem isso o jogo
+aparecia como "alterado" para sempre, mesmo depois de restaurado.
+
+### Build pre-release nao entra mais como "atualizacao"
+
+O pacote que traz o `nvngx_dlssnr.dll` e um drop que a NVIDIA nao lancou, e os outros runtimes
+dentro dele sao da mesma leva. Eles tem numero de versao MAIOR, entao a regra "maior e melhor" os
+escolhia como se fossem release - e o jogo recebia um runtime nunca publicado nem testado com ele.
+
+Foi assim que o Black Myth Wukong, com o resto em 310.7.129, acabou com um Super Resolution 310.8.0
+ao lado, e passou a travar.
+
+A deteccao usa o vizinho: uma pasta que contenha o `nvngx_dlssnr.dll` e um drop pre-release
+inteiro. O runtime continua servindo para o filtro neural, que e para o que ele existe, mas nao e
+mais oferecido como atualizacao de um jogo.
+
+## v1.17.0
+
+### O launcher agora CONSERTA um conjunto de runtimes quebrado
+
+Detectar e mandar a pessoa resolver na pasta nao serve para quem usa um launcher. O cartao de DLSS
+passou a mostrar um botao Corrigir quando encontra um estado comprovadamente quebrado.
+
+O que ele considera quebrado, sem precisar adivinhar qual versao o jogo aceita:
+
+- plugins do Streamline de builds diferentes lado a lado. Eles saem juntos do mesmo SDK, entao
+  versoes divergentes significam que alguem trocou parte do conjunto - e e assim que o jogo trava
+  na abertura;
+- arquivo no lugar de um runtime que nao e assinado pela NVIDIA.
+
+Os dois sao defeito com certeza, venham deste launcher, do DLSS Swapper ou de uma troca manual.
+
+O conserto aplica o conjunto Streamline COMPLETO da biblioteca - todos os `sl.*` mais o
+`nvngx_dlssg.dll`, do mesmo build. Nao acerta so a peca divergente: trocar peca solta e
+exatamente o que produziu o defeito. E nao volta para a versao antiga do jogo, porque quem chega
+ali quer o conjunto novo funcionando; para voltar ao original existe o botao Restaurar, separado.
+
+Verificado reproduzindo o estado quebrado: Streamline 2.7.3 com um plugin 2.13.0, detectado, e
+depois do conserto tudo coerente em 2.13.0 com backup dos arquivos substituidos.
+
+### A biblioteca guarda conjuntos, nao pecas soltas
+
+Para poder consertar era preciso uma referencia COMPLETA. A varredura agora reconhece uma pasta que
+tenha o conjunto inteiro na mesma versao e guarda a pasta toda. Um conjunto incoerente e recusado
+como referencia - copiar isso para a biblioteca espalharia o defeito em vez de curar.
+
+## v1.16.1
+
+### Atualizar DLSS podia travar o jogo - o Frame Generation nao pode ser trocado sozinho
+
+A 1.15.0 trocava os tres runtimes NGX igualmente. Isso esta certo para Super Resolution e Ray
+Reconstruction, que o jogo alcanca por NGX e que respondem o mesmo contrato numa build nova.
+Esta errado para Frame Generation: o `nvngx_dlssg.dll` e dirigido pelo interposer do Streamline
+que o jogo carrega, e os dois sao versionados como par.
+
+Medido nesta maquina: os jogos trazem Streamline 2.7.x com nvngx_dlssg 310.7.129, e o conjunto novo
+e Streamline 2.13.0 com 310.8.0. Trocar so a metade nvngx deixava um interposer 2.7 chamando um
+runtime 310.8 - e isso trava na abertura.
+
+Agora "Atualizar" mexe apenas em Super Resolution e Ray Reconstruction, e o cartao diz por que o
+Frame Generation ficou de fora, em vez de lista-lo e nao fazer nada com ele.
+
+### Frame Generation ganhou um caminho proprio, com o conjunto inteiro
+
+Quando existe uma pasta com um conjunto casado (os runtimes e os `sl.*` que a NVIDIA distribui
+juntos), da para atualizar o Frame Generation trocando tudo de uma vez. A verificacao acontece
+ANTES de qualquer escrita: se faltar um arquivo do conjunto, ou se algum nao for assinado pela
+NVIDIA, nada e tocado - uma troca parcial e pior que nenhuma, porque e exatamente o desencontro que
+trava o jogo.
+
+### Reverter agora devolve o conjunto inteiro
+
+`Restore` so procurava backup de `nvngx_dls*`. Com os `sl.*` no jogo, restaurar metade
+reproduziria o mesmo desencontro de versao que a reversao existe para desfazer.
+
+### Cada troca vai para o log
+
+Nao havia registro por arquivo. Depois que um jogo comeca a travar, sem isso nao ha como saber o
+que foi trocado, quando, nem por qual ferramenta - e nesta maquina o DLSS Swapper estava ativo no
+mesmo minuto, o que tornou a causa impossivel de provar.
+
+## v1.16.0
+
+### Pasta adicionada a mao podia ser reconhecida como o jogo ERRADO
+
+O corte do sufixo de grupo de release era `-[A-Za-z0-9]+$`: qualquer coisa depois de um hifen. Isso
+transformava **`Dishonored-2` em `Dishonored`**, que casava com o jogo anterior da serie â€” o
+resultado exato que `MatchService.FindMatch` foi escrito para impedir ("Dishonored 2 must never
+match Dishonored"). Pelo mesmo caminho, `Spider-Man` virava `Spider`, `Half-Life` virava `Half`,
+`Call-of-Duty` virava `Call-of` e `Gears of War 0-3` virava `Gears of War 0`.
+
+O que separa um grupo de uma palavra do titulo e a caixa: grupos sao all-caps (`CODEX`, `FLT`,
+`RELOADED`) ou tem maiuscula interna (`InsaneRamZes`); palavra de titulo depois de hifen e apenas
+capitalizada. Numeral romano fica de fora tambem, senao `Control-III` viraria `Control`. Verificado
+contra doze casos, os oito legitimos preservados e os quatro sufixos de grupo removidos.
+
+### Pasta sem mod no catalogo agora mostra um nome legivel
+
+Um jogo que o catalogo nao conhece continua util â€” ReShade e o addon neural generico nao dependem
+de mod proprio â€” mas aparecia com o nome cru da pasta: `Mortal.Shell.II-InsaneRamZes`, ou pior,
+`Retail`. Agora o nome vem do `ProductName` do executavel, o unico candidato escrito pelo
+desenvolvedor e nao por quem empacotou a pasta; sem ele, o nome da pasta sem as decoracoes, com
+ponto e underscore virando espaco.
+
+## v1.15.1
+
+### A chave que liga o neural estava indo para a secao errada
+
+O addon generico distribuido pela biblioteca passou a ser o build da comunidade, que guarda a
+configuracao em `[RenoDX.DLSS5]` sob `NeuralUplift`. O launcher escrevia em `[RENODX-NEURAL]
+Enabled`, a secao do build anterior â€” o addon era instalado e ficava desligado, que e exatamente
+a forma de "liguei e nao aconteceu nada".
+
+`Remove` agora zera as duas secoes: uma chave de habilitacao esquecida nao pode religar a feature
+sozinha se o usuario trocar de build depois.
+
+### Os sliders de NR tambem gravavam no lugar errado
+
+`SettingDef.Section` sempre foi rotulo de agrupamento na interface, nao secao de arquivo â€” todo
+valor ia para a secao de preset do mod. Para os controles do neural isso significava gravar
+`NRIntensity` num bloco que o addon nao le. `SettingDef` ganhou `IniSection`, e os controles do
+neural apontam para o bloco proprio dele.
+
+## v1.15.0
+
+### O launcher atualiza os runtimes de DLSS do jogo
+
+Um jogo roda para sempre a versao de DLSS com que foi lancado, a menos que o estudio publique um
+patch. Os runtimes sao drop-in â€” mesmos exports, mesmo contrato NGX â€” entao trocar o arquivo e a
+atualizacao inteira, e e a correcao padrao para os artefatos de uma build antiga de Super Resolution.
+
+O cartao aparece em qualquer jogo que carregue um runtime NGX e mostra o que ele tem hoje e para
+onde subiria. Nesta maquina, por exemplo: Stellar Blade em 310.1.0, Black Myth Wukong e RE Requiem
+em 310.7.129, com 310.8.0 disponivel.
+
+A biblioteca se enche das copias que ja estao na maquina â€” todo jogo com DLSS carrega um runtime
+assinado, e o mais novo entre eles serve para o mais antigo. **Nao busca na rede**: puxar binario da
+NVIDIA de um espelho qualquer nao e algo que o launcher deva fazer no lugar do usuario.
+
+Duas regras tornam a troca reversivel e segura:
+
+- o arquivo do estudio e copiado para `.renodx-bak` antes de qualquer escrita, e nunca sobrescrito
+  depois â€” um segundo "Atualizar" nao pode transformar a nossa copia anterior no "original";
+- nada e instalado sem estar assinado pela NVIDIA com digest integro. Um runtime adulterado na pasta
+  de um jogo tem exatamente o formato de um ataque, e o arquivo vem de onde o usuario o tinha.
+
+So atualiza, nunca rebaixa: um jogo com build mais nova que a biblioteca fica como esta.
+
+### O cartao do DLSSFIX tambem faltava nos jogos que podiam usa-lo
+
+Mesmo defeito da deteccao do neural, no `DlssFixService`: varredura com `MaxRecursionDepth = 4`
+enquanto a Unreal guarda o runtime oito niveis abaixo. E pior ali, porque `ShouldOffer` so oferece
+o fix para mods Unreal/Unity â€” ou seja, o cartao faltava exatamente nos titulos para os quais ele
+existe. Verificado nesta maquina: com o limite em 10, Stellar Blade e Black Myth Wukong passam a
+ser detectados; com 4, nenhum dos dois.
+
+## v1.14.0
+
+### O cartao do neural faltava na maioria dos jogos que podiam usa-lo
+
+A deteccao de DLSS varria a pasta do jogo com `MaxRecursionDepth = 4`. A Unreal guarda o runtime em
+`Engine\Plugins\Runtime\Nvidia\DLSS\Binaries\ThirdParty\Win64` â€” **oito** niveis abaixo. O resultado
+e que `HasDlss` dava falso em praticamente todo jogo UE, e como UE e a maior parte dos titulos com
+DLSS, o cartao simplesmente nao aparecia. Medido nesta maquina: Stellar Blade e Black Myth Wukong,
+os dois com o DLSS a profundidade 8, os dois invisiveis. O limite subiu para 10.
+
+### O launcher acha o runtime sozinho
+
+O `nvngx_dlssnr.dll` nao vem em driver nem em SDK publico, entao a unica fonte sao as copias que ja
+estao na maquina â€” e ate agora o launcher exigia que o usuario achasse esse arquivo de 158 MB pelo
+Explorer e importasse na mao. Agora ele varre Downloads, Area de Trabalho e as pastas dos jogos
+detectados, valida o tamanho e importa a primeira copia boa.
+
+De proposito nao busca na rede: o arquivo nao e distribuido publicamente, e puxar um binario da
+NVIDIA de um espelho qualquer nao e algo que o launcher deva fazer no lugar do usuario.
+
+### Desligar o neural podia nao desligar nada
+
+`Remove` apagava os arquivos dentro de um `try` que so registrava a falha no log. Com o arquivo em
+uso â€” jogo aberto, por exemplo â€” a exclusao falhava, a interface voltava a dizer "desligado", e a
+feature continuava viva no jogo. Agora a falha e reportada, dizendo qual arquivo ficou preso e o que
+fazer.
+
+## v1.13.1
+
+### Ligar o neural instala o ReShade sozinho
+
+O addon generico e um addon de ReShade: sem esse host nao existe nada que o carregue. Num jogo sem
+mod RenoDX â€” justamente o caso que a 1.13.0 passou a atender â€” o ReShade normalmente nao esta la, e
+o cartao bloqueava pedindo que o usuario resolvesse por fora. O passo manual no meio de um botao de
+"ligar" e o tipo de coisa que faz a feature parecer quebrada.
+
+Agora aplicar o neural instala o ReShade antes, pelo mesmo caminho que o fluxo de mod ja usa, e so
+entao copia o addon e o runtime. `GenericBlocker` deixou de listar "ReShade ausente": reportar como
+bloqueio impediria exatamente a acao que o corrige.
+
+## v1.13.0
+
+### Neural render em qualquer jogo com DLSS, nao so nos que tem mod proprio
+
+O cartao de Neural Uplift so aparecia quando o mod RenoDX **do proprio jogo** ja sabia dirigir o
+DLSSNR â€” o launcher decidia isso escaneando o `.addon64` instalado atras do parametro
+`DLSSNR.Output`. Na pratica isso limitava a feature aos poucos titulos com build artesanal, e a
+pergunta que todo mundo fazia ("da para ligar no meu jogo?") tinha quase sempre a mesma resposta.
+
+Agora o launcher guarda um **addon generico** na biblioteca, ao lado do runtime, e o instala em
+qualquer jogo que tenha DLSS â€” inclusive nos que nao tem mod RenoDX nenhum. O addon generico
+engancha os exports do NGX que o jogo ja chama, entao nao precisa de nada do mod do jogo.
+
+Onde ele roda importa: o pass neural entra **inline, na command list do proprio jogo, logo depois
+da saida do DLSS** e antes do pos-processamento e da UI. Compor no `present` em cima do backbuffer
+â€” o caminho obvio â€” sobrescreve o frame ja finalizado e apaga a HUD junto.
+
+`Detect` deixou de exigir um addon instalado: `Offerable` agora e "tem DLSS **e** (o mod do jogo
+sabe fazer **ou** o addon generico esta na biblioteca)". Quando falta alguma peca, `GenericBlocker`
+diz qual â€” addon fora da biblioteca, ou ReShade nao instalado no jogo (o addon generico e um addon
+de ReShade; sem esse host nao ha o que o carregue).
+
+`Remove` agora tira os dois arquivos, runtime e addon. Deixar o addon para tras manteria o hook do
+NGX ativo num jogo em que a feature acabou de ser desligada.
+
+`IsApplied` le a secao certa conforme o caminho: o addon generico tem o proprio bloco de
+configuracao (`[RENODX-NEURAL] Enabled`), e ler so a chave de preset reportaria "desligado" em todo
+jogo servido por ele.
+
 ## v1.12.0
 
 ### O download passou a ser um instalador
@@ -16,19 +654,19 @@ reputacao e acumulada. O zip continua publicado para quem prefere portatil.
 
 O `[Run]` que abre o app no fim usa `runasoriginaluser`. Sem essa flag, instalar como
 administrador abriria o launcher elevado, e ele gravaria config, perfil de nits e cache no
-`%LocalAppData%` do administrador — na abertura seguinte, normal, tudo apareceria vazio.
+`%LocalAppData%` do administrador â€” na abertura seguinte, normal, tudo apareceria vazio.
 
 ### O ReShade e verificado por assinatura antes de ser usado
 
 A validacao do ReShade baixado era `ProductName.Contains("ReShade")`. `ProductName` e campo de
-recurso do PE, editavel por qualquer um — na pratica nao validava nada.
+recurso do PE, editavel por qualquer um â€” na pratica nao validava nada.
 
 Agora, antes de extrair, o launcher confere via `WinVerifyTrust` que o instalador esta assinado
 pelo certificado do autor do ReShade e que o conteudo esta integro. Falhou, o download e
 descartado.
 
 O que torna isso suficiente: o ZIP anexado ao instalador fica antes da tabela de certificado do
-PE, e o Authenticode faz digest de tudo menos dela — trocar um byte dentro do ZIP muda o status
+PE, e o Authenticode faz digest de tudo menos dela â€” trocar um byte dentro do ZIP muda o status
 para `HashMismatch`. Validar o instalador prova as DLLs de dentro dele.
 
 E fixado o certificado, nao o hash do arquivo. Hash muda a cada versao, e uma versao nova sem
@@ -50,7 +688,7 @@ Chave sem traducao cai no portugues, entao traducao parcial ja funciona.
 - `createdump.exe` sai do publish. O runtime pack traz esse utilitario de dump de memoria da
   Microsoft; o launcher nunca o chama.
 - `PublishSingleFile`, `PublishTrimmed` e `PublishReadyToRun` travados em `false`, com o motivo
-  comentado no csproj. Ja eram o padrao — estao escritos para que uma otimizacao de startup
+  comentado no csproj. Ja eram o padrao â€” estao escritos para que uma otimizacao de startup
   bem-intencionada no futuro nao reabra o problema.
 - O `.pdb` saiu do instalador e passou a ir anexado ao release.
 - Nada mais e escrito em `%TEMP%`. A varredura do Battle.net copiava o `product.db` para la com
@@ -75,7 +713,7 @@ O que nao pode ser verificado sai como `SKIP`, nunca `PASS`.
 
 `publish` -> assina o `RenoDXLauncher.exe` -> monta o instalador -> assina o instalador. O
 instalador precisa ser montado depois do exe assinado, senao o binario que fica no disco do
-usuario — o que o antivirus dele escaneia todo dia — seria o nao assinado.
+usuario â€” o que o antivirus dele escaneia todo dia â€” seria o nao assinado.
 
 O Inno Setup e baixado no CI com versao e SHA-256 fixados, e o `dotnet publish` recebe a versao
 da tag, para o PE nao divergir do que o instalador anuncia.
@@ -85,7 +723,7 @@ da tag, para o PE nao divergir do que o instalador anuncia.
 ### Pasta adicionada a mao agora e reconhecida pelo jogo, nao pelo nome da pasta
 
 Um jogo instalado a mao quase nunca esta numa pasta com o nome do jogo. O app usava o nome da
-pasta escolhida e parava por ai — entao uma pasta chamada `Retail` virava um jogo chamado
+pasta escolhida e parava por ai â€” entao uma pasta chamada `Retail` virava um jogo chamado
 "Retail", que nao casa com nada no catalogo. Subir um nivel tambem nao resolvia: pasta baixada
 costuma vir com decoracao (`-Grupo`, `[Repack]`, `v1.2.3`) que nenhum titulo de catalogo tem.
 
@@ -95,13 +733,13 @@ Agora o app tenta varios nomes, do mais fraco para o mais forte:
 2. o nome do pai, subindo enquanto a pasta tiver nome de layout (`Retail`, `Binaries`, `Win64`,
    `bin`, `Content`...);
 3. os dois sem as decoracoes de release;
-4. **o nome do executavel** — que quem escolhe e o desenvolvedor, nao quem empacotou a pasta.
+4. **o nome do executavel** â€” que quem escolhe e o desenvolvedor, nao quem empacotou a pasta.
 
 O primeiro que o catalogo reconhecer ganha, e o jogo passa a aparecer com o nome do catalogo em
 vez de "Retail". O nome completo e sempre tentado primeiro, entao "Half-Life" continua sendo
 Half-Life.
 
-Exemplo real: `...\007.First.Light-InsaneRamZes\Retail` — o executavel se chama
+Exemplo real: `...\007.First.Light-InsaneRamZes\Retail` â€” o executavel se chama
 `007FirstLight.exe`, que normaliza exatamente para o titulo do catalogo.
 
 ### Novo comando `add`
@@ -111,7 +749,7 @@ RenoDXLauncher.exe add "C:\caminho\da\pasta"
 ```
 
 Registra a pasta e ja diz o que ele reconheceu: nome do jogo, mod, mantenedor, se tem download
-direto e qual `.exe` vai receber o ReShade. Quando nao reconhece, lista os nomes que tentou —
+direto e qual `.exe` vai receber o ReShade. Quando nao reconhece, lista os nomes que tentou â€”
 que e a informacao de que voce precisa para saber por que falhou.
 
 ## v1.11.1
@@ -126,7 +764,7 @@ Todos consertados aqui, e os 13 casos viraram teste.
 em tres formas medidas em notas reais:
 
 - Nota com **dois passos em lugares diferentes** ganhava uma etiqueta so, e o ramo "no jogo" era
-  testado primeiro. "Disable in-game HDR. `B8G8R8A8_TYPELESS` `Output Size`" saia como NO JOGO —
+  testado primeiro. "Disable in-game HDR. `B8G8R8A8_TYPELESS` `Output Size`" saia como NO JOGO â€”
   e o segundo passo, que e o que faz o mod funcionar, e no overlay. Aconteceu em 22 jogos.
 - **Negacao invertia o sentido.** "In-game HDR settings are disabled by RenoDX, adjust brightness
   in the mod" era rotulado NO JOGO, ou seja, mandava a pessoa exatamente para o menu que o mod
@@ -141,21 +779,21 @@ que o mod nao funciona.
 ### Quatro defeitos no parser do codigo dos mods
 
 - **O regex de campo disparava dentro do texto.** O ponto em "MAX. INTENSITY" era lido como inicio
-  de um campo novo e cortava a nota ali. O Hitman perdia **85%** da instrucao — justamente a
+  de um campo novo e cortava a nota ali. O Hitman perdia **85%** da instrucao â€” justamente a
   tabela de calibracao.
 - **Blocos comentados eram lidos.** O mod do BMW mantem um `Setting` antigo dentro de `/* */`, e o
   app publicava tres status contraditorios, incluindo "Updating Engine.ini failed".
 - **`\r` nao era desfeito.** A nota do S.T.A.L.K.E.R. 2 aparecia com um `\r` cru no fim de cada
   linha.
 - **Uma palavra apagava o bloco inteiro.** Se a instrucao citasse "discord" em qualquer linha, o
-  bloco todo sumia. O Atelier Yumia perdia o aviso *"NVIDIA GPUs only — AMD/Intel are unsupported"*.
+  bloco todo sumia. O Atelier Yumia perdia o aviso *"NVIDIA GPUs only â€” AMD/Intel are unsupported"*.
   Agora so a linha social e removida, e bloco que o autor marcou como `Instructions` nunca e
   descartado.
 
 ### O app afirmava coisas que nao fez
 
 - O texto do indice sobre o **Max Payne 3** dizia que a versao do ReShade *"has been automatically
-  set in Overrides (RS Channel)"* — isso e a interface de OUTRO aplicativo. Copiado ao pe da letra,
+  set in Overrides (RS Channel)"* â€” isso e a interface de OUTRO aplicativo. Copiado ao pe da letra,
   virava mentira na boca deste launcher. Frases que descrevem a UI alheia agora sao removidas.
 - E dizia "este mod nao e distribuido pelo snapshot automatico" com o proprio botao de instalar
   ativo do lado. Agora so aparece quando realmente nao ha download direto.
@@ -169,7 +807,7 @@ que o mod nao funciona.
 - Prosa nao vai mais para o bloco monoespacado (era cortada no meio da palavra).
 - O dedup ignorava simbolos e engolia o preset "Vanilla+ SDR" por causa do "Vanilla SDR".
 
-Numeros depois da limpeza: **201 mods** com instrucao do autor e **179 presets** — menos blocos
+Numeros depois da limpeza: **201 mods** com instrucao do autor e **179 presets** â€” menos blocos
 que na v1.11.0 (433 contra 540), porque o que saiu era link, credito e carimbo de build.
 
 ## v1.11.0
@@ -192,19 +830,19 @@ o buraco era maior do que parecia:
   escrito o procedimento inteiro: *HDR ligado no jogo, Game Brightness 1.0, contraste 0.50, Paper
   White = HDR Mid Point x 10.*
 - **O manifesto do indice lia 5 de 64 chaves.** O seu **Max Payne 3** exige **ReShade 6.4.1** e um
-  mod separado do Nexus — o app instalava a 6.7.3 e nao dizia nada.
+  mod separado do Nexus â€” o app instalava a 6.7.3 e nao dizia nada.
 - **Links eram apagados.** Nota que dizia "veja aqui" chegava sem o destino.
 - **A seta sumia.** O filtro de simbolos apagava tudo entre U+2190 e U+2BFF, incluindo o `->`, que
   e o operador das instrucoes de menu.
 
 ### O que aparece agora
 
-A secao virou **COMO AJUSTAR ESTE JOGO**, e cada instrucao diz **onde** se mexe — uma etiqueta
+A secao virou **COMO AJUSTAR ESTE JOGO**, e cada instrucao diz **onde** se mexe â€” uma etiqueta
 `NO JOGO`, `OVERLAY RENODX (Home)` ou `ANTES DE INSTALAR`. Instrucao sem lugar e meia instrucao.
 
 Reunidas, em ordem: o que o autor do mod escreveu, a linha do jogo na wiki, o indice curado
 (avisos de instalacao, versao de ReShade exigida, download externo) e, recolhidas num bloco a
-parte, as **regras do motor** (Unreal/Unity) — que sao longas e iguais em centenas de jogos.
+parte, as **regras do motor** (Unreal/Unity) â€” que sao longas e iguais em centenas de jogos.
 
 Blocos de configuracao (`.ini`, argumentos de linha de comando) aparecem em fonte monoespacada e
 dao para copiar. Links viraram links de verdade.
@@ -215,60 +853,60 @@ vazio.
 
 ## v1.10.2
 
-### O tModLoader tinha ficado sem alvo (regressão da v1.10.1)
+### O tModLoader tinha ficado sem alvo (regressÃ£o da v1.10.1)
 
 A v1.10.1 passou a descartar `.exe` dentro de pastas de terceiro (`EpicOnlineServices`,
-`EasyAntiCheat`, `redist`, `dotnet`...). Só que o índice do RenoDX manda instalar o tModLoader
-**exatamente dentro de `<jogo>\dotnet`** — é o `dotnet.exe` que renderiza, porque o jogo é uma
-DLL. Ou seja: o único `.exe` que importava era jogado fora antes de ser pontuado, e a lista de
-candidatos saía **vazia**. Sem lista, o combo da janela fica vazio e não dá nem para escolher na
-mão.
+`EasyAntiCheat`, `redist`, `dotnet`...). SÃ³ que o Ã­ndice do RenoDX manda instalar o tModLoader
+**exatamente dentro de `<jogo>\dotnet`** â€” Ã© o `dotnet.exe` que renderiza, porque o jogo Ã© uma
+DLL. Ou seja: o Ãºnico `.exe` que importava era jogado fora antes de ser pontuado, e a lista de
+candidatos saÃ­a **vazia**. Sem lista, o combo da janela fica vazio e nÃ£o dÃ¡ nem para escolher na
+mÃ£o.
 
-Agora a pasta curada do índice é **imune** ao filtro de pastas de terceiro e vale mais que
-qualquer heurística de nome — ela é dado conferido à mão, o resto é palpite. Ela também é lida
-direto, sem depender da varredura recursiva (que para em 5 níveis e ignora links), e vale para o
-runtime aninhado (`dotnet\6.0.0\`), que muda de lugar entre atualizações do jogo.
+Agora a pasta curada do Ã­ndice Ã© **imune** ao filtro de pastas de terceiro e vale mais que
+qualquer heurÃ­stica de nome â€” ela Ã© dado conferido Ã  mÃ£o, o resto Ã© palpite. Ela tambÃ©m Ã© lida
+direto, sem depender da varredura recursiva (que para em 5 nÃ­veis e ignora links), e vale para o
+runtime aninhado (`dotnet\6.0.0\`), que muda de lugar entre atualizaÃ§Ãµes do jogo.
 
 ### Nenhum filtro pode devolver lista vazia
 
 Se todos os filtros rejeitarem tudo, o app agora devolve os `.exe` que existem, ordenados por
-tamanho. Um primeiro item errado que o usuário corrige é melhor que um combo vazio. Isso já
-aparece na prática no Rockstar Social Club, cujos dois executáveis são de serviço.
+tamanho. Um primeiro item errado que o usuÃ¡rio corrige Ã© melhor que um combo vazio. Isso jÃ¡
+aparece na prÃ¡tica no Rockstar Social Club, cujos dois executÃ¡veis sÃ£o de serviÃ§o.
 
-Os quatro casos viraram teste de regressão, incluindo o primeiro teste que o app já teve para a
-pasta curada do índice.
+Os quatro casos viraram teste de regressÃ£o, incluindo o primeiro teste que o app jÃ¡ teve para a
+pasta curada do Ã­ndice.
 
 ## v1.10.1
 
 ### Escolha do .exe do jogo reescrita
 
-Space Marine 2 aparecia como "32 bits" e travava a instalação. O culpado era o app: ele
+Space Marine 2 aparecia como "32 bits" e travava a instalaÃ§Ã£o. O culpado era o app: ele
 ordenava os `.exe` por tamanho, e o jogo traz um **instalador do Epic Online Services de
-126 MB (32-bit)** ao lado do binário real de 81 MB. Puxando esse fio saíram mais três defeitos
+126 MB (32-bit)** ao lado do binÃ¡rio real de 81 MB. Puxando esse fio saÃ­ram mais trÃªs defeitos
 do mesmo lugar:
 
 - **A lista de nomes de stub nunca funcionou.** O `RegexOptions.IgnoreCase` fazia `[A-Z]`
-  casar com minúsculas, então o nome era quebrado letra por letra e nenhuma palavra da lista
+  casar com minÃºsculas, entÃ£o o nome era quebrado letra por letra e nenhuma palavra da lista
   batia. `crash_reporter.exe` passava como candidato havia meses.
 - **O atalho da loja entrava na frente sem ser avaliado.** A Steam abre Stellar Blade pelo
-  `crs-handler.exe` (1 MB) e Max Payne 3 pelo `PlayMaxPayne3.exe` (0,4 MB) — os dois são
-  atalhos que relançam o binário de verdade. Agora o palpite da loja vale pontos, não a vaga.
-- **Preferir 64-bit não pode ser regra dura.** Max Payne 3 é um jogo 32-bit cujo atalho é
+  `crs-handler.exe` (1 MB) e Max Payne 3 pelo `PlayMaxPayne3.exe` (0,4 MB) â€” os dois sÃ£o
+  atalhos que relanÃ§am o binÃ¡rio de verdade. Agora o palpite da loja vale pontos, nÃ£o a vaga.
+- **Preferir 64-bit nÃ£o pode ser regra dura.** Max Payne 3 Ã© um jogo 32-bit cujo atalho Ã©
   64-bit; a regra dura escolhia o atalho.
 
-Agora existe **um** ranking só, e o critério principal é o certo: **o `.exe` que importa uma API
-gráfica** (`d3d*`, `dxgi`, `opengl32`, `vulkan-1`). É o que separa os dois casos com folga —
-Max Payne 3 importa `d3dcompiler_43.dll` e o atalho não importa nada. Depois vêm o sufixo
-`-Win64-Shipping`, a pasta curada do índice, a semelhança com o nome do jogo, 64-bit, o palpite
-da loja e, por último, o tamanho. Pastas de terceiros (`EpicOnlineServices`, `EasyAntiCheat`,
+Agora existe **um** ranking sÃ³, e o critÃ©rio principal Ã© o certo: **o `.exe` que importa uma API
+grÃ¡fica** (`d3d*`, `dxgi`, `opengl32`, `vulkan-1`). Ã‰ o que separa os dois casos com folga â€”
+Max Payne 3 importa `d3dcompiler_43.dll` e o atalho nÃ£o importa nada. Depois vÃªm o sufixo
+`-Win64-Shipping`, a pasta curada do Ã­ndice, a semelhanÃ§a com o nome do jogo, 64-bit, o palpite
+da loja e, por Ãºltimo, o tamanho. Pastas de terceiros (`EpicOnlineServices`, `EasyAntiCheat`,
 `redist`, ...) ficam fora.
 
-`crash` e `report` saíram da lista de palavras de stub — Crash Bandicoot é um jogo. Esses casos
-passaram a ser tratados por nomes compostos (`crashreport`, `crashhandler`), que não têm como
-disparar num título de verdade.
+`crash` e `report` saÃ­ram da lista de palavras de stub â€” Crash Bandicoot Ã© um jogo. Esses casos
+passaram a ser tratados por nomes compostos (`crashreport`, `crashhandler`), que nÃ£o tÃªm como
+disparar num tÃ­tulo de verdade.
 
-Os 22 jogos da biblioteca de teste agora escolhem o binário certo, e os quatro casos viraram
-teste de regressão.
+Os 22 jogos da biblioteca de teste agora escolhem o binÃ¡rio certo, e os quatro casos viraram
+teste de regressÃ£o.
 
 ### Novo comando `exe`
 
@@ -276,175 +914,175 @@ teste de regressão.
 RenoDXLauncher.exe exe "space marine"
 ```
 
-Mostra os `.exe` candidatos na ordem em que o app escolheria, com bits e tamanho — dá para
+Mostra os `.exe` candidatos na ordem em que o app escolheria, com bits e tamanho â€” dÃ¡ para
 conferir o alvo sem abrir a janela.
 
 ## v1.10.0
 
 ### Foto do autor do mod
 
-O crédito agora mostra a **foto real do autor no GitHub** (com a inicial como reserva quando não
-dá para descobrir), e clicar no nome abre o perfil dele.
+O crÃ©dito agora mostra a **foto real do autor no GitHub** (com a inicial como reserva quando nÃ£o
+dÃ¡ para descobrir), e clicar no nome abre o perfil dele.
 
-O catálogo só traz nomes de exibição ("Musa", "OopyDoopy (Jon)"), nunca o usuário do GitHub — mas
-a URL do addon aponta para o fork que constrói o mod, que é a conta do autor. O mapa é derivado
-disso, do próprio catálogo. Com um cuidado: mods construídos no repositório principal apontariam
-todos para o ShortFuse, então nesses casos o app prefere não mostrar foto nenhuma a mostrar
+O catÃ¡logo sÃ³ traz nomes de exibiÃ§Ã£o ("Musa", "OopyDoopy (Jon)"), nunca o usuÃ¡rio do GitHub â€” mas
+a URL do addon aponta para o fork que constrÃ³i o mod, que Ã© a conta do autor. O mapa Ã© derivado
+disso, do prÃ³prio catÃ¡logo. Com um cuidado: mods construÃ­dos no repositÃ³rio principal apontariam
+todos para o ShortFuse, entÃ£o nesses casos o app prefere nÃ£o mostrar foto nenhuma a mostrar
 **o rosto da pessoa errada**.
 
 ### Selo de estabilidade
 
-Ao lado da loja e do estado agora aparece o selo que a wiki do RenoDX usa: **✓ Estável** em verde
-ou **⚠ Instável** em âmbar (mod marcado como em construção).
+Ao lado da loja e do estado agora aparece o selo que a wiki do RenoDX usa: **âœ“ EstÃ¡vel** em verde
+ou **âš  InstÃ¡vel** em Ã¢mbar (mod marcado como em construÃ§Ã£o).
 
 ## v1.9.0
 
-### Correção de DLSS Frame Generation
+### CorreÃ§Ã£o de DLSS Frame Generation
 
 Quando o RenoDX converte um jogo de SDR para HDR, o jogo continua dizendo ao DLSS que os buffers
-são SDR — e o Frame Generation interpola com a matemática errada, o que aparece como **piscadas**
+sÃ£o SDR â€” e o Frame Generation interpola com a matemÃ¡tica errada, o que aparece como **piscadas**
 e artefatos nos quadros gerados. O addon oficial `renodx-dlssfix` corrige isso.
 
-O launcher agora oferece essa correção **em um botão**, e só quando ela faz sentido: mod genérico
-(o caminho que converte SDR→HDR) **e** o jogo tendo o runtime de Frame Generation (`nvngx_dlssg.dll`
-ou `sl.interposer.dll`) na pasta. Em jogos de HDR nativo ele nem aparece — ali a correção seria
-inútil, e aplicá-la às cegas mentiria para o DLSS na direção oposta.
+O launcher agora oferece essa correÃ§Ã£o **em um botÃ£o**, e sÃ³ quando ela faz sentido: mod genÃ©rico
+(o caminho que converte SDRâ†’HDR) **e** o jogo tendo o runtime de Frame Generation (`nvngx_dlssg.dll`
+ou `sl.interposer.dll`) na pasta. Em jogos de HDR nativo ele nem aparece â€” ali a correÃ§Ã£o seria
+inÃºtil, e aplicÃ¡-la Ã s cegas mentiria para o DLSS na direÃ§Ã£o oposta.
 
 Ele baixa o addon, encontra as DLLs sozinho e escreve o `[RENODX-DLSSFIX]` no `ReShade.ini`
-preservando addons já listados. Reversível pelo mesmo botão.
+preservando addons jÃ¡ listados. ReversÃ­vel pelo mesmo botÃ£o.
 
 ## v1.8.0
 
-### “Ainda não tenho a lista de configurações deste mod”
+### â€œAinda nÃ£o tenho a lista de configuraÃ§Ãµes deste modâ€
 
-Essa mensagem estava **errada** em vários casos. Havia dois problemas diferentes:
+Essa mensagem estava **errada** em vÃ¡rios casos. Havia dois problemas diferentes:
 
-1. **Mods sem opções ajustáveis** (DOOM: The Dark Ages, DMC5, AC Valhalla e outros 30) — o autor
-   deixou os valores fixos e o mod só troca shaders. O app dizia que "não conhecia" o mod, quando
-   na verdade não há nada para ajustar. Agora ele diz isso com todas as letras.
-2. **Catálogo desatualizado** — o manifesto era um retrato do código do renodx no dia do build.
+1. **Mods sem opÃ§Ãµes ajustÃ¡veis** (DOOM: The Dark Ages, DMC5, AC Valhalla e outros 30) â€” o autor
+   deixou os valores fixos e o mod sÃ³ troca shaders. O app dizia que "nÃ£o conhecia" o mod, quando
+   na verdade nÃ£o hÃ¡ nada para ajustar. Agora ele diz isso com todas as letras.
+2. **CatÃ¡logo desatualizado** â€” o manifesto era um retrato do cÃ³digo do renodx no dia do build.
    Foi regenerado (**344 mods**, era 294) e, quando aparecer um mod publicado *depois* desta
-   versão, o launcher agora **lê as opções direto do código-fonte do mod** no repositório do
+   versÃ£o, o launcher agora **lÃª as opÃ§Ãµes direto do cÃ³digo-fonte do mod** no repositÃ³rio do
    maintainer, em vez de desistir.
 
 ## v1.7.0
 
-### Crédito do autor do mod em destaque
+### CrÃ©dito do autor do mod em destaque
 
-Quem faz o mod agora tem lugar de honra no topo do diálogo: um cartão com a inicial em
-destaque, o rótulo **CRIADO POR** e o nome do maintainer — em vez da linha apagada
+Quem faz o mod agora tem lugar de honra no topo do diÃ¡logo: um cartÃ£o com a inicial em
+destaque, o rÃ³tulo **CRIADO POR** e o nome do maintainer â€” em vez da linha apagada
 "Mod por X" que passava despercebida.
 
-### Histórico de versões do mod
+### HistÃ³rico de versÃµes do mod
 
-Botão **Histórico** ao lado do autor: abre a lista de **todas as versões daquele mod, com data
-e autor de cada alteração**.
+BotÃ£o **HistÃ³rico** ao lado do autor: abre a lista de **todas as versÃµes daquele mod, com data
+e autor de cada alteraÃ§Ã£o**.
 
-Cada mod do RenoDX é uma pasta no repositório do maintainer (`src/games/<slug>`), então os
-commits que tocam aquela pasta *são* o changelog do mod — não existe outra lista publicada. O
-launcher descobre o repositório certo pela URL do addon (o mod pode ser mantido num fork) e
-consulta a API do GitHub, guardando o resultado em cache por 12 horas porque consultas anônimas
-são limitadas a 60 por hora. Há também **Ver no GitHub** para o histórico completo.
+Cada mod do RenoDX Ã© uma pasta no repositÃ³rio do maintainer (`src/games/<slug>`), entÃ£o os
+commits que tocam aquela pasta *sÃ£o* o changelog do mod â€” nÃ£o existe outra lista publicada. O
+launcher descobre o repositÃ³rio certo pela URL do addon (o mod pode ser mantido num fork) e
+consulta a API do GitHub, guardando o resultado em cache por 12 horas porque consultas anÃ´nimas
+sÃ£o limitadas a 60 por hora. HÃ¡ tambÃ©m **Ver no GitHub** para o histÃ³rico completo.
 
 ## v1.6.0
 
-### Fonte própria
+### Fonte prÃ³pria
 
 O app agora **embute a [Inter](https://rsms.me/inter/)** (SIL OFL 1.1) em vez de depender de qual
 variante da Segoe cada Windows tem instalada. Resultado: a interface fica igual em qualquer
-máquina, com letras mais legíveis e espaçamento consistente.
+mÃ¡quina, com letras mais legÃ­veis e espaÃ§amento consistente.
 
-### Ícone do app
+### Ãcone do app
 
-Ícone próprio (`tools/gen_icon.py`, gerado por código): uma **faixa de luminância** que vai da
-sombra profunda ao estouro de branco, com um ponto de brilho no extremo claro — que é exatamente
-o que um tone mapper HDR controla — sob o "R" do RenoDX. Sai em 7 tamanhos (16 a 256 px), aparece
-no executável, na janela e na barra de tarefas.
+Ãcone prÃ³prio (`tools/gen_icon.py`, gerado por cÃ³digo): uma **faixa de luminÃ¢ncia** que vai da
+sombra profunda ao estouro de branco, com um ponto de brilho no extremo claro â€” que Ã© exatamente
+o que um tone mapper HDR controla â€” sob o "R" do RenoDX. Sai em 7 tamanhos (16 a 256 px), aparece
+no executÃ¡vel, na janela e na barra de tarefas.
 
-### Os dois botões principais
+### Os dois botÃµes principais
 
-- **Instalar / Atualizar mod**: gradiente quente, brilho suave por trás e resposta ao clique.
-- **Ativar/Desativar** virou um **cartão de estado**: mostra um ícone de energia que fica verde
-  quando o mod está ativo, com o rótulo dizendo em que estado ele está e o que o clique vai fazer —
-  em vez de um botão que só dizia "Desativar".
+- **Instalar / Atualizar mod**: gradiente quente, brilho suave por trÃ¡s e resposta ao clique.
+- **Ativar/Desativar** virou um **cartÃ£o de estado**: mostra um Ã­cone de energia que fica verde
+  quando o mod estÃ¡ ativo, com o rÃ³tulo dizendo em que estado ele estÃ¡ e o que o clique vai fazer â€”
+  em vez de um botÃ£o que sÃ³ dizia "Desativar".
 
 ## v1.5.0
 
 ### Modal do jogo
 
-Clicar num jogo agora abre um **diálogo centralizado** (no lugar do painel lateral), no espírito
-do DLSS Swapper mas com as opções do RenoDX:
+Clicar num jogo agora abre um **diÃ¡logo centralizado** (no lugar do painel lateral), no espÃ­rito
+do DLSS Swapper mas com as opÃ§Ãµes do RenoDX:
 
-- **Capa grande** à esquerda, com a marca da loja, botão **Jogar** e a pasta de instalação.
-- À direita: executável, instalar/atualizar, ativar/desativar, veredito do ReShade.log,
-  recomendações, notas — e as **configurações do mod em duas colunas**, aproveitando a largura.
-- Barra inferior com abrir pasta, página do mod e remover; **Fechar**, **Esc** ou clique fora
-  fecham o diálogo.
-- **Jogar** abre pela loja quando ela é conhecida (`steam://rungameid/...`), preservando overlay
-  e saves na nuvem; senão executa o exe escolhido.
+- **Capa grande** Ã  esquerda, com a marca da loja, botÃ£o **Jogar** e a pasta de instalaÃ§Ã£o.
+- Ã€ direita: executÃ¡vel, instalar/atualizar, ativar/desativar, veredito do ReShade.log,
+  recomendaÃ§Ãµes, notas â€” e as **configuraÃ§Ãµes do mod em duas colunas**, aproveitando a largura.
+- Barra inferior com abrir pasta, pÃ¡gina do mod e remover; **Fechar**, **Esc** ou clique fora
+  fecham o diÃ¡logo.
+- **Jogar** abre pela loja quando ela Ã© conhecida (`steam://rungameid/...`), preservando overlay
+  e saves na nuvem; senÃ£o executa o exe escolhido.
 
 ## v1.4.0
 
-### Aviso de atualização
+### Aviso de atualizaÃ§Ã£o
 
-Quando um mod tem build mais nova, agora é impossível não ver:
+Quando um mod tem build mais nova, agora Ã© impossÃ­vel nÃ£o ver:
 
-- **Selo âmbar “ATUALIZAR”** na capa do jogo, com ponto de status âmbar embaixo.
-- **Cartão de aviso** no painel do jogo, explicando que as configurações são preservadas, com
-  botão **“Atualizar agora”** ali mesmo.
-- **Botão âmbar “Atualizar todos (N)”** na barra superior, que só aparece quando há pendências.
+- **Selo Ã¢mbar â€œATUALIZARâ€** na capa do jogo, com ponto de status Ã¢mbar embaixo.
+- **CartÃ£o de aviso** no painel do jogo, explicando que as configuraÃ§Ãµes sÃ£o preservadas, com
+  botÃ£o **â€œAtualizar agoraâ€** ali mesmo.
+- **BotÃ£o Ã¢mbar â€œAtualizar todos (N)â€** na barra superior, que sÃ³ aparece quando hÃ¡ pendÃªncias.
 
 ### Visual
 
-- **Cards no estilo biblioteca**: a capa preenche o cartão inteiro, com gradiente para o título
-  ficar legível sobre qualquer arte; marca da loja no canto; leve zoom ao passar o mouse.
+- **Cards no estilo biblioteca**: a capa preenche o cartÃ£o inteiro, com gradiente para o tÃ­tulo
+  ficar legÃ­vel sobre qualquer arte; marca da loja no canto; leve zoom ao passar o mouse.
 - **Capas que faltavam agora carregam**: a Steam moderna guarda a arte em
-  `librarycache/<appid>/<hash>/library_capsule.jpg` (o código só olhava o formato antigo), e os
-  jogos de **Xbox/Game Pass** têm imagens próprias na pasta, declaradas no `MicrosoftGame.config`.
-- **Painel de detalhes com cabeçalho ilustrado** (capa esmaecida atrás do título).
-- Barra superior com logo, botões com ícone, estado vazio ilustrado quando nada casa com o filtro.
-- Notas vindas de fontes externas passam por um filtro que remove símbolos que o Windows
+  `librarycache/<appid>/<hash>/library_capsule.jpg` (o cÃ³digo sÃ³ olhava o formato antigo), e os
+  jogos de **Xbox/Game Pass** tÃªm imagens prÃ³prias na pasta, declaradas no `MicrosoftGame.config`.
+- **Painel de detalhes com cabeÃ§alho ilustrado** (capa esmaecida atrÃ¡s do tÃ­tulo).
+- Barra superior com logo, botÃµes com Ã­cone, estado vazio ilustrado quando nada casa com o filtro.
+- Notas vindas de fontes externas passam por um filtro que remove sÃ­mbolos que o Windows
   renderiza como quadrados.
-- Botões agora têm **nomes de acessibilidade** (leitores de tela e automação de teste).
+- BotÃµes agora tÃªm **nomes de acessibilidade** (leitores de tela e automaÃ§Ã£o de teste).
 
 ## v1.3.0
 
 ### Visual refeito
 
-- **Ícones vetoriais em tudo.** Os emojis viravam quadrados/glifos errados dependendo da fonte
-  do Windows. Agora são vetores: as marcas oficiais das lojas (Steam, Epic, GOG, Xbox, EA,
-  Battle.net, Rockstar, Ubisoft) vêm do [simple-icons](https://simple-icons.org) (CC0) e os
-  glifos de interface são paths estilo Material Symbols.
-- **Tipografia e espaçamento** revistos: hierarquia de títulos, rótulos de seção, entrelinha
-  legível, cantos e cores consistentes.
-- **Controles próprios**: slider com trilho/alça desenhados, combo com sombra, campo de busca
-  com ícone e placeholder, barra de rolagem fina, tooltip no tema.
-- **Diálogos no tema do app** (antes eram os do Windows, brancos e destoando), com ícone e cor
-  por tipo — aviso, perigo, pergunta.
-- Selo de estado do jogo agora tem ponto colorido e contraste correto em cada situação.
+- **Ãcones vetoriais em tudo.** Os emojis viravam quadrados/glifos errados dependendo da fonte
+  do Windows. Agora sÃ£o vetores: as marcas oficiais das lojas (Steam, Epic, GOG, Xbox, EA,
+  Battle.net, Rockstar, Ubisoft) vÃªm do [simple-icons](https://simple-icons.org) (CC0) e os
+  glifos de interface sÃ£o paths estilo Material Symbols.
+- **Tipografia e espaÃ§amento** revistos: hierarquia de tÃ­tulos, rÃ³tulos de seÃ§Ã£o, entrelinha
+  legÃ­vel, cantos e cores consistentes.
+- **Controles prÃ³prios**: slider com trilho/alÃ§a desenhados, combo com sombra, campo de busca
+  com Ã­cone e placeholder, barra de rolagem fina, tooltip no tema.
+- **DiÃ¡logos no tema do app** (antes eram os do Windows, brancos e destoando), com Ã­cone e cor
+  por tipo â€” aviso, perigo, pergunta.
+- Selo de estado do jogo agora tem ponto colorido e contraste correto em cada situaÃ§Ã£o.
 
 ### Linha de comando
 
 O launcher agora roda **headless**: `list`, `check`, `verify`, `settings`, `set`, `profile`,
 `install`, `enable`, `disable` e `doctor`. Serve para automatizar, diagnosticar e reportar bugs
-sem abrir a janela. `set` mostra sempre o arquivo-alvo e o antes→depois, e aceita `--dry-run`;
+sem abrir a janela. `set` mostra sempre o arquivo-alvo e o antesâ†’depois, e aceita `--dry-run`;
 instalar por CLI aborta se houver anti-cheat.
 
 ## v1.2.0
 
-### ✨ Atualização de mods
+### âœ¨ AtualizaÃ§Ã£o de mods
 
-Os mods RenoDX são atualizados continuamente pelos autores. Agora o launcher acompanha isso:
+Os mods RenoDX sÃ£o atualizados continuamente pelos autores. Agora o launcher acompanha isso:
 
-- **"Ver atualizações"** checa **todos** os mods instalados de uma vez (em paralelo) e marca na
-  grade quem tem build nova, com o selo ciano **ATUALIZAÇÃO**.
-- **"Atualizar todos (N)"** baixa as versões novas em lote. **Suas configurações são preservadas** —
-  só o arquivo do mod é trocado; o `ReShade.ini` fica intacto.
-- A detecção compara o **ETag** da build exata que você instalou com a do servidor (registrado em
-  `installed.json`), em vez de adivinhar por tamanho/data. Para mods instalados à mão, cai no
-  método antigo automaticamente.
+- **"Ver atualizaÃ§Ãµes"** checa **todos** os mods instalados de uma vez (em paralelo) e marca na
+  grade quem tem build nova, com o selo ciano **ATUALIZAÃ‡ÃƒO**.
+- **"Atualizar todos (N)"** baixa as versÃµes novas em lote. **Suas configuraÃ§Ãµes sÃ£o preservadas** â€”
+  sÃ³ o arquivo do mod Ã© trocado; o `ReShade.ini` fica intacto.
+- A detecÃ§Ã£o compara o **ETag** da build exata que vocÃª instalou com a do servidor (registrado em
+  `installed.json`), em vez de adivinhar por tamanho/data. Para mods instalados Ã  mÃ£o, cai no
+  mÃ©todo antigo automaticamente.
 
-### 🔍 Diagnóstico melhor
+### ðŸ” DiagnÃ³stico melhor
 
 - Novo veredito **"ReShade sem suporte a add-ons"**: quando o jogo roda com um ReShade da build
   normal (sem add-on), o mod fica inerte para sempre e nada indicava isso. Agora o launcher detecta
@@ -452,51 +1090,54 @@ Os mods RenoDX são atualizados continuamente pelos autores. Agora o launcher ac
 
 ## v1.1.0
 
-Auditoria adversarial multi-agente (49 achados verificados). Correções críticas de segurança
+Auditoria adversarial multi-agente (49 achados verificados). CorreÃ§Ãµes crÃ­ticas de seguranÃ§a
 e de qualidade do HDR, mais duas funcionalidades novas.
 
-### ⛔ Correções críticas
+### â›” CorreÃ§Ãµes crÃ­ticas
 
-- **Aviso de anti-cheat por detecção real.** Um novo scanner procura EasyAntiCheat / BattlEye /
-  Vanguard **nos arquivos do jogo** e exige confirmação explícita antes de instalar. Antes o aviso
-  só existia se a nota da wiki mencionasse o assunto — jogos como *The Outlast Trials*, *Remnant 2*
+- **Aviso de anti-cheat por detecÃ§Ã£o real.** Um novo scanner procura EasyAntiCheat / BattlEye /
+  Vanguard **nos arquivos do jogo** e exige confirmaÃ§Ã£o explÃ­cita antes de instalar. Antes o aviso
+  sÃ³ existia se a nota da wiki mencionasse o assunto â€” jogos como *The Outlast Trials*, *Remnant 2*
   e *Ready or Not* instalavam sem nenhum alerta (risco de banimento de conta).
-- **Sliders de nits não são mais cortados.** 26 configurações em 14 jogos (Monster Hunter: World,
-  Valheim, Dragon's Dogma 2, Stellar Blade…) não trazem valor máximo no manifesto; o slider limitava
-  a 100 e **gravava `ToneMapPeakNits=100` no ReShade.ini** — o oposto do objetivo do app.
+- **Sliders de nits nÃ£o sÃ£o mais cortados.** 26 configuraÃ§Ãµes em 14 jogos (Monster Hunter: World,
+  Valheim, Dragon's Dogma 2, Stellar Bladeâ€¦) nÃ£o trazem valor mÃ¡ximo no manifesto; o slider limitava
+  a 100 e **gravava `ToneMapPeakNits=100` no ReShade.ini** â€” o oposto do objetivo do app.
 - **Xbox / Game Pass instalava na pasta errada.** O `gamelaunchhelper.exe` liderava a lista de
-  executáveis, então o ReShade ia para um diretório onde o jogo nunca o carregava (a interface
+  executÃ¡veis, entÃ£o o ReShade ia para um diretÃ³rio onde o jogo nunca o carregava (a interface
   dizia "instalado" e nada acontecia).
 - **Jogos com mod apareciam como "sem mod".** O pareamento agora usa o **Steam AppID**, recuperando
   Resident Evil 4, Silent Hill 2, Resident Evil 2/3/7 e Dying Light 2.
 
-### 🔧 Outras correções
+### ðŸ”§ Outras correÃ§Ãµes
 
-- Grade não perde mais capas e selos quando uma instalação acontece durante o carregamento.
-- `config.json` gravado de forma atômica (o perfil de nits e os executáveis fixados não se perdem
-  mais em silêncio); cópia `.corrupt` preservada se houver falha de leitura.
-- Executáveis legítimos não são mais descartados por conterem "crash", "eac" etc. no nome.
-- Ativar/Desativar/Remover ressincronizam o estado quando falham — o selo parou de mentir.
-- Painel de configurações vazio agora **explica o motivo** em vez de ficar mudo.
-- Instalação que falha depois do ReShade entrar faz **rollback** da DLL recém-copiada.
-- Detecção de "jogo aberto" prioriza o caminho real do processo (menos falso positivo).
+- Grade nÃ£o perde mais capas e selos quando uma instalaÃ§Ã£o acontece durante o carregamento.
+- `config.json` gravado de forma atÃ´mica (o perfil de nits e os executÃ¡veis fixados nÃ£o se perdem
+  mais em silÃªncio); cÃ³pia `.corrupt` preservada se houver falha de leitura.
+- ExecutÃ¡veis legÃ­timos nÃ£o sÃ£o mais descartados por conterem "crash", "eac" etc. no nome.
+- Ativar/Desativar/Remover ressincronizam o estado quando falham â€” o selo parou de mentir.
+- Painel de configuraÃ§Ãµes vazio agora **explica o motivo** em vez de ficar mudo.
+- InstalaÃ§Ã£o que falha depois do ReShade entrar faz **rollback** da DLL recÃ©m-copiada.
+- DetecÃ§Ã£o de "jogo aberto" prioriza o caminho real do processo (menos falso positivo).
 
-### ✨ Novidades
+### âœ¨ Novidades
 
-- **Verificação de carregamento**: o launcher lê o `ReShade.log` e informa se o mod **realmente
-  carregou** na última vez que o jogo rodou — confirmado, falhou, build sem suporte a add-ons, ou
-  não carregado.
-- **Aviso de versão mais nova** do mod disponível no servidor.
+- **VerificaÃ§Ã£o de carregamento**: o launcher lÃª o `ReShade.log` e informa se o mod **realmente
+  carregou** na Ãºltima vez que o jogo rodou â€” confirmado, falhou, build sem suporte a add-ons, ou
+  nÃ£o carregado.
+- **Aviso de versÃ£o mais nova** do mod disponÃ­vel no servidor.
 
-### 🧪 Qualidade
+### ðŸ§ª Qualidade
 
-Bateria de testes ampliada de 33 para 56 verificações, com regressão dedicada para cada bug crítico.
+Bateria de testes ampliada de 33 para 56 verificaÃ§Ãµes, com regressÃ£o dedicada para cada bug crÃ­tico.
 
 ---
 
 ## v1.0.0
 
-Primeira versão. Detecção de jogos em 8 lojas + varredura de pastas, catálogo RenoDX ao vivo
-(~900 entradas), instalação do ReShade + add-on em um clique, ativar/desativar por jogo, editor
-de configurações (nits, tone mapper, color grading) gravando direto no `ReShade.ini`, perfil do
-monitor, cartões de recomendação por jogo e guia de HDR embutido.
+Primeira versÃ£o. DetecÃ§Ã£o de jogos em 8 lojas + varredura de pastas, catÃ¡logo RenoDX ao vivo
+(~900 entradas), instalaÃ§Ã£o do ReShade + add-on em um clique, ativar/desativar por jogo, editor
+de configuraÃ§Ãµes (nits, tone mapper, color grading) gravando direto no `ReShade.ini`, perfil do
+monitor, cartÃµes de recomendaÃ§Ã£o por jogo e guia de HDR embutido.
+
+
+

@@ -84,6 +84,10 @@ public static class Cli
             "install" => await InstallAsync(rest.FirstOrDefault()),
             "enable" => await ToggleAsync(rest.FirstOrDefault(), true),
             "disable" => await ToggleAsync(rest.FirstOrDefault(), false),
+            "dlss-set" => await DlssSetAsync(rest),
+            "fix" or "corrigir" => await FixAsync(rest.FirstOrDefault()),
+            "neural" => await NeuralAsync(rest.FirstOrDefault()),
+            "dlss5" => await Dlss5Async(rest),
             "doctor" => await DoctorAsync(),
             "help" or "h" or "?" => Help(),
             _ => Unknown(cmd),
@@ -112,6 +116,8 @@ public static class Cli
         HelpRow($"install {game}", L.T("Cli_Help_Install"));
         HelpRow($"enable {game}", L.T("Cli_Help_Enable"));
         HelpRow($"disable {game}", L.T("Cli_Help_Disable"));
+        HelpRow($"dlss5 {game} | --all", L.T("Cli_Help_Dlss5"));
+        HelpRow($"neural {game}", L.T("Cli_Help_Neural"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Help_Match", game));
@@ -300,6 +306,265 @@ public static class Cli
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Check_Summary", results.Count, results.Count(r => r.newer == true)));
         return 0;
+    }
+
+    /// <summary>
+    /// Grava o conjunto Streamline completo na pasta do jogo, a partir de uma pasta de origem.
+    ///
+    /// Existe na CLI porque e a operacao que mais precisa ser verificavel: ela escreve varios
+    /// arquivos em pastas de sistema, e poder rodar e conferir o resultado sem abrir a interface e
+    /// o que permite provar que o conjunto ficou completo.
+    /// </summary>
+    /// <summary>
+    /// Conserta a cadeia inteira de um jogo: conjunto de runtimes, ReShade, addon e a chave.
+    ///
+    /// Espelha o botao Corrigir da interface. Existe aqui porque cada elo quebrado produz o MESMO
+    /// sintoma — o jogo abre e nada acontece — entao poder rodar e ler o que foi refeito, elo a
+    /// elo, e o que separa diagnostico de chute.
+    /// </summary>
+    private static async Task<int> FixAsync(string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) { Console.Error.WriteLine("uso: fix <jogo>"); return 1; }
+        var ctx = await LoadAsync();
+        var g = Resolve(ctx, query, out var err);
+        if (g is null) { Console.Error.WriteLine(err); return 1; }
+
+        var (_, state) = StateOf(ctx, g);
+        var target = state?.TargetDir ?? g.InstallDir;
+        var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
+        var exe = state?.ExePath ?? ExeLocator.FindCandidates(g, null).FirstOrDefault();
+
+        Console.WriteLine($"{g.Name}");
+
+        // 1. runtimes
+        try
+        {
+            var r = DlssRuntimeService.Repair(g.InstallDir, target, new Progress<string>(s => Console.WriteLine("  " + s)));
+            Console.WriteLine($"  runtimes: {r.Updated} arquivo(s)");
+        }
+        catch (Exception ex) { Console.WriteLine($"  runtimes: {ex.Message}"); }
+
+        // 2. cadeia que carrega o filtro
+        NeuralUpliftService.AutoDiscoverAddon(ctx.Games.Select(x => x.InstallDir).Where(d => d is not null)!);
+        try { await NeuralUpliftService.FetchAddonAsync(new Progress<string>(s => Console.WriteLine("  " + s))); }
+        catch (Exception ex) { Console.WriteLine($"  addon: {ex.Message}"); }
+        var det = NeuralUpliftService.Detect(g.InstallDir, target, state?.AddonPath);
+        if (!det.Offerable) { Console.WriteLine("  neural: jogo nao elegivel (sem DLSS)"); return 0; }
+
+        // O runtime nao vem em driver nem em SDK publico: quando nao ha copia na maquina, o
+        // indice do RHI e a unica origem. Instalado so se a NVIDIA assinou.
+        if (!det.Host.RuntimeInLibrary && det.Host.Blackwell
+            && det.Host.DriverBranch >= NeuralUpliftService.MinDriverBranch)
+        {
+            var index = new DlssIndexService();
+            await index.LoadAsync();
+            try
+            {
+                var v = await NeuralUpliftService.FetchRuntimeAsync(index,
+                    new Progress<string>(s => Console.WriteLine("  " + s)));
+                if (v is not null) Console.WriteLine($"  runtime: {v} baixado e verificado");
+            }
+            catch (Exception ex) { Console.WriteLine($"  runtime: {ex.Message}"); }
+            det = NeuralUpliftService.Detect(g.InstallDir, target, state?.AddonPath);
+        }
+
+        if (det.Host.Blocker is { } b) { Console.WriteLine($"  neural: {b}"); return 0; }
+
+        if (det.NeedsReShade && exe is not null)
+        {
+            var dep = await new ReShadeService().DeployAsync(target, exe, null, null,
+                new Progress<string>(s => Console.WriteLine("  " + s)));
+            Console.WriteLine($"  reshade: {(dep.Success ? "instalado (" + dep.DllName + ")" : dep.Message)}");
+        }
+        else Console.WriteLine("  reshade: ja presente");
+
+        if (!NeuralUpliftService.IsApplied(target, ini, state?.AddonPath))
+        {
+            NeuralUpliftService.Apply(target, ini, det.UsesGeneric, new Progress<string>(s => Console.WriteLine("  " + s)));
+            Console.WriteLine("  neural: addon + runtime instalados e ligados");
+        }
+        else Console.WriteLine("  neural: ja ligado");
+
+        return 0;
+    }
+
+    /// <summary>
+    /// Le a cadeia do Neural Rendering elo a elo, sem gravar nada na pasta do jogo.
+    ///
+    /// Todo elo quebrado produz o MESMO sintoma — o jogo abre e nada acontece — entao "nao
+    /// funciona" nunca diz qual peca falta. `fix` conserta; este comando so mostra, que e o que
+    /// se quer antes de deixar um programa escrever 158 MB dentro de um jogo.
+    /// </summary>
+    private static async Task<int> NeuralAsync(string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) { Console.Error.WriteLine("uso: neural <jogo>"); return 1; }
+        var ctx = await LoadAsync();
+        var g = Resolve(ctx, query, out var err);
+        if (g is null) { Console.Error.WriteLine(err); return 1; }
+
+        var (_, state) = StateOf(ctx, g);
+        var target = state?.TargetDir ?? g.InstallDir;
+        var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
+
+        Console.WriteLine($"{g.Name}");
+        Console.WriteLine($"  pasta          : {target}");
+
+        if (ctx.Rhi.SkipsDlss(g.Name))
+        {
+            Console.WriteLine("  indice RHI     : jogo na lista dlssSkipGames — nao mexemos no DLSS aqui");
+            return 2;
+        }
+
+        var det = NeuralUpliftService.Detect(g.InstallDir, target, state?.AddonPath);
+        var host = det.Host;
+
+        Console.WriteLine($"  GPU            : {host.GpuName ?? "nenhuma NVIDIA encontrada"}"
+                          + (host.Blackwell ? " (Blackwell, ok)" : " — os kernels sao sm_120, so serie 50"));
+        Console.WriteLine($"  driver         : branch {host.DriverBranch}"
+                          + (host.DriverBranch >= NeuralUpliftService.MinDriverBranch
+                             ? " (ok)" : $" — precisa de {NeuralUpliftService.MinDriverBranch}+"));
+        if (host.RuntimeInLibrary)
+        {
+            Console.WriteLine($"  runtime        : {NeuralUpliftService.LibraryRuntime}");
+        }
+        else
+        {
+            // Sem cópia na máquina, a única saída é o índice — e é o que separa um bloqueio
+            // que o usuário resolve de um que ele não tem como resolver.
+            var index = new DlssIndexService();
+            await index.LoadAsync();
+            var entry = index.Newest(DlssIndexService.KindNeural);
+            Console.WriteLine($"  runtime        : AUSENTE da biblioteca; "
+                              + (entry is null ? "e o indice RHI nao lista nenhum" : $"o indice RHI oferece {entry.Version} (baixado e verificado ao aplicar)"));
+        }
+        Console.WriteLine($"  addon generico : {(det.GenericAddonInLibrary ? NeuralUpliftService.LibraryAddon : "AUSENTE da biblioteca")}");
+        Console.WriteLine($"  DLSS no jogo   : {(det.HasDlss ? "sim" : "nao — sem DLSS nao ha depth/mvec para o filtro ler")}");
+        Console.WriteLine($"  addon do jogo  : {(det.AddonSupportsNr ? "sabe acionar NR sozinho" : "usa o generico")}");
+        Console.WriteLine($"  ReShade        : {det.ReShadeDllName ?? "AUSENTE — sera instalado ao aplicar"}");
+        Console.WriteLine($"  runtime na pasta: {(det.RuntimeDeployed ? "sim" : "nao")}");
+
+        // Muitos jogos sobem o SDK do DLSS ANTES de criar o device. Sem esta chave o addon so e
+        // carregado na criacao do device, tarde demais para enganchar o NGX — e o sintoma e o
+        // silencio de sempre (o build da comunidade reporta isso como "erro 225").
+        var deployedAddon = NeuralUpliftService.DeployedGenericAddon(target);
+        if (deployedAddon is not null)
+        {
+            var early = File.Exists(ini)
+                ? new IniFile(ini).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? ""
+                : "";
+            var name = Path.GetFileName(deployedAddon);
+            Console.WriteLine($"  carga anteci.  : {(early.Split(',').Any(e => e.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)) ? "sim (" + name + ")" : "NAO — sera corrigido ao aplicar")}");
+        }
+        Console.WriteLine($"  ligado         : {(NeuralUpliftService.IsApplied(target, ini, state?.AddonPath) ? "sim" : "nao")}");
+
+        var blocker = host.Blocker ?? det.GenericBlocker;
+        if (!det.Offerable)
+        {
+            Console.WriteLine("  => nao ofertavel: falta DLSS no jogo ou um addon que saiba acionar o filtro");
+            return 2;
+        }
+        if (blocker is not null) { Console.WriteLine($"  => bloqueado: {blocker}"); return 2; }
+        Console.WriteLine("  => pronto para aplicar (RenoDXLauncher.exe fix \"" + g.Name + "\")");
+        return 0;
+    }
+
+    /// <summary>
+    /// A cadeia inteira do DLSS 5, num comando. `--all` faz em todos os jogos elegiveis.
+    ///
+    /// Existe porque "instalar DLSS 5" nunca foi UMA coisa: sao sete, em ordem, e errar qualquer
+    /// uma produz o mesmo silencio. Quem usa um launcher nao deveria precisar saber disso.
+    /// </summary>
+    private static async Task<int> Dlss5Async(string[] rest)
+    {
+        var all = rest.Any(a => a is "--all" or "-a");
+        var query = rest.FirstOrDefault(a => !a.StartsWith('-'));
+        if (!all && string.IsNullOrWhiteSpace(query))
+        {
+            Console.Error.WriteLine("uso: dlss5 <jogo> | dlss5 --all");
+            return 1;
+        }
+
+        var ctx = await LoadAsync();
+        var index = new DlssIndexService();
+        await index.LoadAsync();
+        var reshade = new ReShadeService();
+
+        var alvos = new List<GameInfo>();
+        if (all) alvos.AddRange(ctx.Games);
+        else
+        {
+            var g = Resolve(ctx, query, out var err);
+            if (g is null) { Console.Error.WriteLine(err); return 1; }
+            alvos.Add(g);
+        }
+
+        int ok = 0, pulados = 0, falhos = 0;
+        foreach (var g in alvos)
+        {
+            var (_, state) = StateOf(ctx, g);
+            var target = state?.TargetDir ?? g.InstallDir;
+            var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
+            var exe = state?.ExePath ?? ExeLocator.FindCandidates(g, null).FirstOrDefault();
+
+            var r = await Dlss5Installer.InstallAsync(g, target, ini, exe, state?.AddonPath,
+                index, reshade, ctx.Rhi,
+                // no modo --all so o resultado interessa; passo a passo poluiria dezenas de jogos
+                alvos.Count == 1 ? new Progress<string>(s => Console.WriteLine("  " + s)) : null);
+
+            if (r.Ok)
+            {
+                ok++;
+                Console.WriteLine($"[ok]      {g.Name}");
+                if (alvos.Count == 1) foreach (var m in r.Manual) Console.WriteLine($"  falta voce: {m}");
+            }
+            else if (r.Blocker is not null && alvos.Count > 1)
+            {
+                pulados++;
+                Console.WriteLine($"[pulado]  {g.Name} — {r.Blocker}");
+            }
+            else
+            {
+                falhos++;
+                Console.WriteLine($"[falhou]  {g.Name} — {r.Blocker}");
+                foreach (var s in r.Steps) Console.WriteLine($"    {s}");
+            }
+        }
+
+        if (alvos.Count > 1) Console.WriteLine($"\n{ok} instalado(s), {pulados} pulado(s), {falhos} com falha");
+        return falhos > 0 ? 2 : 0;
+    }
+
+    private static async Task<int> DlssSetAsync(string[] rest)
+    {
+        var query = rest.FirstOrDefault(a => !a.StartsWith('-'));
+        var source = rest.Skip(1).FirstOrDefault(a => !a.StartsWith('-'));
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            Console.Error.WriteLine("uso: dlss-set <jogo> [pasta-de-origem]");
+            return 1;
+        }
+
+        var ctx = await LoadAsync();
+        var g = Resolve(ctx, query, out var err);
+        if (g is null) { Console.Error.WriteLine(err); return 1; }
+
+        var (_, state) = StateOf(ctx, g);
+        var target = state?.TargetDir ?? g.InstallDir;
+        source ??= DlssRuntimeService.LibrarySetDir;
+
+        try
+        {
+            var r = DlssRuntimeService.ApplyFrameGeneration(g.InstallDir, target, source,
+                new Progress<string>(Console.WriteLine));
+            Console.WriteLine($"{g.Name}: {r.Updated} arquivo(s) gravado(s) de {source}");
+
+            var issues = DlssRuntimeService.CheckHealth(g.InstallDir);
+            Console.WriteLine(issues.Count == 0
+                ? "conjunto coerente."
+                : string.Join("\n", issues.Select(i => $"[{i.Severity}] {i.Message}")));
+            return issues.Count == 0 ? 0 : 2;
+        }
+        catch (Exception ex) { Console.Error.WriteLine(ex.Message); return 1; }
     }
 
     private static async Task<int> VerifyAsync(string? query)

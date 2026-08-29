@@ -32,7 +32,17 @@ public static partial class FolderGameResolver
     [GeneratedRegex(@"[-_. ]v?\d+(\.\d+){1,3}([-_. ].*)?$", RegexOptions.IgnoreCase)]
     private static partial Regex VersionTailRegex();
 
-    [GeneratedRegex(@"-[A-Za-z0-9]+$")]
+    /// <summary>
+    /// Sufixo de grupo de release ("-InsaneRamZes", "-CODEX").
+    ///
+    /// O que distingue um grupo de uma palavra do titulo e a CAIXA: grupos sao all-caps (CODEX,
+    /// FLT, RELOADED) ou tem maiuscula interna (InsaneRamZes); palavra de titulo depois de hifen e
+    /// so capitalizada (Spider-<b>Man</b>, Half-<b>Life</b>, Call-of-<b>Duty</b>). Um corte cego de
+    /// "-qualquer coisa" destruia esses titulos, e pior: "Dishonored-2" virava "Dishonored" e
+    /// casava com o jogo errado — exatamente o que <see cref="MatchService.FindMatch"/> existe para
+    /// impedir. Numeral romano fica de fora pelo mesmo motivo ("Control-III").
+    /// </summary>
+    [GeneratedRegex(@"-(?![IVXivx]+$)([A-Z]{2,}|[A-Za-z]*[a-z][A-Z][A-Za-z]*)$")]
     private static partial Regex GroupSuffixRegex();
 
     [GeneratedRegex(@"\b(repack|multi\d*|proper|readnfo|incl|dlc|update|build\s*\d+)\b", RegexOptions.IgnoreCase)]
@@ -118,6 +128,43 @@ public static partial class FolderGameResolver
                 return new GameInfo { Name = hit.GameName, InstallDir = dir, Store = GameStore.Manual };
             }
         }
-        return new GameInfo { Name = folderName, InstallDir = dir, Store = GameStore.Manual };
+        // Sem entrada no catalogo o jogo ainda aparece — e continua util, porque ReShade e o addon
+        // neural generico nao dependem de mod proprio. So o NOME precisa ser apresentavel: a pasta
+        // costuma ser a pior fonte possivel ("Mortal.Shell.II-InsaneRamZes", "Retail").
+        return new GameInfo { Name = DisplayName(dir, exe) ?? folderName, InstallDir = dir,
+                              Store = GameStore.Manual };
+    }
+
+    /// <summary>
+    /// Melhor nome legivel para uma pasta que o catalogo nao reconhece.
+    ///
+    /// O ProductName do executavel vem primeiro porque e o unico candidato escrito pelo
+    /// DESENVOLVEDOR — nome de pasta e escrito por quem empacotou, e carrega separador estranho,
+    /// versao e sufixo de grupo. Depois dele vem o nome da pasta sem as decoracoes, e so entao o
+    /// nome cru.
+    /// </summary>
+    public static string? DisplayName(string dir, string? exePath)
+    {
+        if (exePath != null)
+        {
+            try
+            {
+                var product = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath).ProductName?.Trim();
+                // descarta placeholder de engine e string vazia
+                if (!string.IsNullOrWhiteSpace(product) && product.Length >= 3
+                    && product.Any(char.IsLetter)
+                    && !product.Equals("UnrealGame", StringComparison.OrdinalIgnoreCase)
+                    && !product.Equals("Unreal Engine", StringComparison.OrdinalIgnoreCase))
+                    return product;
+            }
+            catch (Exception ex) { Log.Warn($"produto de {exePath}: {ex.Message}"); }
+        }
+
+        var folder = Path.GetFileName(dir.TrimEnd('\\', '/'));
+        var stripped = StripReleaseTags(folder);
+        // pontos e underscores como separador viram espaco: "Mortal.Shell.II" -> "Mortal Shell II"
+        stripped = Regex.Replace(stripped, @"[._]+", " ").Trim();
+        stripped = Regex.Replace(stripped, @"\s+", " ");
+        return stripped.Length >= 3 && !Containers.Contains(stripped) ? stripped : null;
     }
 }

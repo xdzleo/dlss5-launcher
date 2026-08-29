@@ -188,7 +188,14 @@ public partial class ReShadeService
         var pe = PeUtils.Inspect(exePath);
         if (pe != null)
         {
-            if (pe.Imports.Contains("d3d9.dll")) return "d3d9.dll";
+            // "Importa d3d9" so significa D3D9 quando NAO ha uma API moderna junto. Uma build de
+            // shipping da Unreal linka todas as RHI de uma vez — d3d9, d3d11, d3d12, dxgi e
+            // opengl32 aparecem juntas num jogo que renderiza em D3D12 — e sem esta guarda o
+            // proxy saia como d3d9.dll num jogo que nunca usa D3D9. O ramo do OpenGL logo abaixo
+            // ja tinha exatamente esta guarda; faltava a mesma aqui.
+            var modern = pe.Imports.Any(i => i.Equals("dxgi.dll", StringComparison.OrdinalIgnoreCase)
+                                             || i.StartsWith("d3d1", StringComparison.OrdinalIgnoreCase));
+            if (pe.Imports.Contains("d3d9.dll") && !modern) return "d3d9.dll";
             if (pe.Imports.Contains("opengl32.dll")
                 && !pe.Imports.Any(i => i.StartsWith("d3d") || i == "dxgi.dll")) return "opengl32.dll";
         }

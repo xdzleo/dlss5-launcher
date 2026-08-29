@@ -16,6 +16,23 @@ public class AddonService
 {
     public const string DisabledSuffix = ".disabled";
 
+    /// <summary>
+    /// Addons that are meant to live BESIDE a game's mod instead of replacing it.
+    ///
+    /// A game mod owns the game's shaders, so two of them in one folder is a real conflict. These
+    /// are not that: they hook something else entirely — the NGX exports, the Streamline
+    /// interposer, Unreal's HDR path — and the documented setup for every one of them is to sit
+    /// next to the game's own mod. Treating them as rivals deleted working installs.
+    ///
+    /// Matched by prefix because the builds are renamed constantly as versions circulate
+    /// (renodx-dlss5-v2.5.addon64 and so on).
+    /// </summary>
+    private static readonly string[] CompanionAddonPrefixes =
+        ["renodx-neural", "renodx-dlss5", "renodx-dlssfix", "renodx-ue-extended", "renodx-fpslimiter"];
+
+    private static bool IsCompanionAddon(string fileName) =>
+        CompanionAddonPrefixes.Any(p => fileName.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Scan a deploy dir for ReShade + renodx addon files.</summary>
     public static ModState GetState(string targetDir, string? exePath)
     {
@@ -71,11 +88,23 @@ public class AddonService
 
             // fallback for addons installed before this tracking existed (or by hand)
             var local = new FileInfo(state.AddonPath);
-            if (remoteLen is > 0 && remoteLen != local.Length) return true;
-            // slack of a minute: our copy's mtime is the download time, not the build time
-            if (remoteMod is { } rm && rm > local.LastWriteTimeUtc.AddMinutes(1)) return true;
+            if (remoteLen is > 0)
+            {
+                // Size is the only evidence here that speaks about CONTENT. When it matches, the
+                // answer is "no update" and nothing below may overturn it.
+                //
+                // The modification date used to get a say after this point, and it is not evidence
+                // of anything: File.Copy carries the source's timestamp, a hand-installed addon
+                // carries whatever the browser wrote, and a re-hosted asset gets a fresh
+                // Last-Modified without a byte changing. Any of those made the same build report
+                // "update available" forever — a badge that is always on tells the user nothing.
+                return remoteLen != local.Length;
+            }
 
-            return remoteLen is > 0 || remoteMod is not null ? false : null;
+            // No size from the server: the date is all that is left, and it is weak enough that a
+            // full day of slack is the honest threshold rather than a minute.
+            if (remoteMod is { } rm) return rm > local.LastWriteTimeUtc.AddDays(1);
+            return null;
         }
         catch (Exception ex)
         {
@@ -101,28 +130,69 @@ public class AddonService
         using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) })
         {
             http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-            using var resp = await http.GetAsync(entry.DownloadUrl);
-            resp.EnsureSuccessStatusCode();
-            etag = resp.Headers.ETag?.Tag;           // build identity, for future update checks
-            var bytes = await resp.Content.ReadAsByteArrayAsync();
-            // addons are PE DLLs — reject HTML error pages and truncated downloads
-            if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
-                throw new InvalidOperationException(L.T("Error_Mod_DownloadCorrupt", fileName));
-            await File.WriteAllBytesAsync(cached, bytes);
-            size = bytes.LongLength;
-        }
 
-        // exactly one renodx addon per deploy dir: remove every other addon file first.
-        // Match on "<base>." so renodx-hades doesn't spare renodx-hades2, and same-slug
-        // files of the other bitness are cleaned too.
-        var keep = new[] { fileName, fileName + DisabledSuffix };
-        foreach (var other in Directory.GetFiles(targetDir, "renodx-*.addon*"))
-        {
-            if (!keep.Contains(Path.GetFileName(other), StringComparer.OrdinalIgnoreCase))
+            // The same bytes we already have? Then this install is a local copy.
+            //
+            // Turning the mod off removes it, so turning it back on comes through here — and a
+            // switch that costs a multi-megabyte download every time it is flipped is a switch
+            // people stop flipping. A HEAD is cheap, and the size is what says whether the build
+            // changed; anything else falls through to the full download.
+            var reusable = false;
+            if (File.Exists(cached))
             {
-                Log.Info($"removendo addon conflitante {other}");
-                File.Delete(other);
+                try
+                {
+                    using var head = new HttpRequestMessage(HttpMethod.Head, entry.DownloadUrl);
+                    using var probe = await http.SendAsync(head);
+                    var remote = probe.IsSuccessStatusCode ? probe.Content.Headers.ContentLength : null;
+                    if (remote is > 0 && remote == new FileInfo(cached).Length)
+                    {
+                        progress?.Report(L.T("Install_Mod_Cached", fileName));
+                        etag = probe.Headers.ETag?.Tag;
+                        reusable = true;
+                    }
+                }
+                catch (Exception ex) { Log.Warn($"cache probe {fileName}: {ex.Message}"); }
             }
+
+            if (!reusable)
+            {
+                using var resp = await http.GetAsync(entry.DownloadUrl);
+                resp.EnsureSuccessStatusCode();
+                etag = resp.Headers.ETag?.Tag;       // build identity, for future update checks
+                var bytes = await resp.Content.ReadAsByteArrayAsync();
+                // addons are PE DLLs — reject HTML error pages and truncated downloads
+                if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
+                    throw new InvalidOperationException(L.T("Error_Mod_DownloadCorrupt", fileName));
+                await File.WriteAllBytesAsync(cached, bytes);
+            }
+        }
+        size = new FileInfo(cached).Length;
+
+        // One GAME MOD per deploy dir: two mods for the same game fight over the same shaders.
+        // That is the conflict this clears — and only that.
+        //
+        // It used to sweep `renodx-*.addon*`, which is neither of those things. It ate:
+        //   - the companion addons, which exist precisely to sit BESIDE a game mod. The community
+        //     DLSS 5 installer deploys its own game mod and the neural addon side by side, as its
+        //     documented setup. Installing a mod deleted the neural addon in that game, and doing
+        //     a batch update deleted it in every game at once;
+        //   - `.bak` files, because `.addon*` matches `.addon64.bak` too. A backup that a swap
+        //     depends on to be undoable was removed by an unrelated install.
+        var keep = new[] { fileName, fileName + DisabledSuffix };
+        foreach (var other in Directory.GetFiles(targetDir, "renodx-*"))
+        {
+            var name = Path.GetFileName(other);
+            // exactly an addon, not something that merely starts like one
+            var bare = name.EndsWith(DisabledSuffix, StringComparison.OrdinalIgnoreCase)
+                ? name[..^DisabledSuffix.Length] : name;
+            if (!bare.EndsWith(".addon64", StringComparison.OrdinalIgnoreCase)
+                && !bare.EndsWith(".addon32", StringComparison.OrdinalIgnoreCase)) continue;
+            if (keep.Contains(name, StringComparer.OrdinalIgnoreCase)) continue;
+            if (IsCompanionAddon(bare)) continue;
+
+            Log.Info($"removendo addon conflitante {other}");
+            File.Delete(other);
         }
 
         var target = Path.Combine(targetDir, fileName);

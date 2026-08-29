@@ -16,6 +16,7 @@ public class MainViewModel : ObservableObject
 {
     private readonly CatalogService _catalog = new();
     private readonly RhiManifestService _rhi = new();
+    private readonly DlssIndexService _dlssIndex = new();
     private readonly ReShadeService _reshade = new();
     private ManifestService? _manifest;
     private List<CatalogEntry> _catalogEntries = new();
@@ -49,6 +50,39 @@ public class MainViewModel : ObservableObject
         CheckUpdatesCommand = new AsyncRelayCommand(CheckUpdatesAsync, () => !Busy);
         CloseDialogCommand = new RelayCommand(() => IsDialogOpen = false);
         DlssFixCommand = new AsyncRelayCommand(ToggleDlssFixAsync, () => !Busy);
+        NeuralCommand = new AsyncRelayCommand(ToggleNeuralAsync, () => !Busy && NeuralBlocker is null);
+        Dlss5Command = new AsyncRelayCommand(ToggleDlss5Async, () => !Busy);
+        // A guarda de download veio junto do banner que este interruptor substituiu. Sem ela, um
+        // mod so-Nexus parecia operavel: o clique instalava o ReShade na pasta e SO ENTAO falhava
+        // por nao ter download direto. Desinstalar ja instalado nao precisa de download.
+        ModCommand = new AsyncRelayCommand(ToggleModAsync,
+            () => !Busy && Selected?.HasMod == true
+                  && (Selected?.IsInstalled == true || Selected?.HasDirectDownload == true));
+        // O Reparo NAO pode depender de haver mod no catalogo: quem chega ao estado que ele
+        // conserta — ReShade sem suporte a add-ons — costuma ser justamente um jogo sem entrada de
+        // catalogo, com DLSS 5 instalado. Ligado no InstallCommand ele ficava permanentemente
+        // cinza, no unico lugar da tela que oferecia caminho de volta.
+        RepairReShadeCommand = new AsyncRelayCommand(RepairReShadeAsync, () => !Busy && NeedsRepair);
+
+        // Trocar de idioma retraduz na hora tudo que passa por {loc:Tr}, porque essas bindings
+        // observam L.Instance. O que NAO passa por la sao as propriedades que a view model
+        // calcula chamando L.T(...) — os rotulos do filtro, os selos dos cartoes, a barra de
+        // status, os textos LIGADO/DESLIGADO. Sem isto a janela ficava meio traduzida ate
+        // reiniciar, apesar de dois comentarios no codigo afirmarem o contrario.
+        L.Instance.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(FilterOptions));
+            OnPropertyChanged(nameof(StatusText));
+            OnPropertyChanged(nameof(ModStateText));
+            OnPropertyChanged(nameof(Dlss5StateText));
+            OnPropertyChanged(nameof(DlssButtonText));
+            OnPropertyChanged(nameof(NeuralButtonText));
+            foreach (var g in Games) g.RaiseLocalizedText();
+        };
+        ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
+        DlssCommand = new AsyncRelayCommand(ToggleDlssAsync, () => !Busy);
+        DlssRepairCommand = new AsyncRelayCommand(RepairDlssAsync, () => !Busy);
+        RestoreAllDlssCommand = new AsyncRelayCommand(RestoreAllDlssAsync, () => !Busy);
         LaunchGameCommand = new RelayCommand(LaunchGame, () => Selected != null);
         OpenMaintainerCommand = new RelayCommand(OpenMaintainer,
             () => AvatarService.ProfileUrl(Selected?.Mod) != null);
@@ -146,6 +180,9 @@ public class MainViewModel : ObservableObject
             if (Set(ref _selected, value))
             {
                 OnPropertyChanged(nameof(HasSelection));
+                // O interruptor do mod le o estado do jogo selecionado; sem avisar aqui ele
+                // continua mostrando o do jogo anterior.
+                RaiseModState();
                 if (value != null) IsDialogOpen = true;
                 _ = LoadDetailSafeAsync();
                 RaiseCommands();
@@ -183,7 +220,13 @@ public class MainViewModel : ObservableObject
                 if (previousState?.AddonPath != null && Selected.State?.AddonPath is null)
                     DetailStatus = L.T("Main_Detail_ModInPreviousFolder",
                         Path.GetDirectoryName(previousState.AddonPath));
-                _ = LoadSettingsSafeAsync(_detailToken);
+                // trocar de exe troca TargetDir e AddonPath: a deteccao de NR tem de ser refeita
+                // antes das settings, senao os sliders de Neural Uplift sobram (ou faltam) por
+                // estarem baseados no addon da pasta anterior
+                // Envolvido: solto, uma falha de I/O aqui (permissao, unidade desconectada) caia
+                // numa Task que ninguem observa e sumia — sem log, sem DetailStatus, sem dialogo.
+                // A mesma falha pela selecao normal E reportada, via LoadDetailSafeAsync.
+                _ = SafeRefreshNeuralAsync(_detailToken);
                 RaiseCommands();
             }
         }
@@ -242,6 +285,125 @@ public class MainViewModel : ObservableObject
 
     private DlssFixService.Detection? _dlssDetection;
 
+    /// <summary>O addon instalado sabe acionar o DLSS-NR e o jogo tem DLSS — só então o cartão
+    /// aparece. Requisito de máquina (GPU/driver/runtime) não esconde o cartão: vira
+    /// <see cref="NeuralBlocker"/>, porque "não apareceu nada" não explica nada a ninguém.</summary>
+    private bool _showNeural;
+    public bool ShowNeural { get => _showNeural; set => Set(ref _showNeural, value); }
+
+    private bool _neuralApplied;
+    public bool NeuralApplied
+    {
+        get => _neuralApplied;
+        set { if (Set(ref _neuralApplied, value)) OnPropertyChanged(nameof(NeuralButtonText)); }
+    }
+
+    public string NeuralButtonText =>
+        L.T(_neuralApplied ? "Main_Neural_Remove" : "Main_Neural_Apply");
+
+    /// <summary>Motivo pelo qual esta máquina não pode ligar, ou null quando pode.</summary>
+    private string? _neuralBlocker;
+    public string? NeuralBlocker
+    {
+        get => _neuralBlocker;
+        set { if (Set(ref _neuralBlocker, value)) OnPropertyChanged(nameof(NeuralHasBlocker)); }
+    }
+    public bool NeuralHasBlocker => _neuralBlocker != null;
+
+    /// <summary>
+    /// Um elo da cadeia do DLSS 5, com o estado dele.
+    ///
+    /// Cada elo quebrado produz o mesmo sintoma de fora — o jogo abre e nada acontece — entao um
+    /// unico "ligado/desligado" nao ajuda ninguem a agir. Mostrar os elos separados e o que
+    /// transforma "nao funciona" em "falta o ReShade".
+    /// </summary>
+    public record ChainLink(string Label, bool Ok);
+
+    public ObservableCollection<ChainLink> Dlss5Chain { get; } = new();
+
+    private bool _dlss5Ready;
+    /// <summary>
+    /// Todos os elos no lugar. E o que o interruptor reflete.
+    ///
+    /// A notificacao e INCONDICIONAL, e nao so quando o valor muda. Um ToggleButton move o
+    /// proprio botao ao ser clicado (SetCurrentValue), entao so uma notificacao da origem o traz
+    /// de volta. Quando a instalacao falha e o valor recalculado e o MESMO de antes, um `Set`
+    /// que suprime a notificacao por igualdade deixa o botao na posicao que o clique produziu —
+    /// mostrando LIGADO com as pastilhas vermelhas embaixo. E como o modal e reaproveitado entre
+    /// os jogos, a posicao errada acompanha o proximo jogo aberto.
+    /// </summary>
+    public bool Dlss5Ready
+    {
+        get => _dlss5Ready;
+        set
+        {
+            _dlss5Ready = value;
+            OnPropertyChanged(nameof(Dlss5Ready));
+            OnPropertyChanged(nameof(Dlss5StateText));
+        }
+    }
+
+    public string Dlss5StateText => L.T(_dlss5Ready ? "Dlss5_State_On" : "Dlss5_State_Off");
+
+    /// <summary>Recolhe o estado de cada elo para os indicadores do cartao.</summary>
+    private void BuildDlss5Chain(string targetDir, string iniPath, NeuralUpliftService.Detection det)
+    {
+        Dlss5Chain.Clear();
+        var addon = NeuralUpliftService.DeployedGenericAddon(targetDir);
+        var early = false;
+        if (File.Exists(iniPath) && addon is not null)
+        {
+            var list = new IniFile(iniPath).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "";
+            early = list.Split(',').Any(e => e.Trim()
+                .Equals(Path.GetFileName(addon), StringComparison.OrdinalIgnoreCase));
+        }
+        Dlss5Chain.Add(new ChainLink("ReShade", det.ReShadeDllName is not null));
+        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Addon"), det.AddonSupportsNr));
+        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Neural"), det.RuntimeDeployed));
+        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Rr"),
+            File.Exists(Path.Combine(targetDir, NeuralUpliftService.RayReconstructionFile))));
+        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_EarlyLoad"), early || addon is null));
+        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Switch"), NeuralApplied));
+        Dlss5Ready = Dlss5Chain.All(l => l.Ok);
+    }
+
+    /// <summary>O runtime falta na biblioteca — o único bloqueio que o usuário resolve aqui
+    /// mesmo, então ganha um botão em vez de só um aviso.</summary>
+    private bool _neuralNeedsRuntime;
+    public bool NeuralNeedsRuntime { get => _neuralNeedsRuntime; set => Set(ref _neuralNeedsRuntime, value); }
+
+    private NeuralUpliftService.Detection? _neuralDetection;
+
+    // ---------- runtimes de DLSS ----------
+
+    /// <summary>O jogo carrega pelo menos um runtime NGX. Sem isso nao ha o que atualizar.</summary>
+    private bool _showDlss;
+    public bool ShowDlss { get => _showDlss; set => Set(ref _showDlss, value); }
+
+    /// <summary>Ha backup na pasta do jogo: algum runtime ali e nosso, nao o do estudio.</summary>
+    private bool _dlssApplied;
+    public bool DlssApplied
+    {
+        get => _dlssApplied;
+        set { if (Set(ref _dlssApplied, value)) OnPropertyChanged(nameof(DlssButtonText)); }
+    }
+
+    public string DlssButtonText => L.T(_dlssApplied ? "Main_Dlss_Restore" : "Main_Dlss_Update");
+
+    /// <summary>O que o jogo tem hoje, versus o que a biblioteca pode oferecer.</summary>
+    private string? _dlssSummary;
+    public string? DlssSummary { get => _dlssSummary; set => Set(ref _dlssSummary, value); }
+
+    /// <summary>Problema comprovado no estado atual dos runtimes do jogo, ou null. Aparece
+    /// independente de quem causou — este launcher, o DLSS Swapper, ou troca feita a mao.</summary>
+    private string? _dlssHealth;
+    public string? DlssHealth
+    {
+        get => _dlssHealth;
+        set { if (Set(ref _dlssHealth, value)) OnPropertyChanged(nameof(DlssHasIssue)); }
+    }
+    public bool DlssHasIssue => _dlssHealth != null;
+
     private string _detailStatus = "";
     public string DetailStatus { get => _detailStatus; set => Set(ref _detailStatus, value); }
 
@@ -260,6 +422,50 @@ public class MainViewModel : ObservableObject
     public AsyncRelayCommand CheckUpdatesCommand { get; }
     public RelayCommand CloseDialogCommand { get; }
     public AsyncRelayCommand DlssFixCommand { get; }
+    public AsyncRelayCommand NeuralCommand { get; }
+
+    /// <summary>Instala a cadeia inteira do DLSS 5 neste jogo, ou a desinstala. Um clique.</summary>
+    public AsyncRelayCommand Dlss5Command { get; }
+
+    /// <summary>Troca um ReShade sem suporte a add-ons pela build completa. Ver o construtor.</summary>
+    public AsyncRelayCommand RepairReShadeCommand { get; }
+
+    /// <summary>
+    /// O mod de HDR do jogo, num interruptor so.
+    ///
+    /// Sao tres estados por baixo — ausente, instalado e ligado, instalado e desligado — e o
+    /// usuario so quer saber de um: esta valendo ou nao. Ligar instala se preciso e reativa se
+    /// estava desativado; desligar renomeia para .disabled, que preserva a instalacao (comparar
+    /// HDR ligado x desligado e o uso principal disso e nao deveria custar um download).
+    /// </summary>
+    public AsyncRelayCommand ModCommand { get; }
+
+    /// <summary>O mod esta instalado E ativo. E o que o interruptor reflete.</summary>
+    public bool ModReady => Selected?.IsInstalled == true && Selected?.IsEnabled == true;
+
+    public string ModStateText => L.T(ModReady ? "Dlss5_State_On" : "Dlss5_State_Off");
+
+    /// <summary>Relanca a leitura do estado de DLSS 5 sem deixar a falha virar Task nao observada.</summary>
+    private async Task SafeRefreshNeuralAsync(int token)
+    {
+        try { await RefreshNeuralAndSettingsAsync(token); }
+        catch (Exception ex)
+        {
+            Log.Warn($"neural refresh: {ex.Message}");
+            DetailStatus = ex.Message;
+        }
+    }
+
+    /// <summary>Reavalia o interruptor do mod. Chamado sempre que a instalacao pode ter mudado.</summary>
+    private void RaiseModState()
+    {
+        OnPropertyChanged(nameof(ModReady));
+        OnPropertyChanged(nameof(ModStateText));
+    }
+    public AsyncRelayCommand ImportNeuralRuntimeCommand { get; }
+    public AsyncRelayCommand DlssCommand { get; }
+    public AsyncRelayCommand DlssRepairCommand { get; }
+    public AsyncRelayCommand RestoreAllDlssCommand { get; }
     public RelayCommand LaunchGameCommand { get; }
     public RelayCommand OpenMaintainerCommand { get; }
     public AsyncRelayCommand UpdateAllCommand { get; }
@@ -284,6 +490,15 @@ public class MainViewModel : ObservableObject
 
     private void RaiseCommands()
     {
+        // O interruptor do mod le estado do jogo selecionado, entao ele se reavalia junto com os
+        // comandos — nao em dois ou tres lugares escolhidos a mao.
+        //
+        // Espalhar a chamada era o defeito: dez caminhos mudam o estado do addon e so dois
+        // avisavam. O botao de energia da barra de baixo, por exemplo, desativava o mod e deixava
+        // o interruptor logo acima dele dizendo LIGADO — dois controles contradizendo um ao outro
+        // no mesmo painel. Aqui a regra e uma so: mexeu no estado, os comandos sao reavaliados;
+        // logo o interruptor tambem.
+        RaiseModState();
         RefreshCommand.RaiseCanExecuteChanged();
         AddManualGameCommand.RaiseCanExecuteChanged();
         CheckUpdatesCommand.RaiseCanExecuteChanged();
@@ -297,6 +512,17 @@ public class MainViewModel : ObservableObject
         OpenFolderCommand.RaiseCanExecuteChanged();
         LaunchGameCommand.RaiseCanExecuteChanged();
         DlssFixCommand.RaiseCanExecuteChanged();
+        NeuralCommand.RaiseCanExecuteChanged();
+        RepairReShadeCommand.RaiseCanExecuteChanged();
+        // Faltar aqui nao deixa o botao "as vezes" desabilitado: o CanExecute e avaliado uma vez,
+        // na construcao, quando Selected ainda e nulo — e nunca mais. O ModCommand exige
+        // Selected.HasMod, entao ficava morto para sempre.
+        Dlss5Command.RaiseCanExecuteChanged();
+        ModCommand.RaiseCanExecuteChanged();
+        ImportNeuralRuntimeCommand.RaiseCanExecuteChanged();
+        DlssCommand.RaiseCanExecuteChanged();
+        DlssRepairCommand.RaiseCanExecuteChanged();
+        RestoreAllDlssCommand.RaiseCanExecuteChanged();
         OpenMaintainerCommand.RaiseCanExecuteChanged();
         OpenNexusCommand.RaiseCanExecuteChanged();
     }
@@ -316,9 +542,11 @@ public class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(Config));
             _manifest ??= await Task.Run(() => new ManifestService());
             var rhiTask = _rhi.LoadAsync();
+            var indexTask = _dlssIndex.LoadAsync();
             _catalogEntries = await _catalog.LoadAsync(forceRefresh);
             AvatarService.Learn(_catalogEntries);
             await rhiTask;
+            await indexTask;
 
             StatusText = L.T("Main_Status_ScanningGames");
             // the folder scan only surfaces dirs whose NAME matches a catalog game,
@@ -346,6 +574,7 @@ public class MainViewModel : ObservableObject
 
             var ct = cts.Token;
             _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), ct));
+            _ = Task.Run(() => CheckSwappedRuntimesAsync(Games.Select(g => g.Game.InstallDir).ToList()!));
         }
         catch (Exception ex)
         {
@@ -456,7 +685,7 @@ public class MainViewModel : ObservableObject
         if (exe != null && item.ChosenExe is null) item.ChosenExe = exe;
 
         await LoadAvatarAsync(token);
-        await LoadSettingsSafeAsync(token);
+        await RefreshNeuralAndSettingsAsync(token);
         await CheckDlssFixAsync(token);
         await CheckLoadVerdictAsync(token);
         RaiseCommands();
@@ -509,6 +738,465 @@ public class MainViewModel : ObservableObject
                 DlssFixApplied = true;
                 DetailStatus = L.T("Main_DlssFix_Applied");
             }
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>
+    /// Detecção de NR e leitura das settings, nesta ordem e sempre juntas: é a detecção que decide
+    /// se os sliders de Neural Uplift entram na lista (eles não vêm do manifesto gerado), então
+    /// rodar as settings sozinhas usa a detecção do jogo — ou da pasta — anterior.
+    /// </summary>
+    private async Task RefreshNeuralAndSettingsAsync(int token)
+    {
+        await CheckNeuralAsync(token);
+        await RefreshDlssAsync(token);
+        await LoadSettingsSafeAsync(token);
+    }
+
+    /// <summary>
+    /// O Neural Uplift depende de três coisas independentes: o BUILD do addon saber acionar o
+    /// DLSS-NR, o JOGO ter DLSS ativo (é de onde saem profundidade e motion vectors) e a MÁQUINA
+    /// ser Blackwell com driver 616+ e o runtime na biblioteca.
+    ///
+    /// As duas primeiras escondem o cartão — sem elas não há o que oferecer. A terceira não: ela
+    /// vira um aviso dentro do cartão. Alguém que instalou um addon com NR e não vê nada na tela
+    /// precisa ler POR QUE, e um cartão ausente não diz isso.
+    /// </summary>
+    private async Task CheckNeuralAsync(int token)
+    {
+        ShowNeural = false;
+        NeuralBlocker = null;
+        NeuralNeedsRuntime = false;
+        _neuralDetection = null;
+        var item = _detailItem;
+        // De proposito NAO exige item.Mod: suporte a NR e propriedade do ARQUIVO do addon, nao
+        // do catalogo. Os builds com NR sao passados no Discord e caem em jogos que o catalogo
+        // pode nem listar — exigir entrada de catalogo aqui esconderia o cartao exatamente no
+        // caso para o qual ele existe. O que importa e haver um addon detectado na pasta.
+        // NAO exige mais item.State.AddonPath: com o addon generico na biblioteca, qualquer jogo
+        // com DLSS pode receber o neural render, mesmo sem mod RenoDX proprio. O addon generico
+        // engancha os exports do NGX que o jogo ja chama e roda o pass inline.
+        if (item?.TargetDir is null) return;
+        // O indice curado marca os jogos onde mexer no DLSS quebra alguma coisa. Uma lista que
+        // alguem mantem contra relato real vale mais do que qualquer heuristica daqui.
+        if (_rhi.SkipsDlss(item.Game.Name)) return;
+
+        var installDir = item.Game.InstallDir;
+        var targetDir = item.TargetDir;
+        var addonPath = item.State?.AddonPath;
+        // O addon é o build da comunidade. Uma cópia já presente na máquina vem primeiro — quem
+        // seguiu as instruções do Discord já a tem, e pode ser mais nova que a que sabemos buscar.
+        var allDirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
+        await Task.Run(() => NeuralUpliftService.AutoDiscoverAddon(allDirs!));
+        if (token != _detailToken) return;
+        try { await NeuralUpliftService.FetchAddonAsync(new Progress<string>(s => DetailStatus = s)); }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        if (token != _detailToken) return;
+        var detection = await Task.Run(() => NeuralUpliftService.Detect(installDir, targetDir, addonPath));
+        if (token != _detailToken) return;
+        if (!detection.Offerable) return;
+
+        // O runtime nao vem em driver nem em SDK publico: as unicas copias sao as que ja estao
+        // nesta maquina. Procura sozinho antes de pedir que o usuario ache o arquivo na mao —
+        // achar um .dll de 158 MB pelo Explorer nao e trabalho do usuario.
+        if (detection.Host.Blackwell
+            && detection.Host.DriverBranch >= NeuralUpliftService.MinDriverBranch
+            && !detection.Host.RuntimeInLibrary)
+        {
+            var dirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
+            var found = await Task.Run(() => NeuralUpliftService.AutoDiscoverRuntime(
+                dirs!, new Progress<string>(s => DetailStatus = s)));
+            if (token != _detailToken) return;
+
+            // Nenhuma cópia nesta máquina. O runtime não vem em driver nem em SDK público, então
+            // sem isto o usuário fica travado num bloqueio que ele não tem como resolver — a não
+            // ser saindo para procurar um DLL de 158 MB. Só é instalado se a NVIDIA assinou.
+            if (found is null)
+            {
+                try
+                {
+                    var version = await NeuralUpliftService.FetchRuntimeAsync(
+                        _dlssIndex, new Progress<string>(s => DetailStatus = s));
+                    if (version is not null) { found = version; DetailStatus = L.T("Neural_Fetched", version); }
+                }
+                catch (Exception ex) { DetailStatus = ex.Message; }
+                if (token != _detailToken) return;
+            }
+            else DetailStatus = L.T("Neural_AutoFound", found);
+
+            if (found is not null)
+            {
+                detection = await Task.Run(() => NeuralUpliftService.Detect(installDir, targetDir, addonPath));
+                if (token != _detailToken) return;
+            }
+        }
+
+        _neuralDetection = detection;
+        // o bloqueio do host (GPU/driver/runtime) vem primeiro; so depois o do caminho generico
+        NeuralBlocker = detection.Host.Blocker ?? detection.GenericBlocker;
+        NeuralNeedsRuntime = detection.Host.Blackwell
+            && detection.Host.DriverBranch >= NeuralUpliftService.MinDriverBranch
+            && !detection.Host.RuntimeInLibrary;
+        // sem mod RenoDX nao ha State; o ReShade.ini fica ao lado do addon na pasta do jogo
+        var neuralIni = item.State?.IniPath ?? System.IO.Path.Combine(targetDir, "ReShade.ini");
+        NeuralApplied = NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath);
+        BuildDlss5Chain(targetDir, neuralIni, detection);
+        ShowNeural = true;
+    }
+
+    /// <summary>Estado dos runtimes de DLSS do jogo: o que ele carrega e o que a biblioteca tem
+    /// de mais novo. Independente do neural — vale para qualquer jogo com DLSS.</summary>
+    private async Task RefreshDlssAsync(int token)
+    {
+        ShowDlss = false;
+        DlssSummary = null;
+        DlssHealth = null;
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+        if (_rhi.SkipsDlss(item.Game.Name)) return;
+
+        var installDir = item.Game.InstallDir;
+        var targetDir = item.TargetDir;
+
+        var (inGame, library, applied) = await Task.Run(() =>
+        {
+            var g = DlssRuntimeService.DetectInGame(installDir);
+            var l = DlssRuntimeService.Library();
+            return (g, l, DlssRuntimeService.IsApplied(installDir));
+        });
+        if (token != _detailToken) return;
+        if (inGame.Count == 0) return;   // jogo sem DLSS: nao ha o que atualizar
+
+        // uma linha por feature, com a versao do jogo e, quando houver, para onde subiria
+        var byName = library.ToDictionary(r => r.FileName, StringComparer.OrdinalIgnoreCase);
+        var lines = inGame
+            .GroupBy(r => r.FileName, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var cur = g.OrderBy(r => r.Version).First();   // a mais antiga manda: e a que limita
+                var text = $"{cur.Feature} {cur.Version}";
+                if (!DlssRuntimeService.IsSwappable(cur.FileName))
+                    // Sem isso o usuario ve o Frame Generation listado, clica em Atualizar e nada
+                    // acontece com ele — parece defeito, e e decisao deliberada.
+                    text += " (" + L.T("Dlss_NotSwapped") + ")";
+                else if (byName.TryGetValue(cur.FileName, out var lib) && lib.Version > cur.Version)
+                    text += $" → {lib.Version}";
+                return text;
+            });
+        DlssSummary = string.Join("   ", lines);
+
+        // Problema comprovado no estado atual do jogo — venha de onde vier (deste launcher, do
+        // DLSS Swapper, ou de uma troca manual). So reporta: nao da para saber de fora qual versao
+        // este jogo aceita, entao adivinhar o conserto seria repetir o erro que causou isso.
+        var issues = await Task.Run(() => DlssRuntimeService.CheckHealth(installDir));
+        if (token != _detailToken) return;
+        DlssHealth = issues.Count == 0 ? null
+            : string.Join("\n", issues.Select(i => $"[{i.Severity}] {i.Message}"));
+
+        DlssApplied = applied;
+        ShowDlss = true;
+    }
+
+    /// <summary>
+    /// Na abertura, avisa se algum jogo ficou com runtime trocado.
+    ///
+    /// Uma troca nao aparece em lugar nenhum ate o jogo abrir errado, e quem mexeu em seis jogos
+    /// nao tem como lembrar quais. O launcher sabe exatamente onde mexeu — omitir isso e o que faz
+    /// a ferramenta parecer que "deixou coisa pela metade".
+    /// </summary>
+    private async Task CheckSwappedRuntimesAsync(IReadOnlyList<string> dirs)
+    {
+        try
+        {
+            // Um jogo com DLSS 5 instalado tem runtime trocado POR DEFINICAO — foi o que o usuario
+            // pediu. Listar esses aqui transforma o aviso em ruido permanente, e o botao ao lado
+            // dele desfaria justamente a instalacao. So entra quem tem troca SEM a feature ligada,
+            // que e o caso que o aviso existe para pegar: mexeu e esqueceu.
+            //
+            // A checagem NAO pode depender do TargetDir: ele vem do executavel escolhido, que so e
+            // resolvido no enriquecimento em segundo plano — disparado em paralelo com esta
+            // varredura. Perguntar por ele aqui devolvia nulo para quase todo jogo, e todos eles
+            // apareciam no aviso. IsAppliedAnywhere acha o addon sozinho, sem essa corrida.
+            var swapped = await Task.Run(() => dirs
+                .Where(d => d is not null && Directory.Exists(d))
+                .Where(d => DlssRuntimeService.IsApplied(d!))
+                .Where(d => !NeuralUpliftService.IsAppliedAnywhere(d!))
+                .Select(d => Path.GetFileName(d!.TrimEnd('\\', '/')))
+                .ToList());
+            if (swapped.Count == 0) { SwappedGames = null; return; }
+            SwappedGames = string.Join(", ", swapped);
+        }
+        catch (Exception ex) { Log.Warn($"sweep check: {ex.Message}"); }
+    }
+
+    /// <summary>Jogos com runtime de DLSS trocado, ou null. Vira o aviso de topo.</summary>
+    private string? _swappedGames;
+    public string? SwappedGames
+    {
+        get => _swappedGames;
+        set { if (Set(ref _swappedGames, value)) OnPropertyChanged(nameof(HasSwappedGames)); }
+    }
+    public bool HasSwappedGames => _swappedGames != null;
+
+    /// <summary>Devolve TODOS os runtimes trocados, em todos os jogos, de uma vez.</summary>
+    private async Task RestoreAllDlssAsync()
+    {
+        ActionBusy = true;
+        try
+        {
+            var dirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).ToList();
+            var r = await Task.Run(() => DlssRuntimeService.RestoreAll(
+                dirs!, new Progress<string>(s => StatusText = s)));
+            StatusText = r.Locked.Count == 0
+                ? L.T("Dlss_Sweep_Done", r.Restored)
+                : L.T("Dlss_Sweep_Locked", r.Restored, string.Join(", ", r.Locked));
+            await CheckSwappedRuntimesAsync(dirs!);
+            if (r.Locked.Count == 0) SwappedGames = null;
+        }
+        catch (Exception ex) { StatusText = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>Conserta o conjunto de runtimes quebrado — o botao existe porque apontar o defeito
+    /// e mandar a pessoa resolver na pasta nao serve para quem usa um launcher.</summary>
+    private async Task RepairDlssAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+        var installDir = item.Game.InstallDir;
+        var targetDir = item.TargetDir;
+        var iniPath = item.State?.IniPath ?? System.IO.Path.Combine(targetDir, "ReShade.ini");
+        ActionBusy = true;
+        try
+        {
+            // ---- 1. o conjunto de runtimes ----
+            // Sem backup, o conserto precisa de um conjunto COMPLETO de referencia; procura um
+            // antes de desistir.
+            if (!System.IO.Directory.Exists(DlssRuntimeService.LibrarySetDir))
+            {
+                var refs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList();
+                refs.Add(System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
+                await Task.Run(() => DlssRuntimeService.AutoDiscoverStreamlineSet(
+                    refs!, new Progress<string>(s => DetailStatus = s)));
+            }
+
+            var notas = new List<string>();
+            try
+            {
+                var r = await Task.Run(() => DlssRuntimeService.Repair(installDir, targetDir,
+                    new Progress<string>(s => DetailStatus = s)));
+                notas.AddRange(r.Notes);
+            }
+            catch (Exception ex) { notas.Add(ex.Message); }
+
+            // ---- 2. a cadeia que carrega o filtro ----
+            // Consertar so os runtimes deixava metade do problema de pe: sem o ReShade, sem o
+            // addon ou sem a chave ligada, o sintoma e identico ao das DLLs erradas — o jogo abre
+            // e nada acontece. Quem clica em Corrigir quer o conjunto TODO funcionando, entao a
+            // verificacao vai ate o fim da cadeia.
+            var det = await Task.Run(() => NeuralUpliftService.Detect(installDir, targetDir,
+                item.State?.AddonPath));
+            if (det.Offerable && det.Host.Blocker is null)
+            {
+                if (det.NeedsReShade && item.ChosenExe is not null)
+                {
+                    DetailStatus = L.T("Neural_InstallingReShade");
+                    var dep = await _reshade.DeployAsync(targetDir, item.ChosenExe, null, null,
+                        new Progress<string>(s => DetailStatus = s));
+                    notas.Add(dep.Success ? L.T("Neural_ReShadeInstalled") : dep.Message);
+                }
+
+                if (!NeuralUpliftService.IsApplied(targetDir, iniPath, item.State?.AddonPath))
+                {
+                    await Task.Run(() => NeuralUpliftService.Apply(targetDir, iniPath, det.UsesGeneric,
+                        new Progress<string>(s => DetailStatus = s)));
+                    notas.Add(L.T("Neural_Applied"));
+                }
+            }
+
+            DetailStatus = string.Join("; ", notas.Where(n => !string.IsNullOrWhiteSpace(n)));
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>Atualiza os runtimes do jogo para os da biblioteca, ou devolve os originais.</summary>
+    private async Task ToggleDlssAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+        var installDir = item.Game.InstallDir;
+        var targetDir = item.TargetDir;
+        ActionBusy = true;
+        try
+        {
+            if (DlssApplied)
+            {
+                var n = await Task.Run(() => DlssRuntimeService.Restore(installDir, targetDir));
+                DetailStatus = L.T("Main_Dlss_Restored", n);
+            }
+            else
+            {
+                // A biblioteca se enche das copias que ja estao na maquina: todo jogo com DLSS
+                // carrega um runtime assinado, e o mais novo entre eles serve para o mais antigo.
+                var dirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList();
+                await Task.Run(() => DlssRuntimeService.AutoDiscover(
+                    dirs!, new Progress<string>(s => DetailStatus = s)));
+
+                var r = await Task.Run(() => DlssRuntimeService.Apply(installDir, targetDir,
+                    new Progress<string>(s => DetailStatus = s)));
+                DetailStatus = r.Updated > 0
+                    ? L.T("Main_Dlss_Updated", r.Updated) + " — " + string.Join("; ", r.Notes)
+                    : L.T("Main_Dlss_AlreadyCurrent", r.AlreadyCurrent);
+            }
+            if (item == _detailItem) await RefreshDlssAsync(_detailToken);
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>
+    /// O botao unico. Liga: roda a cadeia inteira pelo mesmo <see cref="Dlss5Installer"/> que o
+    /// comando `dlss5` usa — um caminho de codigo, nao dois. Desliga: devolve o que foi posto.
+    ///
+    /// A interface montava a propria versao da ordem, e o CLI montava outra; era assim que cada
+    /// uma esquecia um elo diferente.
+    /// </summary>
+    /// <summary>
+    /// Reinstala o ReShade por cima da build limitada, mantendo o mod que ja esta na pasta.
+    ///
+    /// O `InstallCommand` fazia isto de carona, e por isso o Reparo ligava nele — mas o
+    /// InstallCommand exige mod de catalogo com download, e quem chega neste estado costuma nao
+    /// ter nenhum dos dois.
+    /// </summary>
+    private async Task RepairReShadeAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null || item.ChosenExe is null) return;
+        ActionBusy = true;
+        try
+        {
+            var dep = await _reshade.DeployAsync(item.TargetDir, item.ChosenExe,
+                _rhi.GraphicsApi(item.Game.Name), _rhi.DllNameOverride(item.Game.Name),
+                new Progress<string>(s => DetailStatus = s));
+            DetailStatus = dep.Message;
+            if (item == _detailItem) await LoadDetailSafeAsync();
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>Ver <see cref="ModCommand"/>: tres estados por baixo, um interruptor por cima.</summary>
+    private async Task ToggleModAsync()
+    {
+        var item = _detailItem;
+        if (item is null) return;
+        // Desligar REMOVE, nao renomeia para .disabled.
+        //
+        // Ter as duas coisas pedia que a pessoa escolhesse entre "desativar" e "remover" sem nada
+        // na tela explicando a diferenca — e a diferenca era so onde os bytes ficam guardados,
+        // que nao e problema de quem usa. Religar nao custa download: o addon fica no cache de
+        // downloads do launcher e e reaproveitado quando o build remoto e o mesmo.
+        if (!item.IsInstalled) await InstallAsync();
+        else await RemoveAsync();
+        RaiseModState();
+    }
+
+    private async Task ToggleDlss5Async()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+        var dir = item.TargetDir;
+        var ini = item.State?.IniPath ?? System.IO.Path.Combine(dir, "ReShade.ini");
+        ActionBusy = true;
+        try
+        {
+            if (Dlss5Ready || NeuralApplied)
+            {
+                await Task.Run(() => NeuralUpliftService.Remove(dir, ini));
+                DetailStatus = L.T("Main_Neural_Removed");
+            }
+            else
+            {
+                var r = await Dlss5Installer.InstallAsync(
+                    item.Game, dir, ini, item.ChosenExe, item.State?.AddonPath,
+                    _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s));
+                DetailStatus = r.Ok
+                    ? string.Join("  •  ", r.Manual)
+                    : r.Blocker ?? string.Join("; ", r.Steps);
+            }
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    private async Task ToggleNeuralAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null || _neuralDetection is null) return;
+        // Sem mod RenoDX o item.State pode nao existir; o ReShade.ini fica ao lado do addon.
+        var iniPath = item.State?.IniPath ?? System.IO.Path.Combine(item.TargetDir, "ReShade.ini");
+        ActionBusy = true;
+        try
+        {
+            var dir = item.TargetDir;
+            var ini = iniPath;
+            var generic = _neuralDetection.UsesGeneric;
+            if (NeuralApplied)
+            {
+                await Task.Run(() => NeuralUpliftService.Remove(dir, ini));
+                NeuralApplied = false;
+                DetailStatus = L.T("Main_Neural_Removed");
+            }
+            else
+            {
+                // O addon generico e um addon de ReShade: sem esse host nao ha nada que o carregue.
+                // Instala na hora em vez de bloquear e mandar o usuario resolver por fora — era o
+                // passo manual que fazia "ligar o neural" falhar em jogo sem mod nenhum.
+                if (_neuralDetection.NeedsReShade && item.ChosenExe is not null)
+                {
+                    var deploy = await _reshade.DeployAsync(dir, item.ChosenExe, null, null,
+                        new Progress<string>(s => DetailStatus = s));
+                    if (!deploy.Success) { DetailStatus = deploy.Message; return; }
+                }
+
+                await Task.Run(() => NeuralUpliftService.Apply(dir, ini, generic,
+                    new Progress<string>(s => DetailStatus = s)));
+                NeuralApplied = true;
+                DetailStatus = L.T("Main_Neural_Applied");
+            }
+            // os sliders de NR entram/saem da lista junto com o estado
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>Traz o nvngx_dlssnr.dll para a biblioteca do launcher. Uma vez só: dali ele serve
+    /// todos os jogos.</summary>
+    private async Task ImportNeuralRuntimeAsync()
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = L.T("Main_Neural_ImportTitle"),
+            Filter = $"{NeuralUpliftService.RuntimeFile}|{NeuralUpliftService.RuntimeFile}",
+            CheckFileExists = true,
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        ActionBusy = true;
+        try
+        {
+            var path = dlg.FileName;
+            DetailStatus = L.T("Main_Neural_Importing");
+            await Task.Run(() => NeuralUpliftService.ImportRuntime(path));
+            DetailStatus = L.T("Main_Neural_Imported");
+            await CheckNeuralAsync(_detailToken);
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
         finally { ActionBusy = false; RaiseCommands(); }
@@ -661,6 +1349,15 @@ public class MainViewModel : ObservableObject
                 SetNoSettings(L.T("Main_NoSettings_Unavailable", item.Mod.Slug));
                 return;
             }
+
+            // Os controles de NR nao estao no manifesto (que sai do fonte publicado do renodx) e
+            // so existem nos builds que carregam a feature. Quando este build tem, eles entram
+            // aqui — senao o usuario ganha o botao de ligar e nenhuma forma de regular. Antes do
+            // teste de lista vazia: um addon so-NR tem zero opcoes no manifesto e mesmo assim
+            // precisa mostrar os sliders.
+            if (_neuralDetection?.AddonSupportsNr == true)
+                defs = [.. defs, .. NeuralUpliftService.Knobs];
+
             if (defs.Count == 0)
             {
                 // "no knobs" does not mean "nothing to do": several of these mods are configured
@@ -972,6 +1669,16 @@ public class MainViewModel : ObservableObject
             StatusText = failed.Count == 0
                 ? L.T("Main_Updates_Done", ok)
                 : L.T("Main_Updates_DonePartial", ok, failed.Count, string.Join("; ", failed.Take(3)));
+        }
+        catch (Exception ex)
+        {
+            // O laco por item ja trata a falha de cada um; o que ficava sem rede era o RESUMO —
+            // a contagem, a revarredura e a formatacao. Uma excecao ali escapava para o handler
+            // global (o comando e `async void`), e o usuario recebia "Erro inesperado" em vez de
+            // "N atualizados, M falharam" — sem nunca saber quais tinham dado certo.
+            Log.Warn($"update all: {ex.Message}");
+            StatusText = L.T("Main_Updates_DonePartial", ok, failed.Count,
+                             string.Join("; ", failed.Take(3)));
         }
         finally { ActionBusy = false; }
     }

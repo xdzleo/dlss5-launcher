@@ -210,6 +210,9 @@
   <data name="Cli_Help_Disable" xml:space="preserve">
     <value>Desativa o mod</value>
   </data>
+  <data name="Cli_Help_Dlss5" xml:space="preserve">
+    <value>Instala a cadeia inteira do DLSS 5 de uma vez (--all para todos os jogos elegíveis)</value>
+  </data>
   <data name="Cli_Help_Doctor" xml:space="preserve">
     <value>Diagnóstico completo: por que um jogo não aparece</value>
     <comment>pt: "Diagnóstico completo: por que um jogo não aparece".</comment>
@@ -233,6 +236,10 @@
   <data name="Cli_Help_Match" xml:space="preserve">
     <value>{0} casa com qualquer parte do nome, sem diferenciar maiusculas. Exemplo:</value>
     <comment>pt: "...sem diferenciar maiúsculas. Exemplo:". {0} = Cli_Arg_Game.</comment>
+  </data>
+  <data name="Cli_Help_Neural" xml:space="preserve">
+    <value>Lê a cadeia do neural DLSS 5 elo a elo, sem gravar nada</value>
+    <comment>pt: "Lê a cadeia do neural DLSS 5 elo a elo, sem gravar nada".</comment>
   </data>
   <data name="Cli_Help_Profile" xml:space="preserve">
     <value>Mostra ou define o perfil de nits do monitor</value>
@@ -491,6 +498,12 @@
   <data name="Dialog_DlssFix_Title" xml:space="preserve">
     <value>DLSS Frame Generation piscando?</value>
   </data>
+  <data name="Dialog_Dlss_Desc" xml:space="preserve">
+    <value>O jogo roda a versão de DLSS com que foi lançado. Runtimes mais novos entram no lugar direto e costumam corrigir artefatos da versão antiga. Os originais ficam guardados e dá para voltar.</value>
+  </data>
+  <data name="Dialog_Dlss_Title" xml:space="preserve">
+    <value>Runtimes de DLSS</value>
+  </data>
   <data name="Dialog_EngineNotes_Desc" xml:space="preserve">
     <value>Regras da wiki do RenoDX que valem para todo jogo deste motor, mesmo quando a nota do jogo não as repete.</value>
     <comment>O cabecalho do Expander continua vindo do VM (EngineNotesHeader).</comment>
@@ -526,11 +539,29 @@
     <value>Abrir a página do mod</value>
     <comment>Corrige o "Pagina do mod" sem acento citado no briefing. Comando e OpenNexusCommand, mas nem todo mod e do Nexus, entao o texto continua generico.</comment>
   </data>
+  <data name="Dialog_Mod_Desc" xml:space="preserve">
+    <value>O mod de HDR do jogo. Os controles finos ficam no overlay do próprio jogo — aperte Home jogando.</value>
+  </data>
   <data name="Dialog_Mod_Stable" xml:space="preserve">
     <value>Estável</value>
   </data>
+  <data name="Dialog_Mod_Title" xml:space="preserve">
+    <value>RenoDX HDR</value>
+  </data>
   <data name="Dialog_Mod_Unstable" xml:space="preserve">
     <value>Instável</value>
+  </data>
+  <data name="Dialog_Neural_Desc" xml:space="preserve">
+    <value>Roda o pós-processamento neural do DLSS 5 sobre o quadro pronto, um quadro atrasado. Melhora principalmente pele e rosto. Experimental.</value>
+    <comment>Descricao do cartao. DLSS e termo tecnico, mantido.</comment>
+  </data>
+  <data name="Dialog_Neural_Name" xml:space="preserve">
+    <value>Neural Uplift (DLSS-NR)</value>
+    <comment>Nome acessivel do botao. Nome da feature: nao traduzir.</comment>
+  </data>
+  <data name="Dialog_Neural_Title" xml:space="preserve">
+    <value>Neural Uplift (DLSS-NR) disponível</value>
+    <comment>Titulo do cartao.</comment>
   </data>
   <data name="Dialog_Notes_Label" xml:space="preserve">
     <value>COMO AJUSTAR ESTE JOGO</value>
@@ -591,6 +622,157 @@
   <data name="Dialog_Update_Title" xml:space="preserve">
     <value>Atualização disponível</value>
     <comment>Title Case no en por ser titulo curto, conforme a regra de maiuscula.</comment>
+  </data>
+  <data name="Dlss5_Blocked_NoDlss" xml:space="preserve">
+    <value>Este jogo não tem DLSS. O filtro neural lê os buffers que o jogo entrega ao DLSS, então aqui não há o que ler.</value>
+  </data>
+  <data name="Dlss5_Blocked_NoExe" xml:space="preserve">
+    <value>Nenhum executável do jogo foi encontrado para instalar o ReShade.</value>
+  </data>
+  <data name="Dlss5_Blocked_Skip" xml:space="preserve">
+    <value>O índice curado diz para não mexer no DLSS deste jogo.</value>
+  </data>
+  <data name="Dlss5_Blocked_Unknown" xml:space="preserve">
+    <value>Tudo foi gravado, mas o estado ainda não lê como ligado. Veja os passos acima.</value>
+  </data>
+  <data name="Dlss5_Link_Addon" xml:space="preserve">
+    <value>Addon</value>
+  </data>
+  <data name="Dlss5_Link_EarlyLoad" xml:space="preserve">
+    <value>Carga antecipada</value>
+  </data>
+  <data name="Dlss5_Link_Neural" xml:space="preserve">
+    <value>Runtime neural</value>
+  </data>
+  <data name="Dlss5_Link_Rr" xml:space="preserve">
+    <value>Ray Reconstruction</value>
+  </data>
+  <data name="Dlss5_Link_Switch" xml:space="preserve">
+    <value>Chave</value>
+  </data>
+  <data name="Dlss5_Manual_EnableDlss" xml:space="preserve">
+    <value>Ligue o DLSS nas opções gráficas do jogo — o filtro lê os buffers que o DLSS produz.</value>
+  </data>
+  <data name="Dlss5_Manual_Overlay" xml:space="preserve">
+    <value>Aperte Home no jogo para abrir o overlay e conferir se o estado diz ATIVO.</value>
+  </data>
+  <data name="Dlss5_State_Off" xml:space="preserve">
+    <value>Desligado</value>
+  </data>
+  <data name="Dlss5_State_On" xml:space="preserve">
+    <value>Instalado</value>
+  </data>
+  <data name="Dlss5_Step_AddonFetchFailed" xml:space="preserve">
+    <value>Não deu para buscar o addon: {0}</value>
+  </data>
+  <data name="Dlss5_Step_AddonGame" xml:space="preserve">
+    <value>O mod do próprio jogo aciona o filtro; runtimes e a chave no lugar.</value>
+  </data>
+  <data name="Dlss5_Step_AddonGeneric" xml:space="preserve">
+    <value>Addon genérico, os dois runtimes e a chave de carga antecipada no lugar.</value>
+  </data>
+  <data name="Dlss5_Step_ReShade" xml:space="preserve">
+    <value>ReShade instalado como {0}.</value>
+  </data>
+  <data name="Dlss5_Step_ReShadeAlready" xml:space="preserve">
+    <value>ReShade já presente ({0}).</value>
+  </data>
+  <data name="Dlss5_Step_RuntimeFetched" xml:space="preserve">
+    <value>Runtime neural {0} baixado e verificado.</value>
+  </data>
+  <data name="Dlss5_Step_StreamlineFailed" xml:space="preserve">
+    <value>Não deu para consertar o conjunto Streamline: {0}</value>
+  </data>
+  <data name="Dlss5_Step_StreamlineFixed" xml:space="preserve">
+    <value>Conjunto Streamline consertado.</value>
+  </data>
+  <data name="Dlss5_Step_StreamlineLeft" xml:space="preserve">
+    <value>O conjunto Streamline ainda tem {0} problema(s).</value>
+  </data>
+  <data name="Dlss_Failed" xml:space="preserve">
+    <value>Não deu para atualizar {0}: {1}</value>
+    <comment>{0} = nome do arquivo, {1} = mensagem do erro.</comment>
+  </data>
+  <data name="Dlss_Fg_Done" xml:space="preserve">
+    <value>{0} arquivo(s) do conjunto Streamline atualizado(s).</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Fg_Incomplete" xml:space="preserve">
+    <value>Falta o {0} na pasta de origem. Frame Generation só funciona se o conjunto inteiro for junto — troca pela metade é o que trava o jogo.</value>
+    <comment>{0} = arquivo faltando.</comment>
+  </data>
+  <data name="Dlss_Fg_NoSource" xml:space="preserve">
+    <value>Pasta não encontrada: {0}</value>
+    <comment>{0} = caminho.</comment>
+  </data>
+  <data name="Dlss_Fg_NoStreamline" xml:space="preserve">
+    <value>Este jogo não tem runtime do Streamline, então não há Frame Generation para atualizar.</value>
+  </data>
+  <data name="Dlss_Health_NotSigned" xml:space="preserve">
+    <value>{0} não é um runtime legítimo da NVIDIA ({1}). Troque pelo arquivo original do jogo.</value>
+    <comment>{0} = arquivo, {1} = detalhe da verificacao.</comment>
+  </data>
+  <data name="Dlss_Health_SlMismatch" xml:space="preserve">
+    <value>Os plugins do Streamline são de builds diferentes: {0}. Eles saem como um conjunto só — troca pela metade é o que trava o jogo na abertura. Use Restaurar, ou verifique os arquivos do jogo.</value>
+    <comment>{0} = versoes e arquivos encontrados.</comment>
+  </data>
+  <data name="Dlss_Index_Downloading" xml:space="preserve">
+    <value>Baixando {0} {1}…</value>
+    <comment>{0} = tipo (dlssnr, streamline), {1} = versão.</comment>
+  </data>
+  <data name="Dlss_Index_Extracting" xml:space="preserve">
+    <value>Extraindo {0}…</value>
+    <comment>{0} = tipo (dlssnr, streamline).</comment>
+  </data>
+  <data name="Dlss_Library_Empty" xml:space="preserve">
+    <value>Nenhum runtime de DLSS na biblioteca ainda. Faça a varredura primeiro — todo jogo com DLSS carrega um.</value>
+  </data>
+  <data name="Dlss_NotNvidia" xml:space="preserve">
+    <value>Não é assinado pela NVIDIA (assinante: {0}). Ignorado.</value>
+    <comment>{0} = subject do certificado encontrado.</comment>
+  </data>
+  <data name="Dlss_NotSwapped" xml:space="preserve">
+    <value>não é trocado — anda junto com o Streamline</value>
+  </data>
+  <data name="Dlss_Repair_Applying" xml:space="preserve">
+    <value>Aplicando o conjunto Streamline casado...</value>
+  </data>
+  <data name="Dlss_Repair_NoReference" xml:space="preserve">
+    <value>Não há conjunto Streamline completo na biblioteca nem backup para voltar. Aponte o launcher para uma pasta com um conjunto casado (os sl.* e o nvngx_dlssg.dll do mesmo build).</value>
+  </data>
+  <data name="Dlss_Repair_Partial" xml:space="preserve">
+    <value>{0} arquivo(s) restaurado(s), mas ainda ha problemas - verifique os arquivos do jogo.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Repair_Restored" xml:space="preserve">
+    <value>{0} arquivo(s) devolvido(s) ao original do jogo.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Searching" xml:space="preserve">
+    <value>Procurando runtimes de DLSS em {0}...</value>
+    <comment>{0} = nome da pasta sendo varrida.</comment>
+  </data>
+  <data name="Dlss_Sweep_Button" xml:space="preserve">
+    <value>Restaurar tudo</value>
+  </data>
+  <data name="Dlss_Sweep_Done" xml:space="preserve">
+    <value>{0} arquivo(s) devolvido(s) ao original do jogo.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Sweep_Game" xml:space="preserve">
+    <value>Restaurando {0}...</value>
+    <comment>{0} = nome do jogo.</comment>
+  </data>
+  <data name="Dlss_Sweep_Locked" xml:space="preserve">
+    <value>{0} restaurado(s). Ainda em uso (feche o jogo e repita): {1}</value>
+    <comment>{0} = quantidade, {1} = lista.</comment>
+  </data>
+  <data name="Dlss_Sweep_Title" xml:space="preserve">
+    <value>Estes jogos estão com um runtime de DLSS que este launcher trocou:</value>
+  </data>
+  <data name="Dlss_Updating" xml:space="preserve">
+    <value>{0}: {1} -&gt; {2}</value>
+    <comment>{0} = feature (Super Resolution etc), {1} = versao atual, {2} = versao nova.</comment>
   </data>
   <data name="Error_CheckUpdates" xml:space="preserve">
     <value>Falha ao verificar atualizações: {0}. Verifique a conexão e tente de novo.</value>
@@ -856,6 +1038,10 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Install_ModPage_Title" xml:space="preserve">
     <value>Página do mod</value>
   </data>
+  <data name="Install_Mod_Cached" xml:space="preserve">
+    <value>{0} já estava baixado — reaproveitando.</value>
+    <comment>{0} = nome do arquivo.</comment>
+  </data>
   <data name="Install_Mod_Done" xml:space="preserve">
     <value>{0} instalado.</value>
     <comment>{0} = nome do arquivo do addon.</comment>
@@ -1019,6 +1205,27 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Main_DlssFix_Removed" xml:space="preserve">
     <value>Correção de DLSS removida.</value>
   </data>
+  <data name="Main_Dlss_AlreadyCurrent" xml:space="preserve">
+    <value>Já está em dia — o jogo tem {0} runtime(s) na mesma versão da biblioteca ou acima.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Main_Dlss_Repair" xml:space="preserve">
+    <value>Corrigir</value>
+  </data>
+  <data name="Main_Dlss_Restore" xml:space="preserve">
+    <value>Restaurar originais</value>
+  </data>
+  <data name="Main_Dlss_Restored" xml:space="preserve">
+    <value>{0} runtime(s) original(is) restaurado(s).</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Main_Dlss_Update" xml:space="preserve">
+    <value>Atualizar</value>
+  </data>
+  <data name="Main_Dlss_Updated" xml:space="preserve">
+    <value>{0} runtime(s) atualizado(s).</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
   <data name="Main_Empty_Hint" xml:space="preserve">
     <value>Mude a busca ou o filtro.</value>
     <comment>Tirei as aspas curvas e o travessao do original. "Adicionar"/"Add" cita o rotulo do botao, entao muda junto com o idioma.</comment>
@@ -1095,6 +1302,34 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Main_Monitor" xml:space="preserve">
     <value>Meu monitor</value>
     <comment>Texto do botao e AutomationProperties.Name.</comment>
+  </data>
+  <data name="Main_Neural_Applied" xml:space="preserve">
+    <value>Neural Uplift ligado. Reinicie o jogo.</value>
+  </data>
+  <data name="Main_Neural_Apply" xml:space="preserve">
+    <value>Ligar</value>
+    <comment>Rotulo de botao. Title Case no en.</comment>
+  </data>
+  <data name="Main_Neural_Import" xml:space="preserve">
+    <value>Escolher arquivo</value>
+    <comment>Rotulo de botao. Title Case no en.</comment>
+  </data>
+  <data name="Main_Neural_ImportTitle" xml:space="preserve">
+    <value>Selecione o nvngx_dlssnr.dll</value>
+    <comment>Titulo do seletor de arquivo. Nome de arquivo: nao traduzir.</comment>
+  </data>
+  <data name="Main_Neural_Imported" xml:space="preserve">
+    <value>Runtime na biblioteca. Agora dá para ligar em qualquer jogo compatível.</value>
+  </data>
+  <data name="Main_Neural_Importing" xml:space="preserve">
+    <value>Copiando o runtime para a biblioteca...</value>
+  </data>
+  <data name="Main_Neural_Remove" xml:space="preserve">
+    <value>Desligar</value>
+    <comment>Rotulo de botao. Title Case no en.</comment>
+  </data>
+  <data name="Main_Neural_Removed" xml:space="preserve">
+    <value>Neural Uplift desligado e runtime removido do jogo.</value>
   </data>
   <data name="Main_NoSettings_ExternalMod" xml:space="preserve">
     <value>Este mod é distribuído só pelo Nexus/Discord e o launcher não conhece as configurações dele. Ajuste pelo overlay do ReShade no jogo (tecla Home).</value>
@@ -1308,6 +1543,80 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Main_Updates_Updating" xml:space="preserve">
     <value>Atualizando {0}...</value>
     <comment>{0} = nome do jogo.</comment>
+  </data>
+  <data name="Neural_Applied" xml:space="preserve">
+    <value>Neural Uplift ligado.</value>
+  </data>
+  <data name="Neural_AutoFound" xml:space="preserve">
+    <value>Runtime neural encontrado e adicionado à biblioteca: {0}</value>
+    <comment>{0} = caminho de onde foi importado.</comment>
+  </data>
+  <data name="Neural_Blocked_Addon" xml:space="preserve">
+    <value>Falta o {0} na biblioteca. Importe o addon neural genérico uma vez e todo jogo com DLSS passa a poder usá-lo.</value>
+    <comment>{0} = nome do arquivo do addon.</comment>
+  </data>
+  <data name="Neural_Blocked_Driver" xml:space="preserve">
+    <value>Precisa do driver {1} ou mais novo. Este é o {0}.</value>
+    <comment>{0} = branch instalado, {1} = branch minimo.</comment>
+  </data>
+  <data name="Neural_Blocked_Gpu" xml:space="preserve">
+    <value>Precisa de uma GeForce RTX série 50. A placa encontrada aqui foi: {0}. Os kernels do modelo só existem compilados para Blackwell (sm_120) — driver novo não resolve.</value>
+    <comment>{0} = nome da placa.</comment>
+  </data>
+  <data name="Neural_Blocked_ReShade" xml:space="preserve">
+    <value>O ReShade não está instalado neste jogo. O addon neural é um addon do ReShade, então precisa desse host para carregar.</value>
+  </data>
+  <data name="Neural_Blocked_Runtime" xml:space="preserve">
+    <value>Falta o {0}. Ele não vem em driver nem no SDK público da NVIDIA, então é tirado de um jogo que o distribui ou baixado do índice do RHI — nos dois casos só é instalado se a NVIDIA assinou.</value>
+    <comment>{0} = nome do arquivo.</comment>
+  </data>
+  <data name="Neural_Deploying" xml:space="preserve">
+    <value>Copiando o runtime para a pasta do jogo (158 MB)...</value>
+  </data>
+  <data name="Neural_DeployingAddon" xml:space="preserve">
+    <value>Instalando o addon neural genérico...</value>
+  </data>
+  <data name="Neural_DeployingRR" xml:space="preserve">
+    <value>Copiando o runtime de Ray Reconstruction…</value>
+  </data>
+  <data name="Neural_Fetch_BadAddon" xml:space="preserve">
+    <value>O addon baixado não corresponde aos bytes esperados ({0}). Ele não foi instalado.</value>
+    <comment>{0} = hash ou tamanho recebido.</comment>
+  </data>
+  <data name="Neural_Fetch_NotGenuine" xml:space="preserve">
+    <value>O runtime baixado não está assinado pela NVIDIA com o digest intacto ({0}). Ele não foi instalado.</value>
+    <comment>{0} = detalhe da verificação de assinatura.</comment>
+  </data>
+  <data name="Neural_Fetched" xml:space="preserve">
+    <value>Runtime neural {0} baixado e verificado.</value>
+    <comment>{0} = versão, ex. 310.8.0.</comment>
+  </data>
+  <data name="Neural_FetchingAddon" xml:space="preserve">
+    <value>Baixando o addon neural…</value>
+  </data>
+  <data name="Neural_Import_NotNrAddon" xml:space="preserve">
+    <value>Este addon não controla o neural rendering (sem os parâmetros DLSSNR dentro). Escolha um build que suporte.</value>
+  </data>
+  <data name="Neural_Import_TooSmall" xml:space="preserve">
+    <value>Arquivo pequeno demais para ser o runtime (o real tem cerca de 158 MB). Provavelmente é um stub ou um download incompleto.</value>
+  </data>
+  <data name="Neural_Import_WrongName" xml:space="preserve">
+    <value>O arquivo precisa se chamar {0}. O addon procura por esse nome exato.</value>
+    <comment>{0} = nome do arquivo.</comment>
+  </data>
+  <data name="Neural_InstallingReShade" xml:space="preserve">
+    <value>Instalando o ReShade...</value>
+  </data>
+  <data name="Neural_ReShadeInstalled" xml:space="preserve">
+    <value>ReShade instalado.</value>
+  </data>
+  <data name="Neural_Remove_Locked" xml:space="preserve">
+    <value>Não deu para apagar {0} — o arquivo está em uso. Feche o jogo e tente de novo; enquanto ele estiver lá a feature continua ativa no jogo.</value>
+    <comment>{0} = nomes dos arquivos travados.</comment>
+  </data>
+  <data name="Neural_Searching" xml:space="preserve">
+    <value>Procurando o runtime neural em {0}...</value>
+    <comment>{0} = nome da pasta sendo varrida.</comment>
   </data>
   <data name="Profile_ApplyOnInstall" xml:space="preserve">
     <value>Aplicar automaticamente ao instalar um mod</value>

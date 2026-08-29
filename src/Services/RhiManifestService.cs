@@ -27,6 +27,7 @@ public class RhiManifestService
     private readonly Dictionary<string, List<ModNote>> _rich = new();
     private readonly Dictionary<string, string> _reshadeVersion = new();
     private readonly HashSet<string> _nativeHdr = new();
+    private readonly HashSet<string> _dlssSkip = new();
 
     public async Task LoadAsync()
     {
@@ -78,6 +79,15 @@ public class RhiManifestService
             foreach (var g in native.EnumerateArray())
                 if (g.GetString() is { Length: > 0 } v)
                     _nativeHdr.Add(MatchService.Normalize(v));
+
+        // Games the index says to keep away from DLSS entirely. Detecting a bundled runtime is not
+        // the same as the game being able to use a different one — these are titles where the
+        // upstream project already learned that touching the DLSS side breaks something. A list
+        // someone maintains against real reports is worth more than any heuristic here.
+        if (root.TryGetProperty("dlssSkipGames", out var skip) && skip.ValueKind == JsonValueKind.Array)
+            foreach (var g in skip.EnumerateArray())
+                if (g.GetString() is { Length: > 0 } v)
+                    _dlssSkip.Add(MatchService.Normalize(v));
 
         // The manifest carries 64 top-level keys and this service used to read five. Everything
         // below is per-game guidance that already existed in the file the app downloads.
@@ -253,6 +263,9 @@ public class RhiManifestService
     public string? DllNameOverride(string gameName) => _dllName.GetValueOrDefault(MatchService.Normalize(gameName));
     public string? GameNote(string gameName) => _notes.GetValueOrDefault(MatchService.Normalize(gameName));
     public bool IsNativeHdr(string gameName) => _nativeHdr.Contains(MatchService.Normalize(gameName));
+
+    /// <summary>The index says to leave this game's DLSS alone — no runtime swap, no neural.</summary>
+    public bool SkipsDlss(string gameName) => _dlssSkip.Contains(MatchService.Normalize(gameName));
 
     /// <summary>Every piece of curated guidance for this game, with links and blocks intact.</summary>
     public IReadOnlyList<ModNote> GameNotes(string gameName) =>

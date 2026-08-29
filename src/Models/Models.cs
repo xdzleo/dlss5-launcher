@@ -108,6 +108,10 @@ public class SettingDef
     public string Type { get; init; } = "float";
     public string? Label { get; init; }
     public string? Section { get; init; }
+
+    /// <summary>Secao do .ini onde este valor vive. Null = a secao de preset do mod. Existe porque
+    /// addons genericos (o neural, por exemplo) tem bloco proprio e nao participam do preset.</summary>
+    public string? IniSection { get; init; }
     public string? Tooltip { get; init; }
     public double? Default { get; init; }
     public double? Min { get; init; }

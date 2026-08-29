@@ -42,7 +42,11 @@ public static class DlssFixService
             {
                 IgnoreInaccessible = true,
                 RecurseSubdirectories = true,
-                MaxRecursionDepth = 4,
+                // Unreal keeps the runtime at Engine\Plugins\Runtime\Nvidia\DLSS\Binaries\
+                // ThirdParty\Win64 — eight levels down. At a depth of 4 this found nothing in a
+                // UE game, and ShouldOffer only offers the fix for UE/Unity mods, so the card was
+                // missing from precisely the titles it exists for.
+                MaxRecursionDepth = 10,
                 AttributesToSkip = FileAttributes.ReparsePoint,
             };
             foreach (var f in Directory.EnumerateFiles(installDir, "*.dll", options))
