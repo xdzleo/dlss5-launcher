@@ -179,6 +179,59 @@ public static class FeederService
         try { if (File.Exists(p)) File.Delete(p); } catch { }
     }
 
+    /// <summary>
+    /// Busca a ultima versao do Feeder e do shader e, se mudou, guarda e leva aos jogos que ja o
+    /// usam. Devolve quantos jogos foram atualizados, ou -1 quando nao havia nada novo.
+    ///
+    /// O Feeder muda rapido — nasceu em v0.1.0 e ja esta em 0.5.0, com o contrato de motion
+    /// vectors trocado no meio do caminho. Esperar que alguem repare e reinstale a mao e o mesmo
+    /// que ficar parado.
+    /// </summary>
+    public static async Task<int> UpdateAsync(IEnumerable<string> installDirs,
+                                              IProgress<string>? progress = null,
+                                              CancellationToken ct = default)
+    {
+        if (!File.Exists(LibraryAddon)) return -1;
+        using var http = NewClient();
+
+        var addon = await http.GetByteArrayAsync(AddonUrl, ct);
+        if (addon.Length < 4096 || addon[0] != (byte)'M' || addon[1] != (byte)'Z')
+            throw new InvalidOperationException(L.T("Feeder_BadDownload"));
+        var fx = await http.GetByteArrayAsync(FxUrl, ct);
+        if (!System.Text.Encoding.ASCII.GetString(fx).Contains("texMotionVectors", StringComparison.Ordinal))
+            throw new InvalidOperationException(L.T("Feeder_MvNoProvider"));
+
+        var atual = File.ReadAllBytes(LibraryAddon);
+        if (addon.Length == atual.Length && addon.SequenceEqual(atual)) return -1;
+
+        await File.WriteAllBytesAsync(LibraryAddon, addon, ct);
+        await File.WriteAllBytesAsync(LibraryFx, fx, ct);
+        Log.Info($"feeder atualizado na biblioteca ({addon.Length} bytes)");
+
+        // Reimplantar por inteiro, e nao so trocar o .addon64: uma versao nova pode mudar o
+        // contrato entre o shader e o addon — foi o que aconteceu da 0.1 para a 0.5 — e deixar
+        // os dois em versoes diferentes e a mesma falha silenciosa de sempre.
+        var n = 0;
+        foreach (var dir in installDirs.Where(d => d is not null && Directory.Exists(d)))
+        {
+            foreach (var alvo in Directory.EnumerateFiles(dir, AddonFile, new EnumerationOptions
+                     {
+                         IgnoreInaccessible = true,
+                         RecurseSubdirectories = true,
+                         MaxRecursionDepth = 10,
+                         AttributesToSkip = FileAttributes.ReparsePoint,
+                     }))
+            {
+                var pasta = Path.GetDirectoryName(alvo);
+                if (pasta is null || AddonService.IsGameRunning(pasta)) continue;
+                try { Deploy(pasta); n++; }
+                catch (Exception ex) { Log.Warn($"atualizar feeder em {alvo}: {ex.Message}"); }
+            }
+        }
+        progress?.Report(L.T("Feeder_Updated", n));
+        return n;
+    }
+
     private static async Task BaixarAsync(HttpClient http, string url, string destino, CancellationToken ct)
     {
         using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);

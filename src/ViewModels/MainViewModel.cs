@@ -1789,6 +1789,35 @@ public class MainViewModel : ObservableObject
         catch (Exception ex) { DetailStatus = ex.Message; }
     }
 
+    /// <summary>
+    /// Traz a ponte DX11 e o Feeder para a ultima versao, e leva aos jogos que ja os usam.
+    ///
+    /// Estas pecas nao tem cartao na grade nem badge de "update available": sao arquivos de
+    /// terceiros que o launcher busca sozinho, e a unica forma de a pessoa saber que ficaram para
+    /// tras seria acompanhar release de estranho no GitHub. Ninguem faz isso — a ponte ficou
+    /// cinco versoes atras aqui mesmo, e ela e a peca sem a qual o Baldur's Gate nao roda.
+    ///
+    /// Silencioso quando nao ha novidade: devolve texto so quando algo mudou de fato.
+    /// </summary>
+    private async Task<string> AtualizarPecasDlss5Async()
+    {
+        var dirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
+        var partes = new List<string>();
+        try
+        {
+            var n = await NeuralUpliftService.UpdateBridgeAsync(dirs!);
+            if (n >= 0) partes.Add(L.T("Dlss5_Bridge_Updated", n));
+        }
+        catch (Exception ex) { Log.Warn($"atualizar ponte: {ex.Message}"); }
+        try
+        {
+            var n = await FeederService.UpdateAsync(dirs!);
+            if (n >= 0) partes.Add(L.T("Feeder_Updated", n));
+        }
+        catch (Exception ex) { Log.Warn($"atualizar feeder: {ex.Message}"); }
+        return partes.Count == 0 ? "" : " " + string.Join(" ", partes);
+    }
+
     /// <summary>Checa TODOS os mods instalados de uma vez (HEAD em paralelo, comparando ETag)
     /// e marca na grade quais têm build nova.</summary>
     private async Task CheckUpdatesAsync()
@@ -1800,13 +1829,18 @@ public class MainViewModel : ObservableObject
             // "tem coisa nova?", e a versao do proprio app faz parte da resposta.
             var launcherCheck = LauncherUpdateService.CheckAsync();
 
+            // As pecas do DLSS 5 tambem. Elas nao aparecem na grade e ninguem vai conferir
+            // release de terceiro no GitHub: a ponte ficou cinco versoes atras sem que nada
+            // indicasse, e ela e o que faz o Baldur's Gate funcionar.
+            var pecas = await AtualizarPecasDlss5Async();
+
             var installed = Games.Where(g => g.IsInstalled && g.Mod?.DownloadUrl != null && g.State != null).ToList();
             if (installed.Count == 0)
             {
                 LauncherUpdate = await launcherCheck ?? _launcherUpdate;
-                StatusText = HasLauncherUpdate
+                StatusText = (HasLauncherUpdate
                     ? L.T("Update_Found", _launcherUpdate!.Version.ToString())
-                    : L.T("Main_Updates_NoneInstalled");
+                    : L.T("Main_Updates_NoneInstalled")) + pecas;
                 UpdateCount = 0;
                 return;
             }
@@ -1837,7 +1871,7 @@ public class MainViewModel : ObservableObject
             var doLauncher = HasLauncherUpdate ? " " + L.T("Update_Found", _launcherUpdate!.Version.ToString()) : "";
             StatusText = (count > 0
                 ? L.T("Main_Updates_Available", count)
-                : L.T("Main_Updates_AllCurrent")) + unverified + doLauncher;
+                : L.T("Main_Updates_AllCurrent")) + unverified + doLauncher + pecas;
         }
         catch (Exception ex)
         {

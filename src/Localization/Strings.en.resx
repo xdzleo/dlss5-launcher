@@ -656,6 +656,9 @@
   <data name="Dlss5_Bridge_Notice" xml:space="preserve">
     <value>This game runs DirectX 11. The DX11 bridge is active: it mirrors the game's DLSS contract onto a second D3D12 device so the neural pass has somewhere to run. Launch through the DirectX 11 executable.</value>
   </data>
+  <data name="Dlss5_Bridge_Updated" xml:space="preserve">
+    <value>DX11 bridge updated ({0} game(s)).</value>
+  </data>
   <data name="Dlss5_Feeder_Notice" xml:space="preserve">
     <value>A game with DLSS hands the motion of every object to the filter. Here a shader has to guess it from the image, so the neural pass has less to work with and the gain is smaller than in a DLSS game. There is no FPS gain either — it runs at full resolution.</value>
   </data>
@@ -915,6 +918,9 @@
   </data>
   <data name="Feeder_NotInLibrary" xml:space="preserve">
     <value>The Feeder is not in the library yet.</value>
+  </data>
+  <data name="Feeder_Updated" xml:space="preserve">
+    <value>DLSS5 Feeder updated ({0} game(s)).</value>
   </data>
   <data name="Guide_AntiCheat_Body" xml:space="preserve">
     <value>The add-on build of ReShade is unsigned. In games with EAC/BattlEye (Elden Ring, GTA Online) it risks a ban, so play offline. The launcher detects those games and warns you before installing.</value>

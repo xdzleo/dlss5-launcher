@@ -656,6 +656,9 @@
   <data name="Dlss5_Bridge_Notice" xml:space="preserve">
     <value>Este jogo roda DirectX 11. A ponte DX11 está ativa: ela espelha o contrato de DLSS do jogo num segundo device D3D12, para o pass neural ter onde rodar. Abra pelo executável DirectX 11.</value>
   </data>
+  <data name="Dlss5_Bridge_Updated" xml:space="preserve">
+    <value>Ponte DX11 atualizada ({0} jogo(s)).</value>
+  </data>
   <data name="Dlss5_Feeder_Notice" xml:space="preserve">
     <value>Um jogo com DLSS entrega ao filtro o movimento de cada objeto. Aqui um shader precisa adivinhar isso pela imagem, então o passe neural tem menos com que trabalhar e o ganho é menor do que num jogo com DLSS. Também não há ganho de FPS — ele roda na resolução cheia.</value>
   </data>
@@ -915,6 +918,9 @@
   </data>
   <data name="Feeder_NotInLibrary" xml:space="preserve">
     <value>O Feeder ainda não está na biblioteca.</value>
+  </data>
+  <data name="Feeder_Updated" xml:space="preserve">
+    <value>DLSS5 Feeder atualizado ({0} jogo(s)).</value>
   </data>
   <data name="Guide_AntiCheat_Body" xml:space="preserve">
     <value>O ReShade com suporte a add-ons é uma build não assinada. Em jogos com EAC/BattlEye (Elden Ring, GTA Online) o risco é banimento: jogue offline. O launcher detecta esses jogos e avisa antes de instalar.</value>

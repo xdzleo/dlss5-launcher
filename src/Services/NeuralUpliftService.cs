@@ -510,11 +510,21 @@ public static class NeuralUpliftService
     /// fixada por hash de conteudo, e nada e instalado se os bytes nao forem estes.
     /// </summary>
     public const string BridgeFile = "dlss5-dx11-bridge.addon64";
+    /// <summary>
+    /// A ponte vem sempre da ultima release, nao de uma tag fixa.
+    ///
+    /// Antes a URL apontava para a v1.0.21 e o download era conferido contra um SHA-256 escrito
+    /// aqui. Fixar o hash protege de um binario trocado, mas congela a versao: quando saiu a
+    /// v1.0.26, cinco versoes depois, o launcher continuava instalando a 1.0.21 e ninguem tinha
+    /// como notar — e a ponte e o que faz o Baldur's Gate funcionar.
+    ///
+    /// O que substitui o hash e a verificacao de CONTEUDO, a mesma do caminho manual: precisa ser
+    /// um PE que se declare a ponte. Isso nao prova autoria como um hash provaria, mas o hash so
+    /// provava a autoria de UMA versao — e a alternativa real nao era "hash de todas", era ficar
+    /// parado numa de agosto.
+    /// </summary>
     private const string BridgeUrl =
-        "https://github.com/NIGos/dlss5-dx11-bridge/releases/download/v1.0.21/dlss5-dx11-bridge.addon64";
-    private const string BridgeSha256 =
-        "B3DD85D42094A10D410F6A63E7E6A95D8436CB58C4E01CDF68F09D380BB3152B";
-    private const long BridgeLength = 277504;
+        "https://github.com/NIGos/dlss5-dx11-bridge/releases/latest/download/dlss5-dx11-bridge.addon64";
 
     public static string LibraryBridge { get; } = Path.Combine(LibraryDir, BridgeFile);
 
@@ -554,7 +564,7 @@ public static class NeuralUpliftService
         catch (Exception ex) { Log.Warn($"remover ponte {targetDir}: {ex.Message}"); }
     }
 
-    /// <summary>Traz a ponte para a biblioteca, conferindo os bytes. Ver <see cref="BridgeFile"/>.</summary>
+    /// <summary>Traz a ponte para a biblioteca se ela ainda nao estiver la.</summary>
     public static async Task<bool> FetchBridgeAsync(IProgress<string>? progress = null,
                                                     CancellationToken ct = default)
     {
@@ -562,23 +572,78 @@ public static class NeuralUpliftService
         try
         {
             progress?.Report(L.T("Dlss5_Bridge_Fetching"));
-            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-            var bytes = await http.GetByteArrayAsync(BridgeUrl, ct);
-            if (bytes.Length != BridgeLength)
-                throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", bytes.Length));
-            var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
-            if (!hash.Equals(BridgeSha256, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", hash));
-
+            var bytes = await BaixarPonteAsync(ct);
             Directory.CreateDirectory(LibraryDir);
             await File.WriteAllBytesAsync(LibraryBridge, bytes, ct);
-            Log.Info("dlss5 bridge fetched and verified by hash");
+            Log.Info($"dlss5 bridge fetched ({bytes.Length} bytes)");
             return true;
         }
         catch (OperationCanceledException) { throw; }
         catch (InvalidOperationException) { throw; }
         catch (Exception ex) { Log.Warn($"dlss5 bridge fetch: {ex.Message}"); return false; }
+    }
+
+    /// <summary>
+    /// Busca a ultima ponte e, se for diferente da que temos, guarda e leva aos jogos que ja a
+    /// usam. Devolve quantos jogos foram atualizados, ou -1 quando nao havia nada novo.
+    ///
+    /// Substituir arquivo dentro de jogo aberto nao da certo, entao esses ficam de fora e pegam
+    /// a versao nova na proxima passada.
+    /// </summary>
+    public static async Task<int> UpdateBridgeAsync(IEnumerable<string> installDirs,
+                                                    IProgress<string>? progress = null,
+                                                    CancellationToken ct = default)
+    {
+        if (!File.Exists(LibraryBridge)) return -1;
+        var bytes = await BaixarPonteAsync(ct);
+        if (bytes.Length == new FileInfo(LibraryBridge).Length
+            && Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes))
+               == Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(LibraryBridge))))
+            return -1;
+
+        await File.WriteAllBytesAsync(LibraryBridge, bytes, ct);
+        Log.Info($"dlss5 bridge atualizada na biblioteca ({bytes.Length} bytes)");
+
+        var n = 0;
+        foreach (var dir in installDirs.Where(d => d is not null && Directory.Exists(d)))
+        {
+            foreach (var alvo in Directory.EnumerateFiles(dir, BridgeFile, new EnumerationOptions
+                     {
+                         IgnoreInaccessible = true,
+                         RecurseSubdirectories = true,
+                         MaxRecursionDepth = 10,
+                         AttributesToSkip = FileAttributes.ReparsePoint,
+                     }))
+            {
+                var pasta = Path.GetDirectoryName(alvo);
+                if (pasta is null || AddonService.IsGameRunning(pasta)) continue;
+                try { File.WriteAllBytes(alvo, bytes); n++; }
+                catch (Exception ex) { Log.Warn($"atualizar ponte em {alvo}: {ex.Message}"); }
+            }
+        }
+        progress?.Report(L.T("Dlss5_Bridge_Updated", n));
+        return n;
+    }
+
+    /// <summary>
+    /// Baixa a ponte e confere que e mesmo ela.
+    ///
+    /// A checagem e por conteudo: um PE que se declara a ponte na descricao que o ReShade le.
+    /// Sem isso, uma pagina de erro devolvida com 200, ou um asset renomeado na release, viraria
+    /// um arquivo com o nome certo que o jogo carrega e que nao faz nada.
+    /// </summary>
+    private static async Task<byte[]> BaixarPonteAsync(CancellationToken ct)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
+        var bytes = await http.GetByteArrayAsync(BridgeUrl, ct);
+        if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
+            throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", bytes.Length));
+        var texto = System.Text.Encoding.ASCII.GetString(bytes);
+        if (!texto.Contains("DX11 Bridge", StringComparison.OrdinalIgnoreCase)
+            && !texto.Contains("dlss5-dx11-bridge", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(L.T("Settings_Bridge_NotBridge"));
+        return bytes;
     }
 
     /// <summary>

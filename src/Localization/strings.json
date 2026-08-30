@@ -757,6 +757,10 @@
     "en": "This game runs DirectX 11. The DX11 bridge is active: it mirrors the game's DLSS contract onto a second D3D12 device so the neural pass has somewhere to run. Launch through the DirectX 11 executable.",
     "pt-BR": "Este jogo roda DirectX 11. A ponte DX11 está ativa: ela espelha o contrato de DLSS do jogo num segundo device D3D12, para o pass neural ter onde rodar. Abra pelo executável DirectX 11."
   },
+  "Dlss5_Bridge_Updated": {
+    "en": "DX11 bridge updated ({0} game(s)).",
+    "pt-BR": "Ponte DX11 atualizada ({0} jogo(s))."
+  },
   "Dlss5_Feeder_Notice": {
     "en": "A game with DLSS hands the motion of every object to the filter. Here a shader has to guess it from the image, so the neural pass has less to work with and the gain is smaller than in a DLSS game. There is no FPS gain either — it runs at full resolution.",
     "pt-BR": "Um jogo com DLSS entrega ao filtro o movimento de cada objeto. Aqui um shader precisa adivinhar isso pela imagem, então o passe neural tem menos com que trabalhar e o ganho é menor do que num jogo com DLSS. Também não há ganho de FPS — ele roda na resolução cheia."
@@ -1092,6 +1096,10 @@
   "Feeder_NotInLibrary": {
     "en": "The Feeder is not in the library yet.",
     "pt-BR": "O Feeder ainda não está na biblioteca."
+  },
+  "Feeder_Updated": {
+    "en": "DLSS5 Feeder updated ({0} game(s)).",
+    "pt-BR": "DLSS5 Feeder atualizado ({0} jogo(s))."
   },
   "Guide_AntiCheat_Body": {
     "en": "The add-on build of ReShade is unsigned. In games with EAC/BattlEye (Elden Ring, GTA Online) it risks a ban, so play offline. The launcher detects those games and warns you before installing.",
