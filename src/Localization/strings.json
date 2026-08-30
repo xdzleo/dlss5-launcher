@@ -2274,6 +2274,18 @@
     "en": "unknown version",
     "pt-BR": "versão desconhecida"
   },
+  "Settings_Runtime_Community": {
+    "en": "Community build — NVIDIA did not sign this file. It exists to run on RTX 40, where NVIDIA's own kernels do not. The author of the patch says not to use it in online or anti-cheat games: it modifies a file the anti-cheat may check.",
+    "pt-BR": "Build da comunidade — a NVIDIA não assinou este arquivo. Ele existe para rodar nas RTX 40, onde os kernels da NVIDIA não rodam. O autor do patch diz para não usar em jogo online ou com anti-cheat: ele altera um arquivo que o anti-cheat pode conferir."
+  },
+  "Settings_Runtime_Done": {
+    "en": "Runtime stored in the library — NVIDIA's signature checks out.",
+    "pt-BR": "Runtime guardado na biblioteca — a assinatura da NVIDIA confere."
+  },
+  "Settings_Runtime_DoneCommunity": {
+    "en": "Runtime stored. It is a community build: the signature no longer checks out, and the GPU requirement is lifted. Read the warning on the card.",
+    "pt-BR": "Runtime guardado. É um build da comunidade: a assinatura não confere mais, e a exigência de GPU foi liberada. Leia o aviso no cartão."
+  },
   "Settings_Runtime_Have": {
     "en": "NVIDIA ships this in no driver and no public SDK. Found on this machine or fetched from the RHI index, and only installed if NVIDIA signed it.",
     "pt-BR": "A NVIDIA não distribui isto em driver nem em SDK público. Achado nesta máquina ou buscado no índice do RHI, e só instalado se a NVIDIA assinou."
@@ -2281,6 +2293,10 @@
   "Settings_Runtime_None": {
     "en": "Not here yet. The launcher looks for a copy on this machine, then falls back to the RHI index.",
     "pt-BR": "Ainda não está aqui. O launcher procura uma cópia nesta máquina e, se não achar, busca no índice do RHI."
+  },
+  "Settings_Runtime_Pick": {
+    "en": "Pick the nvngx_dlssnr.dll you want to use",
+    "pt-BR": "Escolha o nvngx_dlssnr.dll que você quer usar"
   },
   "Settings_Runtime_Title": {
     "en": "Neural runtime",

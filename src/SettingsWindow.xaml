@@ -137,24 +137,48 @@
                         </DockPanel>
                     </Border>
 
-                    <!-- 3. O runtime. Sem botao: nao ha o que escolher — ou a NVIDIA assinou, ou
-                            nao entra. O launcher acha sozinho na maquina ou busca no indice do RHI. -->
+                    <!-- 3. O runtime. Ganhou botao quando passou a existir escolha: a NVIDIA
+                            compila os kernels so para Blackwell, e ha builds da comunidade com
+                            eles recompilados para Ada. Esses nao tem assinatura valida — o
+                            arquivo foi alterado depois de assinado — entao a escolha e de quem
+                            instala, e o cartao diz o que ela custa. -->
                     <Border Style="{StaticResource PieceCard}" Background="#1C1F26"
                             BorderBrush="{StaticResource BorderBrush2}">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource IconCheck}" Fill="{StaticResource GreenBrush}"
-                                      Stretch="Uniform" Width="15" Height="15" VerticalAlignment="Center"
-                                      Margin="0,0,8,0"/>
-                                <TextBlock Text="{loc:Tr Settings_Runtime_Title}" Style="{StaticResource PieceName}"
-                                           Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
-                                <Border Style="{StaticResource VersionPill}">
-                                    <TextBlock x:Name="RuntimePill" FontSize="11" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextDimBrush}"/>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Padding="13,7" VerticalAlignment="Top"
+                                    Margin="12,0,0,0" Click="OnImportRuntime"
+                                    Content="{loc:Tr Settings_Addon_Update}"/>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path x:Name="RuntimeIcon" Data="{StaticResource IconCheck}"
+                                          Fill="{StaticResource GreenBrush}"
+                                          Stretch="Uniform" Width="15" Height="15" VerticalAlignment="Center"
+                                          Margin="0,0,8,0"/>
+                                    <TextBlock Text="{loc:Tr Settings_Runtime_Title}" Style="{StaticResource PieceName}"
+                                               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                                    <Border Style="{StaticResource VersionPill}">
+                                        <TextBlock x:Name="RuntimePill" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextDimBrush}"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock x:Name="RuntimeText" Style="{StaticResource PieceState}"/>
+
+                                <!-- So aparece com um build da comunidade instalado. O aviso de
+                                     anti-cheat e do proprio autor do patch, nao nosso: ele diz
+                                     para nao usar em jogo online protegido. -->
+                                <Border x:Name="RuntimeWarn" CornerRadius="7" Padding="9,7" Margin="0,8,0,0"
+                                        Background="#33291B" BorderBrush="#8A6A30" BorderThickness="1"
+                                        Visibility="Collapsed">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconWarning}" Fill="#E8B860" Stretch="Uniform"
+                                              Width="13" Height="13" VerticalAlignment="Top" Margin="0,1,8,0"/>
+                                        <TextBlock Text="{loc:Tr Settings_Runtime_Community}" FontSize="11"
+                                                   TextWrapping="Wrap" LineHeight="16" MaxWidth="430"
+                                                   Foreground="#E8C89A"/>
+                                    </StackPanel>
                                 </Border>
                             </StackPanel>
-                            <TextBlock x:Name="RuntimeText" Style="{StaticResource PieceState}"/>
-                        </StackPanel>
+                        </DockPanel>
                     </Border>
 
                     <TextBlock Text="{loc:Tr Settings_Footnote}" Style="{StaticResource Caption}"

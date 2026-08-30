@@ -837,12 +837,20 @@ public static class NeuralUpliftService
     /// <param name="DriverBranch">616 for 616.56. 0 when no NVIDIA adapter was found.</param>
     public record HostCapability(string? GpuName, int DriverBranch, bool Blackwell, bool RuntimeInLibrary)
     {
-        public bool Ready => Blackwell && DriverBranch >= MinDriverBranch && RuntimeInLibrary;
+        /// <summary>
+        /// A exigencia de Blackwell vale para o runtime da NVIDIA, cujos kernels sao sm_120 e
+        /// so isso. Um build da comunidade com os kernels recompilados cobre as arquiteturas
+        /// anteriores — nesse caso a GPU deixa de ser o limite, e quem trouxe o arquivo ja sabe
+        /// o que trouxe.
+        /// </summary>
+        public bool GpuOk => Blackwell || RuntimeIsCommunityBuild;
+
+        public bool Ready => GpuOk && DriverBranch >= MinDriverBranch && RuntimeInLibrary;
 
         /// <summary>The single reason this host cannot run it, or null when it can. Ordered by
         /// what the user can actually act on: a missing file is fixable, a GPU is not.</summary>
         public string? Blocker =>
-            !Blackwell ? L.T("Neural_Blocked_Gpu", GpuName ?? "?")
+            !GpuOk ? L.T("Neural_Blocked_Gpu", GpuName ?? "?")
             : DriverBranch < MinDriverBranch ? L.T("Neural_Blocked_Driver", DriverBranch, MinDriverBranch)
             : !RuntimeInLibrary ? L.T("Neural_Blocked_Runtime", RuntimeFile)
             : null;
@@ -1418,8 +1426,41 @@ public static class NeuralUpliftService
 
         Directory.CreateDirectory(LibraryDir);
         File.Copy(sourcePath, LibraryRuntime, overwrite: true);
+
+        // A NVIDIA compila os kernels CG2R so para sm_120, e por isso o launcher recusa GPU que
+        // nao seja Blackwell. Existem builds da comunidade com os kernels recompilados para as
+        // arquiteturas anteriores; nelas a assinatura NAO fecha, porque o binario foi alterado
+        // depois de assinado. Registrar isso e o que permite levantar aquele bloqueio sem fingir
+        // que o arquivo e o original — e sem escondê-lo de quem for usar.
+        try
+        {
+            if (DlssRuntimeService.IsGenuine(LibraryRuntime, out var porque))
+            {
+                if (File.Exists(RuntimeCustomMark)) File.Delete(RuntimeCustomMark);
+            }
+            else
+            {
+                File.WriteAllText(RuntimeCustomMark, porque);
+                Log.Warn($"neural runtime importado SEM assinatura valida: {porque}");
+            }
+        }
+        catch (Exception ex) { Log.Warn($"neural runtime mark: {ex.Message}"); }
+
         Log.Info($"neural runtime imported from {sourcePath} ({info.Length / (1024 * 1024)} MB)");
     }
+
+    /// <summary>Marca que o runtime na biblioteca foi trazido pelo usuario e nao tem assinatura
+    /// valida da NVIDIA.</summary>
+    private static string RuntimeCustomMark { get; } = Path.Combine(LibraryDir, "runtime.custom");
+
+    /// <summary>
+    /// O runtime da biblioteca e um build da comunidade, sem assinatura?
+    ///
+    /// Isso muda duas coisas: o bloqueio por GPU deixa de valer (os kernels podem cobrir as
+    /// arquiteturas antigas) e a interface passa a dizer, sem rodeios, que o arquivo nao e o
+    /// que a NVIDIA assinou.
+    /// </summary>
+    public static bool RuntimeIsCommunityBuild => File.Exists(RuntimeCustomMark);
 
     // ---------- knobs ----------
 

@@ -1856,11 +1856,23 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Settings_Pill_Unknown" xml:space="preserve">
     <value>versão desconhecida</value>
   </data>
+  <data name="Settings_Runtime_Community" xml:space="preserve">
+    <value>Build da comunidade — a NVIDIA não assinou este arquivo. Ele existe para rodar nas RTX 40, onde os kernels da NVIDIA não rodam. O autor do patch diz para não usar em jogo online ou com anti-cheat: ele altera um arquivo que o anti-cheat pode conferir.</value>
+  </data>
+  <data name="Settings_Runtime_Done" xml:space="preserve">
+    <value>Runtime guardado na biblioteca — a assinatura da NVIDIA confere.</value>
+  </data>
+  <data name="Settings_Runtime_DoneCommunity" xml:space="preserve">
+    <value>Runtime guardado. É um build da comunidade: a assinatura não confere mais, e a exigência de GPU foi liberada. Leia o aviso no cartão.</value>
+  </data>
   <data name="Settings_Runtime_Have" xml:space="preserve">
     <value>A NVIDIA não distribui isto em driver nem em SDK público. Achado nesta máquina ou buscado no índice do RHI, e só instalado se a NVIDIA assinou.</value>
   </data>
   <data name="Settings_Runtime_None" xml:space="preserve">
     <value>Ainda não está aqui. O launcher procura uma cópia nesta máquina e, se não achar, busca no índice do RHI.</value>
+  </data>
+  <data name="Settings_Runtime_Pick" xml:space="preserve">
+    <value>Escolha o nvngx_dlssnr.dll que você quer usar</value>
   </data>
   <data name="Settings_Runtime_Title" xml:space="preserve">
     <value>Runtime neural</value>

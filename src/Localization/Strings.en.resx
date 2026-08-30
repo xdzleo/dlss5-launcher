@@ -1856,11 +1856,23 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Settings_Pill_Unknown" xml:space="preserve">
     <value>unknown version</value>
   </data>
+  <data name="Settings_Runtime_Community" xml:space="preserve">
+    <value>Community build — NVIDIA did not sign this file. It exists to run on RTX 40, where NVIDIA's own kernels do not. The author of the patch says not to use it in online or anti-cheat games: it modifies a file the anti-cheat may check.</value>
+  </data>
+  <data name="Settings_Runtime_Done" xml:space="preserve">
+    <value>Runtime stored in the library — NVIDIA's signature checks out.</value>
+  </data>
+  <data name="Settings_Runtime_DoneCommunity" xml:space="preserve">
+    <value>Runtime stored. It is a community build: the signature no longer checks out, and the GPU requirement is lifted. Read the warning on the card.</value>
+  </data>
   <data name="Settings_Runtime_Have" xml:space="preserve">
     <value>NVIDIA ships this in no driver and no public SDK. Found on this machine or fetched from the RHI index, and only installed if NVIDIA signed it.</value>
   </data>
   <data name="Settings_Runtime_None" xml:space="preserve">
     <value>Not here yet. The launcher looks for a copy on this machine, then falls back to the RHI index.</value>
+  </data>
+  <data name="Settings_Runtime_Pick" xml:space="preserve">
+    <value>Pick the nvngx_dlssnr.dll you want to use</value>
   </data>
   <data name="Settings_Runtime_Title" xml:space="preserve">
     <value>Neural runtime</value>

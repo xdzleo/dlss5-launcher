@@ -64,10 +64,59 @@ public partial class SettingsWindow : Window
         BridgeText.Text = temPonte ? L.T("Settings_Bridge_Have") : L.T("Settings_Bridge_None");
 
         var temRuntime = File.Exists(NeuralUpliftService.LibraryRuntime);
+        var daComunidade = temRuntime && NeuralUpliftService.RuntimeIsCommunityBuild;
         RuntimePill.Text = temRuntime
             ? $"{new FileInfo(NeuralUpliftService.LibraryRuntime).Length / (1024 * 1024)} MB"
             : L.T("Settings_Pill_Missing");
         RuntimeText.Text = temRuntime ? L.T("Settings_Runtime_Have") : L.T("Settings_Runtime_None");
+
+        // O visto verde afirma "a NVIDIA assinou". Com um build da comunidade isso deixa de ser
+        // verdade, e manter o mesmo icone seria o launcher mentindo sobre o que instalou.
+        RuntimeWarn.Visibility = daComunidade ? Visibility.Visible : Visibility.Collapsed;
+        RuntimeIcon.Data = (System.Windows.Media.Geometry)FindResource(daComunidade ? "IconWarning" : "IconCheck");
+        RuntimeIcon.Fill = (Brush)FindResource(daComunidade ? "AccentBrush" : "GreenBrush");
+    }
+
+    /// <summary>
+    /// Traz um runtime que o usuario achou. Aceita o build da comunidade — o que tem os kernels
+    /// recompilados para Ada — e por isso NAO exige assinatura da NVIDIA aqui.
+    ///
+    /// O que ele exige e que o arquivo seja plausivelmente o runtime: o nome certo e o tamanho
+    /// certo. E, quando a assinatura nao fecha, diz isso na cara em vez de instalar em silencio.
+    /// </summary>
+    private void OnImportRuntime(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = L.T("Settings_Runtime_Pick"),
+            Filter = "nvngx_dlssnr.dll|nvngx_dlssnr*.dll|DLL|*.dll",
+            CheckFileExists = true,
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + @"\Downloads",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            // O seletor aceita "nvngx_dlssnr (2).dll" — o nome que o navegador da a uma segunda
+            // copia — mas o import exige o nome exato. Copiar para um temporario com o nome
+            // certo evita mandar a pessoa renomear arquivo para satisfazer o programa.
+            var origem = dlg.FileName;
+            if (!Path.GetFileName(origem).Equals("nvngx_dlssnr.dll", StringComparison.OrdinalIgnoreCase))
+            {
+                var tmp = Path.Combine(Path.GetTempPath(), "renodx-import", "nvngx_dlssnr.dll");
+                Directory.CreateDirectory(Path.GetDirectoryName(tmp)!);
+                File.Copy(origem, tmp, overwrite: true);
+                origem = tmp;
+            }
+
+            NeuralUpliftService.ImportRuntime(origem);
+            Refresh();
+            Say(L.T(NeuralUpliftService.RuntimeIsCommunityBuild
+                        ? "Settings_Runtime_DoneCommunity"
+                        : "Settings_Runtime_Done"),
+                ok: !NeuralUpliftService.RuntimeIsCommunityBuild);
+        }
+        catch (Exception ex) { Say(ex.Message, false); }
     }
 
     private void Say(string texto, bool ok)
