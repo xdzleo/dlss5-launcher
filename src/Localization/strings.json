@@ -733,6 +733,10 @@
     "en": "No game executable was found to install ReShade against.",
     "pt-BR": "Nenhum executável do jogo foi encontrado para instalar o ReShade."
   },
+  "Dlss5_Blocked_NoFeeder": {
+    "en": "This game has no DLSS of its own, and the DLSS5 Feeder — which would supply what DLSS needs — could not be downloaded.",
+    "pt-BR": "Este jogo não tem DLSS próprio, e o DLSS5 Feeder — que forneceria o que o DLSS precisa — não pôde ser baixado."
+  },
   "Dlss5_Blocked_Skip": {
     "en": "The curated index says to leave this game's DLSS alone.",
     "pt-BR": "O índice curado diz para não mexer no DLSS deste jogo."
@@ -753,6 +757,14 @@
     "en": "This game runs DirectX 11. The DX11 bridge is active: it mirrors the game's DLSS contract onto a second D3D12 device so the neural pass has somewhere to run. Launch through the DirectX 11 executable.",
     "pt-BR": "Este jogo roda DirectX 11. A ponte DX11 está ativa: ela espelha o contrato de DLSS do jogo num segundo device D3D12, para o pass neural ter onde rodar. Abra pelo executável DirectX 11."
   },
+  "Dlss5_Feeder_Notice": {
+    "en": "A game with DLSS hands the motion of every object to the filter. Here a shader has to guess it from the image, so the neural pass has less to work with and the gain is smaller than in a DLSS game. There is no FPS gain either — it runs at full resolution.",
+    "pt-BR": "Um jogo com DLSS entrega ao filtro o movimento de cada objeto. Aqui um shader precisa adivinhar isso pela imagem, então o passe neural tem menos com que trabalhar e o ganho é menor do que num jogo com DLSS. Também não há ganho de FPS — ele roda na resolução cheia."
+  },
+  "Dlss5_Feeder_Title": {
+    "en": "This game has no DLSS of its own — what you get here is weaker",
+    "pt-BR": "Este jogo não tem DLSS próprio — o resultado aqui é mais fraco"
+  },
   "Dlss5_Link_Addon": {
     "en": "Addon",
     "pt-BR": "Addon"
@@ -765,6 +777,10 @@
     "en": "Early load",
     "pt-BR": "Carga antecipada"
   },
+  "Dlss5_Link_Feeder": {
+    "en": "Feeder",
+    "pt-BR": "Feeder"
+  },
   "Dlss5_Link_Neural": {
     "en": "Neural runtime",
     "pt-BR": "Runtime neural"
@@ -774,12 +790,20 @@
     "pt-BR": "Ray Reconstruction"
   },
   "Dlss5_Link_Switch": {
-    "en": "Switch",
-    "pt-BR": "Chave"
+    "en": "Neural uplift",
+    "pt-BR": "Neural uplift"
   },
   "Dlss5_Manual_EnableDlss": {
     "en": "Turn DLSS on in the game's graphics settings — the filter reads the buffers DLSS produces.",
     "pt-BR": "Ligue o DLSS nas opções gráficas do jogo — o filtro lê os buffers que o DLSS produz."
+  },
+  "Dlss5_Manual_FeederMsaa": {
+    "en": "Turn MSAA and SSAA off in the game's settings — they fight the neural pass.",
+    "pt-BR": "Desligue MSAA e SSAA nas opções do jogo — eles brigam com o passe neural."
+  },
+  "Dlss5_Manual_FeederNoFps": {
+    "en": "Expect no extra FPS: the Feeder runs in DLAA, at full resolution. What changes is image quality, not performance.",
+    "pt-BR": "Não espere FPS a mais: o Feeder roda em DLAA, na resolução cheia. O que muda é a qualidade da imagem, não o desempenho."
   },
   "Dlss5_Manual_Overlay": {
     "en": "Press Home in the game to open the overlay and check that the state reads ACTIVE.",
@@ -812,6 +836,10 @@
   "Dlss5_Step_Bridge": {
     "en": "DX11 bridge in place — the D3D12 pass now has somewhere to run.",
     "pt-BR": "Ponte DX11 no lugar — o pass de D3D12 agora tem onde rodar."
+  },
+  "Dlss5_Step_Feeder": {
+    "en": "DLSS5 Feeder installed — this game has no DLSS, so the data is generated for it.",
+    "pt-BR": "DLSS5 Feeder instalado — este jogo não tem DLSS, então os dados são gerados para ele."
   },
   "Dlss5_Step_ReShade": {
     "en": "ReShade installed as {0}.",
@@ -1032,6 +1060,38 @@
     "en": "The ReShade installer signature does not match ({0}). Nothing was installed. If this persists, check whether an antivirus or proxy is altering the download.",
     "note": "{0} = detalhe tecnico vindo do Authenticode.IsSignedBy, nao traduzido.",
     "pt-BR": "A assinatura do instalador do ReShade não confere ({0}). Nada foi instalado. Se persistir, verifique se um antivírus ou proxy está alterando o download."
+  },
+  "Feeder_BadDownload": {
+    "en": "The Feeder download did not arrive intact. Nothing was installed — try again.",
+    "pt-BR": "O download do Feeder não chegou inteiro. Nada foi instalado — tente de novo."
+  },
+  "Feeder_Configured": {
+    "en": "ReShade configured: LaunchPad and DLSS5 Feed enabled, in that order.",
+    "pt-BR": "ReShade configurado: LaunchPad e DLSS5 Feed ligados, nessa ordem."
+  },
+  "Feeder_Deployed": {
+    "en": "Feeder and shaders copied to the game.",
+    "pt-BR": "Feeder e shaders copiados para o jogo."
+  },
+  "Feeder_DeployingSr": {
+    "en": "Copying the Super Resolution runtime (this game has none of its own)…",
+    "pt-BR": "Copiando o runtime de Super Resolution (este jogo não tem o dele)…"
+  },
+  "Feeder_Fetching": {
+    "en": "Downloading the DLSS5 Feeder…",
+    "pt-BR": "Baixando o DLSS5 Feeder…"
+  },
+  "Feeder_FetchingMv": {
+    "en": "Downloading the motion-vector provider (DRME) from its author's repository…",
+    "pt-BR": "Baixando o provedor de motion vectors (DRME) do repositório do autor…"
+  },
+  "Feeder_MvNoProvider": {
+    "en": "The motion-vector shader arrived without the texture the Feeder reads. Without it the neural pass would run on zeroed vectors — no error, and almost no effect.",
+    "pt-BR": "O shader de motion vectors veio sem a textura que o Feeder lê. Sem ela o passe neural rodaria com vetores zerados — sem erro, e quase sem efeito."
+  },
+  "Feeder_NotInLibrary": {
+    "en": "The Feeder is not in the library yet.",
+    "pt-BR": "O Feeder ainda não está na biblioteca."
   },
   "Guide_AntiCheat_Body": {
     "en": "The add-on build of ReShade is unsigned. In games with EAC/BattlEye (Elden Ring, GTA Online) it risks a ban, so play offline. The launcher detects those games and warns you before installing.",
@@ -1635,6 +1695,10 @@
     "en": "Copying the runtime to the library...",
     "pt-BR": "Copiando o runtime para a biblioteca..."
   },
+  "Main_Neural_Reasserted": {
+    "en": "Neural rendering had been switched off in the game (F6 or the overlay) — turned back on.",
+    "pt-BR": "O neural tinha sido desligado dentro do jogo (F6 ou o overlay) — religado."
+  },
   "Main_Neural_Remove": {
     "en": "Turn Off",
     "note": "Rotulo de botao. Title Case no en.",
@@ -1941,6 +2005,10 @@
     "note": "{0} = nome do arquivo.",
     "pt-BR": "Falta o {0}. Ele não vem em driver nem no SDK público da NVIDIA, então é tirado de um jogo que o distribui ou baixado do índice do RHI — nos dois casos só é instalado se a NVIDIA assinou."
   },
+  "Neural_CompilerUpgraded": {
+    "en": "The game shipped a 2013 shader compiler ({0}); replaced with the Windows one ({1}) so the neural pass can compile. The original is kept.",
+    "pt-BR": "O jogo trazia um compilador de shaders de 2013 ({0}); trocado pelo do Windows ({1}) para o passe neural conseguir compilar. O original foi guardado."
+  },
   "Neural_Deploying": {
     "en": "Copying the runtime into the game folder (158 MB)...",
     "pt-BR": "Copiando o runtime para a pasta do jogo (158 MB)..."
@@ -1988,6 +2056,10 @@
   "Neural_InstallingReShade": {
     "en": "Installing ReShade...",
     "pt-BR": "Instalando o ReShade..."
+  },
+  "Neural_OrphanRrRemoved": {
+    "en": "Removed a leftover Ray Reconstruction runtime an older build left here — it was making the launcher read this game as having DLSS. The original is kept.",
+    "pt-BR": "Removido um runtime de Ray Reconstruction que uma versão antiga deixou aqui — ele fazia o launcher entender que este jogo tinha DLSS. O original foi guardado."
   },
   "Neural_ReShadeInstalled": {
     "en": "ReShade installed.",

@@ -204,6 +204,20 @@ public static class NeuralUpliftService
         {
             var source = Path.Combine(DlssRuntimeService.LibraryDir, RayReconstructionFile);
             if (!File.Exists(source)) return;
+
+            // Um jogo sem runtime nenhum na pasta resolve NGX pelo driver, e a pasta do
+            // executavel tem prioridade sobre ele. Plantar so o RR ali deixa um conjunto PARCIAL
+            // — RR local, Super Resolution do driver, versoes que nao combinam — que e o mesmo
+            // "conjunto incoerente" que CheckHealth trata como erro grave. O comentario acima
+            // dizia que o arquivo seria inerte; ele nao e, porque muda de onde o NGX resolve.
+            //
+            // Custou o DLSS do Dragon Ball Sparking! ZERO, um jogo que nunca teve runtime local.
+            if (!TemRuntimeLocal(targetDir))
+            {
+                Log.Info($"neural: {targetDir} nao tem runtime local; RR nao implantado (o driver resolve)");
+                return;
+            }
+
             var dest = Path.Combine(targetDir, RayReconstructionFile);
             if (File.Exists(dest) && new FileInfo(dest).Length == new FileInfo(source).Length) return;
             // Same bar as every other runtime this launcher writes: NVIDIA's signature decides.
@@ -215,13 +229,214 @@ public static class NeuralUpliftService
             // `overwrite: false` lanca quando ja existe backup — e o catch la embaixo engolia,
             // levando junto a copia da linha seguinte. Resultado: depois da primeira troca, o
             // runtime de RR nunca mais era atualizado, e o unico sinal era um Log.Warn.
+            var novo = !File.Exists(dest);
             var backup = dest + BackupSuffix;
-            if (File.Exists(dest) && !File.Exists(backup)) File.Copy(dest, backup);
+            if (!novo && !File.Exists(backup)) File.Copy(dest, backup);
             File.Copy(source, dest, overwrite: true);
+            // Marca so quando o arquivo nao existia: desligar o recurso devolve a pasta ao que
+            // era, sem apagar um RR que o jogo ja trazia.
+            if (novo) MarkOurs(targetDir, RayReconstructionFile);
             progress?.Report(L.T("Neural_DeployingRR"));
             Log.Info($"neural: {RayReconstructionFile} deployed to {targetDir}");
         }
         catch (Exception ex) { Log.Warn($"neural RR deploy {targetDir}: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// Tira um Ray Reconstruction que versoes antigas deste launcher deixaram numa pasta que
+    /// nunca teve runtime proprio.
+    ///
+    /// Ate pouco tempo o RR era copiado para todo jogo, sem marcador e sem condicao. O estrago
+    /// nao e so ocupar 79 MB: a deteccao varre a pasta procurando runtime de DLSS, encontra esse
+    /// arquivo e conclui que o JOGO tem DLSS. A partir dai o instalador escolhe a ponte em vez do
+    /// Feeder e manda o usuario ligar, nas opcoes, um DLSS que o jogo nao tem.
+    ///
+    /// So sai com as tres condicoes juntas: e byte a byte o mesmo da nossa biblioteca, nao ha
+    /// marcador dizendo que e nosso (senao o caminho normal ja daria conta), e nao existe nenhum
+    /// outro runtime que seja do jogo. Um jogo com DLSS de verdade nunca satisfaz a terceira.
+    /// </summary>
+    public static void CleanOrphanRayReconstruction(string targetDir, IProgress<string>? progress = null)
+    {
+        try
+        {
+            var alvo = Path.Combine(targetDir, RayReconstructionFile);
+            if (!File.Exists(alvo) || File.Exists(alvo + OursSuffix)) return;
+            if (OutroRuntimeDoJogo(targetDir)) return;
+
+            var biblioteca = Path.Combine(DlssRuntimeService.LibraryDir, RayReconstructionFile);
+            if (!File.Exists(biblioteca)) return;
+            if (new FileInfo(alvo).Length != new FileInfo(biblioteca).Length) return;
+            if (!MesmoConteudo(alvo, biblioteca)) return;
+
+            var backup = alvo + BackupSuffix;
+            if (!File.Exists(backup)) File.Copy(alvo, backup);
+            File.Delete(alvo);
+            progress?.Report(L.T("Neural_OrphanRrRemoved"));
+            Log.Info($"neural: {RayReconstructionFile} orfao removido de {targetDir}");
+        }
+        catch (Exception ex) { Log.Warn($"neural orphan RR {targetDir}: {ex.Message}"); }
+    }
+
+    /// <summary>Existe algum runtime de DLSS na pasta que NAO tenha sido escrito por nos?</summary>
+    private static bool OutroRuntimeDoJogo(string targetDir)
+    {
+        foreach (var f in Directory.GetFiles(targetDir, "*.dll"))
+        {
+            var nome = Path.GetFileName(f);
+            if (nome.Equals(RayReconstructionFile, StringComparison.OrdinalIgnoreCase)) continue;
+            var dlss = nome.StartsWith("nvngx_", StringComparison.OrdinalIgnoreCase)
+                       || nome.StartsWith("sl.", StringComparison.OrdinalIgnoreCase);
+            if (dlss && !File.Exists(f + OursSuffix)) return true;
+        }
+        return false;
+    }
+
+    private static bool MesmoConteudo(string a, string b)
+    {
+        using var fa = File.OpenRead(a);
+        using var fb = File.OpenRead(b);
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fa))
+            == Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fb));
+    }
+
+    /// <summary>
+    /// Troca um d3dcompiler_47.dll velho da pasta do jogo pelo do Windows.
+    ///
+    /// Alguns jogos trazem a propria copia do compilador de shaders, e ela pode ser MUITO antiga
+    /// — o NARUTO X BORUTO traz a v6.3.9600, de 2013. A pasta do executavel tem prioridade na
+    /// busca de DLL, entao o addon neural carrega essa e nao a do sistema. Ele compila o shader
+    /// de encode com alvo `cs_5_1`, que so existe a partir do compilador do Windows 10, e o
+    /// resultado e:
+    ///
+    ///     proxy encode compilation failed: error X3506: unrecognized compiler target 'cs_5_1'
+    ///
+    /// O Feeder entrega os frames, o log fica limpo do lado dele, e o filtro neural simplesmente
+    /// nao roda. So acontece em jogo que traz a propria copia — Sonic e Sparking usam a do
+    /// Windows e nunca viram isso.
+    ///
+    /// Troca so o mesmo nome por versao mais nova, com backup. Um jogo que pede outro nome
+    /// (d3dcompiler_43) nao e tocado: renomear compilador para satisfazer um import e chute.
+    /// </summary>
+    private static void UpgradeShaderCompiler(string targetDir, IProgress<string>? progress)
+    {
+        const string nome = "d3dcompiler_47.dll";
+        try
+        {
+            var local = Path.Combine(targetDir, nome);
+            if (!File.Exists(local)) return;
+
+            var sistema = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), nome);
+            if (!File.Exists(sistema)) return;
+
+            var vLocal = System.Diagnostics.FileVersionInfo.GetVersionInfo(local);
+            var vSistema = System.Diagnostics.FileVersionInfo.GetVersionInfo(sistema);
+            // cs_5_1 chegou com o compilador do Windows 10; o divisor de agua e a major version.
+            if (vLocal.FileMajorPart >= vSistema.FileMajorPart) return;
+
+            var backup = local + BackupSuffix;
+            if (!File.Exists(backup)) File.Copy(local, backup);
+            File.Copy(sistema, local, overwrite: true);
+            MarkOurs(targetDir, nome);
+            progress?.Report(L.T("Neural_CompilerUpgraded", vLocal.FileVersion ?? "?", vSistema.FileVersion ?? "?"));
+            Log.Info($"neural: {nome} {vLocal.FileVersion} -> {vSistema.FileVersion} em {targetDir}");
+        }
+        catch (Exception ex) { Log.Warn($"neural compiler upgrade {targetDir}: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// A pasta ja resolve runtimes de DLSS localmente?
+    ///
+    /// Nao conta o que este launcher escreveu: senao a primeira instalacao criaria a condicao
+    /// que autoriza a segunda, e a resposta viraria "sim" para sempre a partir de um "nao".
+    /// </summary>
+    /// <summary>
+    /// O runtime neural esta na pasta e inteiro?
+    ///
+    /// Sao 158 MB copiados de uma vez: uma copia interrompida (jogo aberto no meio, disco cheio,
+    /// maquina desligada) deixa um arquivo com o nome certo e conteudo pela metade. Existir nao
+    /// prova nada — o tamanho da copia na biblioteca prova.
+    /// </summary>
+    private static bool RuntimeIntact(string targetDir)
+    {
+        var deployed = Path.Combine(targetDir, RuntimeFile);
+        if (!File.Exists(deployed)) return false;
+        try
+        {
+            if (!File.Exists(LibraryRuntime)) return true;
+            return new FileInfo(deployed).Length == new FileInfo(LibraryRuntime).Length;
+        }
+        catch { return true; }
+    }
+
+    /// <summary>
+    /// Devolve a chave de ligado a 1 se ela tiver sido zerada. True quando houve o que corrigir.
+    ///
+    /// O addon escreve 0 aqui quando alguem desliga pelo overlay ou pela tecla F6, e nao volta
+    /// sozinho. Escrever so quando esta 0 evita tocar no arquivo a cada abertura de jogo.
+    /// </summary>
+    public static bool ReassertEnabled(string iniPath)
+    {
+        if (!File.Exists(iniPath)) return false;
+        var ini = new IniFile(iniPath);
+        var atual = ini.Get(GenericSection, GenericEnableKey, ignoreCase: true);
+        if (atual is null || atual.Trim() is "1" or "1.0" or "1.000000") return false;
+        ini.Set(GenericSection, GenericEnableKey, "1");
+        ini.Save();
+        Log.Info($"neural: NeuralUplift estava '{atual}' em {iniPath}; devolvido para 1");
+        return true;
+    }
+
+    /// <summary>
+    /// Como <see cref="ReassertEnabled"/>, mas partindo da pasta do jogo: acha o ReShade.ini ao
+    /// lado do addon, que e onde ele fica. Usado na varredura da abertura, que so tem o diretorio.
+    /// </summary>
+    public static bool ReassertEnabledIn(string installDir)
+    {
+        try
+        {
+            foreach (var ini in Directory.EnumerateFiles(installDir, "ReShade.ini", new EnumerationOptions
+                     {
+                         IgnoreInaccessible = true,
+                         RecurseSubdirectories = true,
+                         MaxRecursionDepth = 10,
+                         AttributesToSkip = FileAttributes.ReparsePoint,
+                     }))
+            {
+                // So onde a cadeia esta de fato instalada: um ReShade.ini de outro mod nao e nosso
+                // para reescrever.
+                var pasta = Path.GetDirectoryName(ini);
+                if (pasta is null || DeployedGenericAddon(pasta) is null) continue;
+                if (ReassertEnabled(ini)) return true;
+            }
+        }
+        catch (Exception ex) { Log.Warn($"reassert em {installDir}: {ex.Message}"); }
+        return false;
+    }
+
+    public static bool TemRuntimeLocal(string targetDir)
+    {
+        try
+        {
+            foreach (var f in Directory.GetFiles(targetDir, "*.dll"))
+            {
+                var nome = Path.GetFileName(f);
+                var dlss = nome.StartsWith("nvngx_", StringComparison.OrdinalIgnoreCase)
+                           || nome.StartsWith("sl.", StringComparison.OrdinalIgnoreCase);
+                if (!dlss) continue;
+                if (File.Exists(f + OursSuffix)) continue; // foi o launcher que pos
+                return true;
+            }
+        }
+        catch (Exception ex) { Log.Warn($"neural local runtime probe: {ex.Message}"); }
+        return false;
+    }
+
+    private const string OursSuffix = ".renodx-ours";
+
+    private static void MarkOurs(string targetDir, string fileName)
+    {
+        try { File.WriteAllText(Path.Combine(targetDir, fileName + OursSuffix), DateTime.UtcNow.ToString("o")); }
+        catch (Exception ex) { Log.Warn($"neural mark {fileName}: {ex.Message}"); }
     }
 
     /// <summary>
@@ -304,8 +519,40 @@ public static class NeuralUpliftService
     public static string LibraryBridge { get; } = Path.Combine(LibraryDir, BridgeFile);
 
     /// <summary>A ponte esta instalada neste jogo?</summary>
-    public static bool BridgeDeployed(string targetDir) =>
-        File.Exists(Path.Combine(targetDir, BridgeFile));
+    /// <summary>
+    /// A ponte esta na pasta E integra?
+    ///
+    /// "Existe" nao basta. Um download interrompido, uma copia parcial ou uma versao antiga
+    /// deixam um arquivo com o nome certo que o ReShade carrega e que nao funciona — e o launcher
+    /// dizia "pronto" para todos esses casos. Quando ha copia na biblioteca, o tamanho dela e a
+    /// referencia; sem biblioteca, so resta acreditar no que esta la.
+    /// </summary>
+    public static bool BridgeDeployed(string targetDir)
+    {
+        var deployed = Path.Combine(targetDir, BridgeFile);
+        if (!File.Exists(deployed)) return false;
+        try
+        {
+            if (!File.Exists(LibraryBridge)) return true;
+            return new FileInfo(deployed).Length == new FileInfo(LibraryBridge).Length;
+        }
+        catch { return true; }
+    }
+
+    /// <summary>
+    /// Tira a ponte da pasta. Ponte e Feeder resolvem o mesmo problema por caminhos opostos e o
+    /// autor do Feeder diz para nao rodar os dois: um reproduz o contrato de DLSS do jogo, o
+    /// outro fabrica um do zero, e os dois juntos alimentam o mesmo pass em duplicidade.
+    /// </summary>
+    public static void RemoveBridge(string targetDir)
+    {
+        try
+        {
+            var p = Path.Combine(targetDir, BridgeFile);
+            if (File.Exists(p)) File.Delete(p);
+        }
+        catch (Exception ex) { Log.Warn($"remover ponte {targetDir}: {ex.Message}"); }
+    }
 
     /// <summary>Traz a ponte para a biblioteca, conferindo os bytes. Ver <see cref="BridgeFile"/>.</summary>
     public static async Task<bool> FetchBridgeAsync(IProgress<string>? progress = null,
@@ -707,13 +954,26 @@ public static class NeuralUpliftService
             {
                 var name = Path.GetFileName(f).ToLowerInvariant();
                 // SR or RR both work: either one means the addon has depth+mvec to hand over
-                if (name is "nvngx_dlss.dll" or "nvngx_dlssd.dll") { hasDlss = true; break; }
+                if (name is not ("nvngx_dlss.dll" or "nvngx_dlssd.dll")) continue;
+
+                // ...desde que o arquivo seja DO JOGO. Um runtime que este launcher copiou nao
+                // e evidencia de nada: e o resultado da nossa propria acao. Contando os nossos,
+                // um jogo sem DLSS nenhum passava a "ter DLSS" logo depois da primeira
+                // instalacao, e o launcher trocava o Feeder pela ponte na segunda passada — ou
+                // pior, mandava o usuario ligar nas opcoes um DLSS que o jogo nao tem.
+                //
+                // O marcador sobrevive ao arquivo que ele descreve sumir, e e por isso que ele
+                // e a memoria certa: apagar o addon do Feeder nao faz o jogo ganhar DLSS.
+                if (File.Exists(f + OursSuffix)) continue;
+
+                hasDlss = true;
+                break;
             }
         }
         catch (Exception ex) { Log.Warn($"neural detect {installDir}: {ex.Message}"); }
 
         var (reshadeDll, _) = ReShadeService.Detect(targetDir);
-        return new Detection(supports, hasDlss, File.Exists(Path.Combine(targetDir, RuntimeFile)),
+        return new Detection(supports, hasDlss, RuntimeIntact(targetDir),
                              ProbeHost(), File.Exists(LibraryAddon), reshadeDll, gameModDrivesNr);
     }
 
@@ -784,6 +1044,7 @@ public static class NeuralUpliftService
         }
 
         DeployRayReconstruction(targetDir, progress);
+        UpgradeShaderCompiler(targetDir, progress);
 
         var ini = new IniFile(iniPath);
         if (useGenericAddon)
@@ -797,6 +1058,12 @@ public static class NeuralUpliftService
         {
             RefreshDeployedAddon(deployedAddon, progress);
             AddToEarlyLoad(ini, Path.GetFileName(deployedAddon));
+
+            // A chave vale sempre que o addon esta na pasta, e nao so quando NOS o implantamos
+            // nesta passada. Sem isto, instalar num jogo cujo mod proprio dirige o NR deixava
+            // [RenoDX.DLSS5] como estava — inclusive em 0, se alguem tivesse apertado F6 antes.
+            // Instalar tem de significar ligado, sem excecao.
+            ini.Set(GenericSection, GenericEnableKey, "1");
         }
         if (!useGenericAddon)
         {
@@ -845,8 +1112,22 @@ public static class NeuralUpliftService
         // destroyed by turning the feature off. That file ships in no driver and no public SDK,
         // so "delete it and re-copy from the library" is not a round trip when the library copy
         // is the same one that came from there.
+        // O Feeder sai junto: ele so existe para alimentar este pass, e um addon que continua
+        // fabricando motion vectors para um consumidor que nao esta mais la e puro custo por
+        // frame. Os shaders de terceiro (iMMERSE) ficam — sao inertes sem a tecnica ligada.
+        try { FeederService.Remove(targetDir); }
+        catch (Exception ex) { Log.Warn($"feeder remove: {ex.Message}"); }
+
         var files = new List<string> { GenericAddonFile };
         if (RuntimeIsOurs(targetDir)) files.Add(RuntimeFile);
+        // O RR segue a mesma regra, e por muito tempo nao seguia nenhuma: era copiado sempre e
+        // nunca retirado, entao ficava para tras em pastas que nunca tiveram runtime local.
+        if (File.Exists(Path.Combine(targetDir, RayReconstructionFile + OursSuffix)))
+        {
+            files.Add(RayReconstructionFile);
+            try { File.Delete(Path.Combine(targetDir, RayReconstructionFile + OursSuffix)); }
+            catch (Exception ex) { Log.Warn($"neural RR mark clear: {ex.Message}"); }
+        }
         else Log.Info($"neural remove: {RuntimeFile} was already in {targetDir}; leaving it");
 
         var stuck = new List<string>();

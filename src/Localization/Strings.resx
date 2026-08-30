@@ -638,6 +638,9 @@
   <data name="Dlss5_Blocked_NoExe" xml:space="preserve">
     <value>Nenhum executável do jogo foi encontrado para instalar o ReShade.</value>
   </data>
+  <data name="Dlss5_Blocked_NoFeeder" xml:space="preserve">
+    <value>Este jogo não tem DLSS próprio, e o DLSS5 Feeder — que forneceria o que o DLSS precisa — não pôde ser baixado.</value>
+  </data>
   <data name="Dlss5_Blocked_Skip" xml:space="preserve">
     <value>O índice curado diz para não mexer no DLSS deste jogo.</value>
   </data>
@@ -653,6 +656,12 @@
   <data name="Dlss5_Bridge_Notice" xml:space="preserve">
     <value>Este jogo roda DirectX 11. A ponte DX11 está ativa: ela espelha o contrato de DLSS do jogo num segundo device D3D12, para o pass neural ter onde rodar. Abra pelo executável DirectX 11.</value>
   </data>
+  <data name="Dlss5_Feeder_Notice" xml:space="preserve">
+    <value>Um jogo com DLSS entrega ao filtro o movimento de cada objeto. Aqui um shader precisa adivinhar isso pela imagem, então o passe neural tem menos com que trabalhar e o ganho é menor do que num jogo com DLSS. Também não há ganho de FPS — ele roda na resolução cheia.</value>
+  </data>
+  <data name="Dlss5_Feeder_Title" xml:space="preserve">
+    <value>Este jogo não tem DLSS próprio — o resultado aqui é mais fraco</value>
+  </data>
   <data name="Dlss5_Link_Addon" xml:space="preserve">
     <value>Addon</value>
   </data>
@@ -662,6 +671,9 @@
   <data name="Dlss5_Link_EarlyLoad" xml:space="preserve">
     <value>Carga antecipada</value>
   </data>
+  <data name="Dlss5_Link_Feeder" xml:space="preserve">
+    <value>Feeder</value>
+  </data>
   <data name="Dlss5_Link_Neural" xml:space="preserve">
     <value>Runtime neural</value>
   </data>
@@ -669,10 +681,16 @@
     <value>Ray Reconstruction</value>
   </data>
   <data name="Dlss5_Link_Switch" xml:space="preserve">
-    <value>Chave</value>
+    <value>Neural uplift</value>
   </data>
   <data name="Dlss5_Manual_EnableDlss" xml:space="preserve">
     <value>Ligue o DLSS nas opções gráficas do jogo — o filtro lê os buffers que o DLSS produz.</value>
+  </data>
+  <data name="Dlss5_Manual_FeederMsaa" xml:space="preserve">
+    <value>Desligue MSAA e SSAA nas opções do jogo — eles brigam com o passe neural.</value>
+  </data>
+  <data name="Dlss5_Manual_FeederNoFps" xml:space="preserve">
+    <value>Não espere FPS a mais: o Feeder roda em DLAA, na resolução cheia. O que muda é a qualidade da imagem, não o desempenho.</value>
   </data>
   <data name="Dlss5_Manual_Overlay" xml:space="preserve">
     <value>Aperte Home no jogo para abrir o overlay e conferir se o estado diz ATIVO.</value>
@@ -697,6 +715,9 @@
   </data>
   <data name="Dlss5_Step_Bridge" xml:space="preserve">
     <value>Ponte DX11 no lugar — o pass de D3D12 agora tem onde rodar.</value>
+  </data>
+  <data name="Dlss5_Step_Feeder" xml:space="preserve">
+    <value>DLSS5 Feeder instalado — este jogo não tem DLSS, então os dados são gerados para ele.</value>
   </data>
   <data name="Dlss5_Step_ReShade" xml:space="preserve">
     <value>ReShade instalado como {0}.</value>
@@ -870,6 +891,30 @@
   <data name="Error_ReShade_Signature" xml:space="preserve">
     <value>A assinatura do instalador do ReShade não confere ({0}). Nada foi instalado. Se persistir, verifique se um antivírus ou proxy está alterando o download.</value>
     <comment>{0} = detalhe tecnico vindo do Authenticode.IsSignedBy, nao traduzido.</comment>
+  </data>
+  <data name="Feeder_BadDownload" xml:space="preserve">
+    <value>O download do Feeder não chegou inteiro. Nada foi instalado — tente de novo.</value>
+  </data>
+  <data name="Feeder_Configured" xml:space="preserve">
+    <value>ReShade configurado: LaunchPad e DLSS5 Feed ligados, nessa ordem.</value>
+  </data>
+  <data name="Feeder_Deployed" xml:space="preserve">
+    <value>Feeder e shaders copiados para o jogo.</value>
+  </data>
+  <data name="Feeder_DeployingSr" xml:space="preserve">
+    <value>Copiando o runtime de Super Resolution (este jogo não tem o dele)…</value>
+  </data>
+  <data name="Feeder_Fetching" xml:space="preserve">
+    <value>Baixando o DLSS5 Feeder…</value>
+  </data>
+  <data name="Feeder_FetchingMv" xml:space="preserve">
+    <value>Baixando o provedor de motion vectors (DRME) do repositório do autor…</value>
+  </data>
+  <data name="Feeder_MvNoProvider" xml:space="preserve">
+    <value>O shader de motion vectors veio sem a textura que o Feeder lê. Sem ela o passe neural rodaria com vetores zerados — sem erro, e quase sem efeito.</value>
+  </data>
+  <data name="Feeder_NotInLibrary" xml:space="preserve">
+    <value>O Feeder ainda não está na biblioteca.</value>
   </data>
   <data name="Guide_AntiCheat_Body" xml:space="preserve">
     <value>O ReShade com suporte a add-ons é uma build não assinada. Em jogos com EAC/BattlEye (Elden Ring, GTA Online) o risco é banimento: jogue offline. O launcher detecta esses jogos e avisa antes de instalar.</value>
@@ -1355,6 +1400,9 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Main_Neural_Importing" xml:space="preserve">
     <value>Copiando o runtime para a biblioteca...</value>
   </data>
+  <data name="Main_Neural_Reasserted" xml:space="preserve">
+    <value>O neural tinha sido desligado dentro do jogo (F6 ou o overlay) — religado.</value>
+  </data>
   <data name="Main_Neural_Remove" xml:space="preserve">
     <value>Desligar</value>
     <comment>Rotulo de botao. Title Case no en.</comment>
@@ -1601,6 +1649,9 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Falta o {0}. Ele não vem em driver nem no SDK público da NVIDIA, então é tirado de um jogo que o distribui ou baixado do índice do RHI — nos dois casos só é instalado se a NVIDIA assinou.</value>
     <comment>{0} = nome do arquivo.</comment>
   </data>
+  <data name="Neural_CompilerUpgraded" xml:space="preserve">
+    <value>O jogo trazia um compilador de shaders de 2013 ({0}); trocado pelo do Windows ({1}) para o passe neural conseguir compilar. O original foi guardado.</value>
+  </data>
   <data name="Neural_Deploying" xml:space="preserve">
     <value>Copiando o runtime para a pasta do jogo (158 MB)...</value>
   </data>
@@ -1637,6 +1688,9 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   </data>
   <data name="Neural_InstallingReShade" xml:space="preserve">
     <value>Instalando o ReShade...</value>
+  </data>
+  <data name="Neural_OrphanRrRemoved" xml:space="preserve">
+    <value>Removido um runtime de Ray Reconstruction que uma versão antiga deixou aqui — ele fazia o launcher entender que este jogo tinha DLSS. O original foi guardado.</value>
   </data>
   <data name="Neural_ReShadeInstalled" xml:space="preserve">
     <value>ReShade instalado.</value>

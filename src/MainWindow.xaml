@@ -877,6 +877,30 @@
                                         </StackPanel>
                                     </Border>
 
+                                    <!-- Feeder em uso: o jogo nao tem DLSS nenhum, e os dados que
+                                         o neural consome estao sendo fabricados por um shader.
+                                         O aviso calibra a expectativa ANTES da decepcao: aqui o
+                                         DLSS 5 rende menos do que num jogo que entrega os proprios
+                                         vetores, e nao ha ganho de FPS. Quem nao souber disso vai
+                                         concluir que instalou errado. -->
+                                    <Border CornerRadius="7" Padding="10,8" Margin="0,4,0,0"
+                                            Background="#33291B" BorderBrush="#8A6A30" BorderThickness="1"
+                                            Visibility="{Binding FeederActive, Converter={StaticResource BoolToVis}}">
+                                        <DockPanel>
+                                            <Path DockPanel.Dock="Left" Data="{StaticResource IconWarning}"
+                                                  Fill="#E8B860" Stretch="Uniform" Width="14" Height="14"
+                                                  VerticalAlignment="Top" Margin="0,1,9,0"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{loc:Tr Dlss5_Feeder_Title}" FontSize="11.5"
+                                                           FontWeight="SemiBold" Foreground="#F0D0A0"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="{loc:Tr Dlss5_Feeder_Notice}" FontSize="11"
+                                                           TextWrapping="Wrap" LineHeight="16" Margin="0,3,0,0"
+                                                           Foreground="{StaticResource TextFaintBrush}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+
                                     <!-- por que esta maquina nao pode ligar -->
                                     <Border CornerRadius="7" Padding="9,7" Margin="0,9,0,0"
                                             Background="#2E2438" BorderBrush="#5A4270" BorderThickness="1"

@@ -65,22 +65,55 @@ public static class Dlss5Installer
         try { await NeuralUpliftService.FetchAddonAsync(progress, ct); }
         catch (Exception ex) { Step(L.T("Dlss5_Step_AddonFetchFailed", ex.Message)); }
 
-        var det = NeuralUpliftService.Detect(installDir, targetDir, addonPath);
-        if (!det.HasDlss) return new Result(false, L.T("Dlss5_Blocked_NoDlss"), steps, manual);
+        // Antes de detectar, e nao depois: versoes antigas deste launcher deixavam um Ray
+        // Reconstruction em pastas que nunca tiveram runtime proprio, e a varredura o lia como
+        // "o jogo tem DLSS". Limpar primeiro faz a deteccao enxergar o jogo, nao o nosso rastro.
+        NeuralUpliftService.CleanOrphanRayReconstruction(targetDir, progress);
 
-        // O filtro neural e um pass de D3D12, e um jogo DirectX 11 nao tem onde recebe-lo — a
-        // menos que a ponte esteja no meio. Ela cria um segundo device D3D12 e reproduz nele o
-        // contrato de DLSS do jogo, entao um jogo DX11 COM DLSS NATIVO passa a ser atendivel.
+        var det = NeuralUpliftService.Detect(installDir, targetDir, addonPath);
+
+        // Tres caminhos, e qual deles serve depende de duas perguntas: o jogo alcanca D3D12, e o
+        // jogo tem DLSS proprio.
         //
-        // Isto substituiu um bloqueio: antes o instalador parava aqui e dizia "este jogo nao roda
-        // D3D12". Verdadeiro sobre o jogo, e inutil — havia uma resposta, e ela nao era desistir.
-        var precisaPonte = exePath is not null && !LooksLikeD3D12(exePath);
+        //   D3D12                  -> nada no meio, o pass roda no device do jogo
+        //   DX11 + tem DLSS        -> ponte: um segundo device D3D12 reproduz o contrato do jogo
+        //   DX11 + NAO tem DLSS    -> Feeder: nao ha contrato para reproduzir, entao ele FABRICA
+        //                             um (motion vectors e depth vindos de um shader do ReShade)
+        //
+        // Ponte e Feeder nao convivem, e o autor do Feeder e explicito quanto a isso. A escolha
+        // acima ja os mantem exclusivos: uma exige DLSS nativo, o outro exige a ausencia dele.
+        var alcancaD3d12 = exePath is null || LooksLikeD3D12(exePath);
+
+        // HasDlss varre a pasta, e a partir da primeira instalacao a pasta contem runtimes que
+        // NOS copiamos — o de Ray Reconstruction em todo caminho, o de Super Resolution no do
+        // Feeder. Reinstalar entao lia "este jogo tem DLSS" sobre os proprios arquivos do
+        // launcher, trocava o Feeder pela ponte e mandava o usuario ligar um DLSS que o jogo nao
+        // tem. O Feeder ja implantado e a evidencia de que a decisao anterior foi essa.
+        var feederJaAqui = FeederService.IsDeployed(targetDir);
+        var temDlssNativo = det.HasDlss && !feederJaAqui;
+
+        var precisaPonte = temDlssNativo && !alcancaD3d12;
+        var precisaFeeder = !temDlssNativo && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12);
+
+        // Sem DLSS e sem Feeder aplicavel, nao ha o que fazer — e so aqui que o bloqueio antigo
+        // ainda vale. Antes ele valia para todo jogo sem DLSS, inclusive os que o Feeder atende.
+        if (!temDlssNativo && !precisaFeeder)
+            return new Result(false, L.T("Dlss5_Blocked_NoDlss"), steps, manual);
+
         if (precisaPonte)
         {
             try { await NeuralUpliftService.FetchBridgeAsync(progress, ct); }
             catch (Exception ex) { Step(ex.Message); }
             if (!File.Exists(NeuralUpliftService.LibraryBridge))
                 return new Result(false, L.T("Dlss5_Blocked_NoBridge"), steps, manual);
+        }
+
+        if (precisaFeeder)
+        {
+            try { await FeederService.FetchAsync(progress, ct); }
+            catch (Exception ex) { Step(ex.Message); }
+            if (!FeederService.InLibrary)
+                return new Result(false, L.T("Dlss5_Blocked_NoFeeder"), steps, manual);
         }
 
         if (!det.Host.RuntimeInLibrary)
@@ -141,12 +174,27 @@ public static class Dlss5Installer
             Step(det.UsesGeneric ? L.T("Dlss5_Step_AddonGeneric") : L.T("Dlss5_Step_AddonGame"));
             if (precisaPonte)
             {
+                FeederService.Remove(targetDir); // ver acima: os dois nunca convivem
                 NeuralUpliftService.DeployBridge(targetDir, progress);
                 Step(L.T("Dlss5_Step_Bridge"));
                 // O jogo DX11 tem mais de um executavel (o Baldur's Gate tem um Vulkan e um DX11),
                 // e a ponte so tem o que enganchar num deles. Dizer qual e a diferenca entre
                 // funcionar e "instalei e nao vi nada".
                 manual.Add(L.T("Dlss5_Manual_UseDx11Exe"));
+            }
+            if (precisaFeeder)
+            {
+                // Exclusivos, e o autor do Feeder e explicito quanto a isso. Uma pasta pode ter
+                // as duas por historico — o Sonic ficou assim depois de o launcher ter lido, por
+                // engano, um runtime nosso como sendo do jogo e ter escolhido a ponte.
+                NeuralUpliftService.RemoveBridge(targetDir);
+                FeederService.Deploy(targetDir, progress);
+                FeederService.Configure(targetDir, iniPath, progress);
+                Step(L.T("Dlss5_Step_Feeder"));
+                // Duas coisas que nenhum instalador resolve, e que decidem se a pessoa vai achar
+                // que funcionou: nao ha ganho de FPS (e DLAA), e MSAA/SSAA do jogo precisa sair.
+                manual.Add(L.T("Dlss5_Manual_FeederNoFps"));
+                manual.Add(L.T("Dlss5_Manual_FeederMsaa"));
             }
         }
         catch (Exception ex)
@@ -158,7 +206,10 @@ public static class Dlss5Installer
         // What no installer can do: the feature reads the game's own DLSS buffers, so DLSS has to
         // be on in the game's settings. Saying so is the difference between "it does not work" and
         // "there is one switch left".
-        manual.Add(L.T("Dlss5_Manual_EnableDlss"));
+        // "Ligue o DLSS nas opcoes do jogo" seria instrucao impossivel no caminho do Feeder: ele
+        // existe justamente porque o jogo NAO tem DLSS. Mandar procurar uma opcao que nao existe
+        // faria a pessoa concluir que instalou errado.
+        if (!precisaFeeder) manual.Add(L.T("Dlss5_Manual_EnableDlss"));
         manual.Add(L.T("Dlss5_Manual_Overlay"));
 
         var applied = NeuralUpliftService.IsApplied(targetDir, iniPath, addonPath);
@@ -173,6 +224,10 @@ public static class Dlss5Installer
     /// executavel importa uma API grafica concorrente e nao importa D3D12. Sem essa condicao
     /// dupla, um binario que resolve tudo em runtime seria barrado sem motivo.
     /// </summary>
+    /// <summary>O executavel alcanca D3D12? Null (exe desconhecido) responde SIM, como o resto
+    /// da heuristica: so um NAO bem fundamentado desvia do caminho normal.</summary>
+    public static bool ReachesD3D12(string? exePath) => exePath is null || LooksLikeD3D12(exePath);
+
     private static bool LooksLikeD3D12(string exePath)
     {
         var pe = PeUtils.Inspect(exePath);

@@ -86,11 +86,23 @@ CURTAS = {"le": "lê", "ve": "vê", "cre": "crê", "pe": "pé", "tres": "três",
           "mes": "mês", "pos": "pós", "voce": "você"}
 
 
+# Formas verbais no futuro do pretérito terminam em -aria/-eria/-iria e NAO sao acentuadas
+# ("rodaria", "ficaria", "seguiria"), mas casam com a regra de sufixo de "-ária/-éria". A regra
+# nao tem como distinguir sem conjugar o verbo, entao a excecao e explicita.
+NAO_ACENTUA = re.compile(
+    r"^(?:[a-zà-ÿ]+(?:ar|er|ir))ia(?:m|s)?$|"          # rodaria, rodariam, comerias
+    r"^(?:ser|ter|ir|vir|ver|dar|por|dizer|fazer|"
+    r"haver|poder|querer|saber|trazer)ia(?:m|s)?$"
+)
+
+
 def problemas_de_acento(texto: str) -> list[str]:
     achados = []
     for m in PALAVRA.finditer(texto):
         original = m.group(0)
         p = original.lower()
+        if NAO_ACENTUA.match(p):
+            continue
         if p in ACENTOS:
             achados.append(f"{original} -> {ACENTOS[p]}")
             continue

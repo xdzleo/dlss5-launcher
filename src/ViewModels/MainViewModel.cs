@@ -442,8 +442,17 @@ public class MainViewModel : ObservableObject
         set { _bridgeActive = value; OnPropertyChanged(nameof(BridgeActive)); }
     }
 
+    private bool _feederActive;
+    /// <summary>O Feeder esta em uso neste jogo — o jogo nao tem DLSS proprio.</summary>
+    public bool FeederActive
+    {
+        get => _feederActive;
+        set { _feederActive = value; OnPropertyChanged(nameof(FeederActive)); }
+    }
+
     /// <summary>Recolhe o estado de cada elo para os indicadores do cartao.</summary>
-    private void BuildDlss5Chain(string targetDir, string iniPath, NeuralUpliftService.Detection det)
+    private void BuildDlss5Chain(string targetDir, string iniPath, NeuralUpliftService.Detection det,
+                                 string? exePath)
     {
         Dlss5Chain.Clear();
         var addon = NeuralUpliftService.DeployedGenericAddon(targetDir);
@@ -457,17 +466,40 @@ public class MainViewModel : ObservableObject
         Dlss5Chain.Add(new ChainLink("ReShade", det.ReShadeDllName is not null));
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Addon"), det.AddonSupportsNr));
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Neural"), det.RuntimeDeployed));
+        // O Ray Reconstruction so e exigido onde o jogo resolve runtimes na propria pasta. Onde
+        // quem resolve e o driver, nao implantamos nada (um runtime parcial na pasta do
+        // executavel quebra a resolucao do NGX) — e cobrar o arquivo aqui deixaria a cadeia
+        // incompleta para sempre, num jogo que esta certo.
+        var rrEsperado = NeuralUpliftService.TemRuntimeLocal(targetDir);
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Rr"),
-            File.Exists(Path.Combine(targetDir, NeuralUpliftService.RayReconstructionFile))));
+            !rrEsperado || File.Exists(Path.Combine(targetDir, NeuralUpliftService.RayReconstructionFile))));
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_EarlyLoad"), early || addon is null));
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Switch"), NeuralApplied));
-        Dlss5Ready = Dlss5Chain.All(l => l.Ok);
 
-        // A ponte so aparece onde ela e necessaria. Num jogo D3D12 ela nao existe e listar uma
-        // pastilha apagada chamada "Ponte DX11" seria inventar um problema que nao ha; num jogo
-        // DX11 ela e a peca sem a qual nada roda, e o usuario precisa saber que esta em uso.
+        // A ponte e o Feeder entram na cadeia quando sao NECESSARIOS, com o estado que de fato
+        // tem — e nao, como antes, apenas quando ja estao na pasta.
+        //
+        // Aquela regra tinha um buraco no unico lugar que importa: a AUSENCIA da peca, que e
+        // exatamente a falha, era o estado que a cadeia nao sabia representar. Faltando a ponte,
+        // nenhum elo aparecia, todos os outros ficavam verdes, o interruptor dizia "ligado" e
+        // nada rodava dentro do jogo. Foi assim que a ponte do Baldur's Gate ficou renomeada para
+        // .teste sem que o launcher notasse.
+        FeederActive = FeederService.IsDeployed(targetDir);
         BridgeActive = NeuralUpliftService.BridgeDeployed(targetDir);
-        if (BridgeActive) Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Bridge"), true));
+
+        var alcancaD3d12 = Dlss5Installer.ReachesD3D12(exePath);
+        var temDlssNativo = det.HasDlss && !FeederActive;
+        var pedePonte = temDlssNativo && !alcancaD3d12;
+        var pedeFeeder = !temDlssNativo && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12);
+
+        if (pedePonte || BridgeActive)
+            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Bridge"), BridgeActive));
+        if (pedeFeeder || FeederActive)
+            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Feeder"), FeederActive));
+
+        // Depois de TODOS os elos, nao antes: o calculo ficava acima dos dois ultimos, entao nem
+        // um elo vermelho ali derrubava o "pronto".
+        Dlss5Ready = Dlss5Chain.All(l => l.Ok);
     }
 
     /// <summary>O runtime falta na biblioteca — o único bloqueio que o usuário resolve aqui
@@ -900,7 +932,19 @@ public class MainViewModel : ObservableObject
         if (token != _detailToken) return;
         var detection = await Task.Run(() => NeuralUpliftService.Detect(installDir, targetDir, addonPath));
         if (token != _detailToken) return;
-        if (!detection.Offerable) return;
+
+        // Offerable exige DLSS no jogo, e essa era a regra certa enquanto a unica forma de rodar
+        // o pass era consumir o DLSS que o jogo ja tinha. Com o Feeder deixou de ser: um jogo
+        // DX11 sem DLSS nenhum passa a ser atendivel, e esconder o cartao dele significaria que
+        // o caminho existe no instalador e nao tem por onde ser pedido.
+        // Mesma correcao do instalador: depois da primeira instalacao os runtimes que copiamos
+        // ficam na pasta, e HasDlss passa a falar deles em vez do jogo.
+        var temDlssNativo = detection.HasDlss && !FeederService.IsDeployed(targetDir);
+        var feederServe = !temDlssNativo
+                          && FeederService.Applies(item.ChosenExe, temDlssNativo,
+                                                   Dlss5Installer.ReachesD3D12(item.ChosenExe))
+                          && (detection.AddonSupportsNr || detection.GenericAddonInLibrary);
+        if (!detection.Offerable && !feederServe) return;
 
         // O runtime nao vem em driver nem em SDK publico: as unicas copias sao as que ja estao
         // nesta maquina. Procura sozinho antes de pedir que o usuario ache o arquivo na mao —
@@ -946,7 +990,27 @@ public class MainViewModel : ObservableObject
         // sem mod RenoDX nao ha State; o ReShade.ini fica ao lado do addon na pasta do jogo
         var neuralIni = item.State?.IniPath ?? System.IO.Path.Combine(targetDir, "ReShade.ini");
         NeuralApplied = NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath);
-        BuildDlss5Chain(targetDir, neuralIni, detection);
+        BuildDlss5Chain(targetDir, neuralIni, detection, item.ChosenExe);
+
+        // O interruptor volta sozinho, sempre que o launcher olha para o jogo — nao apenas ao
+        // clicar em Play. A tecla F6 do addon desliga o neural e o estado fica GRAVADO no ini,
+        // entao um toque acidental (F6 e quicksave em muitos jogos) apagava o efeito para sempre,
+        // em silencio, com tudo instalado e verde.
+        //
+        // Reafirmar so quando a unica peca fora do lugar e o interruptor: se falta arquivo, quem
+        // resolve e a instalacao, e ligar a chave ali so criaria um verde falso. E nunca com o
+        // jogo aberto — o addon reescreve o ini ao sair e levaria a nossa correcao junto.
+        if (!Dlss5Ready
+            && !NeuralApplied
+            && Dlss5Chain.All(l => l.Ok || l.Label == L.T("Dlss5_Link_Switch"))
+            && !AddonService.IsGameRunning(targetDir)
+            && NeuralUpliftService.ReassertEnabled(neuralIni))
+        {
+            NeuralApplied = NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath);
+            BuildDlss5Chain(targetDir, neuralIni, detection, item.ChosenExe);
+            DetailStatus = L.T("Main_Neural_Reasserted");
+        }
+
         ShowNeural = true;
     }
 
@@ -1010,8 +1074,37 @@ public class MainViewModel : ObservableObject
     /// nao tem como lembrar quais. O launcher sabe exatamente onde mexeu — omitir isso e o que faz
     /// a ferramenta parecer que "deixou coisa pela metade".
     /// </summary>
+    /// <summary>
+    /// Na abertura, devolve o neural a "ligado" em todo jogo onde ele foi desligado por dentro.
+    ///
+    /// A tecla F6 do addon desliga o filtro e o estado fica GRAVADO no ReShade.ini — e F6 e
+    /// quicksave em meio mundo de jogo. Um toque acidental apagava o efeito para sempre, sem
+    /// erro, sem aviso, com a instalacao inteira intacta.
+    ///
+    /// Varrer na abertura fecha o caso de quem joga pela Steam e nunca abre o cartao no launcher:
+    /// basta o launcher subir uma vez. Nao mexe em jogo aberto (o addon reescreve o ini ao sair
+    /// e levaria a correcao junto) nem em pasta onde a cadeia nao esta completa — la o que falta
+    /// nao e a chave.
+    /// </summary>
+    private static async Task ReassertNeuralAsync(IReadOnlyList<string> dirs)
+    {
+        try
+        {
+            // Sem filtrar por IsAppliedAnywhere: ele responde "esta LIGADO?", e usa-lo aqui
+            // excluiria justamente os jogos desligados, que sao os unicos com o que corrigir.
+            // Quem decide e o ReassertEnabledIn, que so mexe onde ha addon implantado.
+            var religados = await Task.Run(() => dirs
+                .Where(d => d is not null && Directory.Exists(d))
+                .Where(d => !AddonService.IsGameRunning(d!))
+                .Count(d => NeuralUpliftService.ReassertEnabledIn(d!)));
+            if (religados > 0) Log.Info($"neural: interruptor devolvido em {religados} jogo(s)");
+        }
+        catch (Exception ex) { Log.Warn($"reafirmar neural na varredura: {ex.Message}"); }
+    }
+
     private async Task CheckSwappedRuntimesAsync(IReadOnlyList<string> dirs)
     {
+        await ReassertNeuralAsync(dirs);
         try
         {
             // Um jogo com DLSS 5 instalado tem runtime trocado POR DEFINICAO — foi o que o usuario
@@ -1219,7 +1312,11 @@ public class MainViewModel : ObservableObject
         ActionBusy = true;
         try
         {
-            if (Dlss5Ready || NeuralApplied)
+            // Só remove quando a cadeia está INTEIRA. Com uma peça faltando o interruptor mostra
+            // "desligado", e quem clica em algo desligado quer ligá-lo — mas NeuralApplied
+            // continua verdadeiro (a chave segue no ini), então esta condição desinstalava.
+            // Clicar para consertar e receber uma desinstalação é o pior desfecho possível aqui.
+            if (Dlss5Ready)
             {
                 await Task.Run(() => NeuralUpliftService.Remove(dir, ini));
                 DetailStatus = L.T("Main_Neural_Removed");
@@ -1805,10 +1902,35 @@ public class MainViewModel : ObservableObject
 
     /// <summary>Launch through the store when we know it (keeps the store's overlay and
     /// cloud saves working); fall back to running the chosen exe directly.</summary>
+    /// <summary>
+    /// Antes de abrir o jogo, garante que o interruptor do neural continua ligado.
+    ///
+    /// O addon persiste esse estado no ReShade.ini e o desliga por tres caminhos — o ini, o
+    /// overlay e a tecla F6, que e facil de encostar sem querer durante o jogo. Uma vez desligado
+    /// ele fica assim para sempre, e o sintoma e o pior possivel: tudo instalado, tudo verde na
+    /// sessao anterior, e nenhum efeito na tela.
+    ///
+    /// So reafirma onde o launcher ja instalou a cadeia inteira. Num jogo que ele nao instalou,
+    /// ou com peca faltando, nao ha nada a reafirmar — e escrever ali seria opiniao sobre uma
+    /// instalacao que nao e nossa.
+    /// </summary>
+    private void ReafirmarNeural(GameItemVm item)
+    {
+        if (!Dlss5Ready || item.TargetDir is null) return;
+        try
+        {
+            var ini = item.State?.IniPath ?? Path.Combine(item.TargetDir, "ReShade.ini");
+            if (NeuralUpliftService.ReassertEnabled(ini))
+                DetailStatus = L.T("Main_Neural_Reasserted");
+        }
+        catch (Exception ex) { Log.Warn($"reafirmar neural: {ex.Message}"); }
+    }
+
     private void LaunchGame()
     {
         var item = _detailItem ?? Selected;
         if (item is null) return;
+        ReafirmarNeural(item);
         try
         {
             string? uri = item.Game.Store switch

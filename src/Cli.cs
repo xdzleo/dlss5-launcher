@@ -402,9 +402,10 @@ public static class Cli
         var g = Resolve(ctx, query, out var err);
         if (g is null) { Console.Error.WriteLine(err); return 1; }
 
-        var (_, state) = StateOf(ctx, g);
+        var (exeDetectado, state) = StateOf(ctx, g);
         var target = state?.TargetDir ?? g.InstallDir;
         var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
+        var exe = state?.ExePath ?? exeDetectado ?? ExeLocator.FindCandidates(g, null).FirstOrDefault();
 
         Console.WriteLine($"{g.Name}");
         Console.WriteLine($"  pasta          : {target}");
@@ -447,18 +448,56 @@ public static class Cli
         // carregado na criacao do device, tarde demais para enganchar o NGX — e o sintoma e o
         // silencio de sempre (o build da comunidade reporta isso como "erro 225").
         var deployedAddon = NeuralUpliftService.DeployedGenericAddon(target);
+        var cargaOk = true;
         if (deployedAddon is not null)
         {
             var early = File.Exists(ini)
                 ? new IniFile(ini).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? ""
                 : "";
             var name = Path.GetFileName(deployedAddon);
-            Console.WriteLine($"  carga anteci.  : {(early.Split(',').Any(e => e.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)) ? "sim (" + name + ")" : "NAO — sera corrigido ao aplicar")}");
+            cargaOk = early.Split(',').Any(e => e.Trim().Equals(name, StringComparison.OrdinalIgnoreCase));
+            Console.WriteLine($"  carga anteci.  : {(cargaOk ? "sim (" + name + ")" : "NAO — sera corrigido ao aplicar")}");
         }
         Console.WriteLine($"  ligado         : {(NeuralUpliftService.IsApplied(target, ini, state?.AddonPath) ? "sim" : "nao")}");
 
         var blocker = host.Blocker ?? det.GenericBlocker;
-        if (!det.Offerable)
+
+        // Ponte e Feeder sao reportados quando sao NECESSARIOS, com o estado real — nao so
+        // quando ja estao na pasta. Um "=> pronto" com a ponte faltando e a mesma cegueira que
+        // deixou a do Baldur's Gate renomeada para .teste sem ninguem notar.
+        var feederAqui = FeederService.IsDeployed(target);
+        var ponteAqui = NeuralUpliftService.BridgeDeployed(target);
+        var chegaD3d12 = Dlss5Installer.ReachesD3D12(exe);
+        var dlssNativo = det.HasDlss && !feederAqui;
+        var pedePonte = dlssNativo && !chegaD3d12;
+        var feederServe = !dlssNativo
+                          && FeederService.Applies(exe, dlssNativo, chegaD3d12)
+                          && (det.AddonSupportsNr || det.GenericAddonInLibrary);
+
+        if (pedePonte || ponteAqui)
+            Console.WriteLine($"  ponte DX11     : {(ponteAqui ? "sim" : "FALTA — sem ela o pass nao tem onde rodar")}");
+        if (feederServe || feederAqui)
+            Console.WriteLine($"  Feeder         : {(feederAqui ? "sim — este jogo nao tem DLSS, os dados sao gerados" : "FALTA — este jogo nao tem DLSS e precisa dele")}");
+        // O veredito olha a cadeia INTEIRA, do mesmo jeito que a interface. Antes ele so
+        // enxergava ponte e Feeder: com o runtime pela metade ou o addon apagado, o diagnostico
+        // dizia "pronto" enquanto o jogo abria sem nada.
+        var ligado = NeuralUpliftService.IsApplied(target, ini, state?.AddonPath);
+        var faltando = new List<string>();
+        if (det.ReShadeDllName is null) faltando.Add("ReShade");
+        if (deployedAddon is null && !det.AddonSupportsNr) faltando.Add("addon");
+        if (!det.RuntimeDeployed) faltando.Add("runtime neural");
+        if (!cargaOk) faltando.Add("carga antecipada");
+        if (!ligado) faltando.Add("interruptor");
+        if (pedePonte && !ponteAqui) faltando.Add("ponte DX11");
+        if (feederServe && !feederAqui) faltando.Add("Feeder");
+
+        if (faltando.Count > 0 && (det.Offerable || feederServe))
+        {
+            Console.WriteLine($"  => incompleto ({string.Join(", ", faltando)}): "
+                              + $"rode `RenoDXLauncher.exe dlss5 \"{g.Name}\"` para completar");
+            return 2;
+        }
+        if (!det.Offerable && !feederServe)
         {
             Console.WriteLine("  => nao ofertavel: falta DLSS no jogo ou um addon que saiba acionar o filtro");
             return 2;
