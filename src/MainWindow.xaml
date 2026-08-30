@@ -335,11 +335,14 @@
                             <TextBlock Text="{loc:Tr Common_Add}" Margin="7,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="{loc:Tr Main_Monitor}" Click="OnProfileClick">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconMonitor}"/>
-                            <TextBlock Text="{loc:Tr Main_Monitor}" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <!-- Ajustes do app: as pecas compartilhadas do DLSS 5 e a calibracao da tela.
+                         Tudo o que vale para todos os jogos e nao pertence a nenhum mora aqui —
+                         a barra tinha dois botoes para isso e agora tem um. So o icone: a
+                         engrenagem e reconhecivel sem rotulo e a barra ja estava cheia. -->
+                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Padding="11,8"
+                            ToolTip="{loc:Tr Settings_Title}"
+                            AutomationProperties.Name="{loc:Tr Settings_Title}" Click="OnSettingsClick">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconGear}"/>
                     </Button>
                     <Button Style="{StaticResource ToolButton}" AutomationProperties.Name="{loc:Tr Main_Guide}" Click="OnGuideClick">
                         <StackPanel Orientation="Horizontal">
@@ -361,6 +364,28 @@
                              Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Text="{Binding StatusText}" FontSize="11.5"
                            Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Versao nova do proprio launcher. Fica acima de tudo porque e o unico aviso que muda
+             o programa que esta desenhando a tela; os outros falam de um jogo. -->
+        <Border DockPanel.Dock="Top" CornerRadius="8" Padding="13,10" Margin="10,10,10,0"
+                Background="#1B2E3A" BorderBrush="#3A6E8A" BorderThickness="1"
+                Visibility="{Binding HasLauncherUpdate, Converter={StaticResource BoolToVis}}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Padding="14,7" VerticalAlignment="Center" Margin="10,0,0,0"
+                        Style="{StaticResource AccentButton}" Command="{Binding UpdateLauncherCommand}">
+                    <TextBlock Text="{loc:Tr Update_Banner_Button}" FontSize="11.5"/>
+                </Button>
+                <Path DockPanel.Dock="Left" Data="{StaticResource IconDownload}" Fill="#8FD0F0"
+                      Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center"
+                      Margin="0,0,11,0"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding LauncherUpdateTitle}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#A8DCF5"/>
+                    <TextBlock Text="{Binding LauncherUpdateDetail}" FontSize="11" TextWrapping="Wrap"
+                               Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
             </DockPanel>
         </Border>
 
@@ -708,7 +733,7 @@
                             <Border CornerRadius="9" Padding="12,10" Margin="0,10,0,0"
                                     Background="{StaticResource CardBrush}"
                                     BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
-                                    Visibility="{Binding HasLoadVerdict, Converter={StaticResource BoolToVis}}">
+                                    Visibility="{Binding HasLoadProblem, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="{Binding LoadVerdict}" TextWrapping="Wrap" FontSize="11.5"
                                            LineHeight="17" Foreground="{StaticResource TextBrush}"/>
                             </Border>
@@ -839,6 +864,19 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
 
+                                    <!-- Ponte DX11 em uso: o jogo nao tem D3D12, e o pass so
+                                         existe ali por causa dela. Aparece so onde ela esta. -->
+                                    <Border CornerRadius="7" Padding="9,7" Margin="0,4,0,0"
+                                            Background="#1E2A33" BorderBrush="#356178" BorderThickness="1"
+                                            Visibility="{Binding BridgeActive, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="7" Height="7" VerticalAlignment="Top" Margin="0,5,7,0"
+                                                     Fill="{StaticResource CyanBrush}"/>
+                                            <TextBlock Text="{loc:Tr Dlss5_Bridge_Notice}" FontSize="11"
+                                                       TextWrapping="Wrap" Foreground="#A8D4E8"/>
+                                        </StackPanel>
+                                    </Border>
+
                                     <!-- por que esta maquina nao pode ligar -->
                                     <Border CornerRadius="7" Padding="9,7" Margin="0,9,0,0"
                                             Background="#2E2438" BorderBrush="#5A4270" BorderThickness="1"
@@ -904,33 +942,58 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- exe picker -->
-                            <TextBlock Text="{loc:Tr Dialog_Exe_Label}" Style="{StaticResource SectionLabel}" Margin="0,18,0,6"/>
-                            <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
-                                      FontSize="11.5"/>
+                            <!-- Leitura de referencia: as instrucoes, o executavel escolhido e o
+                                 veredito do log.
 
+                                 Isto se le uma vez e depois nunca mais, mas estava aberto em toda
+                                 visita a um jogo, empurrando para baixo o que se usa sempre — o
+                                 botao de ligar. Fica recolhido, e quem precisa abre.
 
-                            <StackPanel Margin="0,8,0,0"
-                                        Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
-                                <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"/>
-                                <ItemsControl ItemsSource="{Binding Notes}"
-                                              ItemTemplate="{StaticResource NoteCard}"/>
-                            </StackPanel>
-
-                            <!-- Regras que valem para TODOS os jogos do motor: longas e iguais em
-                                 centenas de jogos, entao ficam recolhidas para nao enterrar a
-                                 instrucao especifica deste jogo. -->
-                            <Expander Margin="0,10,0,0" Padding="0"
-                                      Visibility="{Binding EngineNotes.Count, Converter={StaticResource CountToVis}}">
+                                 O veredito e a excecao: quando ele traz problema ou build nova, e
+                                 exibido inteiro la em cima, fora daqui. Erro atras de um clique e
+                                 erro que ninguem le. -->
+                            <Expander Margin="0,16,0,0" Padding="0">
                                 <Expander.Header>
-                                    <TextBlock Text="{Binding EngineNotesHeader}" FontSize="10.5"
+                                    <TextBlock Text="{loc:Tr Dialog_Details_Label}" FontSize="10.5"
                                                FontWeight="SemiBold" Foreground="{StaticResource TextFaintBrush}"/>
                                 </Expander.Header>
-                                <StackPanel Margin="0,8,0,0">
-                                    <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,8" TextWrapping="Wrap"
-                                               Text="{loc:Tr Dialog_EngineNotes_Desc}"/>
-                                    <ItemsControl ItemsSource="{Binding EngineNotes}"
-                                                  ItemTemplate="{StaticResource NoteCard}"/>
+                                <StackPanel Margin="0,10,0,0">
+
+                                    <StackPanel Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
+                                        <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"/>
+                                        <ItemsControl ItemsSource="{Binding Notes}"
+                                                      ItemTemplate="{StaticResource NoteCard}"/>
+                                    </StackPanel>
+
+                                    <!-- Regras que valem para TODOS os jogos do motor: longas e
+                                         iguais em centenas de jogos, entao ficam recolhidas para
+                                         nao enterrar a instrucao especifica deste jogo. -->
+                                    <Expander Margin="0,10,0,0" Padding="0"
+                                              Visibility="{Binding EngineNotes.Count, Converter={StaticResource CountToVis}}">
+                                        <Expander.Header>
+                                            <TextBlock Text="{Binding EngineNotesHeader}" FontSize="10.5"
+                                                       FontWeight="SemiBold" Foreground="{StaticResource TextFaintBrush}"/>
+                                        </Expander.Header>
+                                        <StackPanel Margin="0,8,0,0">
+                                            <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                                       Text="{loc:Tr Dialog_EngineNotes_Desc}"/>
+                                            <ItemsControl ItemsSource="{Binding EngineNotes}"
+                                                          ItemTemplate="{StaticResource NoteCard}"/>
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <TextBlock Text="{loc:Tr Dialog_Exe_Label}" Style="{StaticResource SectionLabel}"
+                                               Margin="0,14,0,6"/>
+                                    <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
+                                              FontSize="11.5"/>
+
+                                    <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0"
+                                            Background="{StaticResource CardBrush}"
+                                            BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
+                                            Visibility="{Binding LoadVerdictOk, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding LoadVerdict}" TextWrapping="Wrap" FontSize="11.5"
+                                                   LineHeight="17" Foreground="{StaticResource TextDimBrush}"/>
+                                    </Border>
                                 </StackPanel>
                             </Expander>
 

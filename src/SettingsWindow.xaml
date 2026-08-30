@@ -1,0 +1,211 @@
+<Window x:Class="RenoDXLauncher.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
+        Title="{loc:Tr Settings_Title}" Height="760" Width="660"
+        Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True">
+    <Window.Resources>
+        <!-- Um cartao por peca. Todas tem a mesma anatomia — icone, nome, estado, acao — porque
+             sao a mesma coisa vista tres vezes: um arquivo que o launcher guarda uma vez e serve
+             a todos os jogos. Variar a forma sugeriria uma diferenca que nao existe. -->
+        <Style x:Key="PieceCard" TargetType="Border">
+            <Setter Property="CornerRadius" Value="11"/>
+            <Setter Property="Padding" Value="15,14"/>
+            <Setter Property="Margin" Value="0,0,0,11"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style x:Key="PieceName" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style x:Key="PieceState" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="17"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+        </Style>
+        <!-- Selo da versao: o dado que a pessoa vem conferir. Fica na linha do nome, nao perdido
+             no meio da explicacao. -->
+        <Style x:Key="VersionPill" TargetType="Border">
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="7,2"/>
+            <Setter Property="Margin" Value="9,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#33000000"/>
+        </Style>
+        <!-- Cabecalho de secao. A janela junta dois assuntos que antes eram duas janelas; sem
+             uma divisao visivel eles viravam uma lista so. -->
+        <Style x:Key="SectionHead" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}"/>
+            <Setter Property="Margin" Value="2,0,0,10"/>
+        </Style>
+        <Style x:Key="NitBadge" TargetType="Border">
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Background" Value="#2A2F3A"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="{StaticResource PanelBrush}" CornerRadius="12" BorderThickness="1"
+            BorderBrush="{StaticResource BorderStrongBrush}" Margin="12">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="26" ShadowDepth="5" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+        <DockPanel Margin="26,22,26,20">
+
+            <StackPanel DockPanel.Dock="Top">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="36" Height="36" CornerRadius="10" Background="#2A1F12">
+                        <Path Data="{StaticResource IconGear}" Fill="{StaticResource AccentBrush}"
+                              Stretch="Uniform" Width="19" Height="19"/>
+                    </Border>
+                    <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Tr Settings_Title}" Style="{StaticResource H1}" FontSize="17"/>
+                        <TextBlock Text="{loc:Tr Settings_Subtitle}" Style="{StaticResource Caption}"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+                <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,18,0,18"/>
+            </StackPanel>
+
+            <StackPanel DockPanel.Dock="Bottom">
+                <!-- Resultado da ultima acao. Ocupa o rodape porque vale para qualquer um dos
+                     cartoes, e piscar a mensagem dentro do cartao clicado empurraria os outros. -->
+                <Border x:Name="StatusBox" CornerRadius="8" Padding="11,9" Margin="0,10,0,0"
+                        Visibility="Collapsed" BorderThickness="1">
+                    <TextBlock x:Name="StatusText" FontSize="11.5" TextWrapping="Wrap" LineHeight="17"/>
+                </Border>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                    <Button Content="{loc:Tr Common_Close}" MinWidth="112" Padding="12,7" Click="OnClose"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Focusable=False: sem isso o ScrollViewer recebe o foco na abertura e ja rola um
+                 pouco para mostra-lo, cortando o topo do primeiro cartao. -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0" Focusable="False">
+                <StackPanel>
+                    <TextBlock Text="{loc:Tr Settings_Section_Dlss5}" Style="{StaticResource SectionHead}"/>
+
+                    <!-- 1. O addon. Sem URL estavel: os builds circulam pelo Discord, renomeados
+                            a cada versao. Atualizar e apontar para o arquivo baixado. -->
+                    <Border Style="{StaticResource PieceCard}" Background="#241B33" BorderBrush="#4A2F5E">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Padding="13,7" VerticalAlignment="Top"
+                                    Margin="12,0,0,0" Style="{StaticResource AccentButton}"
+                                    Click="OnImportAddon" Content="{loc:Tr Settings_Addon_Update}"/>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconDownload}" Fill="#D0A8F0" Stretch="Uniform"
+                                          Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{loc:Tr Settings_Addon_Title}" Style="{StaticResource PieceName}"
+                                               Foreground="#D0A8F0" VerticalAlignment="Center"/>
+                                    <Border Style="{StaticResource VersionPill}">
+                                        <TextBlock x:Name="AddonVersionPill" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="#E8D4F5"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock x:Name="AddonVersionText" Style="{StaticResource PieceState}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- 2. A ponte. Tem release publica, entao o launcher busca sozinho e fixa por
+                            hash — mas fixar um hash congela a versao, e por isso o caminho manual
+                            existe aqui tambem. -->
+                    <Border Style="{StaticResource PieceCard}" Background="#1E2A33" BorderBrush="#356178">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Padding="13,7" VerticalAlignment="Top"
+                                    Margin="12,0,0,0" Click="OnImportBridge"
+                                    Content="{loc:Tr Settings_Addon_Update}"/>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconGlobe}" Fill="#8FD0F0" Stretch="Uniform"
+                                          Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{loc:Tr Settings_Bridge_Title}" Style="{StaticResource PieceName}"
+                                               Foreground="#8FD0F0" VerticalAlignment="Center"/>
+                                    <Border Style="{StaticResource VersionPill}">
+                                        <TextBlock x:Name="BridgePill" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="#CDE8F5"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock x:Name="BridgeText" Style="{StaticResource PieceState}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- 3. O runtime. Sem botao: nao ha o que escolher — ou a NVIDIA assinou, ou
+                            nao entra. O launcher acha sozinho na maquina ou busca no indice do RHI. -->
+                    <Border Style="{StaticResource PieceCard}" Background="#1C1F26"
+                            BorderBrush="{StaticResource BorderBrush2}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconCheck}" Fill="{StaticResource GreenBrush}"
+                                      Stretch="Uniform" Width="15" Height="15" VerticalAlignment="Center"
+                                      Margin="0,0,8,0"/>
+                                <TextBlock Text="{loc:Tr Settings_Runtime_Title}" Style="{StaticResource PieceName}"
+                                           Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                                <Border Style="{StaticResource VersionPill}">
+                                    <TextBlock x:Name="RuntimePill" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextDimBrush}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock x:Name="RuntimeText" Style="{StaticResource PieceState}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="{loc:Tr Settings_Footnote}" Style="{StaticResource Caption}"
+                               TextWrapping="Wrap" Margin="2,4,0,0" LineHeight="16"/>
+
+                    <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,20,0,18"/>
+
+                    <!-- A calibracao da tela. Estava em uma janela propria e virou secao: e o
+                         mesmo tipo de coisa que o resto daqui — vale para todos os jogos, nao
+                         pertence a nenhum. Nao ha botao de salvar: cada mexida ja fica gravada. -->
+                    <TextBlock Text="{loc:Tr Settings_Section_Display}" Style="{StaticResource SectionHead}"/>
+
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" Style="{StaticResource NitBadge}">
+                            <TextBlock x:Name="PeakText" FontWeight="SemiBold" FontSize="12"
+                                       Foreground="{StaticResource AccentBrush}"/>
+                        </Border>
+                        <TextBlock Text="{loc:Tr Profile_PeakNits_Label}" Style="{StaticResource H2}"/>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
+                               Text="{loc:Tr Profile_PeakNits_Hint}"/>
+                    <Slider x:Name="PeakSlider" Minimum="48" Maximum="4000" TickFrequency="10"
+                            IsSnapToTickEnabled="True" ValueChanged="OnAnyValueChanged" Margin="0,8,0,6"/>
+                    <UniformGrid Columns="7">
+                        <Button Content="400" Click="OnPeakPreset" Margin="0,0,3,0" Padding="0,5" FontSize="11.5"/>
+                        <Button Content="600" Click="OnPeakPreset" Margin="3,0" Padding="0,5" FontSize="11.5"/>
+                        <Button Content="800" Click="OnPeakPreset" Margin="3,0" Padding="0,5" FontSize="11.5"/>
+                        <Button Content="1000" Click="OnPeakPreset" Margin="3,0" Padding="0,5" FontSize="11.5"/>
+                        <Button Content="1500" Click="OnPeakPreset" Margin="3,0" Padding="0,5" FontSize="11.5"/>
+                        <Button Content="2000" Click="OnPeakPreset" Margin="3,0" Padding="0,5" FontSize="11.5"/>
+                        <Button Content="4000" Click="OnPeakPreset" Margin="3,0,0,0" Padding="0,5" FontSize="11.5"/>
+                    </UniformGrid>
+
+                    <!-- So o pico do monitor. Os outros dois (jogo e interface) sairam: sao
+                         ajuste fino que se faz olhando a cena, dentro do jogo pelo Home, e nao
+                         aqui no escuro. O pico e diferente — e uma caracteristica da tela, vale
+                         para todo jogo e a pessoa so precisa dizer uma vez. -->
+                    <CheckBox x:Name="ApplyOnInstall" Margin="0,18,0,0" Click="OnApplyOnInstallChanged"
+                              Content="{loc:Tr Profile_ApplyOnInstall}"/>
+
+                    <Border Height="1" Background="{StaticResource BorderBrush2}" Margin="0,20,0,18"/>
+
+                    <DockPanel>
+                        <TextBlock Text="{loc:Tr Settings_Language}" Style="{StaticResource H2}"
+                                   VerticalAlignment="Center"/>
+                        <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" MinWidth="168"
+                                  HorizontalAlignment="Right" SelectionChanged="OnLanguageChanged"
+                                  DisplayMemberPath="Nome" SelectedValuePath="Tag"/>
+                    </DockPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</Window>

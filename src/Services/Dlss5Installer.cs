@@ -68,6 +68,21 @@ public static class Dlss5Installer
         var det = NeuralUpliftService.Detect(installDir, targetDir, addonPath);
         if (!det.HasDlss) return new Result(false, L.T("Dlss5_Blocked_NoDlss"), steps, manual);
 
+        // O filtro neural e um pass de D3D12, e um jogo DirectX 11 nao tem onde recebe-lo — a
+        // menos que a ponte esteja no meio. Ela cria um segundo device D3D12 e reproduz nele o
+        // contrato de DLSS do jogo, entao um jogo DX11 COM DLSS NATIVO passa a ser atendivel.
+        //
+        // Isto substituiu um bloqueio: antes o instalador parava aqui e dizia "este jogo nao roda
+        // D3D12". Verdadeiro sobre o jogo, e inutil — havia uma resposta, e ela nao era desistir.
+        var precisaPonte = exePath is not null && !LooksLikeD3D12(exePath);
+        if (precisaPonte)
+        {
+            try { await NeuralUpliftService.FetchBridgeAsync(progress, ct); }
+            catch (Exception ex) { Step(ex.Message); }
+            if (!File.Exists(NeuralUpliftService.LibraryBridge))
+                return new Result(false, L.T("Dlss5_Blocked_NoBridge"), steps, manual);
+        }
+
         if (!det.Host.RuntimeInLibrary)
         {
             try
@@ -124,6 +139,15 @@ public static class Dlss5Installer
         {
             NeuralUpliftService.Apply(targetDir, iniPath, det.UsesGeneric, progress);
             Step(det.UsesGeneric ? L.T("Dlss5_Step_AddonGeneric") : L.T("Dlss5_Step_AddonGame"));
+            if (precisaPonte)
+            {
+                NeuralUpliftService.DeployBridge(targetDir, progress);
+                Step(L.T("Dlss5_Step_Bridge"));
+                // O jogo DX11 tem mais de um executavel (o Baldur's Gate tem um Vulkan e um DX11),
+                // e a ponte so tem o que enganchar num deles. Dizer qual e a diferenca entre
+                // funcionar e "instalei e nao vi nada".
+                manual.Add(L.T("Dlss5_Manual_UseDx11Exe"));
+            }
         }
         catch (Exception ex)
         {
@@ -139,6 +163,64 @@ public static class Dlss5Installer
 
         var applied = NeuralUpliftService.IsApplied(targetDir, iniPath, addonPath);
         return new Result(applied, applied ? null : L.T("Dlss5_Blocked_Unknown"), steps, manual);
+    }
+
+    /// <summary>
+    /// O executavel alcanca D3D12?
+    ///
+    /// Responde SIM na duvida. Um jogo pode carregar `d3d12.dll` dinamicamente, e nesse caso a
+    /// tabela de importacao nao diz nada — entao so um NAO bem fundamentado bloqueia: o
+    /// executavel importa uma API grafica concorrente e nao importa D3D12. Sem essa condicao
+    /// dupla, um binario que resolve tudo em runtime seria barrado sem motivo.
+    /// </summary>
+    private static bool LooksLikeD3D12(string exePath)
+    {
+        var pe = PeUtils.Inspect(exePath);
+        if (pe is null) return true;
+        if (pe.Imports.Any(i => i.Equals("d3d12.dll", StringComparison.OrdinalIgnoreCase))) return true;
+
+        // A tabela de importacao nao basta. Um renderizador Vulkan carrega `vulkan-1.dll` em
+        // runtime e nao aparece ali: o `bg3.exe` do Baldur's Gate importa SO `dxgi.dll`, o que
+        // pela tabela e indistinguivel de um jogo que resolve D3D12 dinamicamente.
+        //
+        // O nome do modulo, porem, precisa existir em algum lugar do binario para ser passado ao
+        // LoadLibrary. Procurar a string decide o caso: no Baldur's Gate, `d3d12` aparece ZERO
+        // vezes nos dois executaveis, e `vulkan-1` aparece.
+        var mencionaD3d12 = ContainsAscii(exePath, "d3d12");
+        if (mencionaD3d12) return true;
+        var mencionaOutra = ContainsAscii(exePath, "vulkan-1") || ContainsAscii(exePath, "d3d11");
+        // So um NAO bem fundamentado — mencionar outra API e nunca mencionar D3D12 — decide pela
+        // ponte. Silencio total continua sendo "provavelmente sim", para nao barrar sem base.
+        return !mencionaOutra;
+    }
+
+    /// <summary>Procura uma string ASCII no arquivo, sem carrega-lo inteiro na memoria: estes
+    /// executaveis passam de 100 MB.</summary>
+    private static bool ContainsAscii(string path, string needle)
+    {
+        try
+        {
+            var alvo = System.Text.Encoding.ASCII.GetBytes(needle);
+            using var fs = File.OpenRead(path);
+            var buf = new byte[1 << 20];
+            var carry = alvo.Length - 1;
+            int lido, inicio = 0;
+            while ((lido = fs.Read(buf, inicio, buf.Length - inicio)) > 0)
+            {
+                var total = inicio + lido;
+                for (var i = 0; i <= total - alvo.Length; i++)
+                {
+                    var j = 0;
+                    while (j < alvo.Length && buf[i + j] == alvo[j]) j++;
+                    if (j == alvo.Length) return true;
+                }
+                // preserva a cauda, senao uma ocorrencia partida entre dois blocos escapa
+                if (total >= carry) Array.Copy(buf, total - carry, buf, 0, carry);
+                inicio = Math.Min(carry, total);
+            }
+        }
+        catch (Exception ex) { Log.Warn($"scan {needle} em {path}: {ex.Message}"); }
+        return false;
     }
 
     /// <summary>The library sweep is slow and noisy; it only matters when the runtime is absent.</summary>

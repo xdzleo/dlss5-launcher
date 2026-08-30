@@ -279,6 +279,127 @@ public static class NeuralUpliftService
     /// the release can be re-tagged, and the bytes still have to be the ones this was tested
     /// against or nothing is installed.
     /// </summary>
+    /// <summary>
+    /// A ponte que faz o addon — que so engancha D3D12 — rodar em jogo DirectX 11.
+    ///
+    /// Ela cria um SEGUNDO device D3D12 ao lado do jogo e reproduz nele o mesmo contrato de DLSS
+    /// que o jogo entrega ao NGX: copia cor e motion vectors para texturas compartilhadas,
+    /// converte a profundidade num compute shader, sincroniza as duas filas com uma fence
+    /// compartilhada, deixa o addon avaliar, e copia o resultado de volta. Cada tamanho,
+    /// deslocamento e escalar sai do proprio bloco de parametros NGX do jogo.
+    ///
+    /// Sem ela, um jogo DX11 com DLSS nativo — Baldur's Gate 3 e o caso testado — nao tinha onde
+    /// receber o pass, e o launcher so podia dizer "este jogo nao roda D3D12".
+    ///
+    /// Fonte publica (MIT, C++). Nao e assinada por ninguem, entao vale a mesma regra do addon:
+    /// fixada por hash de conteudo, e nada e instalado se os bytes nao forem estes.
+    /// </summary>
+    public const string BridgeFile = "dlss5-dx11-bridge.addon64";
+    private const string BridgeUrl =
+        "https://github.com/NIGos/dlss5-dx11-bridge/releases/download/v1.0.21/dlss5-dx11-bridge.addon64";
+    private const string BridgeSha256 =
+        "B3DD85D42094A10D410F6A63E7E6A95D8436CB58C4E01CDF68F09D380BB3152B";
+    private const long BridgeLength = 277504;
+
+    public static string LibraryBridge { get; } = Path.Combine(LibraryDir, BridgeFile);
+
+    /// <summary>A ponte esta instalada neste jogo?</summary>
+    public static bool BridgeDeployed(string targetDir) =>
+        File.Exists(Path.Combine(targetDir, BridgeFile));
+
+    /// <summary>Traz a ponte para a biblioteca, conferindo os bytes. Ver <see cref="BridgeFile"/>.</summary>
+    public static async Task<bool> FetchBridgeAsync(IProgress<string>? progress = null,
+                                                    CancellationToken ct = default)
+    {
+        if (File.Exists(LibraryBridge)) return false;
+        try
+        {
+            progress?.Report(L.T("Dlss5_Bridge_Fetching"));
+            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
+            var bytes = await http.GetByteArrayAsync(BridgeUrl, ct);
+            if (bytes.Length != BridgeLength)
+                throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", bytes.Length));
+            var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
+            if (!hash.Equals(BridgeSha256, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", hash));
+
+            Directory.CreateDirectory(LibraryDir);
+            await File.WriteAllBytesAsync(LibraryBridge, bytes, ct);
+            Log.Info("dlss5 bridge fetched and verified by hash");
+            return true;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (InvalidOperationException) { throw; }
+        catch (Exception ex) { Log.Warn($"dlss5 bridge fetch: {ex.Message}"); return false; }
+    }
+
+    /// <summary>
+    /// Traz uma ponte que o usuario baixou para a biblioteca e a leva aos jogos que ja a tem.
+    ///
+    /// A ponte TEM release publica com URL estavel, ao contrario do addon — mas fixar o hash de
+    /// uma versao significa que a proxima nao entra sozinha. Entao existe este caminho manual
+    /// pelo mesmo motivo do addon: quando sair uma versao nova, apontar para o arquivo resolve,
+    /// sem esperar que alguem edite a constante no codigo.
+    ///
+    /// A validacao aqui e por CONTEUDO, nao por nome: precisa ser um PE que se declare a ponte.
+    /// </summary>
+    public static int ImportBridge(string sourcePath, IEnumerable<string> installDirs)
+    {
+        if (!File.Exists(sourcePath)) throw new FileNotFoundException(sourcePath);
+        var bytes = File.ReadAllBytes(sourcePath);
+        if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
+            throw new InvalidOperationException(L.T("Settings_Bridge_NotBridge"));
+        // O binario se identifica na descricao que o ReShade le. Sem isso, qualquer .addon64
+        // entraria como "ponte" e o jogo simplesmente nao ganharia D3D12 nenhum.
+        var texto = System.Text.Encoding.ASCII.GetString(bytes);
+        if (!texto.Contains("DX11 Bridge", StringComparison.OrdinalIgnoreCase)
+            && !texto.Contains("dlss5-dx11-bridge", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(L.T("Settings_Bridge_NotBridge"));
+
+        Directory.CreateDirectory(LibraryDir);
+        File.WriteAllBytes(LibraryBridge, bytes);
+        Log.Info($"dlss5 bridge imported from {sourcePath}");
+
+        var options = new EnumerationOptions
+        {
+            IgnoreInaccessible = true,
+            RecurseSubdirectories = true,
+            MaxRecursionDepth = 10,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+        };
+        var n = 0;
+        foreach (var dir in installDirs.Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                foreach (var f in Directory.EnumerateFiles(dir, BridgeFile, options))
+                {
+                    if (new FileInfo(f).Length == bytes.Length
+                        && File.ReadAllBytes(f).AsSpan().SequenceEqual(bytes)) continue;
+                    if (AddonService.IsGameRunning(Path.GetDirectoryName(f)!)) continue;
+                    var backup = f + BackupSuffix;
+                    if (!File.Exists(backup)) File.Copy(f, backup);
+                    File.WriteAllBytes(f, bytes);
+                    n++;
+                }
+            }
+            catch (Exception ex) { Log.Warn($"bridge propagate {dir}: {ex.Message}"); }
+        }
+        return n;
+    }
+
+    /// <summary>Coloca a ponte ao lado do addon. Inerte num jogo que ja e D3D12.</summary>
+    public static void DeployBridge(string targetDir, IProgress<string>? progress = null)
+    {
+        if (!File.Exists(LibraryBridge)) return;
+        var dest = Path.Combine(targetDir, BridgeFile);
+        if (File.Exists(dest) && new FileInfo(dest).Length == new FileInfo(LibraryBridge).Length) return;
+        File.Copy(LibraryBridge, dest, overwrite: true);
+        progress?.Report(L.T("Dlss5_Bridge_Deployed"));
+        Log.Info($"dlss5 bridge deployed to {targetDir}");
+    }
+
     private const string CommunityAddonUrl =
         "https://github.com/zhubaohi/FF7R-DLSS5/releases/download/v1/renodx-dlss5-v2.5.addon64";
     private const string CommunityAddonSha256 =
@@ -842,6 +963,80 @@ public static class NeuralUpliftService
         catch (OperationCanceledException) { throw; }
         catch (InvalidOperationException) { throw; }
         catch (Exception ex) { Log.Warn($"neural runtime fetch: {ex.Message}"); return null; }
+    }
+
+    /// <summary>
+    /// A versao que o proprio binario declara, ou null.
+    ///
+    /// Lida do arquivo e nao do nome: esses builds circulam renomeados de todo jeito —
+    /// `renodx-dlss5 3,3.4.addon64`, `renodx-dlss5(3).addon64`, `renodx-dlss5++.addon64` — e o
+    /// nome nao diz o que ha dentro. A string `vX.Y.Z` diz.
+    /// </summary>
+    public static string? ReadAddonVersion(string path)
+    {
+        try
+        {
+            if (!File.Exists(path) || new FileInfo(path).Length > 64L * 1024 * 1024) return null;
+            var texto = System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(path));
+            // A versao do RUNTIME (v310.8.0) tambem aparece; a do addon e a que nao e 310.
+            return System.Text.RegularExpressions.Regex.Matches(texto, @"\bv(\d+\.\d+\.\d+)\b")
+                .Select(m => m.Groups[1].Value)
+                .FirstOrDefault(v => !v.StartsWith("310.", StringComparison.Ordinal));
+        }
+        catch (Exception ex) { Log.Warn($"neural version {path}: {ex.Message}"); return null; }
+    }
+
+    /// <summary>
+    /// Leva o build da biblioteca para todo jogo que ja tem o addon instalado.
+    ///
+    /// Sem isto, trocar o addon na biblioteca so valia para instalacoes NOVAS: um jogo ja
+    /// configurado ficava no build que chegou primeiro ate alguem aplicar nele de novo, um por
+    /// um. Quando a correcao e de frame preto, ficar uma versao atras nao e detalhe.
+    /// </summary>
+    /// <returns>Quantos jogos foram atualizados.</returns>
+    public static int PropagateAddon(IEnumerable<string> installDirs, IProgress<string>? progress = null)
+    {
+        if (!File.Exists(LibraryAddon)) return 0;
+        var alvo = File.ReadAllBytes(LibraryAddon);
+        var options = new EnumerationOptions
+        {
+            IgnoreInaccessible = true,
+            RecurseSubdirectories = true,
+            MaxRecursionDepth = 10,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+        };
+
+        var n = 0;
+        foreach (var dir in installDirs.Where(Directory.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            foreach (var nome in GenericAddonNames)
+            {
+                IEnumerable<string> achados;
+                try { achados = Directory.EnumerateFiles(dir, nome, options).ToList(); }
+                catch (Exception ex) { Log.Warn($"neural propagate {dir}: {ex.Message}"); continue; }
+
+                foreach (var f in achados)
+                {
+                    try
+                    {
+                        if (new FileInfo(f).Length == alvo.Length
+                            && File.ReadAllBytes(f).AsSpan().SequenceEqual(alvo)) continue;
+                        if (AddonService.IsGameRunning(Path.GetDirectoryName(f)!))
+                        {
+                            progress?.Report(L.T("Error_GameRunning"));
+                            continue;
+                        }
+                        var backup = f + BackupSuffix;
+                        if (!File.Exists(backup)) File.Copy(f, backup);
+                        File.WriteAllBytes(f, alvo);
+                        n++;
+                        Log.Info($"neural propagate: {f}");
+                    }
+                    catch (Exception ex) { Log.Warn($"neural propagate {f}: {ex.Message}"); }
+                }
+            }
+        }
+        return n;
     }
 
     /// <summary>Bring the generic addon into the library. Validated the same way as the runtime:

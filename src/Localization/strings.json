@@ -540,6 +540,10 @@
     "en": "Writes your monitor's nits into this game's settings.",
     "pt-BR": "Escreve os nits do seu monitor nas configurações deste jogo."
   },
+  "Dialog_Details_Label": {
+    "en": "INSTRUCTIONS AND DETAILS",
+    "pt-BR": "INSTRUÇÕES E DETALHES"
+  },
   "Dialog_DlssFix_Desc": {
     "en": "Apply only if you see flicker or artifacts.",
     "pt-BR": "Só use se notar piscadas ou artefatos."
@@ -622,19 +626,19 @@
     "pt-BR": "Instável"
   },
   "Dialog_Neural_Desc": {
-    "en": "Runs the DLSS 5 neural post-process over the finished frame, one frame late. Mostly improves skin and faces. Experimental.",
+    "en": "Runs NVIDIA's neural post-process over the finished frame. Mostly improves skin and faces. Experimental.",
     "note": "Descricao do cartao. DLSS e termo tecnico, mantido.",
-    "pt-BR": "Roda o pós-processamento neural do DLSS 5 sobre o quadro pronto, um quadro atrasado. Melhora principalmente pele e rosto. Experimental."
+    "pt-BR": "Roda o pós-processo neural da NVIDIA sobre o frame pronto. Melhora principalmente pele e rostos. Experimental."
   },
   "Dialog_Neural_Name": {
-    "en": "Neural Uplift (DLSS-NR)",
+    "en": "DLSS 5 addon",
     "note": "Nome acessivel do botao. Nome da feature: nao traduzir.",
-    "pt-BR": "Neural Uplift (DLSS-NR)"
+    "pt-BR": "Addon do DLSS 5"
   },
   "Dialog_Neural_Title": {
-    "en": "Neural Uplift (DLSS-NR) available",
+    "en": "DLSS 5 addon",
     "note": "Titulo do cartao.",
-    "pt-BR": "Neural Uplift (DLSS-NR) disponível"
+    "pt-BR": "Addon do DLSS 5"
   },
   "Dialog_Notes_Label": {
     "en": "HOW TO SET UP THIS GAME",
@@ -713,6 +717,14 @@
     "note": "Title Case no en por ser titulo curto, conforme a regra de maiuscula.",
     "pt-BR": "Atualização disponível"
   },
+  "Dlss5_Blocked_NoBridge": {
+    "en": "This game runs DirectX 11, and the bridge that makes the D3D12 pass work here could not be fetched.",
+    "pt-BR": "Este jogo roda DirectX 11, e a ponte que faz o pass de D3D12 funcionar aqui não pôde ser baixada."
+  },
+  "Dlss5_Blocked_NoD3D12": {
+    "en": "This game does not run D3D12 — the neural filter is a D3D12 pass, so there is nowhere for it to run here. Having DLSS does not change that.",
+    "pt-BR": "Este jogo não roda em D3D12 — o filtro neural é um pass de D3D12, então aqui não há onde ele rodar. Ter DLSS não muda isso."
+  },
   "Dlss5_Blocked_NoDlss": {
     "en": "This game ships no DLSS runtime. The neural filter reads the buffers the game hands to DLSS, so there is nothing for it to read here.",
     "pt-BR": "Este jogo não tem DLSS. O filtro neural lê os buffers que o jogo entrega ao DLSS, então aqui não há o que ler."
@@ -729,9 +741,25 @@
     "en": "Everything was written, but the state still does not read as on. See the steps above.",
     "pt-BR": "Tudo foi gravado, mas o estado ainda não lê como ligado. Veja os passos acima."
   },
+  "Dlss5_Bridge_Deployed": {
+    "en": "DX11 bridge deployed.",
+    "pt-BR": "Ponte DX11 instalada."
+  },
+  "Dlss5_Bridge_Fetching": {
+    "en": "Downloading the DX11 bridge…",
+    "pt-BR": "Baixando a ponte DX11…"
+  },
+  "Dlss5_Bridge_Notice": {
+    "en": "This game runs DirectX 11. The DX11 bridge is active: it mirrors the game's DLSS contract onto a second D3D12 device so the neural pass has somewhere to run. Launch through the DirectX 11 executable.",
+    "pt-BR": "Este jogo roda DirectX 11. A ponte DX11 está ativa: ela espelha o contrato de DLSS do jogo num segundo device D3D12, para o pass neural ter onde rodar. Abra pelo executável DirectX 11."
+  },
   "Dlss5_Link_Addon": {
     "en": "Addon",
     "pt-BR": "Addon"
+  },
+  "Dlss5_Link_Bridge": {
+    "en": "DX11 bridge",
+    "pt-BR": "Ponte DX11"
   },
   "Dlss5_Link_EarlyLoad": {
     "en": "Early load",
@@ -757,6 +785,10 @@
     "en": "Press Home in the game to open the overlay and check that the state reads ACTIVE.",
     "pt-BR": "Aperte Home no jogo para abrir o overlay e conferir se o estado diz ATIVO."
   },
+  "Dlss5_Manual_UseDx11Exe": {
+    "en": "Launch the game through its DirectX 11 executable — the bridge has nothing to hook in a Vulkan one.",
+    "pt-BR": "Abra o jogo pelo executável DirectX 11 — num Vulkan a ponte não tem o que enganchar."
+  },
   "Dlss5_State_Off": {
     "en": "Off",
     "pt-BR": "Desligado"
@@ -776,6 +808,10 @@
   "Dlss5_Step_AddonGeneric": {
     "en": "Generic addon, both runtimes and the early-load key are in place.",
     "pt-BR": "Addon genérico, os dois runtimes e a chave de carga antecipada no lugar."
+  },
+  "Dlss5_Step_Bridge": {
+    "en": "DX11 bridge in place — the D3D12 pass now has somewhere to run.",
+    "pt-BR": "Ponte DX11 no lugar — o pass de D3D12 agora tem onde rodar."
   },
   "Dlss5_Step_ReShade": {
     "en": "ReShade installed as {0}.",
@@ -1292,6 +1328,11 @@
   "Install_ReShadeVersion_Title": {
     "en": "ReShade Version",
     "pt-BR": "Versão do ReShade"
+  },
+  "Install_ReShade_Chained": {
+    "en": "ReShade is already here as {0}, chain-loaded by another mod — nothing to deploy.",
+    "note": "{0} = nome do arquivo, ex. ReShade64.dll.",
+    "pt-BR": "O ReShade já está aqui como {0}, carregado em cadeia por outro mod — nada a instalar."
   },
   "Install_ReShade_CheckingVersion": {
     "en": "Checking the ReShade version...",
@@ -2002,6 +2043,30 @@
     "note": "H2.",
     "pt-BR": "Brilho da interface (HUD)"
   },
+  "Settings_Addon_Current": {
+    "en": "New builds circulate on Discord under changing names, so point at the file you downloaded — it goes to every game at once.",
+    "pt-BR": "Os builds novos circulam pelo Discord com nomes que mudam, então aponte para o arquivo que você baixou — ele vai para todos os jogos de uma vez."
+  },
+  "Settings_Addon_Done": {
+    "en": "Saved to the library and updated in {0} game(s).",
+    "pt-BR": "Guardado na biblioteca e atualizado em {0} jogo(s)."
+  },
+  "Settings_Addon_None": {
+    "en": "Nothing in the library yet. Point at a .addon64 you downloaded.",
+    "pt-BR": "Nada na biblioteca ainda. Aponte para um .addon64 que você baixou."
+  },
+  "Settings_Addon_Pick": {
+    "en": "Pick the .addon64 you downloaded",
+    "pt-BR": "Escolha o .addon64 que você baixou"
+  },
+  "Settings_Addon_Title": {
+    "en": "DLSS 5 addon",
+    "pt-BR": "Addon do DLSS 5"
+  },
+  "Settings_Addon_Update": {
+    "en": "Update…",
+    "pt-BR": "Atualizar…"
+  },
   "Settings_Bloom_Label": {
     "en": "Bloom",
     "note": "Termo tecnico.",
@@ -2011,6 +2076,30 @@
     "en": "Blowout (highlight desaturation)",
     "note": "Blowout e termo do mod; o parenteses explica o efeito.",
     "pt-BR": "Blowout (dessatura realces)"
+  },
+  "Settings_Bridge_Done": {
+    "en": "Bridge saved to the library and updated in {0} game(s).",
+    "pt-BR": "Ponte guardada na biblioteca e atualizada em {0} jogo(s)."
+  },
+  "Settings_Bridge_Have": {
+    "en": "Lets the D3D12 neural pass run in DirectX 11 games. Deployed automatically where it is needed; point at a file to update it.",
+    "pt-BR": "Faz o pass neural de D3D12 rodar em jogos DirectX 11. É instalada sozinha onde é preciso; aponte um arquivo para atualizar."
+  },
+  "Settings_Bridge_None": {
+    "en": "Not here yet — it is fetched automatically the first time a DirectX 11 game needs it.",
+    "pt-BR": "Ainda não está aqui — ela é buscada sozinha na primeira vez que um jogo DirectX 11 precisar."
+  },
+  "Settings_Bridge_NotBridge": {
+    "en": "That file is not the DX11 bridge — its contents do not identify it as one.",
+    "pt-BR": "Esse arquivo não é a ponte DX11 — o conteúdo dele não se identifica como tal."
+  },
+  "Settings_Bridge_Pick": {
+    "en": "Pick the bridge .addon64 you downloaded",
+    "pt-BR": "Escolha o .addon64 da ponte que você baixou"
+  },
+  "Settings_Bridge_Title": {
+    "en": "DX11 bridge",
+    "pt-BR": "Ponte DX11"
   },
   "Settings_ColorGradeStrength_Label": {
     "en": "Color grade strength",
@@ -2033,6 +2122,10 @@
     "en": "Flare (diffuse glow)",
     "note": "Antes era \"Flare / brilho difuso\"; a barra virou parenteses.",
     "pt-BR": "Flare (brilho difuso)"
+  },
+  "Settings_Footnote": {
+    "en": "Every file is verified before it is stored: the addon and the bridge by their contents, the runtime by NVIDIA's signature. A wrong file does not fail inside the game — it just does nothing.",
+    "pt-BR": "Todo arquivo é conferido antes de ser guardado: o addon e a ponte pelo conteúdo, o runtime pela assinatura da NVIDIA. Arquivo errado não dá erro dentro do jogo — ele só não faz nada."
   },
   "Settings_GameBrightness_Label": {
     "en": "Game brightness (nits)",
@@ -2089,6 +2182,30 @@
     "note": "Saiu o \"SEU\" em caixa alta e o \"nao e gosto\"; o texto agora diz onde medir logo na segunda frase.",
     "pt-BR": "Pico do monitor, em nits. Medido, não escolhido."
   },
+  "Settings_Pill_Have": {
+    "en": "in the library",
+    "pt-BR": "na biblioteca"
+  },
+  "Settings_Pill_Missing": {
+    "en": "missing",
+    "pt-BR": "faltando"
+  },
+  "Settings_Pill_Unknown": {
+    "en": "unknown version",
+    "pt-BR": "versão desconhecida"
+  },
+  "Settings_Runtime_Have": {
+    "en": "NVIDIA ships this in no driver and no public SDK. Found on this machine or fetched from the RHI index, and only installed if NVIDIA signed it.",
+    "pt-BR": "A NVIDIA não distribui isto em driver nem em SDK público. Achado nesta máquina ou buscado no índice do RHI, e só instalado se a NVIDIA assinou."
+  },
+  "Settings_Runtime_None": {
+    "en": "Not here yet. The launcher looks for a copy on this machine, then falls back to the RHI index.",
+    "pt-BR": "Ainda não está aqui. O launcher procura uma cópia nesta máquina e, se não achar, busca no índice do RHI."
+  },
+  "Settings_Runtime_Title": {
+    "en": "Neural runtime",
+    "pt-BR": "Runtime neural"
+  },
   "Settings_Saturation_Label": {
     "en": "Saturation",
     "pt-BR": "Saturação"
@@ -2096,6 +2213,14 @@
   "Settings_SceneGradeStrength_Label": {
     "en": "Scene grade strength",
     "pt-BR": "Intensidade da gradação da cena"
+  },
+  "Settings_Section_Display": {
+    "en": "YOUR DISPLAY",
+    "pt-BR": "SUA TELA"
+  },
+  "Settings_Section_Dlss5": {
+    "en": "DLSS 5",
+    "pt-BR": "DLSS 5"
   },
   "Settings_Section_Other": {
     "en": "Other",
@@ -2109,6 +2234,14 @@
   "Settings_Shadows_Label": {
     "en": "Shadows",
     "pt-BR": "Sombras"
+  },
+  "Settings_Subtitle": {
+    "en": "Everything that applies to every game and belongs to none.",
+    "pt-BR": "Tudo o que vale para todos os jogos e não pertence a nenhum."
+  },
+  "Settings_Title": {
+    "en": "Settings",
+    "pt-BR": "Ajustes"
   },
   "Settings_ToneMapper_Label": {
     "en": "Tone mapper",
@@ -2132,5 +2265,45 @@
   "Settings_Vignette_Label": {
     "en": "Vignette",
     "pt-BR": "Vinheta"
+  },
+  "Update_BadHost": {
+    "en": "the release pointed the download somewhere outside GitHub, so it was not followed.",
+    "pt-BR": "a release apontou o download para fora do GitHub, então ele não foi seguido."
+  },
+  "Update_Banner_Button": {
+    "en": "Update",
+    "pt-BR": "Atualizar"
+  },
+  "Update_Banner_Detail": {
+    "en": "You are on {0}. The update downloads ({1}) and installs itself — your games and settings stay as they are.",
+    "pt-BR": "Você está na {0}. A atualização baixa ({1}) e se instala sozinha — seus jogos e ajustes ficam como estão."
+  },
+  "Update_Banner_Title": {
+    "en": "RenoDX Launcher {0} is out",
+    "pt-BR": "Saiu o RenoDX Launcher {0}"
+  },
+  "Update_Cancelled": {
+    "en": "the installer did not start.",
+    "pt-BR": "o instalador não iniciou."
+  },
+  "Update_Downloading": {
+    "en": "Downloading the update… {0}%",
+    "pt-BR": "Baixando a atualização… {0}%"
+  },
+  "Update_Failed": {
+    "en": "Update failed: {0}",
+    "pt-BR": "A atualização falhou: {0}"
+  },
+  "Update_Found": {
+    "en": "RenoDX Launcher {0} is available.",
+    "pt-BR": "O RenoDX Launcher {0} está disponível."
+  },
+  "Update_HashMismatch": {
+    "en": "the downloaded file did not arrive intact. Nothing was installed — try again.",
+    "pt-BR": "o arquivo baixado não chegou inteiro. Nada foi instalado — tente de novo."
+  },
+  "Update_Installing": {
+    "en": "Installing {0}. The launcher closes and reopens on its own.",
+    "pt-BR": "Instalando a {0}. O launcher fecha e reabre sozinho."
   }
 }

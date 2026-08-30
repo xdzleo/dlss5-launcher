@@ -87,6 +87,79 @@ public class MainViewModel : ObservableObject
         OpenMaintainerCommand = new RelayCommand(OpenMaintainer,
             () => AvatarService.ProfileUrl(Selected?.Mod) != null);
         UpdateAllCommand = new AsyncRelayCommand(UpdateAllAsync, () => !Busy && UpdateCount > 0);
+        UpdateLauncherCommand = new AsyncRelayCommand(UpdateLauncherAsync, () => !Busy && _launcherUpdate != null);
+    }
+
+    // ---------------------------------------------------------------- launcher self-update
+
+    private LauncherRelease? _launcherUpdate;
+    public AsyncRelayCommand UpdateLauncherCommand { get; }
+
+    /// <summary>A release nova do proprio launcher, quando existe. Vira o aviso de topo.</summary>
+    public LauncherRelease? LauncherUpdate
+    {
+        get => _launcherUpdate;
+        private set
+        {
+            if (!Set(ref _launcherUpdate, value)) return;
+            OnPropertyChanged(nameof(HasLauncherUpdate));
+            OnPropertyChanged(nameof(LauncherUpdateTitle));
+            OnPropertyChanged(nameof(LauncherUpdateDetail));
+            RaiseCommands();
+        }
+    }
+
+    public bool HasLauncherUpdate => _launcherUpdate != null;
+
+    public string LauncherUpdateTitle =>
+        _launcherUpdate is { } r ? L.T("Update_Banner_Title", r.Version.ToString()) : "";
+
+    public string LauncherUpdateDetail =>
+        _launcherUpdate is { } r
+            ? L.T("Update_Banner_Detail", LauncherUpdateService.Current.ToString(),
+                  r.Size > 0 ? $"{r.Size / (1024 * 1024)} MB" : "?")
+            : "";
+
+    /// <summary>
+    /// Checagem silenciosa na abertura. Quem instala mod sozinho nao volta ao repositorio para
+    /// conferir versao, entao a versao nova precisa vir ate a pessoa. So aparece se houver uma.
+    /// </summary>
+    public async Task CheckLauncherUpdateAsync()
+    {
+        var r = await LauncherUpdateService.CheckAsync();
+        if (r != null) LauncherUpdate = r;
+    }
+
+    /// <summary>
+    /// Baixa a release nova, confere o hash e entrega ao instalador.
+    ///
+    /// A partir do RunSetup o launcher esta com os dias contados — o Inno fecha esta janela para
+    /// trocar os arquivos. Por isso a mensagem final e escrita antes, e nao depois.
+    /// </summary>
+    private async Task UpdateLauncherAsync()
+    {
+        if (_launcherUpdate is not { } rel) return;
+        ActionBusy = true;
+        try
+        {
+            var progresso = new Progress<string>(t => StatusText = t);
+            var setup = await LauncherUpdateService.DownloadAsync(rel, progresso);
+            StatusText = L.T("Update_Installing", rel.Version.ToString());
+            if (LauncherUpdateService.RunSetup(setup))
+            {
+                LauncherUpdate = null;
+            }
+            else
+            {
+                StatusText = L.T("Update_Failed", L.T("Update_Cancelled"));
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"launcher update: {ex}");
+            StatusText = L.T("Update_Failed", ex.Message);
+        }
+        finally { ActionBusy = false; }
     }
 
     // ---------- top-level state ----------
@@ -253,6 +326,22 @@ public class MainViewModel : ObservableObject
     private bool _hasLoadVerdict;
     public bool HasLoadVerdict { get => _hasLoadVerdict; set => Set(ref _hasLoadVerdict, value); }
 
+    /// <summary>
+    /// O veredito e uma boa noticia ("carregou") e nao ha build nova esperando.
+    ///
+    /// Separa quem fala sozinho de quem espera ser chamado: um "nao carregou" precisa aparecer
+    /// na hora, e um "carregou certinho" nao merece ocupar o painel toda vez que se clica em um
+    /// jogo — esse vai para dentro do bloco recolhido.
+    /// </summary>
+    private bool _loadVerdictOk;
+    public bool LoadVerdictOk
+    {
+        get => _loadVerdictOk;
+        set { if (Set(ref _loadVerdictOk, value)) OnPropertyChanged(nameof(HasLoadProblem)); }
+    }
+
+    public bool HasLoadProblem => _hasLoadVerdict && !_loadVerdictOk;
+
     private bool _needsRepair;
     /// <summary>O ReShade que está na pasta é a build SEM suporte a add-ons — o mod nunca vai
     /// carregar até ser substituído. Como o banner de instalar some depois de instalado, este é
@@ -345,6 +434,14 @@ public class MainViewModel : ObservableObject
 
     public string Dlss5StateText => L.T(_dlss5Ready ? "Dlss5_State_On" : "Dlss5_State_Off");
 
+    private bool _bridgeActive;
+    /// <summary>A ponte DX11 esta em uso neste jogo. Vira o aviso no cartao.</summary>
+    public bool BridgeActive
+    {
+        get => _bridgeActive;
+        set { _bridgeActive = value; OnPropertyChanged(nameof(BridgeActive)); }
+    }
+
     /// <summary>Recolhe o estado de cada elo para os indicadores do cartao.</summary>
     private void BuildDlss5Chain(string targetDir, string iniPath, NeuralUpliftService.Detection det)
     {
@@ -365,6 +462,12 @@ public class MainViewModel : ObservableObject
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_EarlyLoad"), early || addon is null));
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Switch"), NeuralApplied));
         Dlss5Ready = Dlss5Chain.All(l => l.Ok);
+
+        // A ponte so aparece onde ela e necessaria. Num jogo D3D12 ela nao existe e listar uma
+        // pastilha apagada chamada "Ponte DX11" seria inventar um problema que nao ha; num jogo
+        // DX11 ela e a peca sem a qual nada roda, e o usuario precisa saber que esta em uso.
+        BridgeActive = NeuralUpliftService.BridgeDeployed(targetDir);
+        if (BridgeActive) Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Bridge"), true));
     }
 
     /// <summary>O runtime falta na biblioteca — o único bloqueio que o usuário resolve aqui
@@ -502,6 +605,7 @@ public class MainViewModel : ObservableObject
         RefreshCommand.RaiseCanExecuteChanged();
         AddManualGameCommand.RaiseCanExecuteChanged();
         CheckUpdatesCommand.RaiseCanExecuteChanged();
+        UpdateLauncherCommand.RaiseCanExecuteChanged();
         UpdateAllCommand.RaiseCanExecuteChanged();
         InstallCommand.RaiseCanExecuteChanged();
         ToggleCommand.RaiseCanExecuteChanged();
@@ -1285,6 +1389,7 @@ public class MainViewModel : ObservableObject
     {
         LoadVerdict = "";
         HasLoadVerdict = false;
+        LoadVerdictOk = false;
         NeedsRepair = false;
         var item = _detailItem;
         if (item?.State is null || item.State.AddonPath is null) return;
@@ -1293,6 +1398,7 @@ public class MainViewModel : ObservableObject
         if (token != _detailToken) return;
         LoadVerdict = report.Message;
         HasLoadVerdict = true;
+        LoadVerdictOk = report.Result is LoadResult.Loaded;
         NeedsRepair = report.Result is LoadResult.LimitedBuild or LoadResult.NoAddonSupport;
 
         // mods RenoDX atualizam direto — avisa quando há build nova no servidor
@@ -1301,7 +1407,11 @@ public class MainViewModel : ObservableObject
             var newer = await AddonService.IsUpdateAvailableAsync(item.Mod, item.State);
             if (token != _detailToken) return;
             if (newer == true)
+            {
                 LoadVerdict += "\n\n" + L.T("Main_Detail_UpdateAvailable");
+                // Build nova e algo a fazer, entao o bloco sai do recolhido e aparece.
+                LoadVerdictOk = false;
+            }
         }
     }
 
@@ -1589,10 +1699,17 @@ public class MainViewModel : ObservableObject
         ActionBusy = true;
         try
         {
+            // O launcher entra na mesma checagem dos mods: quem clica aqui esta perguntando
+            // "tem coisa nova?", e a versao do proprio app faz parte da resposta.
+            var launcherCheck = LauncherUpdateService.CheckAsync();
+
             var installed = Games.Where(g => g.IsInstalled && g.Mod?.DownloadUrl != null && g.State != null).ToList();
             if (installed.Count == 0)
             {
-                StatusText = L.T("Main_Updates_NoneInstalled");
+                LauncherUpdate = await launcherCheck ?? _launcherUpdate;
+                StatusText = HasLauncherUpdate
+                    ? L.T("Update_Found", _launcherUpdate!.Version.ToString())
+                    : L.T("Main_Updates_NoneInstalled");
                 UpdateCount = 0;
                 return;
             }
@@ -1617,10 +1734,13 @@ public class MainViewModel : ObservableObject
             }
             UpdateCount = count;
             RefreshViewKeepSelection();
+            LauncherUpdate = await launcherCheck ?? _launcherUpdate;
+
             var unverified = unknown > 0 ? " " + L.T("Main_Updates_Unverified", unknown) : "";
+            var doLauncher = HasLauncherUpdate ? " " + L.T("Update_Found", _launcherUpdate!.Version.ToString()) : "";
             StatusText = (count > 0
                 ? L.T("Main_Updates_Available", count)
-                : L.T("Main_Updates_AllCurrent")) + unverified;
+                : L.T("Main_Updates_AllCurrent")) + unverified + doLauncher;
         }
         catch (Exception ex)
         {

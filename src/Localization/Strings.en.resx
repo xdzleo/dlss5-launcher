@@ -489,6 +489,9 @@
   <data name="Dialog_ApplyProfile_Tooltip" xml:space="preserve">
     <value>Writes your monitor's nits into this game's settings.</value>
   </data>
+  <data name="Dialog_Details_Label" xml:space="preserve">
+    <value>INSTRUCTIONS AND DETAILS</value>
+  </data>
   <data name="Dialog_DlssFix_Desc" xml:space="preserve">
     <value>Apply only if you see flicker or artifacts.</value>
   </data>
@@ -552,15 +555,15 @@
     <value>Unstable</value>
   </data>
   <data name="Dialog_Neural_Desc" xml:space="preserve">
-    <value>Runs the DLSS 5 neural post-process over the finished frame, one frame late. Mostly improves skin and faces. Experimental.</value>
+    <value>Runs NVIDIA's neural post-process over the finished frame. Mostly improves skin and faces. Experimental.</value>
     <comment>Descricao do cartao. DLSS e termo tecnico, mantido.</comment>
   </data>
   <data name="Dialog_Neural_Name" xml:space="preserve">
-    <value>Neural Uplift (DLSS-NR)</value>
+    <value>DLSS 5 addon</value>
     <comment>Nome acessivel do botao. Nome da feature: nao traduzir.</comment>
   </data>
   <data name="Dialog_Neural_Title" xml:space="preserve">
-    <value>Neural Uplift (DLSS-NR) available</value>
+    <value>DLSS 5 addon</value>
     <comment>Titulo do cartao.</comment>
   </data>
   <data name="Dialog_Notes_Label" xml:space="preserve">
@@ -623,6 +626,12 @@
     <value>Update Available</value>
     <comment>Title Case no en por ser titulo curto, conforme a regra de maiuscula.</comment>
   </data>
+  <data name="Dlss5_Blocked_NoBridge" xml:space="preserve">
+    <value>This game runs DirectX 11, and the bridge that makes the D3D12 pass work here could not be fetched.</value>
+  </data>
+  <data name="Dlss5_Blocked_NoD3D12" xml:space="preserve">
+    <value>This game does not run D3D12 — the neural filter is a D3D12 pass, so there is nowhere for it to run here. Having DLSS does not change that.</value>
+  </data>
   <data name="Dlss5_Blocked_NoDlss" xml:space="preserve">
     <value>This game ships no DLSS runtime. The neural filter reads the buffers the game hands to DLSS, so there is nothing for it to read here.</value>
   </data>
@@ -635,8 +644,20 @@
   <data name="Dlss5_Blocked_Unknown" xml:space="preserve">
     <value>Everything was written, but the state still does not read as on. See the steps above.</value>
   </data>
+  <data name="Dlss5_Bridge_Deployed" xml:space="preserve">
+    <value>DX11 bridge deployed.</value>
+  </data>
+  <data name="Dlss5_Bridge_Fetching" xml:space="preserve">
+    <value>Downloading the DX11 bridge…</value>
+  </data>
+  <data name="Dlss5_Bridge_Notice" xml:space="preserve">
+    <value>This game runs DirectX 11. The DX11 bridge is active: it mirrors the game's DLSS contract onto a second D3D12 device so the neural pass has somewhere to run. Launch through the DirectX 11 executable.</value>
+  </data>
   <data name="Dlss5_Link_Addon" xml:space="preserve">
     <value>Addon</value>
+  </data>
+  <data name="Dlss5_Link_Bridge" xml:space="preserve">
+    <value>DX11 bridge</value>
   </data>
   <data name="Dlss5_Link_EarlyLoad" xml:space="preserve">
     <value>Early load</value>
@@ -656,6 +677,9 @@
   <data name="Dlss5_Manual_Overlay" xml:space="preserve">
     <value>Press Home in the game to open the overlay and check that the state reads ACTIVE.</value>
   </data>
+  <data name="Dlss5_Manual_UseDx11Exe" xml:space="preserve">
+    <value>Launch the game through its DirectX 11 executable — the bridge has nothing to hook in a Vulkan one.</value>
+  </data>
   <data name="Dlss5_State_Off" xml:space="preserve">
     <value>Off</value>
   </data>
@@ -670,6 +694,9 @@
   </data>
   <data name="Dlss5_Step_AddonGeneric" xml:space="preserve">
     <value>Generic addon, both runtimes and the early-load key are in place.</value>
+  </data>
+  <data name="Dlss5_Step_Bridge" xml:space="preserve">
+    <value>DX11 bridge in place — the D3D12 pass now has somewhere to run.</value>
   </data>
   <data name="Dlss5_Step_ReShade" xml:space="preserve">
     <value>ReShade installed as {0}.</value>
@@ -1087,6 +1114,10 @@ Only continue if you are going to play OFFLINE.</value>
   </data>
   <data name="Install_ReShadeVersion_Title" xml:space="preserve">
     <value>ReShade Version</value>
+  </data>
+  <data name="Install_ReShade_Chained" xml:space="preserve">
+    <value>ReShade is already here as {0}, chain-loaded by another mod — nothing to deploy.</value>
+    <comment>{0} = nome do arquivo, ex. ReShade64.dll.</comment>
   </data>
   <data name="Install_ReShade_CheckingVersion" xml:space="preserve">
     <value>Checking the ReShade version...</value>
@@ -1650,6 +1681,24 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>UI Brightness (HUD)</value>
     <comment>H2.</comment>
   </data>
+  <data name="Settings_Addon_Current" xml:space="preserve">
+    <value>New builds circulate on Discord under changing names, so point at the file you downloaded — it goes to every game at once.</value>
+  </data>
+  <data name="Settings_Addon_Done" xml:space="preserve">
+    <value>Saved to the library and updated in {0} game(s).</value>
+  </data>
+  <data name="Settings_Addon_None" xml:space="preserve">
+    <value>Nothing in the library yet. Point at a .addon64 you downloaded.</value>
+  </data>
+  <data name="Settings_Addon_Pick" xml:space="preserve">
+    <value>Pick the .addon64 you downloaded</value>
+  </data>
+  <data name="Settings_Addon_Title" xml:space="preserve">
+    <value>DLSS 5 addon</value>
+  </data>
+  <data name="Settings_Addon_Update" xml:space="preserve">
+    <value>Update…</value>
+  </data>
   <data name="Settings_Bloom_Label" xml:space="preserve">
     <value>Bloom</value>
     <comment>Termo tecnico.</comment>
@@ -1657,6 +1706,24 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Settings_Blowout_Label" xml:space="preserve">
     <value>Blowout (highlight desaturation)</value>
     <comment>Blowout e termo do mod; o parenteses explica o efeito.</comment>
+  </data>
+  <data name="Settings_Bridge_Done" xml:space="preserve">
+    <value>Bridge saved to the library and updated in {0} game(s).</value>
+  </data>
+  <data name="Settings_Bridge_Have" xml:space="preserve">
+    <value>Lets the D3D12 neural pass run in DirectX 11 games. Deployed automatically where it is needed; point at a file to update it.</value>
+  </data>
+  <data name="Settings_Bridge_None" xml:space="preserve">
+    <value>Not here yet — it is fetched automatically the first time a DirectX 11 game needs it.</value>
+  </data>
+  <data name="Settings_Bridge_NotBridge" xml:space="preserve">
+    <value>That file is not the DX11 bridge — its contents do not identify it as one.</value>
+  </data>
+  <data name="Settings_Bridge_Pick" xml:space="preserve">
+    <value>Pick the bridge .addon64 you downloaded</value>
+  </data>
+  <data name="Settings_Bridge_Title" xml:space="preserve">
+    <value>DX11 bridge</value>
   </data>
   <data name="Settings_ColorGradeStrength_Label" xml:space="preserve">
     <value>Color grade strength</value>
@@ -1674,6 +1741,9 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Settings_Flare_Label" xml:space="preserve">
     <value>Flare (diffuse glow)</value>
     <comment>Antes era "Flare / brilho difuso"; a barra virou parenteses.</comment>
+  </data>
+  <data name="Settings_Footnote" xml:space="preserve">
+    <value>Every file is verified before it is stored: the addon and the bridge by their contents, the runtime by NVIDIA's signature. A wrong file does not fail inside the game — it just does nothing.</value>
   </data>
   <data name="Settings_GameBrightness_Label" xml:space="preserve">
     <value>Game brightness (nits)</value>
@@ -1717,11 +1787,35 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>Display peak, in nits. Measured, not chosen.</value>
     <comment>Saiu o "SEU" em caixa alta e o "nao e gosto"; o texto agora diz onde medir logo na segunda frase.</comment>
   </data>
+  <data name="Settings_Pill_Have" xml:space="preserve">
+    <value>in the library</value>
+  </data>
+  <data name="Settings_Pill_Missing" xml:space="preserve">
+    <value>missing</value>
+  </data>
+  <data name="Settings_Pill_Unknown" xml:space="preserve">
+    <value>unknown version</value>
+  </data>
+  <data name="Settings_Runtime_Have" xml:space="preserve">
+    <value>NVIDIA ships this in no driver and no public SDK. Found on this machine or fetched from the RHI index, and only installed if NVIDIA signed it.</value>
+  </data>
+  <data name="Settings_Runtime_None" xml:space="preserve">
+    <value>Not here yet. The launcher looks for a copy on this machine, then falls back to the RHI index.</value>
+  </data>
+  <data name="Settings_Runtime_Title" xml:space="preserve">
+    <value>Neural runtime</value>
+  </data>
   <data name="Settings_Saturation_Label" xml:space="preserve">
     <value>Saturation</value>
   </data>
   <data name="Settings_SceneGradeStrength_Label" xml:space="preserve">
     <value>Scene grade strength</value>
+  </data>
+  <data name="Settings_Section_Display" xml:space="preserve">
+    <value>YOUR DISPLAY</value>
+  </data>
+  <data name="Settings_Section_Dlss5" xml:space="preserve">
+    <value>DLSS 5</value>
   </data>
   <data name="Settings_Section_Other" xml:space="preserve">
     <value>Other</value>
@@ -1732,6 +1826,12 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   </data>
   <data name="Settings_Shadows_Label" xml:space="preserve">
     <value>Shadows</value>
+  </data>
+  <data name="Settings_Subtitle" xml:space="preserve">
+    <value>Everything that applies to every game and belongs to none.</value>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>Settings</value>
   </data>
   <data name="Settings_ToneMapper_Label" xml:space="preserve">
     <value>Tone mapper</value>
@@ -1750,5 +1850,35 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   </data>
   <data name="Settings_Vignette_Label" xml:space="preserve">
     <value>Vignette</value>
+  </data>
+  <data name="Update_BadHost" xml:space="preserve">
+    <value>the release pointed the download somewhere outside GitHub, so it was not followed.</value>
+  </data>
+  <data name="Update_Banner_Button" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Update_Banner_Detail" xml:space="preserve">
+    <value>You are on {0}. The update downloads ({1}) and installs itself — your games and settings stay as they are.</value>
+  </data>
+  <data name="Update_Banner_Title" xml:space="preserve">
+    <value>RenoDX Launcher {0} is out</value>
+  </data>
+  <data name="Update_Cancelled" xml:space="preserve">
+    <value>the installer did not start.</value>
+  </data>
+  <data name="Update_Downloading" xml:space="preserve">
+    <value>Downloading the update… {0}%</value>
+  </data>
+  <data name="Update_Failed" xml:space="preserve">
+    <value>Update failed: {0}</value>
+  </data>
+  <data name="Update_Found" xml:space="preserve">
+    <value>RenoDX Launcher {0} is available.</value>
+  </data>
+  <data name="Update_HashMismatch" xml:space="preserve">
+    <value>the downloaded file did not arrive intact. Nothing was installed — try again.</value>
+  </data>
+  <data name="Update_Installing" xml:space="preserve">
+    <value>Installing {0}. The launcher closes and reopens on its own.</value>
   </data>
 </root>

@@ -104,6 +104,32 @@ def problemas_de_acento(texto: str) -> list[str]:
     return achados
 
 
+# Como o codigo pede uma string: {loc:Tr Chave} no XAML, L.T("Chave") no C#.
+REFS = [
+    re.compile(r"\{loc:Tr\s+([A-Za-z0-9_]+)\s*\}"),
+    re.compile(r"\bL\.T\(\s*\"([A-Za-z0-9_]+)\""),
+]
+
+# L.T() tambem e chamado com chave montada em variavel; esses casos nao dao para
+# resolver estaticamente e nao sao contados como referencia.
+def referencias(raiz: pathlib.Path) -> dict[str, str]:
+    """Chave -> primeiro arquivo onde aparece."""
+    achadas: dict[str, str] = {}
+    for arquivo in list((raiz / "src").rglob("*.xaml")) + list((raiz / "src").rglob("*.cs")):
+        if "obj" in arquivo.parts or "bin" in arquivo.parts:
+            continue
+        for linha in arquivo.read_text(encoding="utf-8", errors="replace").splitlines():
+            # Comentario de codigo e de XML documenta o uso com chave inventada
+            # ("L.T(\"Alguma_Chave\")"); nao e referencia de verdade.
+            nu = linha.lstrip()
+            if nu.startswith(("///", "//", "*", "<!--")):
+                continue
+            for padrao in REFS:
+                for m in padrao.finditer(linha):
+                    achadas.setdefault(m.group(1), arquivo.name)
+    return achadas
+
+
 def main() -> int:
     raiz = pathlib.Path(__file__).resolve().parent.parent
     origem = raiz / "src" / "Localization" / "strings.json"
@@ -147,6 +173,18 @@ def main() -> int:
         en = valores.get("en")
         if pt and en and pt == en and len(pt) > 3 and " " in pt:
             avisos.append(f"{chave}: pt-BR e en identicos ({pt[:40]!r})")
+
+    # 5. chave que o codigo pede e o strings.json nao tem. Nao quebra a compilacao: a
+    #    interface abre e mostra o nome da chave cru no lugar da frase, e so aparece
+    #    para quem abrir aquela tela. Ja escapou assim mais de uma vez.
+    usadas = referencias(raiz)
+    for chave, arquivo in sorted(usadas.items()):
+        if chave not in entradas:
+            erros.append(f"{chave}: usada em {arquivo} e nao existe no strings.json")
+
+    # Nao ha checagem do contrario (string que ninguem usa): metade das chaves e pedida
+    # com o nome montado em variavel — L.T(badge.ResourceKey) — e a varredura estatica
+    # marcaria todas elas como orfas. Aviso que erra metade das vezes vira ruido.
 
     for e in erros:
         print(f"ERRO   {e}")

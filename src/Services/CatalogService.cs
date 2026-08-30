@@ -183,7 +183,7 @@ public partial class CatalogService
                     if (entry.NexusUrl is { Length: > 0 } nx)
                         entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step,
                             L.T("Main_Note_AuthorSteps_Title"), L.T("Main_Note_AuthorSteps_Nexus"),
-                            new[] { new NoteLink(L.T("Main_Note_Nexus_Link"), nx) }, null, "ANTES DE INSTALAR"));
+                            new[] { new NoteLink(L.T("Main_Note_Nexus_Link"), nx) }, null, L.T("Dialog_Prereq_Label")));
 
                     SeedAliases(entry);
                     foreach (var a in aliases) entry.NormalizedAliases.Add(MatchService.Normalize(a));
@@ -408,12 +408,12 @@ public partial class CatalogService
         if (nexus != null)
             entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step,
                 L.T("Main_Note_AuthorSteps_Title"), L.T("Main_Note_AuthorSteps_Nexus"),
-                new[] { new NoteLink(L.T("Main_Note_Nexus_Link"), nexus) }, null, "ANTES DE INSTALAR"));
+                new[] { new NoteLink(L.T("Main_Note_Nexus_Link"), nexus) }, null, L.T("Dialog_Prereq_Label")));
 
         if (discussion != null)
             entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Step,
                 L.T("Main_Note_Discussion_Title"), L.T("Main_Note_Discussion_Body"),
-                new[] { new NoteLink(L.T("Main_Note_Discussion_Link"), discussion) }, null, "ANTES DE INSTALAR"));
+                new[] { new NoteLink(L.T("Main_Note_Discussion_Link"), discussion) }, null, L.T("Dialog_Prereq_Label")));
 
         entries.Add(entry);
     }

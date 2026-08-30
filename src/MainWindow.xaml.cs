@@ -11,7 +11,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = _vm;
-        Loaded += async (_, _) => await _vm.LoadAsync();
+        Loaded += async (_, _) =>
+        {
+            await _vm.LoadAsync();
+            // Depois da lista de jogos, nunca antes: a checagem fala com a rede e o aviso dela
+            // nao vale atrasar a tela que a pessoa abriu o app para ver.
+            await _vm.CheckLauncherUpdateAsync();
+        };
         // Esc fecha o modal do jogo (comportamento esperado de qualquer diálogo)
         PreviewKeyDown += (_, e) =>
         {
@@ -23,9 +29,9 @@ public partial class MainWindow : Window
         };
     }
 
-    private void OnProfileClick(object sender, RoutedEventArgs e)
+    private void OnSettingsClick(object sender, RoutedEventArgs e)
     {
-        var win = new ProfileWindow(_vm) { Owner = this };
+        var win = new SettingsWindow(_vm) { Owner = this };
         win.ShowDialog();
     }
 

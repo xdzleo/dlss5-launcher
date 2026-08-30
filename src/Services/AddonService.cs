@@ -33,6 +33,14 @@ public class AddonService
     private static bool IsCompanionAddon(string fileName) =>
         CompanionAddonPrefixes.Any(p => fileName.StartsWith(p, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Nome do arquivo sem o sufixo que marca "desativado".</summary>
+    private static string BareName(string path)
+    {
+        var nome = Path.GetFileName(path);
+        return nome.EndsWith(DisabledSuffix, StringComparison.OrdinalIgnoreCase)
+            ? nome[..^DisabledSuffix.Length] : nome;
+    }
+
     /// <summary>Scan a deploy dir for ReShade + renodx addon files.</summary>
     public static ModState GetState(string targetDir, string? exePath)
     {
@@ -51,12 +59,43 @@ public class AddonService
                          || f.EndsWith(".addon64" + DisabledSuffix, StringComparison.OrdinalIgnoreCase)
                          || f.EndsWith(".addon32" + DisabledSuffix, StringComparison.OrdinalIgnoreCase))
                 .ToList();
-            var enabled = addons.FirstOrDefault(f => !f.EndsWith(DisabledSuffix, StringComparison.OrdinalIgnoreCase));
-            state.AddonPath = enabled ?? addons.FirstOrDefault();
+            // O mod DO JOGO, e nao qualquer renodx-*. Os companions moram na mesma pasta de
+            // proposito, e vinham antes na ordem alfabetica (renodx-neural, renodx-dlss5 e
+            // renodx-dlssfix vem antes de renodx-stalker2), entao o primeiro da lista costumava
+            // ser o companion. Dai o launcher comparava o addon neural de 573 KB com o mod do
+            // jogo de 2 MB, concluia "tem versao nova", instalava o mod do jogo ao lado — e na
+            // checagem seguinte reelegia o companion e dizia de novo. Update que nunca acaba.
+            var doJogo = addons.Where(f => !IsCompanionAddon(BareName(f))).ToList();
+            var enabled = doJogo.FirstOrDefault(f => !f.EndsWith(DisabledSuffix, StringComparison.OrdinalIgnoreCase));
+            state.AddonPath = enabled ?? doJogo.FirstOrDefault();
             state.AddonEnabled = enabled != null;
         }
         catch (Exception ex) { Log.Warn($"addon state {targetDir}: {ex.Message}"); }
         return state;
+    }
+
+    /// <summary>
+    /// Is this ETag just the file's mtime and size in disguise?
+    ///
+    /// nginx's default is <c>"{mtime:x}-{size:x}"</c>, and the size half is the giveaway: when it
+    /// matches the byte count we are comparing, the other half is a timestamp, and a timestamp
+    /// changes every time the site is re-deployed. An ETag like that answers "were these bytes
+    /// written at the same instant", not "are these the same bytes" — so it is not evidence.
+    ///
+    /// Servers that hash the content (GitHub among them) do not match this shape, and their ETag
+    /// stays the strongest signal we have: it still catches a new build of identical size.
+    /// </summary>
+    private static bool IsMtimeEtag(string etag, long? size)
+    {
+        if (size is not > 0) return false;
+        var v = etag.Trim();
+        if (v.StartsWith("W/", StringComparison.Ordinal)) v = v[2..];
+        v = v.Trim('"');
+        var hifen = v.LastIndexOf('-');
+        if (hifen <= 0 || hifen == v.Length - 1) return false;
+        return long.TryParse(v[(hifen + 1)..], System.Globalization.NumberStyles.HexNumber,
+                             System.Globalization.CultureInfo.InvariantCulture, out var doEtag)
+               && doEtag == size;
     }
 
     /// <summary>
@@ -81,13 +120,19 @@ public class AddonService
             var remoteLen = resp.Content.Headers.ContentLength;
             var remoteMod = resp.Content.Headers.LastModified?.UtcDateTime;
 
-            // preferred: compare against the ETag of the exact build we installed
+            var local = new FileInfo(state.AddonPath);
+
+            // The ETag identifies the exact build we installed — but only when it says something
+            // about the bytes. nginx, which serves these addons, builds it out of the file's
+            // mtime and size ("6a91a630-1e2600"), so re-publishing the site changes every ETag
+            // without changing a single byte. That is not hypothetical: it is what made every
+            // installed mod claim an update, survive the update, and claim it again.
             var record = InstalledModRegistry.Get(state.AddonPath);
-            if (record?.ETag is { Length: > 0 } localEtag && remoteEtag is { Length: > 0 })
+            if (record?.ETag is { Length: > 0 } localEtag && remoteEtag is { Length: > 0 }
+                && !IsMtimeEtag(localEtag, local.Length) && !IsMtimeEtag(remoteEtag, remoteLen))
                 return !string.Equals(localEtag, remoteEtag, StringComparison.Ordinal);
 
             // fallback for addons installed before this tracking existed (or by hand)
-            var local = new FileInfo(state.AddonPath);
             if (remoteLen is > 0)
             {
                 // Size is the only evidence here that speaks about CONTENT. When it matches, the

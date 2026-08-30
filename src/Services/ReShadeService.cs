@@ -43,6 +43,11 @@ public partial class ReShadeService
     {
         "dxgi.dll", "d3d12.dll", "d3d11.dll", "d3d10.dll", "d3d9.dll", "d3d8.dll",
         "opengl32.dll", "ddraw.dll", "dinput8.dll", "version.dll", "winmm.dll",
+        // ReShade nem sempre ocupa o slot de proxy. Quando outro mod ja o ocupa — o OptiScaler
+        // e o caso comum — ele fica como ReShade64.dll e e carregado em cadeia por esse mod.
+        // Sem este nome, uma instalacao perfeitamente funcional era lida como "sem ReShade", e o
+        // launcher oferecia instalar por cima do proxy alheio.
+        "ReShade64.dll", "ReShade32.dll",
     };
 
     /// <summary>Ensure ReShade DLLs are staged locally; returns the staged version.</summary>
@@ -220,6 +225,23 @@ public partial class ReShadeService
 
         var dllName = PickDllName(exePath, apiOverride, dllNameOverride);
         var target = Path.Combine(targetDir, dllName);
+
+        // Ja ha um ReShade CARREGADO nesta pasta por outro caminho?
+        //
+        // Quando outro mod ocupa o slot de proxy — OptiScaler e o caso comum — o ReShade fica
+        // como ReShade64.dll e e carregado em cadeia por ele. Isso e uma instalacao valida e
+        // funcionando, com addons rodando em cima. Nao ha nada a depositar.
+        //
+        // Sem isto, instalar qualquer mod nessa pasta esbarrava no proxy alheio e abortava com
+        // "remova o dxgi.dll antes de instalar" — mandando o usuario quebrar um mod que funciona
+        // para resolver um conflito que nao existe.
+        var (jaTem, versaoLa) = Detect(targetDir);
+        if (jaTem is not null && !jaTem.Equals(dllName, StringComparison.OrdinalIgnoreCase)
+            && File.Exists(target))
+        {
+            progress?.Report(L.T("Install_ReShade_Chained", jaTem));
+            return new DeployResult(true, L.T("Install_ReShade_Chained", jaTem), jaTem);
+        }
 
         if (File.Exists(target))
         {
