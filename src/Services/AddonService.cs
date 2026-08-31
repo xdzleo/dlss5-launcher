@@ -33,6 +33,25 @@ public class AddonService
     private static bool IsCompanionAddon(string fileName) =>
         CompanionAddonPrefixes.Any(p => fileName.StartsWith(p, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// O caminho esta dentro de uma pasta que o PROPRIO launcher criou?
+    ///
+    /// Toda varredura recursiva daqui procura evidencia sobre o JOGO — onde ele instala, que API
+    /// usa, se ja tem DLSS. As pastas que nos criamos contem copias das mesmas coisas, e conta-las
+    /// faz o launcher medir o proprio rastro. Isso deu errado cinco vezes em um dia: o alvo da
+    /// instalacao virou host64\, o executavel do jogo virou o nosso processo auxiliar, o ReShade
+    /// do host passou por ReShade do jogo, e a deteccao de DLSS leu runtimes que nos copiamos.
+    ///
+    /// Uma regra so, usada por todas elas, em vez de um remendo por varredura.
+    /// </summary>
+    public static bool IsLauncherOwnedDir(string path)
+    {
+        var sep = Path.DirectorySeparatorChar;
+        return path.Contains($"{sep}host64{sep}", StringComparison.OrdinalIgnoreCase)
+            || path.EndsWith($"{sep}host64", StringComparison.OrdinalIgnoreCase)
+            || path.Contains($"{sep}_mods_desligados{sep}", StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>Nome do arquivo sem o sufixo que marca "desativado".</summary>
     private static string BareName(string path)
     {

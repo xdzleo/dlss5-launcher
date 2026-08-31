@@ -205,7 +205,8 @@ public static class Cli
         };
         try
         {
-            var addon = Directory.EnumerateFiles(game.InstallDir, "renodx-*.addon*", options).FirstOrDefault();
+            var addon = Directory.EnumerateFiles(game.InstallDir, "renodx-*.addon*", options)
+                .FirstOrDefault(f => !AddonService.IsLauncherOwnedDir(f));
             if (addon != null)
             {
                 var dir = Path.GetDirectoryName(addon)!;
@@ -482,11 +483,20 @@ public static class Cli
         // enxergava ponte e Feeder: com o runtime pela metade ou o addon apagado, o diagnostico
         // dizia "pronto" enquanto o jogo abria sem nada.
         var ligado = NeuralUpliftService.IsApplied(target, ini, state?.AddonPath);
+
+        // Num jogo de 32 bits o addon e os runtimes vivem no processo auxiliar, nao na pasta do
+        // jogo — cobra-los aqui reportaria "incompleto" numa instalacao inteira e correta.
+        var pastaHost = Path.Combine(target, FeederService.Host64Dir);
+        var partido = Directory.Exists(pastaHost)
+                      && File.Exists(Path.Combine(target, FeederService.Addon32File));
+        if (partido)
+            Console.WriteLine($"  32 bits        : addon no jogo, pass neural em {FeederService.Host64Dir}\\");
+
         var faltando = new List<string>();
         if (det.ReShadeDllName is null) faltando.Add("ReShade");
-        if (deployedAddon is null && !det.AddonSupportsNr) faltando.Add("addon");
-        if (!det.RuntimeDeployed) faltando.Add("runtime neural");
-        if (!cargaOk) faltando.Add("carga antecipada");
+        if (!partido && deployedAddon is null && !det.AddonSupportsNr) faltando.Add("addon");
+        if (!partido && !det.RuntimeDeployed) faltando.Add("runtime neural");
+        if (!partido && !cargaOk) faltando.Add("carga antecipada");
         if (!ligado) faltando.Add("interruptor");
         if (pedePonte && !ponteAqui) faltando.Add("ponte DX11");
         if (feederServe && !feederAqui) faltando.Add("Feeder");
@@ -499,7 +509,11 @@ public static class Cli
         }
         if (!det.Offerable && !feederServe)
         {
-            Console.WriteLine("  => nao ofertavel: falta DLSS no jogo ou um addon que saiba acionar o filtro");
+            // Sem DLSS e sem Feeder aplicavel, o motivo mais comum e a API do jogo — e dizer
+            // "falta DLSS" num jogo D3D10 manda a pessoa procurar uma opcao que nao existe.
+            Console.WriteLine(!det.HasDlss && exe is not null && !FeederService.Applies(exe, false, chegaD3d12)
+                ? "  => " + L.T("Dlss5_Blocked_D3d10")
+                : "  => nao ofertavel: falta DLSS no jogo ou um addon que saiba acionar o filtro");
             return 2;
         }
         if (blocker is not null) { Console.WriteLine($"  => bloqueado: {blocker}"); return 2; }

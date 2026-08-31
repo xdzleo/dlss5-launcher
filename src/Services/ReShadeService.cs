@@ -200,6 +200,14 @@ public partial class ReShadeService
             // ja tinha exatamente esta guarda; faltava a mesma aqui.
             var modern = pe.Imports.Any(i => i.Equals("dxgi.dll", StringComparison.OrdinalIgnoreCase)
                                              || i.StartsWith("d3d1", StringComparison.OrdinalIgnoreCase));
+
+            // A tabela de importacao ainda mente por omissao: o Just Cause 2 IMPORTA d3d9.dll e
+            // renderiza em Direct3D 10, carregado por LoadLibrary. Sem olhar as strings do
+            // binario, o proxy sai como d3d9.dll num jogo que nunca cria um device D3D9 — e o
+            // ReShade fica na pasta sem enganchar coisa alguma.
+            if (!modern)
+                modern = MencionaApiModerna(exePath);
+
             if (pe.Imports.Contains("d3d9.dll") && !modern) return "d3d9.dll";
             if (pe.Imports.Contains("opengl32.dll")
                 && !pe.Imports.Any(i => i.StartsWith("d3d") || i == "dxgi.dll")) return "opengl32.dll";
@@ -208,7 +216,84 @@ public partial class ReShadeService
         return "dxgi.dll";
     }
 
+    /// <summary>
+    /// O binario menciona uma API grafica moderna, ainda que nao a importe?
+    ///
+    /// Um jogo que resolve a API por LoadLibrary nao aparece em import table nenhuma, mas o nome
+    /// do modulo tem de existir em algum lugar do arquivo para ser passado adiante. Procurar a
+    /// string decide os casos que a tabela sozinha erra.
+    /// </summary>
+    private static bool MencionaApiModerna(string exePath)
+    {
+        foreach (var api in new[] { "d3d10.dll", "d3d10_1.dll", "d3d11.dll", "d3d12.dll" })
+            if (ContemTexto(exePath, api)) return true;
+        return false;
+    }
+
+    private static bool ContemTexto(string path, string alvo)
+    {
+        try
+        {
+            var bytes = System.Text.Encoding.ASCII.GetBytes(alvo);
+            using var fs = File.OpenRead(path);
+            var buf = new byte[1 << 20];
+            var carry = bytes.Length - 1;
+            var anterior = new byte[carry];
+            var temAnterior = false;
+            int n;
+            while ((n = fs.Read(buf, 0, buf.Length)) > 0)
+            {
+                var janela = temAnterior ? anterior.Concat(buf.Take(n)).ToArray() : buf.Take(n).ToArray();
+                if (System.Text.Encoding.ASCII.GetString(janela)
+                        .Contains(alvo, StringComparison.OrdinalIgnoreCase)) return true;
+                if (n >= carry) { Array.Copy(buf, n - carry, anterior, 0, carry); temAnterior = true; }
+            }
+        }
+        catch (Exception ex) { Log.Warn($"reshade api probe {path}: {ex.Message}"); }
+        return false;
+    }
+
     public record DeployResult(bool Success, string Message, string? DllName = null);
+
+    /// <summary>
+    /// Poe um ReShade de 64 bits numa pasta sob o nome pedido, independente do jogo.
+    ///
+    /// Existe para o processo auxiliar do Feeder em jogos de 32 bits: NGX e o addon neural sao
+    /// 64-bit-only, entao um jogo 32-bit ganha um host separado, de verdade 64 bits, com o seu
+    /// proprio ReShade. Ali o bitness nao vem do executavel do jogo — vem do host.
+    /// </summary>
+    public async Task<DeployResult> Deploy64BitAsync(string targetDir, string dllName,
+                                                     IProgress<string>? progress = null)
+    {
+        var version = await ProvisionAsync(progress);
+        var source = Path.Combine(StageDir(version), "ReShade64.dll");
+        if (!File.Exists(source))
+            return new DeployResult(false, L.T("Error_ReShade_DllMissing", "ReShade64.dll"));
+
+        Directory.CreateDirectory(targetDir);
+        File.Copy(source, Path.Combine(targetDir, dllName), overwrite: true);
+        return new DeployResult(true, "", dllName);
+    }
+
+    /// <summary>
+    /// Copia o ReShade cru para uma pasta, no bitness pedido e sob o nome pedido.
+    ///
+    /// Diferente do Deploy64BitAsync, que fixa 64 bits: aqui quem decide e o chamador. Serve a
+    /// camada Vulkan, que precisa do ReShade fora do slot de proxy — em Vulkan o nome do arquivo
+    /// nao significa nada, quem carrega e o loader pelo manifesto.
+    /// </summary>
+    public async Task<DeployResult> DeployRawAsync(string targetDir, string dllName, bool is64,
+                                                   IProgress<string>? progress = null)
+    {
+        var version = await ProvisionAsync(progress);
+        var source = Path.Combine(StageDir(version), is64 ? "ReShade64.dll" : "ReShade32.dll");
+        if (!File.Exists(source))
+            return new DeployResult(false, L.T("Error_ReShade_DllMissing", Path.GetFileName(source)));
+
+        Directory.CreateDirectory(targetDir);
+        File.Copy(source, Path.Combine(targetDir, dllName), overwrite: true);
+        return new DeployResult(true, "", dllName);
+    }
 
     /// <summary>Copy the staged ReShade DLL into the game dir under the proxy name.</summary>
     public async Task<DeployResult> DeployAsync(string targetDir, string exePath, string? apiOverride,

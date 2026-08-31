@@ -80,6 +80,44 @@ public static class NeuralUpliftService
     /// </summary>
     private static readonly string[] GenericAddonNames = [GenericAddonFile, "renodx-dlss5.addon64"];
 
+    /// <summary>O nome pelo qual o Feeder procura o addon de NR, e ele procura por nome exato.</summary>
+    private const string FeederEsperaAddon = "renodx-dlss5.addon64";
+
+    /// <summary>
+    /// Garante que o addon exista TAMBEM sob o nome que o Feeder procura.
+    ///
+    /// O Feeder resolve o addon por nome literal e escreve no proprio log quando nao acha:
+    ///   [feed] DLSS 5 add-on: renodx-dlss5.addon64 not found next to this add-on
+    /// Sem essa copia ele roda, entrega frames, e o pass neural fica sem quem o dirija — falha
+    /// silenciosa do tipo mais caro, porque tudo o mais parece certo.
+    ///
+    /// A copia e um segundo arquivo, e nao um rename: o nome proprio continua sendo o do
+    /// launcher, que e como ele sabe o que pode remover depois.
+    /// </summary>
+    public static void GarantirNomeDoFeeder(string targetDir, IProgress<string>? progress = null)
+    {
+        try
+        {
+            // Num jogo de 32 bits o addon de NR nao mora na pasta do jogo — ele e 64-bit-only e
+            // vive no host64\. Copia-lo para a raiz punha um binario de 64 bits onde um ReShade
+            // de 32 bits tenta carrega-lo, e o ReShade responde com
+            //   ERROR | Failed to load add-on ... with error code 193!
+            // que e "nao e um aplicativo Win32 valido". O host64 ja recebe o nome certo por
+            // DeployForHost64.
+            if (Directory.Exists(Path.Combine(targetDir, FeederService.Host64Dir))) return;
+
+            var nosso = Path.Combine(targetDir, GenericAddonFile);
+            if (!File.Exists(nosso)) return;
+            var esperado = Path.Combine(targetDir, FeederEsperaAddon);
+            if (File.Exists(esperado)
+                && new FileInfo(esperado).Length == new FileInfo(nosso).Length) return;
+            File.Copy(nosso, esperado, overwrite: true);
+            Log.Info($"neural: addon copiado como {FeederEsperaAddon} (o Feeder procura este nome)");
+            progress?.Report(L.T("Neural_AddonFeederName"));
+        }
+        catch (Exception ex) { Log.Warn($"neural nome do feeder: {ex.Message}"); }
+    }
+
     /// <summary>The generic NR addon deployed in this game folder, whichever build it is.</summary>
     public static string? DeployedGenericAddon(string targetDir) =>
         GenericAddonNames.Select(n => Path.Combine(targetDir, n)).FirstOrDefault(File.Exists);
@@ -111,6 +149,7 @@ public static class NeuralUpliftService
             {
                 foreach (var found in Directory.EnumerateFiles(installDir, name, options))
                 {
+                    if (AddonService.IsLauncherOwnedDir(found)) continue; // ver IsLauncherOwnedDir
                     var dir = Path.GetDirectoryName(found);
                     if (dir is null) continue;
                     if (IsApplied(dir, Path.Combine(dir, "ReShade.ini"))) return true;
@@ -1029,6 +1068,12 @@ public static class NeuralUpliftService
                 // SR or RR both work: either one means the addon has depth+mvec to hand over
                 if (name is not ("nvngx_dlss.dll" or "nvngx_dlssd.dll")) continue;
 
+                // A pasta do processo auxiliar e NOSSA: os runtimes ali foram postos pelo
+                // launcher para o host de 64 bits rodar o pass num jogo de 32. Conta-los como
+                // "o jogo tem DLSS" faz a proxima instalacao escolher a ponte em vez do Feeder,
+                // num jogo de 2006 que nunca ouviu falar de DLSS.
+                if (AddonService.IsLauncherOwnedDir(f)) continue;
+
                 // ...desde que o arquivo seja DO JOGO. Um runtime que este launcher copiou nao
                 // e evidencia de nada: e o resultado da nossa propria acao. Contando os nossos,
                 // um jogo sem DLSS nenhum passava a "ter DLSS" logo depois da primeira
@@ -1054,6 +1099,21 @@ public static class NeuralUpliftService
     /// half-configured state the user would read as "it is on" while nothing happens.</summary>
     public static bool IsApplied(string targetDir, string iniPath, string? addonPath = null)
     {
+        // No caminho de 32 bits nada disto vive na pasta do jogo, de proposito: o processo tem
+        // 32 bits e nao carregaria runtime nem addon de 64. Quem roda o pass e o host, e e la
+        // que se pergunta se esta aplicado. Sem esta ramificacao a instalacao termina correta e
+        // se declara falhada, porque procura exatamente o que ela mesma mandou tirar dali.
+        var host = Path.Combine(targetDir, FeederService.Host64Dir);
+        if (Directory.Exists(host) && File.Exists(Path.Combine(targetDir, FeederService.Addon32File)))
+        {
+            // O addon do host se chama renodx-dlss5.addon64, e DeployedGenericAddon so reconhece
+            // os nomes da lista — passar o caminho explicito evita que "aplicado" leia falso numa
+            // instalacao correta.
+            var addonHost = Path.Combine(host, "renodx-dlss5.addon64");
+            return IsApplied(host, Path.Combine(host, "ReShade.ini"),
+                             File.Exists(addonHost) ? addonHost : null);
+        }
+
         if (!File.Exists(Path.Combine(targetDir, RuntimeFile))) return false;
         if (!File.Exists(iniPath)) return false;
 
@@ -1447,6 +1507,79 @@ public static class NeuralUpliftService
         catch (Exception ex) { Log.Warn($"neural runtime mark: {ex.Message}"); }
 
         Log.Info($"neural runtime imported from {sourcePath} ({info.Length / (1024 * 1024)} MB)");
+    }
+
+    /// <summary>
+    /// Copia o addon neural e os dois runtimes para a pasta do processo auxiliar de 64 bits.
+    ///
+    /// O host do Feeder e quem roda o pass em jogos de 32 bits, e ele e um processo separado: o
+    /// que esta na pasta do jogo nao serve para nada ali. Isto e o equivalente do Apply, sem a
+    /// parte do jogo — sem chave de preset, sem carga antecipada, porque nao ha jogo nesta pasta.
+    /// </summary>
+    public static void DeployForHost64(string hostDir, IProgress<string>? progress = null)
+    {
+        Directory.CreateDirectory(hostDir);
+
+        // O nome importa AQUI, ao contrario da pasta do jogo: o guia do Feeder lista
+        // "renodx-dlss5.addon64" entre as copias que o host precisa ter, e o proprio addon
+        // procura esse nome ao lado dele — a linha
+        //     [feed] DLSS 5 add-on: renodx-dlss5.addon64 not found next to this add-on
+        // aparecia em todo log e eu a tinha lido como cosmetica.
+        if (File.Exists(LibraryAddon))
+            File.Copy(LibraryAddon, Path.Combine(hostDir, "renodx-dlss5.addon64"), overwrite: true);
+        if (File.Exists(LibraryRuntime))
+            File.Copy(LibraryRuntime, Path.Combine(hostDir, RuntimeFile), overwrite: true);
+
+        var sr = Path.Combine(DlssRuntimeService.LibraryDir, "nvngx_dlss.dll");
+        if (File.Exists(sr)) File.Copy(sr, Path.Combine(hostDir, "nvngx_dlss.dll"), overwrite: true);
+
+        // O host carrega o addon pelo ReShade dele, e vale a mesma regra de sempre: o SDK de DLSS
+        // sobe antes do device, entao a carga antecipada precisa estar la tambem.
+        var ini = new IniFile(Path.Combine(hostDir, "ReShade.ini"));
+        AddToEarlyLoad(ini, "renodx-dlss5.addon64");
+        ini.Set(GenericSection, GenericEnableKey, "1");
+        ini.Save();
+
+        progress?.Report(L.T("Neural_Host64Deployed"));
+        Log.Info($"neural: addon e runtimes copiados para o host64 em {hostDir}");
+    }
+
+    /// <summary>
+    /// Tira da pasta os runtimes de 64 bits e o addon, quando quem roda o pass e o host auxiliar.
+    ///
+    /// Num jogo de 32 bits eles nunca serao carregados — o processo nao tem como — e sao 271 MB
+    /// por jogo. So sai o que NOS colocamos: a marca .renodx-ours decide, igual em todo o resto.
+    /// </summary>
+    public static void RemoveRuntimesFrom(string targetDir, string? iniPath = null)
+    {
+        foreach (var nome in new[] { RuntimeFile, "nvngx_dlss.dll", RayReconstructionFile })
+        {
+            var alvo = Path.Combine(targetDir, nome);
+            var marca = alvo + OursSuffix;
+            if (!File.Exists(alvo) || !File.Exists(marca)) continue;
+            try { File.Delete(alvo); File.Delete(marca); }
+            catch (Exception ex) { Log.Warn($"neural remove 64-bit runtime {alvo}: {ex.Message}"); }
+        }
+
+        var addon = Path.Combine(targetDir, GenericAddonFile);
+        try { if (File.Exists(addon)) File.Delete(addon); }
+        catch (Exception ex) { Log.Warn($"neural remove addon {addon}: {ex.Message}"); }
+
+        // E a entrada da carga antecipada TEM de sair junto.
+        //
+        // O ReShade carrega o que esta em LoadFromDllMain de dentro do DllMain, no instante mais
+        // sensivel do carregamento do processo. Com o nome de um arquivo que nao existe mais, ele
+        // falha ali — erro 126, "modulo nao encontrado" — e leva o jogo junto. Foi o que travou
+        // o Hitman: o arquivo saiu da pasta e a linha ficou apontando para ele.
+        try
+        {
+            var ini = iniPath ?? Path.Combine(targetDir, "ReShade.ini");
+            if (!File.Exists(ini)) return;
+            var f = new IniFile(ini);
+            RemoveFromEarlyLoad(f, GenericAddonFile);
+            f.Save();
+        }
+        catch (Exception ex) { Log.Warn($"neural remove early-load {targetDir}: {ex.Message}"); }
     }
 
     /// <summary>Marca que o runtime na biblioteca foi trazido pelo usuario e nao tem assinatura

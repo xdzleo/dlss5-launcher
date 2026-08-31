@@ -205,6 +205,15 @@ public static class ExeLocator
                 score += NameScore(f, game.Name) * 3;                 // 0..300
                 var pe = Pe(f);
                 if (UsesGpu(pe)) score += 400;                        // it talks to the GPU
+
+                // Utilitarios que acompanham o jogo perdem, por mais que pareçam gráficos.
+                //
+                // O configurador de video do Hitman: Blood Money importa d3d9.dll para enumerar
+                // modos de tela e leva os 400 de "fala com a GPU"; o jogo em si carrega D3D9 por
+                // LoadLibrary e nao aparece em import table nenhuma, entao ficava com o nome e
+                // mais nada. Resultado: 57 KB de configurador venciam 1,3 MB de jogo, e todas as
+                // decisoes seguintes — qual API, qual proxy, 32 ou 64 bits — saiam do exe errado.
+                if (EhUtilitario(fileName)) score -= 600;
                 if (pe?.Is64Bit == true) score += 120;                // prefer, never require
                 if (hint != null && f.Equals(hint, StringComparison.OrdinalIgnoreCase))
                     score += 80;                                      // the store's guess
@@ -254,6 +263,10 @@ public static class ExeLocator
         "epiconlineservices", "easyanticheat", "battleye", "_commonredist", "commonredist",
         "redist", "directx", "vcredist", "dotnet", "prereq", "_installer", "installers",
         "steamvr", "support", "tools", "sdk", "crashreporter",
+        // A pasta do processo auxiliar do Feeder e NOSSA, e o executavel dela e de 64 bits — o
+        // que lhe rende mais pontos que o jogo de 32 bits ao lado. Sem esta linha, o launcher
+        // elege o proprio auxiliar como "o jogo" e passa a instalar dentro de host64\.
+        "host64",
     };
 
     private static bool InVendorDir(string path, string installDir)
@@ -269,6 +282,28 @@ public static class ExeLocator
 
     /// <summary>How much an exe name looks like the game's own title — the strongest signal
     /// that this is the binary the user actually plays.</summary>
+    /// <summary>
+    /// O nome diz que este executavel acompanha o jogo em vez de ser o jogo?
+    ///
+    /// Casa o nome INTEIRO, nao um pedaco: "config" como substring reprovaria um jogo chamado
+    /// "Configuration Fantasy", e ha jogos com "editor" e "server" no titulo. Um jogo cujo nome
+    /// de arquivo e exatamente "setup.exe" nao existe.
+    /// </summary>
+    private static bool EhUtilitario(string fileName)
+    {
+        var nome = Path.GetFileNameWithoutExtension(fileName);
+        return nome.Equals("configure", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("config", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("setup", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("settings", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("launcher", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("benchmark", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("crashreporter", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("unins000", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("runme", StringComparison.OrdinalIgnoreCase)
+            || nome.Equals("dxsetup", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static int NameScore(string path, string gameName)
     {
         var exe = MatchService.Normalize(Path.GetFileNameWithoutExtension(path));

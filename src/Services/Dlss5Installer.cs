@@ -82,7 +82,29 @@ public static class Dlss5Installer
         //
         // Ponte e Feeder nao convivem, e o autor do Feeder e explicito quanto a isso. A escolha
         // acima ja os mantem exclusivos: uma exige DLSS nativo, o outro exige a ausencia dele.
-        var alcancaD3d12 = exePath is null || LooksLikeD3D12(exePath);
+        // Um jogo D3D9 nao tem como receber o pass: o ReShade em D3D9 para no Shader Model 3, e
+        // nenhum provedor de motion vectors compila; e a API nao tem handle compartilhado nem
+        // fence, que e por onde as texturas chegam ao device D3D12. Traduzir para D3D11 antes
+        // resolve os dois de uma vez e transforma o jogo no caso comum.
+        //
+        // Vem antes do ReShade de proposito: depois de envolvido, o jogo apresenta por dxgi, e o
+        // proxy tem de ser dxgi.dll — nao d3d9.dll, que agora pertence ao dgVoodoo.
+        var precisaDgVoodoo = DgVoodooService.Applies(exePath);
+        if (precisaDgVoodoo)
+        {
+            try
+            {
+                await DgVoodooService.FetchAsync(progress, ct);
+                var bits64 = exePath is not null
+                             && PeUtils.Inspect(exePath, readImports: false)?.Is64Bit == true;
+                DgVoodooService.Deploy(targetDir, bits64, progress);
+                Step(L.T("Dlss5_Step_DgVoodoo"));
+                manual.Add(L.T("Dlss5_Manual_DgVoodoo"));
+            }
+            catch (Exception ex) { Step(ex.Message); }
+        }
+
+        var alcancaD3d12 = exePath is null || LooksLikeD3D12(exePath) || precisaDgVoodoo;
 
         // HasDlss varre a pasta, e a partir da primeira instalacao a pasta contem runtimes que
         // NOS copiamos — o de Ray Reconstruction em todo caminho, o de Super Resolution no do
@@ -92,12 +114,39 @@ public static class Dlss5Installer
         var feederJaAqui = FeederService.IsDeployed(targetDir);
         var temDlssNativo = det.HasDlss && !feederJaAqui;
 
-        var precisaPonte = temDlssNativo && !alcancaD3d12;
-        var precisaFeeder = !temDlssNativo && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12);
+        // A ponte e de DirectX 11 — ela engancha o device D3D11 do jogo para dar ao pass neural
+        // um lugar onde rodar. Num jogo Vulkan nao ha device D3D11 nenhum: instala-la ali punha
+        // um addon inerte na pasta e, pior, o passo manual mandava "abra pelo executavel de
+        // DirectX 11", que no DOOM Eternal nao existe.
+        var ehVulkan = VulkanLayerService.Applies(exePath);
+        var precisaPonte = temDlssNativo && !alcancaD3d12 && !ehVulkan;
 
-        // Sem DLSS e sem Feeder aplicavel, nao ha o que fazer — e so aqui que o bloqueio antigo
-        // ainda vale. Antes ele valia para todo jogo sem DLSS, inclusive os que o Feeder atende.
-        if (!temDlssNativo && !precisaFeeder)
+        // Jogo com FSR ou XeSS proprio e sem DLSS: o OptiScaler redireciona o upscaler que ele ja
+        // tem. Vem ANTES do Feeder na decisao, e por um motivo de qualidade, nao de gosto — o
+        // jogo ja calcula motion vectors e depth corretos para o proprio upscaler, enquanto o
+        // Feeder teria de reconstruir os dois por fora, com um shader. Dado do engine ganha de
+        // dado fabricado sempre que existe.
+        var upscaler = OptiScalerService.AchaUpscaler(targetDir);
+        var precisaOpti = !temDlssNativo && !ehVulkan && upscaler is not null
+                          && OptiScalerService.Applies(targetDir, temDlssNativo);
+
+        // Jogo Vulkan vai para o Feeder MESMO tendo DLSS proprio, e a razao esta no addon: ele
+        // engancha `NVSDK_NGX_D3D12_EvaluateFeature_C`, uma funcao de Direct3D 12. Um jogo Vulkan
+        // chama a familia NVSDK_NGX_VULKAN_*, que o addon nao procura — ele carrega, nao acha o
+        // que enganchar, e ainda assim tenta alocar os buffers do pass. O sintoma que chega ao
+        // usuario e "Failed to allocate video memory" numa placa com 32 GB livres, e no log:
+        //   ERROR | [DLSS 5 Neural Rendering] vtable::Hook(Failed to find NVSDK_NGX_D3D12_...)
+        //
+        // O Feeder resolve porque nao depende do NGX do jogo: ele cria um device D3D12 PROPRIO e
+        // importa as texturas do VkDevice por memoria externa. E o caminho que o autor documenta
+        // para Vulkan, e o que faz o DOOM 2016 funcionar na tabela de status dele.
+        var precisaFeeder = (!temDlssNativo && !precisaOpti
+                             && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12))
+                            || (ehVulkan && FeederService.Applies(exePath, false, true));
+
+        // Sem DLSS, sem OptiScaler e sem Feeder aplicavel, nao ha o que fazer — e so aqui que o
+        // bloqueio antigo ainda vale. Antes ele valia para todo jogo sem DLSS.
+        if (!temDlssNativo && !precisaOpti && !precisaFeeder)
             return new Result(false, L.T("Dlss5_Blocked_NoDlss"), steps, manual);
 
         if (precisaPonte)
@@ -108,12 +157,34 @@ public static class Dlss5Installer
                 return new Result(false, L.T("Dlss5_Blocked_NoBridge"), steps, manual);
         }
 
+        // A biblioteca antes da pasta do jogo, como em todo o resto: uma pasta meio escrita e
+        // pior do que uma intocada, e o download e o passo com mais chance de falhar.
+        if (precisaOpti)
+        {
+            try { await OptiScalerService.FetchAsync(progress, ct); }
+            catch (Exception ex) { Step(ex.Message); }
+            if (!OptiScalerService.InLibrary)
+            {
+                // Sem o OptiScaler, o Feeder ainda atende este jogo — pior, porque reconstroi o
+                // que o engine ja tinha, mas melhor do que nao instalar nada.
+                precisaOpti = false;
+                precisaFeeder = FeederService.Applies(exePath, temDlssNativo, alcancaD3d12);
+            }
+        }
+
+        var precisaHost64 = precisaFeeder && FeederService.NeedsHost64(exePath);
         if (precisaFeeder)
         {
-            try { await FeederService.FetchAsync(progress, ct); }
+            try
+            {
+                await FeederService.FetchAsync(progress, ct);
+                if (precisaHost64) await FeederService.FetchBits32Async(progress, ct);
+            }
             catch (Exception ex) { Step(ex.Message); }
             if (!FeederService.InLibrary)
                 return new Result(false, L.T("Dlss5_Blocked_NoFeeder"), steps, manual);
+            if (precisaHost64 && !FeederService.Bits32InLibrary)
+                return new Result(false, L.T("Dlss5_Blocked_No32"), steps, manual);
         }
 
         if (!det.Host.RuntimeInLibrary)
@@ -151,12 +222,53 @@ public static class Dlss5Installer
             catch (Exception ex) { Step(L.T("Dlss5_Step_StreamlineFailed", ex.Message)); }
         }
 
+        // Com o dgVoodoo no meio, um ReShade que esteja como d3d9.dll TEM de sair de la.
+        //
+        // No Windows o nome de arquivo nao distingue maiusculas: "d3d9.dll" e "D3D9.dll" sao o
+        // mesmo arquivo, e o wrapper simplesmente escreve por cima do ReShade — que some sem
+        // aviso. O guia do Feeder diz isso em uma linha: "ReShade must install as dxgi.dll, not
+        // d3d9.dll, since dgVoodoo owns that filename now and the two would fight."
+        //
+        // Depois de traduzido o jogo apresenta por DXGI, entao dxgi.dll e o proxy certo de
+        // qualquer forma. Isto so realoca; o backup do wrapper preserva o que estava la.
+        if (precisaDgVoodoo
+            && det.ReShadeDllName is not null
+            && det.ReShadeDllName.Equals("d3d9.dll", StringComparison.OrdinalIgnoreCase))
+        {
+            det = det with { ReShadeDllName = null };
+            Step(L.T("Dlss5_Step_ReShadeMoved"));
+        }
+
         // 4. ReShade. Without it nothing loads the addon at all.
-        if (det.ReShadeDllName is null)
+        //
+        // Jogo Vulkan nao usa proxy de DLL: ele fala com vulkan-1.dll e mais nada, entao um
+        // dxgi.dll na pasta nunca e carregado e a instalacao inteira fica inerte — sem sequer um
+        // ReShade.log para dizer que falhou. Era o caso do DOOM Eternal, que recebia dxgi.dll e
+        // a ponte de DX11 num jogo que nao tem uma linha de DirectX.
+        var precisaCamadaVulkan = !precisaDgVoodoo && ehVulkan;
+        if (precisaCamadaVulkan)
+        {
+            var bits64 = exePath is null
+                         || PeUtils.Inspect(exePath, readImports: false)?.Is64Bit != false;
+            if (VulkanLayerService.IsRegistered(targetDir, bits64))
+                Step(L.T("Dlss5_Step_VulkanLayer"));
+            else if (await VulkanLayerService.DeployAsync(reshade, targetDir, bits64, progress))
+                Step(L.T("Dlss5_Step_VulkanLayer"));
+            else
+            {
+                Step(L.T("Dlss5_Step_VulkanLayerFailed", "HKLM"));
+                manual.Add(L.T("Dlss5_Manual_VulkanAdmin"));
+            }
+        }
+        else if (det.ReShadeDllName is null)
         {
             if (exePath is null) return new Result(false, L.T("Dlss5_Blocked_NoExe"), steps, manual);
-            var dep = await reshade.DeployAsync(targetDir, exePath,
-                rhi?.GraphicsApi(game.Name), rhi?.DllNameOverride(game.Name), progress);
+            // Com o dgVoodoo no meio, o proxy TEM de ser dxgi.dll: o d3d9.dll agora pertence ao
+            // wrapper, e os dois com o mesmo nome brigariam pelo carregamento. O override vai
+            // por cima de qualquer palpite da heuristica ou do indice do RHI.
+            var dllForcada = precisaDgVoodoo ? "dxgi.dll" : rhi?.DllNameOverride(game.Name);
+            var apiForcada = precisaDgVoodoo ? "DX11" : rhi?.GraphicsApi(game.Name);
+            var dep = await reshade.DeployAsync(targetDir, exePath, apiForcada, dllForcada, progress);
             if (!dep.Success) return new Result(false, dep.Message, steps, manual);
             Step(L.T("Dlss5_Step_ReShade", dep.DllName ?? "?"));
         }
@@ -182,6 +294,17 @@ public static class Dlss5Installer
                 // funcionar e "instalei e nao vi nada".
                 manual.Add(L.T("Dlss5_Manual_UseDx11Exe"));
             }
+            if (precisaOpti)
+            {
+                // Feeder e OptiScaler alimentam o mesmo pass: dois produtores para um consumidor
+                // nao e configuracao, e bug. Sai o que nao vale mais.
+                FeederService.Remove(targetDir);
+                OptiScalerService.Deploy(targetDir, progress);
+                Step(L.T("Dlss5_Step_OptiScaler", upscaler!));
+                // O redirecionamento so acontece quando o jogo CHAMA o upscaler. Deixar isso
+                // implicito e a diferenca entre funcionar e "instalei e nao vi nada".
+                manual.Add(L.T("Dlss5_Manual_OptiScaler", upscaler!));
+            }
             if (precisaFeeder)
             {
                 // Exclusivos, e o autor do Feeder e explicito quanto a isso. Uma pasta pode ter
@@ -190,7 +313,20 @@ public static class Dlss5Installer
                 NeuralUpliftService.RemoveBridge(targetDir);
                 FeederService.Deploy(targetDir, progress);
                 FeederService.Configure(targetDir, iniPath, progress);
+                // O Feeder resolve o addon de NR por nome literal; sem esta copia ele entrega
+                // frames com o pass sem quem o dirija, e diz isso so no proprio log.
+                NeuralUpliftService.GarantirNomeDoFeeder(targetDir, progress);
+                FeederService.AjustarAlocacao(targetDir, progress);
                 Step(L.T("Dlss5_Step_Feeder"));
+
+                if (precisaHost64)
+                {
+                    await FeederService.DeployBits32Async(targetDir, reshade, progress, ct);
+                    Step(L.T("Dlss5_Step_Host64"));
+                    // A janela do auxiliar aparece junto com o jogo na primeira vez. Sem aviso,
+                    // isso parece coisa estranha se abrindo sozinha.
+                    manual.Add(L.T("Dlss5_Manual_Host64"));
+                }
                 // Duas coisas que nenhum instalador resolve, e que decidem se a pessoa vai achar
                 // que funcionou: nao ha ganho de FPS (e DLAA), e MSAA/SSAA do jogo precisa sair.
                 manual.Add(L.T("Dlss5_Manual_FeederNoFps"));

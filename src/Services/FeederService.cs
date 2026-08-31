@@ -27,26 +27,78 @@ public static class FeederService
     public const string FxFile = "DLSS5_Feed.fx";
 
     /// <summary>
-    /// O provedor de motion vectors: DRME, de Jakob Wapenhensch (CC BY-NC 4.0).
+    /// As pecas do caminho de 32 bits.
     ///
-    /// NAO e o iMMERSE LaunchPad, que o guia da v0.1.0 do Feeder indicava. O LaunchPad calcula
-    /// movimento, mas publica em texturas proprias (MotionTexLA*, MotionTexLB*) e nao declara
-    /// `texMotionVectors` em lugar nenhum — zero ocorrencias no arquivo. O DLSS5_Feed.fx 0.5.0 le
-    /// exatamente dessa textura, a "community-standard", entao os dois nunca se encontravam:
-    /// tudo instalado, tudo verde, e o log dizendo
+    /// NGX e o addon neural sao 64-bit-only, entao num jogo de 32 bits o Feeder se parte em dois:
+    /// um addon pequeno de 32 bits vive dentro do jogo e manda os frames para um processo
+    /// auxiliar de 64 bits, que abre o proprio device D3D12 e roda o mesmo DLAA que o addon de
+    /// 64 bits roda in-process. Nenhum frame passa pela memoria do sistema — tudo fica na GPU,
+    /// por recurso compartilhado entre processos.
     ///
-    ///     no known texMotionVectors provider found: motion vectors will be zero (still images only)
-    ///
-    /// Sem vetores, o DLSS neural perde a informacao temporal e o ganho fica proximo de nada em
-    /// movimento — que foi exatamente o sintoma relatado ("efeito muito pouco").
+    /// O host precisa da propria copia de tudo o que e 64 bits: ReShade, o addon neural e os dois
+    /// runtimes. E uma instalacao inteira dentro de host64\.
     /// </summary>
+    public const string Addon32File = "dlss5-feed.addon32";
+    public const string Host64Exe = "dlss5-feed-host64.exe";
+    public const string Host64Dir = "host64";
+    private const string Addon32Url = "https://github.com/jlrouzies-fr/DLSS5-Feeder/releases/latest/download/dlss5-feed.addon32";
+    private const string Host64Url = "https://github.com/jlrouzies-fr/DLSS5-Feeder/releases/latest/download/dlss5-feed-host64.exe";
+
+    // Propriedades calculadas, e nao inicializadas: campo estatico e inicializado na ordem de
+    // declaracao, e estes vem antes de LibraryDir no arquivo. Como inicializados, recebiam
+    // Path.Combine(null, ...) e a classe inteira falhava ao carregar.
+    private static string LibraryAddon32 => Path.Combine(LibraryDir, Addon32File);
+    private static string LibraryHost64 => Path.Combine(LibraryDir, Host64Exe);
+
+    /// <summary>A biblioteca tem o que o caminho de 32 bits precisa.</summary>
+    public static bool Bits32InLibrary => File.Exists(LibraryAddon32) && File.Exists(LibraryHost64);
+
+    /// <summary>
+    /// O provedor de motion vectors: LumeniteFX Kernel.
+    ///
+    /// Quarta escolha em um dia, e cada troca teve um motivo que so o log mostrou:
+    ///
+    ///   iMMERSE LaunchPad — o guia da v0.1.0 indicava, mas ele publica em texturas proprias e
+    ///     nunca declarou `texMotionVectors`, que era de onde o Feed 0.5.x lia. Os dois nunca se
+    ///     encontravam, e o log dizia "no known texMotionVectors provider found".
+    ///
+    ///   DRME — declara a textura certa e resolveu aquilo. Mas as notas da 0.6.0 dizem que ele
+    ///     NAO COMPILA no ReShade 6.8: a tecnica aparece ligada, o efeito lista como carregado, e
+    ///     nao sai vetor nenhum. O erro estava no ReShade.log o tempo todo, engolido por um
+    ///     "Successfully compiled ... with warnings".
+    ///
+    ///   VORT — funcionava, mas e o provedor 2. As notas da 0.6.0-beta.1 dizem, sobre o provedor
+    ///     3: "this is the configuration the beta was tuned on, and the one to use". Rodavamos a
+    ///     beta com um provedor que ela nao foi ajustada em cima, e os limiares de validacao que
+    ///     ela introduziu (teste de luma, profundidade 0.10, consistencia 1.4 px) foram
+    ///     calibrados contra a saida do Kernel.
+    ///
+    /// Na 0.6.0 o contrato tambem mudou: o provedor e escolhido em tempo de COMPILACAO, pelo
+    /// define DLSS5_MV_PROVIDER, e nao mais por uma textura de nome combinado. Sem o define o
+    /// shader compila com provedor 0 — nenhum — e o pass roda cego.
+    /// </summary>
+    private const int MvProviderId = 3; // 3 = LumeniteFX Kernel
+    private const string MvTechnique = "Lumenite_Kernel@lumenite_Kernel.fx";
+    private const string MvUrl = "https://raw.githubusercontent.com/umar-afzaal/LumeniteFX/mainline/Shaders/";
+    private const string MvTexUrl = "https://raw.githubusercontent.com/umar-afzaal/LumeniteFX/mainline/Textures/";
+
+    /// <summary>
+    /// As texturas do provedor, que NAO sao opcionais.
+    ///
+    /// Sem a blue noise o ReShade recusa o efeito com "Source '...' was not found in any of the
+    /// texture search paths", e o provedor entra na lista sem produzir nada. Copiar so os .fx e
+    /// .fxh parecia bastar e nao bastava.
+    /// </summary>
+    private static readonly string[] MvTextures = ["lumenite_bluenoise256.png"];
+
+    /// <summary>O .fx e os includes que ele puxa, copiados inteiros — resolver a arvore de
+    /// #include na mao quebra a cada versao do provedor.</summary>
     private static readonly string[] MvFiles =
     [
-        "MotionEstimation.fx", "MotionEstimation.fxh", "MotionEstimationUI.fxh", "MotionVectors.fxh",
+        "lumenite_Kernel.fx",
+        "include/lumenite_Compute.fxh", "include/lumenite_Helpers.fxh",
+        "include/lumenite_Projections.fxh", "include/lumenite_ColorManagement.fxh",
     ];
-    private const string MvTechnique = "DRME@MotionEstimation.fx";
-    private const string MvUrl =
-        "https://raw.githubusercontent.com/JakobPCoder/ReshadeMotionEstimation/main/";
 
     // latest/download em vez de uma tag fixa: o Feeder acabou de nascer (v0.1.0) e vai mudar
     // rapido. Fixar versao aqui congelaria o launcher numa build antiga do dia da integracao.
@@ -57,7 +109,10 @@ public static class FeederService
     // DLSS5_Feed.fx abre com #include "ReShade.fxh" e falha a compilar sem ele — e o sintoma nao
     // aparece na instalacao, so no ReShade.log depois de abrir o jogo:
     //   preprocessor error: could not open included file 'ReShade.fxh'
-    private static readonly string[] BaseIncludes = ["ReShade.fxh", "ReShadeUI.fxh"];
+    // DrawText.fxh entrou junto com o LumeniteFX: o lumenite_Kernel.fx o inclui para desenhar o
+    // proprio HUD de depuracao, e sem ele o provedor inteiro falha a compilar — mesmo sintoma
+    // silencioso do ReShade.fxh ausente, visivel so no ReShade.log depois de abrir o jogo.
+    private static readonly string[] BaseIncludes = ["ReShade.fxh", "ReShadeUI.fxh", "DrawText.fxh"];
     private const string BaseIncludeUrl = "https://raw.githubusercontent.com/crosire/reshade-shaders/slim/Shaders/";
 
     public static string LibraryDir { get; } = Path.Combine(AppPaths.DataDir, "feeder");
@@ -67,7 +122,8 @@ public static class FeederService
     /// <summary>A biblioteca tem tudo o que o deploy precisa.</summary>
     public static bool InLibrary =>
         File.Exists(LibraryAddon) && File.Exists(LibraryFx)
-        && MvFiles.All(n => File.Exists(Path.Combine(LibraryDir, n)))
+        && MvFiles.Distinct().All(n => File.Exists(Path.Combine(LibraryDir, n.Replace('/', Path.DirectorySeparatorChar))))
+        && MvTextures.All(n => File.Exists(Path.Combine(LibraryDir, "Textures", n)))
         && BaseIncludes.All(n => File.Exists(Path.Combine(LibraryDir, n)));
 
     /// <summary>
@@ -79,19 +135,29 @@ public static class FeederService
     /// </summary>
     public static bool IsDeployed(string targetDir)
     {
+        // No caminho de 32 bits quem fica no jogo e o addon32 — o de 64 bits foi removido de
+        // proposito, porque o processo nao o carregaria. Exigir so o addon64 reportava "Feeder
+        // ausente" numa instalacao completa e funcionando.
         var addon = Path.Combine(targetDir, AddonFile);
+        var addon32 = Path.Combine(targetDir, Addon32File);
+        if (File.Exists(addon32) && !File.Exists(addon)) addon = addon32;
         if (!File.Exists(addon)) return false;
 
         var shaders = Path.Combine(targetDir, "reshade-shaders", "Shaders");
         if (!File.Exists(Path.Combine(shaders, FxFile))) return false;
-        if (!MvFiles.All(n => File.Exists(Path.Combine(shaders, n)))) return false;
+        if (!MvFiles.Distinct().All(n => File.Exists(Path.Combine(shaders, n.Replace('/', Path.DirectorySeparatorChar))))) return false;
         if (!BaseIncludes.All(n => File.Exists(Path.Combine(shaders, n)))) return false;
+        var texturas = Path.Combine(targetDir, "reshade-shaders", "Textures");
+        if (!MvTextures.All(n => File.Exists(Path.Combine(texturas, n)))) return false;
 
-        // Integridade do addon contra a biblioteca, quando ha uma para comparar.
+        // Integridade contra a copia certa da biblioteca: o addon de 32 bits tem outro tamanho,
+        // e compara-lo com o de 64 daria "corrompido" em toda instalacao de 32 bits.
         try
         {
-            if (File.Exists(LibraryAddon)
-                && new FileInfo(addon).Length != new FileInfo(LibraryAddon).Length) return false;
+            var referencia = addon.EndsWith(Addon32File, StringComparison.OrdinalIgnoreCase)
+                ? LibraryAddon32 : LibraryAddon;
+            if (File.Exists(referencia)
+                && new FileInfo(addon).Length != new FileInfo(referencia).Length) return false;
         }
         catch { /* sem leitura, aceita o que esta la */ }
 
@@ -112,9 +178,182 @@ public static class FeederService
     public static bool Applies(string? exePath, bool jogoTemDlss, bool alcancaD3d12)
     {
         _ = alcancaD3d12; // ver acima: deixou de ser criterio na 0.5.0
+        // 32 bits tambem deixou de desqualificar: a 0.6.0 traz addon32 e um host auxiliar.
         if (jogoTemDlss || exePath is null) return false;
-        return PeUtils.Inspect(exePath, readImports: false)?.Is64Bit == true;
+        if (PeUtils.Inspect(exePath, readImports: false) is null) return false;
+        return !EhD3d10(exePath);
     }
+
+    /// <summary>
+    /// O jogo renderiza em Direct3D 10?
+    ///
+    /// O README do Feeder e de uma linha so: "D3D10 is not supported". O transporte compartilha
+    /// texturas por handle NT com um device D3D12, e as pontas que ele sabe abrir sao D3D11,
+    /// D3D12 e Vulkan — D3D10 nao esta entre elas.
+    ///
+    /// O dgVoodoo tambem nao salva este caso: ele entra como D3D9.dll e traduz D3D9 para D3D11.
+    /// Um jogo que chama D3D10CreateDevice1 direto nunca passa por ele.
+    ///
+    /// Custou o Just Cause 2: instalacao inteira, coerente, e o jogo fechando ao criar o device.
+    /// </summary>
+    private static bool EhD3d10(string exePath)
+    {
+        var pe = PeUtils.Inspect(exePath);
+        if (pe is null) return false;
+        // A D3DX9 decide antes de tudo. Ela e a biblioteca auxiliar do Direct3D 9 e de mais nada:
+        // quem a linka renderiza em D3D9, e o dgVoodoo cuida do resto. Sem esta saida o `Bully.exe`
+        // era lido como D3D10 — ele carrega a string "d3d10.dll" e nao menciona nenhuma API mais
+        // nova, que e exatamente o padrao que a heuristica abaixo usa para acusar D3D10 — e o
+        // launcher recusava um jogo que a comunidade ja demonstrou funcionando por esta rota.
+        if (pe.Imports.Any(i => i.StartsWith("d3dx9_", StringComparison.OrdinalIgnoreCase))) return false;
+
+        var d10 = pe.Imports.Any(i => i.StartsWith("d3d10", StringComparison.OrdinalIgnoreCase));
+        var d11ou12 = pe.Imports.Any(i => i.StartsWith("d3d11", StringComparison.OrdinalIgnoreCase)
+                                          || i.StartsWith("d3d12", StringComparison.OrdinalIgnoreCase));
+        if (d10 && !d11ou12) return true;
+
+        // Carregado por LoadLibrary nao aparece na tabela: o Just Cause 2 chama d3d10_1.dll assim.
+        // So decide quando D3D10 esta no binario e nenhuma API mais nova esta.
+        var mencionaD10 = ContemTexto(exePath, "d3d10.dll") || ContemTexto(exePath, "d3d10_1.dll");
+        if (!mencionaD10) return false;
+        return !ContemTexto(exePath, "d3d11.dll") && !ContemTexto(exePath, "d3d12.dll");
+    }
+
+    private static bool ContemTexto(string path, string alvo)
+    {
+        try
+        {
+            var bytes = System.Text.Encoding.ASCII.GetBytes(alvo);
+            using var fs = File.OpenRead(path);
+            var buf = new byte[1 << 20];
+            var carry = bytes.Length - 1;
+            var anterior = new byte[carry];
+            var temAnterior = false;
+            int n;
+            while ((n = fs.Read(buf, 0, buf.Length)) > 0)
+            {
+                var janela = temAnterior ? anterior.Concat(buf.Take(n)).ToArray() : buf.Take(n).ToArray();
+                if (System.Text.Encoding.ASCII.GetString(janela)
+                        .Contains(alvo, StringComparison.OrdinalIgnoreCase)) return true;
+                if (n >= carry) { Array.Copy(buf, n - carry, anterior, 0, carry); temAnterior = true; }
+            }
+        }
+        catch (Exception ex) { Log.Warn($"feeder api probe {path}: {ex.Message}"); }
+        return false;
+    }
+
+    /// <summary>Este jogo precisa do caminho partido (addon de 32 bits + host de 64)?</summary>
+    public static bool NeedsHost64(string? exePath) =>
+        exePath is not null && PeUtils.Inspect(exePath, readImports: false)?.Is64Bit == false;
+
+    /// <summary>Baixa as pecas de 32 bits. Separado do FetchAsync porque a maioria dos jogos
+    /// nunca precisa delas, e sao mais dois downloads.</summary>
+    public static async Task FetchBits32Async(IProgress<string>? progress = null,
+                                              CancellationToken ct = default)
+    {
+        if (Bits32InLibrary) return;
+        Directory.CreateDirectory(LibraryDir);
+        progress?.Report(L.T("Feeder_Fetching32"));
+        using var http = NewClient();
+        if (!File.Exists(LibraryAddon32)) await BaixarAsync(http, Addon32Url, LibraryAddon32, ct);
+        if (!File.Exists(LibraryHost64)) await BaixarAsync(http, Host64Url, LibraryHost64, ct);
+        if (!EhPe(LibraryAddon32) || !EhPe(LibraryHost64))
+        {
+            TryDelete(LibraryAddon32);
+            TryDelete(LibraryHost64);
+            throw new InvalidOperationException(L.T("Feeder_BadDownload"));
+        }
+    }
+
+    /// <summary>
+    /// Monta o caminho de 32 bits: o addon pequeno na pasta do jogo e a instalacao de 64 bits
+    /// inteira em host64\.
+    ///
+    /// O host e um processo separado e de verdade 64 bits, entao ele precisa de tudo o que um
+    /// jogo 64-bit precisaria: ReShade proprio, o addon neural e os dois runtimes. Faltando
+    /// qualquer um, ele sobe e nao roda o pass — sem erro no lado do jogo, porque o jogo nem
+    /// sabe que existe um host.
+    /// </summary>
+    public static async Task DeployBits32Async(string targetDir, ReShadeService reshade,
+                                               IProgress<string>? progress = null,
+                                               CancellationToken ct = default)
+    {
+        if (!Bits32InLibrary) throw new InvalidOperationException(L.T("Feeder_NotInLibrary"));
+
+        // No jogo: o addon de 32 bits, e NAO o de 64 — o processo é 32 bits e o ReShade dali só
+        // carrega .addon32.
+        File.Copy(LibraryAddon32, Path.Combine(targetDir, Addon32File), overwrite: true);
+        var addon64Solto = Path.Combine(targetDir, AddonFile);
+        if (File.Exists(addon64Solto)) File.Delete(addon64Solto);
+
+        var host = Path.Combine(targetDir, Host64Dir);
+        Directory.CreateDirectory(host);
+        File.Copy(LibraryHost64, Path.Combine(host, Host64Exe), overwrite: true);
+
+        var r = await reshade.Deploy64BitAsync(host, "dxgi.dll", progress);
+        if (!r.Success) throw new InvalidOperationException(r.Message);
+
+        // O host roda o pass neural, entao o addon e os runtimes vao para LA, nao para o jogo.
+        NeuralUpliftService.DeployForHost64(host, progress);
+
+        // E saem da pasta do jogo. O processo do jogo tem 32 bits e nao carrega nenhum deles —
+        // ficariam ali como 271 MB de peso morto por jogo, e o launcher acabou de os copiar
+        // porque o caminho comum roda antes de sabermos que este jogo e partido em dois.
+        NeuralUpliftService.RemoveRuntimesFrom(targetDir, Path.Combine(targetDir, "ReShade.ini"));
+
+        // host_window=0 esconde a janela do auxiliar. Fica visivel na primeira vez de proposito:
+        // e por ela que se ve o host subir, e um processo invisivel que falha em silencio e
+        // exatamente o que nao queremos aqui.
+        progress?.Report(L.T("Feeder_Host64Deployed"));
+        Log.Info($"feeder: caminho de 32 bits montado em {targetDir} (host em {host})");
+    }
+
+    /// <summary>
+    /// Faz o Feeder alocar no PRIMEIRO frame, em vez de esperar.
+    ///
+    /// O padrao dele e `create_delay=60`: ele deixa passar 60 frames antes de criar as texturas
+    /// compartilhadas. Em motor que reserva um pool de memoria proprio na largada — id Tech 7 e o
+    /// caso — esses 60 frames sao suficientes para o jogo fechar o pool inteiro, e a alocacao do
+    /// Feeder chega depois da porta fechada. O sintoma e uma mensagem do JOGO, nao nossa:
+    ///   "Failed to allocate video memory. Total allocated: 5887 MiB"
+    /// com o mesmo valor toda vez, e dezenas de GB livres na placa — porque o teto nao e a VRAM,
+    /// e o pool que o motor ja fechou.
+    ///
+    /// `warmup_rebuild` cai pelo mesmo motivo: ele refaz a feature la pelo frame 180, que e uma
+    /// segunda alocacao no pior momento possivel.
+    ///
+    /// Sem efeito colateral em jogo que nao reserva pool: alocar cedo e so alocar cedo.
+    /// </summary>
+    public static void AjustarAlocacao(string targetDir, IProgress<string>? progress = null)
+    {
+        try
+        {
+            var cfg = Path.Combine(targetDir, CfgFile);
+            if (!File.Exists(cfg)) return;   // o addon escreve na primeira execucao; nada a fazer
+
+            var linhas = File.ReadAllLines(cfg);
+            var mudou = false;
+            for (int i = 0; i < linhas.Length; i++)
+            {
+                var chave = linhas[i].Split('=')[0].Trim();
+                var novo = chave switch
+                {
+                    "create_delay" => "create_delay=0",
+                    "warmup_rebuild" => "warmup_rebuild=0",
+                    _ => null,
+                };
+                if (novo is not null && linhas[i] != novo) { linhas[i] = novo; mudou = true; }
+            }
+            if (!mudou) return;
+
+            File.WriteAllLines(cfg, linhas);
+            Log.Info($"feeder: alocacao antecipada em {targetDir} (create_delay=0)");
+            progress?.Report(L.T("Feeder_EarlyAlloc"));
+        }
+        catch (Exception ex) { Log.Warn($"feeder cfg {targetDir}: {ex.Message}"); }
+    }
+
+    private const string CfgFile = "dlss5-feed.cfg";
 
     private static HttpClient NewClient()
     {
@@ -151,28 +390,50 @@ public static class FeederService
             await BaixarAsync(http, BaseIncludeUrl + nome, destino, ct);
         }
 
-        // O provedor de motion vectors. Sao quatro arquivos de texto vindos do repositorio do
-        // autor — nada e re-hospedado por nos, o que a licenca CC BY-NC pede em termos de credito
-        // fica com ele, e o launcher e gratuito.
-        if (!MvFiles.All(n => File.Exists(Path.Combine(LibraryDir, n))))
+        // O provedor de motion vectors, do repositorio do autor. MIT, entao redistribuir seria
+        // permitido — mesmo assim vem da fonte, como todo o resto: uma copia nossa envelheceria
+        // sozinha e ninguem notaria.
+        var mv = MvFiles.Distinct().ToArray();
+        if (!mv.All(n => File.Exists(Caminho(LibraryDir, n))))
         {
             progress?.Report(L.T("Feeder_FetchingMv"));
-            foreach (var nome in MvFiles)
+            foreach (var nome in mv)
             {
-                var destino = Path.Combine(LibraryDir, nome);
+                var destino = Caminho(LibraryDir, nome);
                 if (File.Exists(destino)) continue;
+                Directory.CreateDirectory(Path.GetDirectoryName(destino)!);
                 await BaixarAsync(http, MvUrl + nome, destino, ct);
             }
-            // O .fx precisa declarar a textura que o Feed le. Sem isso o download "funcionou" e
-            // o jogo roda com vetores zerados, sem erro nenhum a lugar nenhum.
-            var principal = Path.Combine(LibraryDir, MvFiles[0]);
-            if (!File.ReadAllText(principal).Contains("texMotionVectors", StringComparison.Ordinal))
+
+            // O arquivo baixado tem mesmo a tecnica que vamos ligar no preset? Sem esta
+            // conferencia, um download que "funcionou" — um 404 salvo como HTML, um repositorio
+            // que renomeou o shader — deixa o jogo rodando com vetores zerados e sem erro em
+            // lugar nenhum. Foi assim que o Feeder passou o dia inteiro cego.
+            var kernel = Caminho(LibraryDir, "lumenite_Kernel.fx");
+            var tecnica = MvTechnique.Split('@')[0];
+            if (!File.Exists(kernel)
+                || !File.ReadAllText(kernel).Contains($"technique {tecnica}", StringComparison.Ordinal))
             {
-                foreach (var n in MvFiles) TryDelete(Path.Combine(LibraryDir, n));
+                foreach (var n in mv) TryDelete(Caminho(LibraryDir, n));
                 throw new InvalidOperationException(L.T("Feeder_MvNoProvider"));
             }
         }
+
+        // Fora do bloco acima de proposito: as texturas foram acrescentadas depois dos shaders,
+        // e quem ja tinha a biblioteca montada tem os .fx em dia e nenhuma textura. Aninhado
+        // ali, este download nunca rodava para essas instalacoes — que sao todas as existentes.
+        foreach (var tex in MvTextures)
+        {
+            var destinoTex = Path.Combine(LibraryDir, "Textures", tex);
+            if (File.Exists(destinoTex)) continue;
+            Directory.CreateDirectory(Path.GetDirectoryName(destinoTex)!);
+            await BaixarAsync(http, MvTexUrl + tex, destinoTex, ct);
+        }
     }
+
+    /// <summary>Resolve um caminho do manifesto (que usa "/") sob uma pasta.</summary>
+    private static string Caminho(string raiz, string relativo) =>
+        Path.Combine(raiz, relativo.Replace('/', Path.DirectorySeparatorChar));
 
     private static void TryDelete(string p)
     {
@@ -268,8 +529,12 @@ public static class FeederService
 
         // O provedor de motion vectors e seus includes. Sempre sobrescritos: se ficarem de uma
         // versao antiga, o Feed le uma textura com layout diferente e o defeito e silencioso.
-        foreach (var nome in MvFiles)
-            File.Copy(Path.Combine(LibraryDir, nome), Path.Combine(shaders, nome), overwrite: true);
+        foreach (var nome in MvFiles.Distinct())
+        {
+            var destino = Caminho(shaders, nome);
+            Directory.CreateDirectory(Path.GetDirectoryName(destino)!);
+            File.Copy(Caminho(LibraryDir, nome), destino, overwrite: true);
+        }
 
         // Os includes base so entram se ainda nao existirem: uma instalacao completa do ReShade
         // ja os tem, e podem ser de uma versao diferente da que buscamos.
@@ -277,6 +542,20 @@ public static class FeederService
         {
             var destino = Path.Combine(shaders, nome);
             if (!File.Exists(destino)) File.Copy(Path.Combine(LibraryDir, nome), destino);
+        }
+
+        // As texturas vao para reshade-shaders\Textures, que e onde TextureSearchPaths aponta.
+        var pastaTex = Path.Combine(targetDir, "reshade-shaders", "Textures");
+        Directory.CreateDirectory(pastaTex);
+        foreach (var tex in MvTextures)
+            File.Copy(Path.Combine(LibraryDir, "Textures", tex), Path.Combine(pastaTex, tex), overwrite: true);
+
+        // O DRME nao compila no ReShade 6.8 e so gera erro no log de quem tem a instalacao
+        // antiga. Sai junto, senao fica poluindo o diagnostico para sempre.
+        foreach (var velho in new[] { "MotionEstimation.fx", "MotionEstimation.fxh", "MotionEstimationUI.fxh", "MotionVectors.fxh" })
+        {
+            var p = Path.Combine(shaders, velho);
+            try { if (File.Exists(p)) File.Delete(p); } catch (Exception ex) { Log.Warn($"feeder limpar {velho}: {ex.Message}"); }
         }
 
         DeploySuperResolution(targetDir, progress);
@@ -382,6 +661,18 @@ public static class FeederService
     /// A ordem nao e preferencia: o DRME escreve texMotionVectors e o DLSS5_Feed le dessa textura.
     /// Fica gravada em TechniqueSorting, que e como o ReShade guarda a ordem de execucao.
     /// </summary>
+    /// <summary>
+    /// O jogo e de motor pre-reversed-Z?
+    ///
+    /// A pergunta que importa e "este motor usa profundidade invertida?", e ela nao tem resposta
+    /// direta de fora. A aproximacao boa e o dgVoodoo estar em uso: ele so entra em jogo D3D9, e
+    /// D3D9 e anterior a reversed-Z virar praxe. Cobre o caso que motiva isto sem arriscar mexer
+    /// na profundidade de um jogo moderno, onde o padrao 1 esta certo.
+    /// </summary>
+    private static bool EhMotorAntigo(string targetDir) =>
+        File.Exists(Path.Combine(targetDir, "D3D9.dll"))
+        && File.Exists(Path.Combine(targetDir, "dgVoodoo.conf"));
+
     public static void Configure(string targetDir, string iniPath, IProgress<string>? progress = null)
     {
         var ini = new IniFile(iniPath);
@@ -396,6 +687,30 @@ public static class FeederService
         var desligados = ini.Get("ADDON", "DisabledAddons");
         if (desligados is not null)
             ini.Set("ADDON", "DisabledAddons", RemoverDaLista(desligados, "Generic Depth"));
+
+        // Profundidade NAO invertida, e o motor da epoca limpa o depth varias vezes por quadro.
+        //
+        // O ReShade assume RESHADE_DEPTH_INPUT_IS_REVERSED=1, que e certo para engine moderna com
+        // reversed-Z e ERRADO para jogo dos anos 2000. Com o padrao, o DLSS recebe profundidade
+        // invertida e a logica de desoclusao dele trabalha sobre lixo: a imagem sai LAVADA, sem
+        // erro em lugar nenhum. Foi assim no Saints Row 2 ate o log mostrar "depth reversed=1".
+        //
+        // DepthCopyBeforeClears existe pelo motivo vizinho: esses motores limpam o depth mais de
+        // uma vez por quadro (cena, cutscene, UI) e o ReShade por padrao pega o buffer no fim do
+        // quadro, ja apagado. Se ainda vier vazio, o indice do clear e o proximo ajuste — da para
+        // incrementa-lo ao vivo pelo overlay.
+        if (EhMotorAntigo(targetDir))
+        {
+            GarantirDefine(ini, "RESHADE_DEPTH_INPUT_IS_REVERSED", "0");
+            if (ini.Get("DEPTH", "DepthCopyBeforeClears") is null)
+                ini.Set("DEPTH", "DepthCopyBeforeClears", "1");
+        }
+
+        // Na 0.6.0 o provedor de motion vectors e escolhido em tempo de COMPILACAO. Sem este
+        // define o shader compila com DLSS5_MV_PROVIDER=0 — nenhum provedor — e o pass roda cego,
+        // sem nada indicando: as tecnicas ficam ligadas, o log diz "feature ready", os frames
+        // saem, e o filtro trabalha sobre vetores zerados.
+        GarantirDefine(ini, "DLSS5_MV_PROVIDER", MvProviderId.ToString());
 
         var preset = ini.Get("GENERAL", "PresetPath");
         if (string.IsNullOrWhiteSpace(preset))
@@ -459,6 +774,21 @@ public static class FeederService
         else linhas.Insert(limite, valor);
 
         File.WriteAllLines(presetPath, linhas, new System.Text.UTF8Encoding(false));
+    }
+
+    /// <summary>
+    /// Poe (ou corrige) um define na lista PreprocessorDefinitions do ReShade.
+    ///
+    /// A lista e "NOME=VALOR,NOME=VALOR" e pode ja ter defines do usuario, entao a chave e
+    /// substituida no lugar em vez de a lista ser reescrita.
+    /// </summary>
+    private static void GarantirDefine(IniFile ini, string nome, string valor)
+    {
+        var atual = ini.Get("GENERAL", "PreprocessorDefinitions") ?? "";
+        var partes = atual.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(p => !p.StartsWith(nome + "=", StringComparison.OrdinalIgnoreCase))
+            .Append($"{nome}={valor}");
+        ini.Set("GENERAL", "PreprocessorDefinitions", string.Join(',', partes));
     }
 
     private static void GarantirCaminho(IniFile ini, string secao, string chave, string valor)

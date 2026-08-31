@@ -523,6 +523,22 @@
     "note": "Chave Common_* — pode ja estar sendo criada por outro arquivo; deve existir uma definicao so.",
     "pt-BR": "Sim"
   },
+  "DgVoodoo_Deployed": {
+    "en": "dgVoodoo2 in place — the game now presents through DirectX 11.",
+    "pt-BR": "dgVoodoo2 instalado — o jogo agora apresenta por DirectX 11."
+  },
+  "DgVoodoo_Fetching": {
+    "en": "Downloading dgVoodoo2 (translates DirectX 9 to DirectX 11)…",
+    "pt-BR": "Baixando o dgVoodoo2 (traduz DirectX 9 para DirectX 11)…"
+  },
+  "DgVoodoo_Incomplete": {
+    "en": "The dgVoodoo2 package arrived without the files needed to wrap DirectX 9.",
+    "pt-BR": "O pacote do dgVoodoo2 veio sem os arquivos necessários para envolver o DirectX 9."
+  },
+  "DgVoodoo_NotInLibrary": {
+    "en": "dgVoodoo2 is not in the library yet.",
+    "pt-BR": "O dgVoodoo2 ainda não está na biblioteca."
+  },
   "Dialog_Advice_Label": {
     "en": "RECOMMENDED FOR THIS GAME",
     "pt-BR": "RECOMENDADO PARA ESTE JOGO"
@@ -717,6 +733,14 @@
     "note": "Title Case no en por ser titulo curto, conforme a regra de maiuscula.",
     "pt-BR": "Atualização disponível"
   },
+  "Dlss5_Blocked_D3d10": {
+    "en": "This game renders in Direct3D 10, which the DLSS 5 pass cannot reach — it works with D3D11, D3D12 and Vulkan only.",
+    "pt-BR": "Este jogo renderiza em Direct3D 10, que o passe do DLSS 5 não alcança — ele trabalha só com D3D11, D3D12 e Vulkan."
+  },
+  "Dlss5_Blocked_No32": {
+    "en": "This game is 32-bit and the pieces for that path could not be downloaded.",
+    "pt-BR": "Este jogo é de 32 bits e as peças desse caminho não puderam ser baixadas."
+  },
   "Dlss5_Blocked_NoBridge": {
     "en": "This game runs DirectX 11, and the bridge that makes the D3D12 pass work here could not be fetched.",
     "pt-BR": "Este jogo roda DirectX 11, e a ponte que faz o pass de D3D12 funcionar aqui não pôde ser baixada."
@@ -797,6 +821,10 @@
     "en": "Neural uplift",
     "pt-BR": "Neural uplift"
   },
+  "Dlss5_Manual_DgVoodoo": {
+    "en": "This game runs through dgVoodoo2 now. If it fails to start, delete D3D9.dll from the game folder to go back.",
+    "pt-BR": "Este jogo passa pelo dgVoodoo2 agora. Se ele não abrir, apague o D3D9.dll da pasta do jogo para voltar."
+  },
   "Dlss5_Manual_EnableDlss": {
     "en": "Turn DLSS on in the game's graphics settings — the filter reads the buffers DLSS produces.",
     "pt-BR": "Ligue o DLSS nas opções gráficas do jogo — o filtro lê os buffers que o DLSS produz."
@@ -809,6 +837,14 @@
     "en": "Expect no extra FPS: the Feeder runs in DLAA, at full resolution. What changes is image quality, not performance.",
     "pt-BR": "Não espere FPS a mais: o Feeder roda em DLAA, na resolução cheia. O que muda é a qualidade da imagem, não o desempenho."
   },
+  "Dlss5_Manual_Host64": {
+    "en": "A small helper window opens alongside the game the first time — that is the 64-bit process. Set host_window=0 in dlss5-feed.cfg to hide it once you are done.",
+    "pt-BR": "Uma janelinha auxiliar abre junto com o jogo na primeira vez — é o processo de 64 bits. Ponha host_window=0 no dlss5-feed.cfg para escondê-la depois."
+  },
+  "Dlss5_Manual_OptiScaler": {
+    "en": "Turn {0} ON in the game's graphics settings (Quality mode) — OptiScaler redirects it to DLSS 5.",
+    "pt-BR": "Ligue o {0} nas opções gráficas do jogo (modo Qualidade) — o OptiScaler redireciona para o DLSS 5."
+  },
   "Dlss5_Manual_Overlay": {
     "en": "Press Home in the game to open the overlay and check that the state reads ACTIVE.",
     "pt-BR": "Aperte Home no jogo para abrir o overlay e conferir se o estado diz ATIVO."
@@ -816,6 +852,10 @@
   "Dlss5_Manual_UseDx11Exe": {
     "en": "Launch the game through its DirectX 11 executable — the bridge has nothing to hook in a Vulkan one.",
     "pt-BR": "Abra o jogo pelo executável DirectX 11 — num Vulkan a ponte não tem o que enganchar."
+  },
+  "Dlss5_Manual_VulkanAdmin": {
+    "en": "Registering the Vulkan layer needs administrator rights. Run the launcher as administrator once and install again.",
+    "pt-BR": "Registrar a camada Vulkan exige direitos de administrador. Rode o launcher como administrador uma vez e instale de novo."
   },
   "Dlss5_State_Off": {
     "en": "Off",
@@ -841,9 +881,21 @@
     "en": "DX11 bridge in place — the D3D12 pass now has somewhere to run.",
     "pt-BR": "Ponte DX11 no lugar — o pass de D3D12 agora tem onde rodar."
   },
+  "Dlss5_Step_DgVoodoo": {
+    "en": "DirectX 9 wrapped to DirectX 11 — without this no motion-vector shader can even compile.",
+    "pt-BR": "DirectX 9 envolvido em DirectX 11 — sem isso nenhum shader de motion vectors sequer compila."
+  },
   "Dlss5_Step_Feeder": {
     "en": "DLSS5 Feeder installed — this game has no DLSS, so the data is generated for it.",
     "pt-BR": "DLSS5 Feeder instalado — este jogo não tem DLSS, então os dados são gerados para ele."
+  },
+  "Dlss5_Step_Host64": {
+    "en": "32-bit game: a 64-bit helper process runs the neural pass, since DLSS itself is 64-bit only.",
+    "pt-BR": "Jogo de 32 bits: um processo auxiliar de 64 bits roda o passe neural, já que o DLSS só existe em 64 bits."
+  },
+  "Dlss5_Step_OptiScaler": {
+    "en": "OptiScaler bridge: this game has {0} but no DLSS, so {0} is redirected to it.",
+    "pt-BR": "Ponte OptiScaler: este jogo tem {0} e não tem DLSS, então o {0} é redirecionado para ele."
   },
   "Dlss5_Step_ReShade": {
     "en": "ReShade installed as {0}.",
@@ -852,6 +904,10 @@
   "Dlss5_Step_ReShadeAlready": {
     "en": "ReShade already present ({0}).",
     "pt-BR": "ReShade já presente ({0})."
+  },
+  "Dlss5_Step_ReShadeMoved": {
+    "en": "ReShade moved off d3d9.dll — that name now belongs to the DirectX 9 wrapper, and the two cannot share it.",
+    "pt-BR": "ReShade saiu do d3d9.dll — esse nome agora é do tradutor de DirectX 9, e os dois não podem dividi-lo."
   },
   "Dlss5_Step_RuntimeFetched": {
     "en": "Neural runtime {0} downloaded and verified.",
@@ -868,6 +924,14 @@
   "Dlss5_Step_StreamlineLeft": {
     "en": "Streamline set still has {0} problem(s).",
     "pt-BR": "O conjunto Streamline ainda tem {0} problema(s)."
+  },
+  "Dlss5_Step_VulkanLayer": {
+    "en": "Vulkan game: ReShade goes in as a layer, since dxgi.dll is never loaded here.",
+    "pt-BR": "Jogo Vulkan: o ReShade entra como camada, porque aqui o dxgi.dll nunca é carregado."
+  },
+  "Dlss5_Step_VulkanLayerFailed": {
+    "en": "Could not register the Vulkan layer: {0}",
+    "pt-BR": "Não consegui registrar a camada Vulkan: {0}"
   },
   "Dlss_Failed": {
     "en": "Could not update {0}: {1}",
@@ -1070,8 +1134,8 @@
     "pt-BR": "O download do Feeder não chegou inteiro. Nada foi instalado — tente de novo."
   },
   "Feeder_Configured": {
-    "en": "ReShade configured: LaunchPad and DLSS5 Feed enabled, in that order.",
-    "pt-BR": "ReShade configurado: LaunchPad e DLSS5 Feed ligados, nessa ordem."
+    "en": "ReShade configured: the motion-vector provider runs before DLSS 5 Feed, as it must.",
+    "pt-BR": "ReShade configurado: o provedor de motion vectors roda antes do DLSS 5 Feed, como tem de ser."
   },
   "Feeder_Deployed": {
     "en": "Feeder and shaders copied to the game.",
@@ -1081,13 +1145,25 @@
     "en": "Copying the Super Resolution runtime (this game has none of its own)…",
     "pt-BR": "Copiando o runtime de Super Resolution (este jogo não tem o dele)…"
   },
+  "Feeder_EarlyAlloc": {
+    "en": "Feeder set to allocate on the first frame, before the engine closes its memory pool.",
+    "pt-BR": "Feeder ajustado para alocar no primeiro quadro, antes de o motor fechar o pool de memória."
+  },
   "Feeder_Fetching": {
     "en": "Downloading the DLSS5 Feeder…",
     "pt-BR": "Baixando o DLSS5 Feeder…"
   },
+  "Feeder_Fetching32": {
+    "en": "Downloading the 32-bit pieces (add-on and helper process)…",
+    "pt-BR": "Baixando as peças de 32 bits (addon e processo auxiliar)…"
+  },
   "Feeder_FetchingMv": {
-    "en": "Downloading the motion-vector provider (DRME) from its author's repository…",
-    "pt-BR": "Baixando o provedor de motion vectors (DRME) do repositório do autor…"
+    "en": "Downloading the motion-vector provider (LumeniteFX Kernel) from its author's repository…",
+    "pt-BR": "Baixando o provedor de motion vectors (LumeniteFX Kernel) do repositório do autor…"
+  },
+  "Feeder_Host64Deployed": {
+    "en": "32-bit path in place: the helper runs the neural pass outside the game.",
+    "pt-BR": "Caminho de 32 bits montado: o auxiliar roda o passe neural fora do jogo."
   },
   "Feeder_MvNoProvider": {
     "en": "The motion-vector shader arrived without the texture the Feeder reads. Without it the neural pass would run on zeroed vectors — no error, and almost no effect.",
@@ -1980,6 +2056,10 @@
     "note": "{0} = nome do jogo.",
     "pt-BR": "Atualizando {0}..."
   },
+  "Neural_AddonFeederName": {
+    "en": "Neural addon also copied under the name the Feeder looks for.",
+    "pt-BR": "Addon neural copiado também com o nome que o Feeder procura."
+  },
   "Neural_Applied": {
     "en": "Neural Uplift on.",
     "pt-BR": "Neural Uplift ligado."
@@ -2048,6 +2128,10 @@
     "en": "Downloading the neural addon…",
     "pt-BR": "Baixando o addon neural…"
   },
+  "Neural_Host64Deployed": {
+    "en": "Addon and runtimes copied to the helper process.",
+    "pt-BR": "Addon e runtimes copiados para o processo auxiliar."
+  },
   "Neural_Import_NotNrAddon": {
     "en": "This addon does not drive neural rendering (no DLSSNR parameters inside). Pick a build that supports it.",
     "pt-BR": "Este addon não controla o neural rendering (sem os parâmetros DLSSNR dentro). Escolha um build que suporte."
@@ -2082,6 +2166,34 @@
     "en": "Looking for the neural runtime in {0}...",
     "note": "{0} = nome da pasta sendo varrida.",
     "pt-BR": "Procurando o runtime neural em {0}..."
+  },
+  "OptiScaler_BadHost": {
+    "en": "Refused to download from an unexpected host: {0}",
+    "pt-BR": "Recusei baixar de um endereço inesperado: {0}"
+  },
+  "OptiScaler_Deployed": {
+    "en": "OptiScaler in place — the game's FSR/XeSS now feeds DLSS.",
+    "pt-BR": "OptiScaler no lugar — o FSR/XeSS do jogo agora alimenta o DLSS."
+  },
+  "OptiScaler_Fetching": {
+    "en": "Downloading OptiScaler from its author's repository…",
+    "pt-BR": "Baixando o OptiScaler do repositório do autor…"
+  },
+  "OptiScaler_Fetching7z": {
+    "en": "Downloading the 7-Zip extractor (OptiScaler ships as .7z)…",
+    "pt-BR": "Baixando o extrator do 7-Zip (o OptiScaler vem em .7z)…"
+  },
+  "OptiScaler_Incomplete": {
+    "en": "The OptiScaler download did not yield OptiScaler.dll.",
+    "pt-BR": "O download do OptiScaler não produziu o OptiScaler.dll."
+  },
+  "OptiScaler_NoAsset": {
+    "en": "The OptiScaler release has no downloadable archive.",
+    "pt-BR": "A release do OptiScaler não tem arquivo para baixar."
+  },
+  "OptiScaler_NotInLibrary": {
+    "en": "OptiScaler is not in the library yet.",
+    "pt-BR": "O OptiScaler ainda não está na biblioteca."
   },
   "Profile_ApplyOnInstall": {
     "en": "Apply automatically when installing a mod",
@@ -2401,5 +2513,9 @@
   "Update_Installing": {
     "en": "Installing {0}. The launcher closes and reopens on its own.",
     "pt-BR": "Instalando a {0}. O launcher fecha e reabre sozinho."
+  },
+  "Vulkan_LayerRegistered": {
+    "en": "ReShade registered as a Vulkan layer (this game does not load a proxy DLL).",
+    "pt-BR": "ReShade registrado como camada Vulkan (este jogo não carrega DLL de proxy)."
   }
 }

@@ -476,6 +476,18 @@
     <value>Yes</value>
     <comment>Chave Common_* — pode ja estar sendo criada por outro arquivo; deve existir uma definicao so.</comment>
   </data>
+  <data name="DgVoodoo_Deployed" xml:space="preserve">
+    <value>dgVoodoo2 in place — the game now presents through DirectX 11.</value>
+  </data>
+  <data name="DgVoodoo_Fetching" xml:space="preserve">
+    <value>Downloading dgVoodoo2 (translates DirectX 9 to DirectX 11)…</value>
+  </data>
+  <data name="DgVoodoo_Incomplete" xml:space="preserve">
+    <value>The dgVoodoo2 package arrived without the files needed to wrap DirectX 9.</value>
+  </data>
+  <data name="DgVoodoo_NotInLibrary" xml:space="preserve">
+    <value>dgVoodoo2 is not in the library yet.</value>
+  </data>
   <data name="Dialog_Advice_Label" xml:space="preserve">
     <value>RECOMMENDED FOR THIS GAME</value>
   </data>
@@ -626,6 +638,12 @@
     <value>Update Available</value>
     <comment>Title Case no en por ser titulo curto, conforme a regra de maiuscula.</comment>
   </data>
+  <data name="Dlss5_Blocked_D3d10" xml:space="preserve">
+    <value>This game renders in Direct3D 10, which the DLSS 5 pass cannot reach — it works with D3D11, D3D12 and Vulkan only.</value>
+  </data>
+  <data name="Dlss5_Blocked_No32" xml:space="preserve">
+    <value>This game is 32-bit and the pieces for that path could not be downloaded.</value>
+  </data>
   <data name="Dlss5_Blocked_NoBridge" xml:space="preserve">
     <value>This game runs DirectX 11, and the bridge that makes the D3D12 pass work here could not be fetched.</value>
   </data>
@@ -686,6 +704,9 @@
   <data name="Dlss5_Link_Switch" xml:space="preserve">
     <value>Neural uplift</value>
   </data>
+  <data name="Dlss5_Manual_DgVoodoo" xml:space="preserve">
+    <value>This game runs through dgVoodoo2 now. If it fails to start, delete D3D9.dll from the game folder to go back.</value>
+  </data>
   <data name="Dlss5_Manual_EnableDlss" xml:space="preserve">
     <value>Turn DLSS on in the game's graphics settings — the filter reads the buffers DLSS produces.</value>
   </data>
@@ -695,11 +716,20 @@
   <data name="Dlss5_Manual_FeederNoFps" xml:space="preserve">
     <value>Expect no extra FPS: the Feeder runs in DLAA, at full resolution. What changes is image quality, not performance.</value>
   </data>
+  <data name="Dlss5_Manual_Host64" xml:space="preserve">
+    <value>A small helper window opens alongside the game the first time — that is the 64-bit process. Set host_window=0 in dlss5-feed.cfg to hide it once you are done.</value>
+  </data>
+  <data name="Dlss5_Manual_OptiScaler" xml:space="preserve">
+    <value>Turn {0} ON in the game's graphics settings (Quality mode) — OptiScaler redirects it to DLSS 5.</value>
+  </data>
   <data name="Dlss5_Manual_Overlay" xml:space="preserve">
     <value>Press Home in the game to open the overlay and check that the state reads ACTIVE.</value>
   </data>
   <data name="Dlss5_Manual_UseDx11Exe" xml:space="preserve">
     <value>Launch the game through its DirectX 11 executable — the bridge has nothing to hook in a Vulkan one.</value>
+  </data>
+  <data name="Dlss5_Manual_VulkanAdmin" xml:space="preserve">
+    <value>Registering the Vulkan layer needs administrator rights. Run the launcher as administrator once and install again.</value>
   </data>
   <data name="Dlss5_State_Off" xml:space="preserve">
     <value>Off</value>
@@ -719,14 +749,26 @@
   <data name="Dlss5_Step_Bridge" xml:space="preserve">
     <value>DX11 bridge in place — the D3D12 pass now has somewhere to run.</value>
   </data>
+  <data name="Dlss5_Step_DgVoodoo" xml:space="preserve">
+    <value>DirectX 9 wrapped to DirectX 11 — without this no motion-vector shader can even compile.</value>
+  </data>
   <data name="Dlss5_Step_Feeder" xml:space="preserve">
     <value>DLSS5 Feeder installed — this game has no DLSS, so the data is generated for it.</value>
+  </data>
+  <data name="Dlss5_Step_Host64" xml:space="preserve">
+    <value>32-bit game: a 64-bit helper process runs the neural pass, since DLSS itself is 64-bit only.</value>
+  </data>
+  <data name="Dlss5_Step_OptiScaler" xml:space="preserve">
+    <value>OptiScaler bridge: this game has {0} but no DLSS, so {0} is redirected to it.</value>
   </data>
   <data name="Dlss5_Step_ReShade" xml:space="preserve">
     <value>ReShade installed as {0}.</value>
   </data>
   <data name="Dlss5_Step_ReShadeAlready" xml:space="preserve">
     <value>ReShade already present ({0}).</value>
+  </data>
+  <data name="Dlss5_Step_ReShadeMoved" xml:space="preserve">
+    <value>ReShade moved off d3d9.dll — that name now belongs to the DirectX 9 wrapper, and the two cannot share it.</value>
   </data>
   <data name="Dlss5_Step_RuntimeFetched" xml:space="preserve">
     <value>Neural runtime {0} downloaded and verified.</value>
@@ -739,6 +781,12 @@
   </data>
   <data name="Dlss5_Step_StreamlineLeft" xml:space="preserve">
     <value>Streamline set still has {0} problem(s).</value>
+  </data>
+  <data name="Dlss5_Step_VulkanLayer" xml:space="preserve">
+    <value>Vulkan game: ReShade goes in as a layer, since dxgi.dll is never loaded here.</value>
+  </data>
+  <data name="Dlss5_Step_VulkanLayerFailed" xml:space="preserve">
+    <value>Could not register the Vulkan layer: {0}</value>
   </data>
   <data name="Dlss_Failed" xml:space="preserve">
     <value>Could not update {0}: {1}</value>
@@ -899,7 +947,7 @@
     <value>The Feeder download did not arrive intact. Nothing was installed — try again.</value>
   </data>
   <data name="Feeder_Configured" xml:space="preserve">
-    <value>ReShade configured: LaunchPad and DLSS5 Feed enabled, in that order.</value>
+    <value>ReShade configured: the motion-vector provider runs before DLSS 5 Feed, as it must.</value>
   </data>
   <data name="Feeder_Deployed" xml:space="preserve">
     <value>Feeder and shaders copied to the game.</value>
@@ -907,11 +955,20 @@
   <data name="Feeder_DeployingSr" xml:space="preserve">
     <value>Copying the Super Resolution runtime (this game has none of its own)…</value>
   </data>
+  <data name="Feeder_EarlyAlloc" xml:space="preserve">
+    <value>Feeder set to allocate on the first frame, before the engine closes its memory pool.</value>
+  </data>
   <data name="Feeder_Fetching" xml:space="preserve">
     <value>Downloading the DLSS5 Feeder…</value>
   </data>
+  <data name="Feeder_Fetching32" xml:space="preserve">
+    <value>Downloading the 32-bit pieces (add-on and helper process)…</value>
+  </data>
   <data name="Feeder_FetchingMv" xml:space="preserve">
-    <value>Downloading the motion-vector provider (DRME) from its author's repository…</value>
+    <value>Downloading the motion-vector provider (LumeniteFX Kernel) from its author's repository…</value>
+  </data>
+  <data name="Feeder_Host64Deployed" xml:space="preserve">
+    <value>32-bit path in place: the helper runs the neural pass outside the game.</value>
   </data>
   <data name="Feeder_MvNoProvider" xml:space="preserve">
     <value>The motion-vector shader arrived without the texture the Feeder reads. Without it the neural pass would run on zeroed vectors — no error, and almost no effect.</value>
@@ -1629,6 +1686,9 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>Updating {0}...</value>
     <comment>{0} = nome do jogo.</comment>
   </data>
+  <data name="Neural_AddonFeederName" xml:space="preserve">
+    <value>Neural addon also copied under the name the Feeder looks for.</value>
+  </data>
   <data name="Neural_Applied" xml:space="preserve">
     <value>Neural Uplift on.</value>
   </data>
@@ -1682,6 +1742,9 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Neural_FetchingAddon" xml:space="preserve">
     <value>Downloading the neural addon…</value>
   </data>
+  <data name="Neural_Host64Deployed" xml:space="preserve">
+    <value>Addon and runtimes copied to the helper process.</value>
+  </data>
   <data name="Neural_Import_NotNrAddon" xml:space="preserve">
     <value>This addon does not drive neural rendering (no DLSSNR parameters inside). Pick a build that supports it.</value>
   </data>
@@ -1708,6 +1771,27 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Neural_Searching" xml:space="preserve">
     <value>Looking for the neural runtime in {0}...</value>
     <comment>{0} = nome da pasta sendo varrida.</comment>
+  </data>
+  <data name="OptiScaler_BadHost" xml:space="preserve">
+    <value>Refused to download from an unexpected host: {0}</value>
+  </data>
+  <data name="OptiScaler_Deployed" xml:space="preserve">
+    <value>OptiScaler in place — the game's FSR/XeSS now feeds DLSS.</value>
+  </data>
+  <data name="OptiScaler_Fetching" xml:space="preserve">
+    <value>Downloading OptiScaler from its author's repository…</value>
+  </data>
+  <data name="OptiScaler_Fetching7z" xml:space="preserve">
+    <value>Downloading the 7-Zip extractor (OptiScaler ships as .7z)…</value>
+  </data>
+  <data name="OptiScaler_Incomplete" xml:space="preserve">
+    <value>The OptiScaler download did not yield OptiScaler.dll.</value>
+  </data>
+  <data name="OptiScaler_NoAsset" xml:space="preserve">
+    <value>The OptiScaler release has no downloadable archive.</value>
+  </data>
+  <data name="OptiScaler_NotInLibrary" xml:space="preserve">
+    <value>OptiScaler is not in the library yet.</value>
   </data>
   <data name="Profile_ApplyOnInstall" xml:space="preserve">
     <value>Apply automatically when installing a mod</value>
@@ -1952,5 +2036,8 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   </data>
   <data name="Update_Installing" xml:space="preserve">
     <value>Installing {0}. The launcher closes and reopens on its own.</value>
+  </data>
+  <data name="Vulkan_LayerRegistered" xml:space="preserve">
+    <value>ReShade registered as a Vulkan layer (this game does not load a proxy DLL).</value>
   </data>
 </root>
