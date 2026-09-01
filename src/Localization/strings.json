@@ -1,8 +1,8 @@
 {
   "App_Name": {
-    "en": "RenoDX Launcher",
+    "en": "DLSS 5 Launcher",
     "note": "Nome do produto: nao traduzir.",
-    "pt-BR": "RenoDX Launcher"
+    "pt-BR": "DLSS 5 Launcher"
   },
   "Cli_Add_AlreadyRegistered": {
     "en": "Folder was already registered: {0}",

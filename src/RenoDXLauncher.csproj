@@ -9,16 +9,16 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.59.0</Version>
+    <Version>1.60.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Idiomas que o app fala. Sem esta lista o SDK descarta os satelites de recurso,
          e so o idioma neutro (pt-BR, que fica no proprio assembly) sobreviveria.
          Adicionou um Strings.<tag>.resx? Acrescente a tag aqui tambem. -->
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- Full PE version metadata: blank/generic fields raise AV heuristic suspicion. -->
-    <Product>RenoDX Launcher</Product>
-    <AssemblyTitle>RenoDX Launcher</AssemblyTitle>
-    <Description>Gerenciador de mods HDR RenoDX por jogo: detecta seus jogos, instala ReShade + addon e configura o HDR (nits) sem abrir o jogo.</Description>
+    <Product>DLSS 5 Launcher</Product>
+    <AssemblyTitle>DLSS 5 Launcher</AssemblyTitle>
+    <Description>Instalador de um clique para DLSS 5 Neural Rendering: detecta seus jogos e monta a cadeia inteira, inclusive em DirectX 9 e jogos de 32 bits.</Description>
     <Company>xdzleo</Company>
     <Authors>xdzleo</Authors>
     <Copyright>Copyright (c) 2026 xdzleo. MIT License.</Copyright>

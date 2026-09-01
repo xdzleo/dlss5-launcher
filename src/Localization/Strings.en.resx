@@ -63,7 +63,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="App_Name" xml:space="preserve">
-    <value>RenoDX Launcher</value>
+    <value>DLSS 5 Launcher</value>
     <comment>Nome do produto: nao traduzir.</comment>
   </data>
   <data name="Cli_Add_AlreadyRegistered" xml:space="preserve">

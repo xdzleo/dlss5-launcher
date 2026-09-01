@@ -13,7 +13,7 @@
 ;  para o que isso resolve e o que so a assinatura resolve.
 ; ============================================================================
 
-#define AppName       "RenoDX Launcher"
+#define AppName       "DLSS 5 Launcher"
 #define AppExeName    "RenoDXLauncher.exe"
 #define AppPublisher  "xdzleo"
 #define AppURL        "https://github.com/xdzleo/renodx-launcher"

@@ -2,9 +2,9 @@
 
 <img src="docs/icon.png" width="112" alt="">
 
-# RenoDX Launcher
+# DLSS 5 Launcher
 
-**Install, toggle and tune [RenoDX](https://github.com/clshortfuse/renodx) HDR mods for your PC games — without leaving the launcher.**
+**One click puts DLSS 5 Neural Rendering into your games — including DirectX 9 and 32-bit titles no other installer reaches.**
 
 [![Release](https://img.shields.io/github/v/release/xdzleo/renodx-launcher?style=flat-square)](https://github.com/xdzleo/renodx-launcher/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
@@ -16,146 +16,159 @@
 
 ![screenshot](docs/screenshot.png)
 
-[**RenoDX**](https://github.com/clshortfuse/renodx) — short for "Renovation Engine for DirectX
-Games" — is [clshortfuse](https://github.com/clshortfuse)'s toolset for modding games through
-ReShade's add-on system, and the reason proper per-game HDR exists on PC for hundreds of titles.
-This project is not RenoDX. It is a launcher **for** RenoDX: it scans your installed games,
-matches them against the RenoDX catalogue, and handles the setup those mods otherwise need by
-hand — ReShade, the right addon, the right proxy DLL, and the mod's own brightness settings.
+DLSS 5 Neural Rendering is NVIDIA's post-process that reconstructs detail the renderer never
+drew — most visibly in skin, hair and faces. It reached the public as a leaked runtime, with no
+installer and no game that ships it.
 
-The mods, and the work that makes any of this worth using, are theirs.
+Getting it into a game means assembling a chain by hand: ReShade with add-on support, the neural
+add-on, two runtimes, a motion-vector provider, shader includes, and — in a game that has no DLSS
+of its own — a Feeder that fabricates the DLSS contract from scratch. Miss one piece and every
+failure looks identical from the outside: the game opens and nothing happens.
+
+This launcher assembles that chain, verifies every link, and tells you which one is missing when
+something is wrong.
+
+## What it covers
+
+| Game | How |
+| --- | --- |
+| DirectX 12 | the add-on hooks the game's own NGX calls |
+| DirectX 11 | same, through a private D3D12 device |
+| Vulkan | ReShade goes in as a Vulkan layer |
+| **DirectX 9** | translated first — DXVK or dgVoodoo2, chosen per game |
+| **32-bit** | 32-bit add-on in the game, 64-bit helper process beside it |
+| no DLSS at all | the DLSS contract is fabricated from the frame |
+| only FSR/XeSS | those calls are redirected to DLSS |
+
+**The 32-bit path is the hard one, and it is why this project exists.** DLSS is x64-only: a 32-bit
+game cannot load it, period. The launcher runs a separate 64-bit helper process alongside the
+game, shares textures across the process boundary through NT handles and a fence, and runs the
+neural pass there.
+
+**DirectX 9 needs a translator**, because ReShade on D3D9 stops at Shader Model 3 and no
+motion-vector provider compiles. Two exist, and neither covers everything — so you pick:
+
+- **DXVK** translates D3D9 to Vulkan. Default, and the reason DX9 works here at all: on Vulkan
+  ReShade compiles compute shaders, which is what the motion-vector provider needs.
+- **dgVoodoo2** translates D3D9 to D3D11. For the games DXVK drops.
+
+Measured on one machine, same add-on and runtime: *Resident Evil Revelations 2* runs **only** on
+DXVK (dgVoodoo crashes before the menu); *Saints Row 2* runs **only** on dgVoodoo (DXVK crashes at
+~25 s, after DLSS is already evaluating). The sets do not contain each other, so the choice sits
+in the UI, remembered per game.
+
+Making the 32-bit add-on speak Vulkan required extending the Feeder: the official 32-bit build
+accepts D3D11 only (`only Direct3D 11 games are supported by the 32-bit add-on`, verbatim in its
+source). This launcher ships a build with a Vulkan transport added, in the same design the 64-bit
+add-on already used — the host creates the textures on D3D12 and the game imports them with
+`VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT`.
 
 ## Install
 
-Download **`RenoDXLauncher-<version>-setup.exe`** from the
-[latest release](https://github.com/xdzleo/renodx-launcher/releases/latest) and run it.
+1. Download `DLSS5Launcher-setup.exe` from the [latest release](https://github.com/xdzleo/renodx-launcher/releases/latest).
+2. Run it, pick your game, press the DLSS 5 switch.
+3. In game: **Home** opens ReShade, **F6** toggles the neural pass.
 
-Self-contained — no .NET runtime to install. Windows 10 or 11, x64. A portable `.zip` is
-published alongside the installer for people who prefer not to install anything, and every
-release ships `SHA256SUMS.txt`.
+Windows may show a SmartScreen prompt — see [docs/antivirus.md](docs/antivirus.md) for why and what
+to check.
 
-## Features
+### GPU support
 
-**Game detection** across Steam, Epic, GOG, Xbox / Game Pass and Battle.net, plus any folder you
-add by hand — including folders that don't carry the game's name, which are resolved by the
-executable instead.
+Neural Rendering needs tensor cores, so any RTX card qualifies; GTX/GT/MX and non-NVIDIA do not,
+and the launcher says so up front instead of installing 158 MB that cannot run.
 
-**A merged catalogue of ~890 games**, built from the official RenoDX index, the mods wiki (fork
-mods, Nexus-only mods, and the generic Unreal and Unity tables) and the RHI dataset for per-game
-install paths, graphics API and curated notes.
+The original model is FP8 with Blackwell-only kernels. For earlier cards the launcher picks the
+`.SF` build automatically (patched binaries for RTX 40, an FP16 path for RTX 20/30) — the cost of
+the pass is much higher there, and the UI tells you which tier you are on.
 
-**One-click install.** Fetches ReShade with addon support, verifies its signature, reads the
-game executable's import table to pick the correct proxy DLL — `dxgi.dll`, `d3d9.dll`,
-`opengl32.dll` — and drops the matching `renodx-<game>.addon64` next to it.
+## What gets installed
 
-**Enable and disable per game**, and update every installed mod in one pass when new builds ship.
+Everything is fetched from the projects that made it, at install time:
 
-**The mod's settings, in the launcher.** Peak brightness, paper white, UI brightness, tone
-mapper, gamma and the full colour grading set, written straight into the game's `ReShade.ini`.
-A bundled manifest of 6,698 settings across 294 games — extracted from the renodx source — means
-each key is written with the exact casing its mod expects.
+| Piece | From |
+| --- | --- |
+| ReShade with add-on support | [reshade.me](https://reshade.me) |
+| `renodx-dlss5.addon64`, `nvngx_dlssnr.dll`, DLSS runtimes | [RankFTW/RHI](https://github.com/RankFTW/RHI) |
+| `DLSS5_Feed.fx` + the 64-bit add-on | [jlrouzies-fr/DLSS5-Feeder](https://github.com/jlrouzies-fr/DLSS5-Feeder) |
+| motion vectors (`lumenite_*`) | [umar-afzaal/LumeniteFX](https://github.com/umar-afzaal/LumeniteFX) |
+| DXVK | [doitsujin/dxvk](https://github.com/doitsujin/dxvk) |
+| dgVoodoo2 | [dege-diosg/dgVoodoo2](https://github.com/dege-diosg/dgVoodoo2) |
+| OptiScaler | [optiscaler/OptiScaler](https://github.com/optiscaler/OptiScaler) |
 
-**A display profile.** Measure your monitor's peak nits once; apply it to any game in one click.
+The only thing bundled in the exe is the pair of 32-bit halves with the Vulkan transport (124 KB),
+built from the Feeder's MIT source — they exist in no public release.
 
-**Built-in HDR checklist** covering the things that silently ruin HDR: Windows HDR on, AutoHDR
-and RTX HDR off, HGIG, and the anti-cheat warning for online games.
+## The chain, and why it is shown
 
-**English and Brazilian Portuguese**, following your Windows language by default.
+Every broken link produces the same symptom from outside: the game opens and nothing happens. So
+the launcher shows them individually — ReShade, add-on, neural runtime, Ray Reconstruction, early
+load, the switch, and the bridge or Feeder when they are required. Green means present; the
+install is ready only when all of them are.
+
+`--check` prints the plan without writing anything:
+
+```
+DLSS5Launcher.exe dlss5 "Bully" --check
+
+  arquitetura    : 32 bits
+  gpu            : NVIDIA GeForce RTX 5090   (custo do pass: RTX 50)
+  DLSS proprio   : nao
+  tradutor DX9   : DXVK (Vulkan)
+  ReShade entra  : camada Vulkan
+  metades 32 bits: com transporte Vulkan
+  processo extra : host64 (o DLSS e x64; um jogo de 32 bits nao o carrega)
+  (nada foi escrito — isto e so o plano)
+```
+
+## Also does
+
+The launcher started as a manager for [RenoDX](https://github.com/clshortfuse/renodx) HDR mods and
+still does all of it: per-game mod install and toggle, HDR nits from the UI without opening the
+game, DLSS runtime swaps with backups, mod update checks, and a games list built from your stores.
 
 ## Command line
 
-Everything the interface does also runs headless — for scripting, for diagnostics, and for
-filing a useful bug report.
-
-```bash
-RenoDXLauncher.exe list                       # detected games and mod status
-RenoDXLauncher.exe check                      # which mods have a newer build
-RenoDXLauncher.exe verify                     # did the mod actually load? (reads ReShade.log)
-RenoDXLauncher.exe settings "dying light"     # current mod settings
-RenoDXLauncher.exe set "dying light" ToneMapPeakNits=1300 --dry-run
-RenoDXLauncher.exe profile --peak 1300        # display nits profile
-RenoDXLauncher.exe install "elden ring"       # install ReShade + addon
-RenoDXLauncher.exe enable "sekiro"            # enable / disable the mod
-RenoDXLauncher.exe add "C:\path\to\folder"    # register a folder the stores don't know
-RenoDXLauncher.exe doctor                     # full diagnostic
 ```
-
-Game names match on any substring, case-insensitively. `list` and `check` accept `--json`. `set`
-prints the target file and the before → after; `--dry-run` writes nothing. Installing from the
-CLI aborts when anti-cheat is detected — the informed-risk confirmation exists only in the UI.
-
-## How it handles your games
-
-The launcher is deliberately conservative about other people's files:
-
-- it never writes `ReShade.ini` while the game is running, because the overlay rewrites the whole
-  section when the game exits;
-- it preserves the casing of keys already in the ini, since the mod reads them case-sensitively;
-- it refuses to overwrite a proxy DLL it cannot positively identify as ReShade, so ENB, dxvk and
-  Special K installs are left alone;
-- it keeps exactly one renodx addon per folder, because two addons fight over the same keys;
-- it verifies the ReShade download against the ReShade author's signing certificate before
-  extracting anything;
-- it detects anti-cheat and warns before installing, because addon-capable ReShade is an unsigned
-  build and that is a ban risk online.
+list                    detected games and their state
+dlss5 <game>            install DLSS 5      (--dgvoodoo · --check)
+dlss5 --all             every eligible game
+verify <game>           read ReShade.log and say whether the mod loaded
+settings <game>         mod settings from ReShade.ini
+set <game> key=value    write settings (close the game first)
+doctor                  environment check
+```
 
 ## Building
 
-Requires the .NET 10 SDK on Windows.
-
-```powershell
-dotnet build src\RenoDXLauncher.csproj          # debug
-pwsh tools\build-installer.ps1 -Zip             # publish + installer into dist\
+```
+git clone https://github.com/xdzleo/renodx-launcher
+cd renodx-launcher
+dotnet build src/RenoDXLauncher.csproj -c Release
 ```
 
-`tests\SmokeTest` exercises the entire pipeline against a fake game — catalogue, matching, a real
-ReShade download and extraction, addon install, toggle, and settings round-trip. It never touches
-a real game folder.
+.NET 10 SDK, Windows. `tools/gen_resx.ps1` regenerates the string resources from
+`src/Localization/strings.json`; `tools/gen_icon.ps1` regenerates the icon.
 
-```powershell
-cd tests\SmokeTest; dotnet run
-```
-
-`tests\ScanProbe` runs each store detector in isolation and reports what it found and how long it
-took — the first thing to run when a game doesn't show up.
+Tests: `dotnet run --project tests/SmokeTest` covers install/remove against a fake game folder.
+`tests/ChainProbe` runs the real chain logic against a real game folder and prints link by link —
+useful when the switch says "install" on a game that is already working.
 
 ## Translating
 
-Strings live in [`src/Localization/strings.json`](src/Localization/strings.json), all languages
-side by side so a translation can be reviewed in one place.
-
-1. add your `"<bcp-47-tag>"` entry to the strings you're translating;
-2. run `python tools/gen_resx.py`;
-3. register the tag in `L.Available` (`src/Localization/L.cs`) and in
-   `SatelliteResourceLanguages` (`src/RenoDXLauncher.csproj`).
-
-Untranslated keys fall back to Brazilian Portuguese, so a partial translation is still shippable.
-
-## Documentation
-
-- [Code signing policy](docs/code-signing-policy.md)
-- [Release signing setup](docs/SIGNING-SETUP.md)
-- [Antivirus false positives](docs/antivirus.md)
-- [Changelog](CHANGELOG.md)
+Strings live in `src/Localization/strings.json`, one entry per key with every language side by
+side. Add a language tag there, run `tools/gen_resx.ps1`, add the tag to
+`<SatelliteResourceLanguages>` in the csproj.
 
 ## Credits
 
-This launcher is a client for other people's work. All of it.
-
-- **[clshortfuse/renodx](https://github.com/clshortfuse/renodx)** — RenoDX itself, and every mod
-  maintainer who ports and tunes a game. The catalogue, the settings this launcher writes, and
-  the reason any of it looks right on screen come from them.
-  [Mods list](https://github.com/clshortfuse/renodx/wiki/Mods) ·
-  [Discord](https://discord.gg/F6AUTeWJHM)
-- **[crosire/reshade](https://github.com/crosire/reshade)** — the add-on runtime RenoDX is built
-  on, and which this launcher installs.
-- **[RankFTW/RHI](https://github.com/RankFTW/RHI)** — per-game install data (`manifest.json`,
-  GPL-3.0), used with credit.
-
-Bug reports about a *mod* belong upstream with the mod's maintainer, not here. Issues with the
-launcher itself — detection, installation, the settings UI — belong in
-[this repository](https://github.com/xdzleo/renodx-launcher/issues).
+- [clshortfuse](https://github.com/clshortfuse) — RenoDX, and the neural add-on this builds on
+- [jlrouzies-fr](https://github.com/jlrouzies-fr) — DLSS5-Feeder, which makes DLSS-less games possible
+- [umar-afzaal](https://github.com/umar-afzaal) — LumeniteFX, the motion-vector provider
+- [crosire](https://github.com/crosire) — ReShade
+- [Dege](https://github.com/dege-diosg) — dgVoodoo2 · [doitsujin](https://github.com/doitsujin) — DXVK
+- [RankFTW](https://github.com/RankFTW) — RHI, the runtime index
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Bundled Inter font under the SIL Open Font License 1.1.
+MIT — see [LICENSE](LICENSE). Covers this launcher's own code; everything it downloads keeps its
+own license, and the neural add-on is closed-source and community-distributed.
