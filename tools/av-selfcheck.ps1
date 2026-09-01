@@ -470,11 +470,19 @@ if (-not $Installer) {
             $ps = Start-Process -FilePath $exeInstalado -ArgumentList 'help' -Wait -PassThru `
                                 -NoNewWindow -RedirectStandardOutput $so -RedirectStandardError $se
             $saida = Get-Content $so -Raw -ErrorAction SilentlyContinue
-            # Casa com o nome do produto, que nunca e traduzido. Casar com texto traduzido
-            # (era 'linha de comando') faz o teste reprovar em maquina cujo Windows esta em
-            # outro idioma - aconteceu no runner do CI, que e ingles, assim que a CLI passou
-            # a ser localizada.
-            if ($ps.ExitCode -eq 0 -and $saida -match 'RenoDX Launcher') {
+            # O que este teste precisa saber e se o binario ABRIU e imprimiu a ajuda: se o
+            # runtime .NET carregou da pasta instalada. Nao e teste de identidade do produto.
+            #
+            # Ja passou por dois nomes errados. Primeiro casava com 'linha de comando', e
+            # reprovava no runner do CI (ingles) assim que a CLI foi localizada. Trocou-se por
+            # 'RenoDX Launcher', "que nunca e traduzido" -- e o produto virou 'DLSS 5 Launcher',
+            # com o mesmo resultado: exit=0, ajuda impressa, teste reprovado. Tres releases
+            # falharam nisso.
+            #
+            # Agora ancora no que a ajuda tem por definicao e nao muda com nome nem com idioma:
+            # os proprios comandos da CLI, que sao literais no codigo.
+            $ajudaOk = $saida -match '(?m)^\s*list\b' -and $saida -match '(?m)^\s*verify\b'
+            if ($ps.ExitCode -eq 0 -and $ajudaOk) {
                 Add-Result 'Smoke do binario instalado' 'PASS' `
                     'RenoDXLauncher.exe help -> exit 0; o runtime .NET carregou da pasta instalada.'
             } else {
