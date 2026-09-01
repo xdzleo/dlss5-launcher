@@ -8,6 +8,14 @@ using RenoDXLauncher.Services;
 //
 //     dotnet run --project tests/ChainProbe -- "<pasta do jogo>" [caminho do exe]
 
+// --luzes recebe PASTAS DE BIBLIOTECA (nao de jogo) e diz de que cor cada bolinha de DLSS 5
+// nasceria na abertura do launcher, antes de qualquer clique.
+if (args.Contains("--luzes"))
+{
+    ChainProbe.Luzes.Run(args.Where(a => !a.StartsWith("--")).ToArray());
+    return 0;
+}
+
 var dir = args.Length > 0 ? args[0] : null;
 if (dir is null || !Directory.Exists(dir))
 {
@@ -22,6 +30,25 @@ var exe = args.Length > 1 && !args[1].StartsWith("--") ? args[1]
 if (args.Contains("--timing"))
 {
     ChainProbe.Timing.Run(dir, exe);
+    return 0;
+}
+
+// --enrich mede o que BackgroundEnrichAsync paga POR JOGO para descobrir se ha instalacao ali.
+// E o numero que decide se essa varredura pode rodar em todo jogo da lista ou so em alguns --
+// e as bolinhas de DLSS 5 dependem de ela rodar em todos.
+if (args.Contains("--enrich"))
+{
+    var opts = new EnumerationOptions
+    {
+        IgnoreInaccessible = true,
+        RecurseSubdirectories = true,
+        MaxRecursionDepth = 5,
+        AttributesToSkip = FileAttributes.ReparsePoint,
+    };
+    var sw = System.Diagnostics.Stopwatch.StartNew();
+    var achou = Directory.EnumerateFiles(dir, "renodx-*.addon*", opts).FirstOrDefault();
+    sw.Stop();
+    Console.WriteLine($"{sw.ElapsedMilliseconds,6} ms  {(achou is null ? "nada" : "achou")}  {Path.GetFileName(dir)}");
     return 0;
 }
 

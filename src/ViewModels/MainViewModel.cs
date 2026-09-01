@@ -1033,16 +1033,32 @@ public class MainViewModel : ObservableObject
                     exe = pinned;
                     state = AddonService.GetState(Path.GetDirectoryName(pinned)!, pinned);
                 }
-                else if (item.HasMod)
+                else
                 {
+                    // Em TODO jogo, e nao so nos que tem mod HDR no catalogo.
+                    //
+                    // O DLSS 5 nao depende do mod: e a razao de existirem duas bolinhas. Com a
+                    // condicao `item.HasMod` aqui, um jogo com DLSS 5 instalado e sem mod HDR --
+                    // que e a maioria da lista -- nunca era varrido, e a bolinha dele nascia
+                    // vermelha ate o usuario clicar no jogo (o que dispara a releitura por outro
+                    // caminho). Era esse o "so atualiza quando clico".
+                    //
+                    // Custa 0 ms na maior parte dos jogos e 6 ms no pior caso medido, numa thread
+                    // de fundo que ja percorre a lista inteira.
                     (exe, state) = item.DetectExistingInstall();
                 }
-                if (exe != null || state != null)
-                    await dispatcher.InvokeAsync(() =>
-                    {
-                        item.ApplyDetected(exe, state);
-                        if (item == Selected) RaiseCommands();
-                    });
+
+                // Sempre, mesmo sem nada encontrado.
+                //
+                // ApplyDetected e quem chama RefreshLuzes. Com o `if` de antes, o jogo sem
+                // instalacao nunca tinha as bolinhas avaliadas -- ficavam no valor de construcao.
+                // Vermelho por nao ter sido lido e vermelho por estar desligado sao a mesma cor na
+                // tela, e foi por isso que o defeito passou tanto tempo parecendo cosmetico.
+                await dispatcher.InvokeAsync(() =>
+                {
+                    item.ApplyDetected(exe, state);
+                    if (item == Selected) RaiseCommands();
+                });
 
                 var cover = await CoverService.GetCoverAsync(item.Game, item.Mod?.SteamAppId);
                 if (cover != null && !ct.IsCancellationRequested)

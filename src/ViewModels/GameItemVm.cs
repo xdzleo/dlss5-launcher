@@ -201,11 +201,17 @@ public class GameItemVm : ObservableObject
     /// </summary>
     private bool LerDlss5Ligado()
     {
-        if (TargetDir is null) return false;
+        // O exe escolhido diz a pasta, mas ele pode faltar: a deteccao acha o addon e depois
+        // procura um .exe ao lado, e nem toda pasta de deploy tem um. Nesse caso o proprio addon
+        // encontrado diz onde a instalacao esta — desistir ali apagava a bolinha de um jogo
+        // instalado e funcionando.
+        var dir = TargetDir
+                  ?? (_state?.AddonPath is { } a ? Path.GetDirectoryName(a) : null);
+        if (dir is null) return false;
         try
         {
-            var ini = _state?.IniPath ?? Path.Combine(TargetDir, "ReShade.ini");
-            return File.Exists(ini) && NeuralUpliftService.IsApplied(TargetDir, ini, _state?.AddonPath);
+            var ini = _state?.IniPath ?? Path.Combine(dir, "ReShade.ini");
+            return File.Exists(ini) && NeuralUpliftService.IsApplied(dir, ini, _state?.AddonPath);
         }
         catch { return false; }
     }
@@ -254,6 +260,15 @@ public class GameItemVm : ObservableObject
         RefreshLuzes();
     }
 
+    /// <summary>Pastas que o proprio launcher cria e que nunca sao o alvo de uma instalacao.</summary>
+    private static bool EhAndaime(string arquivo)
+    {
+        var pasta = Path.GetFileName(Path.GetDirectoryName(arquivo)) ?? "";
+        return pasta.Equals(FeederService.Host64Dir, StringComparison.OrdinalIgnoreCase)
+               || pasta.Equals("_mods_desligados", StringComparison.OrdinalIgnoreCase)
+               || pasta.Equals("vklayer", StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>Find an existing RenoDX install anywhere in the game dir (installed manually or by
     /// a previous run) and the exe that lives beside it. Pure disk I/O — safe on any thread;
     /// feed the result to ApplyDetected on the UI thread.</summary>
@@ -268,7 +283,19 @@ public class GameItemVm : ObservableObject
                 MaxRecursionDepth = 5,
                 AttributesToSkip = FileAttributes.ReparsePoint,
             };
-            var addon = Directory.EnumerateFiles(Game.InstallDir, "renodx-*.addon*", options).FirstOrDefault();
+            // A pasta do jogo ANTES da varredura recursiva, e por dois motivos.
+            //
+            // Barato: a instalacao esta na raiz na grande maioria dos casos, e resolver ali evita
+            // descer a arvore inteira — o que passou a importar quando isto deixou de rodar so em
+            // jogo com mod e passou a rodar em todos.
+            //
+            // E correto: `host64` e andaime NOSSO, a metade de 64 bits que o Feeder usa em jogo de
+            // 32 bits. O addon esta la tambem, e uma varredura recursiva podia encontrar aquele
+            // primeiro e fixar como alvo uma pasta cujo unico executavel e o host — nao o jogo.
+            var addon = Directory.EnumerateFiles(Game.InstallDir, "renodx-*.addon*",
+                                                 SearchOption.TopDirectoryOnly).FirstOrDefault()
+                        ?? Directory.EnumerateFiles(Game.InstallDir, "renodx-*.addon*", options)
+                            .FirstOrDefault(f => !EhAndaime(f));
             if (addon is null) return (null, null);
             // the addon's own folder is the deploy dir — pin the exe there so selection,
             // toggle and settings all operate on the real install location
