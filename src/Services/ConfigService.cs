@@ -15,6 +15,17 @@ public class LauncherConfig
     public bool ApplyProfileOnInstall { get; set; } = true;
     /// <summary>game key (store_appid or install dir) → chosen exe path.</summary>
     public Dictionary<string, string> PinnedExes { get; set; } = new();
+
+    /// <summary>
+    /// Qual tradutor de Direct3D 9 usar, por jogo: "dxvk" ou "dgvoodoo". Ausente = automatico.
+    ///
+    /// A escolha e do usuario porque nao ha resposta certa. Os dois tradutores cobrem conjuntos
+    /// diferentes de jogos, e os conjuntos nao se contem — medido nesta maquina, com o mesmo
+    /// add-on e o mesmo runtime: o Resident Evil Revelations 2 so roda com DXVK (o dgVoodoo
+    /// crasha antes do menu), e o Saints Row 2 so roda com dgVoodoo (o DXVK crasha aos ~25 s,
+    /// depois de o DLSS ja estar avaliando). Nao da para deduzir qual serve sem abrir o jogo.
+    /// </summary>
+    public Dictionary<string, string> D3d9Translator { get; set; } = new();
     /// <summary>Manually added game folders.</summary>
     public List<string> ManualGameDirs { get; set; } = new();
 

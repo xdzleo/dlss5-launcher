@@ -1352,6 +1352,15 @@ Só continue se você for jogar OFFLINE.</value>
     <value>Ver atualizações</value>
     <comment>Usada no texto do botao e no AutomationProperties.Name.</comment>
   </data>
+  <data name="Main_D3d9Translator_Changed" xml:space="preserve">
+    <value>Tradutor alterado — reinstale para valer.</value>
+  </data>
+  <data name="Main_D3d9Translator_Hint" xml:space="preserve">
+    <value>Os dois cobrem jogos diferentes e nenhum cobre todos. Se o jogo crashar com um, troque e reinstale.</value>
+  </data>
+  <data name="Main_D3d9Translator_Label" xml:space="preserve">
+    <value>Tradutor de DirectX 9</value>
+  </data>
   <data name="Main_Detail_ModInPreviousFolder" xml:space="preserve">
     <value>Ainda há um mod instalado na pasta anterior ({0}). Remova-o de lá ou volte para aquele executável.</value>
     <comment>{0} = caminho da pasta anterior.</comment>

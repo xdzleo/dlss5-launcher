@@ -1011,6 +1011,17 @@
                                     <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
                                               FontSize="11.5"/>
 
+                                    <!-- So aparece em jogo DX9 de 32 bits, que e onde os dois tradutores
+                                         existem e onde a escolha muda o resultado. -->
+                                    <StackPanel Visibility="{Binding MostraTradutorD3d9, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{loc:Tr Main_D3d9Translator_Label}"
+                                                   Style="{StaticResource SectionLabel}" Margin="0,14,0,6"/>
+                                        <ComboBox ItemsSource="{Binding D3d9Translators}"
+                                                  SelectedItem="{Binding TradutorD3d9}" FontSize="11.5"/>
+                                        <TextBlock Text="{loc:Tr Main_D3d9Translator_Hint}" Style="{StaticResource Caption}"
+                                                   TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                    </StackPanel>
+
                                     <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0"
                                             Background="{StaticResource CardBrush}"
                                             BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"

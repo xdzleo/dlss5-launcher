@@ -47,6 +47,36 @@ public static class DxvkService
     /// <summary>O DXVK de 32 bits ja esta na biblioteca?</summary>
     public static bool InLibrary => File.Exists(LibraryD3d9_32);
 
+    /// <summary>
+    /// Jogos em que o DXVK foi testado e PERDEU para o dgVoodoo2.
+    ///
+    /// Os dois tradutores nao se ordenam: cada um cobre um conjunto, e os conjuntos nao se
+    /// contem. Medido nesta maquina, com o mesmo add-on e o mesmo runtime:
+    ///
+    ///   Resident Evil Revelations 2  dgVoodoo crasha (0xc0000005 no d3d9.dll dele)
+    ///                                DXVK roda, 1800 frames avaliados, 64 fps
+    ///   Saints Row 2                 DXVK crasha (0xc0000005 no d3d9.dll dele) aos ~25 s,
+    ///                                DEPOIS de o DLSS ja estar avaliando — o jogo sobe, o
+    ///                                feed entrega 600 frames, e entao morre
+    ///                                dgVoodoo roda estavel
+    ///
+    /// O padrao e o DXVK, porque cobre mais jogos e e mantido ativamente. Esta lista existe
+    /// para os casos ja verificados em que ele perde — e so entra aqui o que foi testado
+    /// dentro do jogo, nunca por suposicao.
+    /// </summary>
+    private static readonly string[] PreferemDgVoodoo =
+    {
+        "sr2_pc.exe",   // Saints Row 2
+    };
+
+    /// <summary>O DXVK e a rota recomendada para este executavel?</summary>
+    public static bool RecomendadoPara(string? exePath)
+    {
+        if (exePath is null) return true;
+        var nome = Path.GetFileName(exePath);
+        return !PreferemDgVoodoo.Contains(nome, StringComparer.OrdinalIgnoreCase);
+    }
+
     /// <summary>Este jogo esta rodando pela rota DXVK? (o d3d9.dll dele e o do DXVK)</summary>
     public static bool IsDeployed(string targetDir)
     {

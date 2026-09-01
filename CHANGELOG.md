@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.57.0
+
+**O tradutor de DirectX 9 virou uma escolha sua, na interface.** Jogo DX9 de 32 bits agora mostra
+um seletor entre DXVK (Vulkan) e dgVoodoo2 (D3D11), lembrado por jogo.
+
+A escolha existe porque não há resposta certa, e isso foi medido — não deduzido. Com o mesmo
+add-on, o mesmo runtime e a mesma máquina:
+
+| jogo | dgVoodoo2 | DXVK |
+| --- | --- | --- |
+| Resident Evil Revelations 2 | crash `0xc0000005` antes do menu | **roda** — 1800 frames, 64 fps |
+| Saints Row 2 | **roda** — estável | crash `0xc0000005` aos ~25 s |
+
+Os dois crashes são idênticos no sintoma (access violation dentro do `d3d9.dll`), em tradutores
+opostos. O caso do Saints Row 2 é o mais traiçoeiro: com DXVK o jogo **sobe**, o DLSS fica pronto
+(`feature ready: 1024x768 DLAA`) e o feed entrega 600 frames — e só então o jogo morre. Um teste
+de trinta segundos diria que funcionou.
+
+Os conjuntos que cada um cobre não se contêm, e não dá para saber qual serve sem abrir o jogo.
+Então quem abre escolhe.
+
+O padrão passou a ser o **DXVK**, por cobrir mais jogos e ser mantido ativamente — com uma lista
+de exceções verificadas em jogo (hoje: Saints Row 2), e só entra nela o que foi testado dentro do
+jogo, nunca por suposição. Trocar o seletor pede reinstalação, porque muda o `d3d9.dll`, o modo do
+ReShade (camada x proxy) e as metades de 32 bits de uma vez.
+
+No CLI a inversão correspondente: `--dxvk` saiu (virou padrão) e entrou `--dgvoodoo`.
+
 ## v1.56.0
 
 **Uma segunda rota para jogo Direct3D 9, e com ela jogos que antes não tinham rota nenhuma.**

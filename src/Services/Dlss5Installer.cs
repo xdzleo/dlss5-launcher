@@ -41,7 +41,7 @@ public static class Dlss5Installer
         GameInfo game, string targetDir, string? iniPath, string? exePath, string? addonPath,
         DlssIndexService index, ReShadeService reshade, RhiManifestService? rhi = null,
         IProgress<string>? progress = null, CancellationToken ct = default,
-        bool preferirDxvk = false)
+        bool preferirDxvk = true, bool forcarDgVoodoo = false)
     {
         var steps = new List<string>();
         var manual = new List<string>();
@@ -92,18 +92,23 @@ public static class Dlss5Installer
         // proxy tem de ser dxgi.dll — nao d3d9.dll, que agora pertence ao dgVoodoo.
         var precisaDgVoodoo = DgVoodooService.Applies(exePath);
 
-        // Duas rotas para o mesmo problema, e a escolha nao e estetica.
+        // Duas rotas para o mesmo problema, e desde a 1.57 o DXVK e a primeira.
         //
-        // O dgVoodoo2 entrega D3D11 e e o padrao, porque e o caminho testado em mais jogos
-        // (Saints Row 2 e Bully rodam com ele). Mas ele derruba jogos que nao tem defeito
-        // nenhum: o Resident Evil Revelations 2 crasha com 0xc0000005 dentro do proprio
+        // O dgVoodoo2 entrega D3D11 e foi o caminho original. Ele derruba jogos que nao tem
+        // defeito nenhum: o Resident Evil Revelations 2 crasha com 0xc0000005 dentro do proprio
         // d3d9.dll dele, em TODA configuracao testada — VRAM, OutputAPI, PresentationModel,
-        // VideoCard — com o binario identico (mesmo SHA) ao que roda o Saints Row 2.
+        // VideoCard — com o binario de SHA identico ao que roda o Saints Row 2. Sem ele o jogo
+        // abre normal.
         //
-        // O DXVK traduz para Vulkan em vez de D3D11, e roda esses jogos. O preco e que o resto
-        // da cadeia muda: o ReShade entra como camada Vulkan, e o add-on de 32 bits precisa
-        // falar Vulkan — o que so o nosso transporte faz (o oficial recusa tudo que nao e D3D11).
-        var usarDxvk = preferirDxvk && precisaDgVoodoo && ehJogo32Bits(exePath);
+        // O DXVK traduz para Vulkan em vez de D3D11, cobre mais jogos e e mantido ativamente.
+        // Alem disso desbloqueia o que o D3D9 nunca teve: em Vulkan o ReShade compila COMPUTE
+        // SHADER, e e por isso que o Lumenite Kernel funciona la e nao em D3D9 puro, onde tudo
+        // para no Shader Model 3.
+        //
+        // O dgVoodoo continua disponivel em --dgvoodoo, para o caso inverso: jogo que o DXVK
+        // recuse e ele aceite. Nenhum dos dois cobre 100%, e por isso os dois ficam.
+        var usarDxvk = preferirDxvk && !forcarDgVoodoo && precisaDgVoodoo && ehJogo32Bits(exePath)
+                       && DxvkService.RecomendadoPara(exePath);
         if (usarDxvk)
         {
             try

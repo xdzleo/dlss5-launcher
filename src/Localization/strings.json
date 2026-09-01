@@ -1181,6 +1181,18 @@
     "en": "The Feeder is not in the library yet.",
     "pt-BR": "O Feeder ainda não está na biblioteca."
   },
+  "Main_D3d9Translator_Label": {
+    "en": "DirectX 9 translator",
+    "pt-BR": "Tradutor de DirectX 9"
+  },
+  "Main_D3d9Translator_Hint": {
+    "en": "The two cover different games and neither covers all. If the game crashes with one, switch and reinstall.",
+    "pt-BR": "Os dois cobrem jogos diferentes e nenhum cobre todos. Se o jogo crashar com um, troque e reinstale."
+  },
+  "Main_D3d9Translator_Changed": {
+    "en": "Translator changed — reinstall for it to take effect.",
+    "pt-BR": "Tradutor alterado — reinstale para valer."
+  },
   "Dlss5_Step_Dxvk": {
     "en": "DXVK installed (Vulkan route): for DX9 games dgVoodoo2 cannot carry.",
     "pt-BR": "DXVK instalado (rota Vulkan): para jogo DX9 que o dgVoodoo2 não consegue carregar."

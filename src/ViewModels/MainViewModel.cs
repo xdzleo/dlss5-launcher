@@ -277,6 +277,35 @@ public class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Qual tradutor de D3D9 este jogo usa. So aparece em jogo DX9 de 32 bits, que e onde a
+    /// pergunta existe.
+    ///
+    /// A escolha e do usuario porque nao ha resposta certa: os dois cobrem conjuntos diferentes,
+    /// e nao se contem. Resident Evil Revelations 2 so roda com DXVK; Saints Row 2 so roda com
+    /// dgVoodoo2. Nao da para deduzir qual serve sem abrir o jogo — entao quem abre escolhe.
+    /// </summary>
+    public ObservableCollection<string> D3d9Translators { get; } =
+        new() { "DXVK (Vulkan)", "dgVoodoo2 (D3D11)" };
+
+    private bool _mostraTradutorD3d9;
+    public bool MostraTradutorD3d9 { get => _mostraTradutorD3d9; set => Set(ref _mostraTradutorD3d9, value); }
+
+    private string? _tradutorD3d9;
+    public string? TradutorD3d9
+    {
+        get => _tradutorD3d9;
+        set
+        {
+            if (!Set(ref _tradutorD3d9, value) || value is null || Selected is null) return;
+            Config.D3d9Translator[Selected.Key] = value.StartsWith("DXVK") ? "dxvk" : "dgvoodoo";
+            Config.Save();
+            // Trocar o tradutor troca o d3d9.dll, o modo do ReShade (camada x proxy) e as
+            // metades de 32 bits. Nada disso e reaproveitavel: quem trocar precisa reinstalar.
+            DetailStatus = L.T("Main_D3d9Translator_Changed");
+        }
+    }
+
     public ObservableCollection<string> ExeCandidates { get; } = new();
     private string? _selectedExe;
     public string? SelectedExe
@@ -845,6 +874,18 @@ public class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedExe));
         if (exe != null && item.ChosenExe is null) item.ChosenExe = exe;
 
+        // A escolha do tradutor so faz sentido em jogo DX9 de 32 bits — e onde os dois existem.
+        MostraTradutorD3d9 = exe is not null
+                             && DgVoodooService.Applies(exe)
+                             && PeUtils.Inspect(exe, readImports: false)?.Is64Bit == false;
+        if (MostraTradutorD3d9)
+        {
+            var escolhido = Config.D3d9Translator.TryGetValue(item.Key, out var v) ? v
+                            : (DxvkService.RecomendadoPara(exe) ? "dxvk" : "dgvoodoo");
+            _tradutorD3d9 = escolhido == "dgvoodoo" ? D3d9Translators[1] : D3d9Translators[0];
+            OnPropertyChanged(nameof(TradutorD3d9));
+        }
+
         await LoadAvatarAsync(token);
         await RefreshNeuralAndSettingsAsync(token);
         await CheckDlssFixAsync(token);
@@ -1348,9 +1389,14 @@ public class MainViewModel : ObservableObject
             }
             else
             {
+                // A escolha do tradutor, quando o usuario fez uma. Sem escolha, o padrao decide.
+                var escolha = Config.D3d9Translator.TryGetValue(item.Key, out var t) ? t : null;
                 var r = await Dlss5Installer.InstallAsync(
                     item.Game, dir, ini, item.ChosenExe, item.State?.AddonPath,
-                    _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s));
+                    _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s),
+                    default,
+                    preferirDxvk: escolha != "dgvoodoo",
+                    forcarDgVoodoo: escolha == "dgvoodoo");
                 DetailStatus = r.Ok
                     ? string.Join("  •  ", r.Manual)
                     : r.Blocker ?? string.Join("; ", r.Steps);
