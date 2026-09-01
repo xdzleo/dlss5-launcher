@@ -898,11 +898,31 @@ public class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(TradutorD3d9));
         }
 
-        await LoadAvatarAsync(token);
+        // O que o card precisa para APARECER vem primeiro, e so isso e esperado.
+        //
+        // Medido com tests/ChainProbe --timing: as leituras de disco somam ~40-60 ms mesmo num
+        // jogo de 3865 arquivos. O que fazia a selecao demorar nao era disco, era REDE: o avatar
+        // do mantenedor e a consulta de "ha mod novo?" estavam com await no meio do caminho, e
+        // custam o que a rede quiser custar -- num link ruim, segundos com a tela parada.
+        //
+        // As duas agora rodam soltas e preenchem a tela quando chegarem. O token cuida do resto:
+        // se o usuario trocar de jogo antes, o resultado que chegar depois e descartado.
         await RefreshNeuralAndSettingsAsync(token);
         await CheckDlssFixAsync(token);
-        await CheckLoadVerdictAsync(token);
         RaiseCommands();
+
+        // Envolvidas: soltas, uma falha de rede (DNS, proxy, offline) viraria excecao nao
+        // observada, e o unico sintoma seria o app morrer sem dizer nada. Nenhuma das duas
+        // tem try/catch proprio, e as duas fazem HTTP.
+        _ = SemQuebrar(() => LoadAvatarAsync(token), "avatar do mantenedor");
+        _ = SemQuebrar(() => CheckLoadVerdictAsync(token), "verificacao de atualizacao do mod");
+    }
+
+    /// <summary>Roda em segundo plano e engole a falha no log: nada aqui vale derrubar a tela.</summary>
+    private static async Task SemQuebrar(Func<Task> acao, string oQue)
+    {
+        try { await acao(); }
+        catch (Exception ex) { Log.Warn($"{oQue}: {ex.Message}"); }
     }
 
     private async Task LoadAvatarAsync(int token)

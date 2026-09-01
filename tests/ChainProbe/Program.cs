@@ -15,8 +15,15 @@ if (dir is null || !Directory.Exists(dir))
     return 1;
 }
 
-var exe = args.Length > 1 ? args[1]
+var exe = args.Length > 1 && !args[1].StartsWith("--") ? args[1]
         : Directory.EnumerateFiles(dir, "*.exe").OrderByDescending(f => new FileInfo(f).Length).FirstOrDefault();
+
+// --timing mede o custo de cada peca do carregamento de detalhe, em vez de checar a cadeia.
+if (args.Contains("--timing"))
+{
+    ChainProbe.Timing.Run(dir, exe);
+    return 0;
+}
 
 Console.WriteLine($"pasta : {dir}");
 Console.WriteLine($"exe   : {exe ?? "(nenhum)"}");
