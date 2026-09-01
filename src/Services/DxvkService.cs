@@ -19,14 +19,73 @@ namespace RenoDXLauncher.Services;
 ///
 /// A escolha entre os dois nao e preferencia estetica: o dgVoodoo continua sendo o padrao,
 /// porque e a rota testada em mais jogos. O DXVK entra onde ele falha.
+///
+/// E cobre uma API a mais, onde nao ha escolha nenhuma: Direct3D 10 (ver <see cref="D3d10Files"/>).
 /// </summary>
 public static class DxvkService
 {
     private const string Repo = "doitsujin/dxvk";
     public const string D3d9File = "d3d9.dll";
 
+    /// <summary>
+    /// Direct3D 10: a terceira API que o DXVK traduz, e a UNICA rota que existe para ela.
+    ///
+    /// O Feeder nao fala D3D10 — o README dele diz "D3D10 is not supported", em uma linha. O
+    /// dgVoodoo2 entra como D3D9.dll e traduz D3D9: um jogo que chama D3D10CreateDevice1 nunca
+    /// passa por ele. Ate a 1.69 o launcher recusava esses jogos com uma mensagem propria, e foi
+    /// o Just Cause 2 que ensinou isso, do jeito caro: instalacao inteira, coerente, e o jogo
+    /// fechando ao criar o device.
+    ///
+    /// A versao NAO e a mais nova, e isso foi medido — tres experimentos no Just Cause 2, na
+    /// mesma maquina, com a mesma cadeia (ReShade 6.8 na camada Vulkan, addon32 com transporte
+    /// Vulkan, host64):
+    ///
+    ///   1. DXVK 3.1, com o que a release atual traz para D3D10: d3d10core + d3d11 + dxgi. SEM o
+    ///      ReShade o jogo roda — o d3d10.dll do Windows resolve o d3d10core.dll na pasta do jogo
+    ///      (d3d10core nao esta em KnownDLLs) e dali tudo e DXVK, conferido pela lista de modulos
+    ///      do processo. COM o ReShade o jogo morre 3 s depois de abrir, com ou sem o addon do
+    ///      Feeder. O ReShade.log diz por que: o jogo carrega o d3d10_1.dll e o d3d10.dll DO
+    ///      SISTEMA (o DXVK 2.0+ nao traz os dois, so a camada por baixo), o ReShade instala os
+    ///      "delayed hooks" neles e envolve o device D3D10 do DXVK num wrapper proprio — e o
+    ///      processo cai logo depois, sem evento no Event Log. Na rota DX9 isso nunca acontece:
+    ///      o d3d9.dll carregado e o LOCAL do DXVK, e o hook no d3d9.dll do sistema fica
+    ///      "Delayed" para sempre.
+    ///   2. d3d10.dll e d3d10_1.dll da 1.10.3 em cima do core da 3.1: o jogo sai limpo em 2 s
+    ///      ("shut down cleanly" no log do Feeder). Wrapper antigo nao casa com core novo.
+    ///   3. O conjunto INTEIRO da 1.10.3 — a ultima release com d3d10.dll e d3d10_1.dll
+    ///      proprios: roda. O ReShade nunca ve um d3d10 do sistema, so existe o runtime Vulkan,
+    ///      os dois shaders compilam, o Feeder acha os vetores, o host64 sobe e conecta, e o log
+    ///      do host diz "signed DLSSNR 310.8.0 D3D12 runtime initialized" e "inline feature 18
+    ///      evaluation succeeded" — a 160+ fps em 2560x1440 numa RTX 5090.
+    ///
+    /// Por isso a rota D3D10 baixa a 1.10.3 FIXA, em subpasta propria da biblioteca, e nunca se
+    /// mistura com a release atual que a rota DX9 usa. Sao CINCO arquivos: os dois wrappers, o
+    /// core, e o d3d11 e o dxgi que eles chamam. O dxgi.dll e tambem o nome de proxy do ReShade —
+    /// por isso o ReShade NAO entra como proxy nesta rota; entra como camada Vulkan, exatamente
+    /// como no caminho DX9 pelo DXVK.
+    ///
+    /// Dali em diante e o mesmo caminho ja testado: o jogo apresenta por Vulkan, o ReShade
+    /// compila compute shader, e o addon32 com transporte Vulkan manda os frames ao host64.
+    /// O d3d9.dll NAO vai junto: o Just Cause 2 importa d3d9.dll como fallback que nunca usa, e
+    /// envolver esse caminho seria carregar um segundo DXVK a toa.
+    /// </summary>
+    public static readonly string[] D3d10Files =
+        { "d3d10.dll", "d3d10_1.dll", "d3d10core.dll", "d3d11.dll", "dxgi.dll" };
+
+    /// <summary>A ultima release do DXVK com d3d10.dll e d3d10_1.dll proprios (ver <see cref="D3d10Files"/>).
+    /// Quando o DXVK voltar a trazer os dois wrappers, basta trocar estas duas constantes.</summary>
+    public const string D3d10Version = "1.10.3";
+    private const string D3d10Url = "https://github.com/doitsujin/dxvk/releases/download/v1.10.3/dxvk-1.10.3.tar.gz";
+
     public static string LibraryDir { get; } = Path.Combine(AppPaths.DataDir, "dxvk");
     private static string LibraryD3d9_32 { get; } = Path.Combine(LibraryDir, "x32", D3d9File);
+
+    /// <summary>O conjunto de D3D10 mora em subpasta propria, porque e de OUTRA versao do DXVK e
+    /// nao pode se misturar com o d3d9.dll da release atual. Calculada, e nao inicializada, para
+    /// nao depender da ordem de declaracao dos estaticos.</summary>
+    private static string LibraryD3d10Dir => Path.Combine(LibraryDir, "d3d10-" + D3d10Version);
+    private static string LibraryD3d10(bool bits64, string file) =>
+        Path.Combine(LibraryD3d10Dir, bits64 ? "x64" : "x32", file);
 
     /// <summary>Só github.com e seus domínios de download, como nas outras buscas do launcher.</summary>
     private static readonly string[] AllowedHosts =
@@ -46,6 +105,14 @@ public static class DxvkService
 
     /// <summary>O DXVK de 32 bits ja esta na biblioteca?</summary>
     public static bool InLibrary => File.Exists(LibraryD3d9_32);
+
+    /// <summary>O conjunto de Direct3D 10 (os cinco arquivos da 1.10.3) esta na biblioteca, no
+    /// bitness pedido? Separado do <see cref="InLibrary"/>: e outro download, de outra versao.</summary>
+    public static bool D3d10InLibrary(bool bits64) =>
+        D3d10Files.All(f => File.Exists(LibraryD3d10(bits64, f)));
+
+    /// <summary>Este jogo renderiza em Direct3D 10 — e portanto so o DXVK o atende?</summary>
+    public static bool AppliesD3d10(string? exePath) => FeederService.RenderizaEmD3d10(exePath);
 
     /// <summary>
     /// Jogos em que o DXVK foi testado e PERDEU para o dgVoodoo2.
@@ -108,33 +175,66 @@ public static class DxvkService
             http, Repo, new System.Text.RegularExpressions.Regex(@"^dxvk-[0-9.]+\.tar\.gz$"), ct);
         if (url is null || !HostOk(url)) throw new InvalidOperationException(L.T("Dxvk_NoAsset"));
 
-        var tgz = Path.Combine(LibraryDir, "dxvk.tar.gz");
+        // Guarda so o que interessa: o d3d9.dll de 32 bits (e o de 64, para jogo Vulkan x64).
+        await BaixarEGuardarAsync(http, url, LibraryDir, [D3d9File], ct);
+
+        if (!InLibrary) throw new InvalidOperationException(L.T("Dxvk_NoAsset"));
+        Log.Info($"dxvk: baixado para a biblioteca ({new FileInfo(LibraryD3d9_32).Length:N0} bytes)");
+    }
+
+    /// <summary>
+    /// Baixa o conjunto de Direct3D 10 para a biblioteca. Sem efeito se ja estiver la.
+    ///
+    /// Versao FIXA, e nao a mais nova — ver <see cref="D3d10Files"/>: a release atual do DXVK nao
+    /// traz d3d10.dll nem d3d10_1.dll, e sem os dois o ReShade engancha os do sistema e o jogo
+    /// morre. URL direta da release, sem passar pela API (mesmo motivo do <see cref="FetchAsync"/>).
+    /// </summary>
+    public static async Task FetchD3d10Async(IProgress<string>? progress = null, CancellationToken ct = default)
+    {
+        if (D3d10InLibrary(false) && D3d10InLibrary(true)) return;
+        if (!HostOk(D3d10Url)) throw new InvalidOperationException(L.T("Dxvk_NoAsset"));
+        Directory.CreateDirectory(LibraryD3d10Dir);
+
+        progress?.Report(L.T("Dxvk_FetchingD3d10", D3d10Version));
+        using var http = NewClient();
+        await BaixarEGuardarAsync(http, D3d10Url, LibraryD3d10Dir, D3d10Files, ct);
+
+        if (!D3d10InLibrary(false)) throw new InvalidOperationException(L.T("Dxvk_NoAsset"));
+        Log.Info($"dxvk: conjunto D3D10 {D3d10Version} na biblioteca "
+                 + $"(x32={D3d10InLibrary(false)} x64={D3d10InLibrary(true)})");
+    }
+
+    /// <summary>Baixa um .tar.gz de release do DXVK e guarda so os arquivos pedidos, em x32\ e
+    /// x64\ sob a pasta dada. O resto do pacote (d3d8.dll, o que nao foi pedido) fica de fora.</summary>
+    private static async Task BaixarEGuardarAsync(HttpClient http, string url, string raiz,
+                                                  string[] nomes, CancellationToken ct)
+    {
+        var tgz = Path.Combine(raiz, "dxvk.tar.gz");
         await using (var s = await http.GetStreamAsync(url, ct))
         await using (var f = File.Create(tgz))
             await s.CopyToAsync(f, ct);
 
         // tar nativo do Windows 10+ resolve .tar.gz sem dependencia externa.
-        var tmp = Path.Combine(LibraryDir, "unpack");
+        var tmp = Path.Combine(raiz, "unpack");
         if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
         Directory.CreateDirectory(tmp);
         var psi = new System.Diagnostics.ProcessStartInfo("tar", $"-xzf \"{tgz}\" -C \"{tmp}\"")
         { UseShellExecute = false, CreateNoWindow = true };
         using (var p = System.Diagnostics.Process.Start(psi)) { if (p is not null) await p.WaitForExitAsync(ct); }
 
-        // Guarda so o que interessa: o d3d9.dll de 32 bits (e o de 64, para jogo Vulkan x64).
-        foreach (var (arch, dest) in new[] { ("x32", Path.Combine(LibraryDir, "x32")),
-                                             ("x64", Path.Combine(LibraryDir, "x64")) })
+        foreach (var (arch, dest) in new[] { ("x32", Path.Combine(raiz, "x32")),
+                                             ("x64", Path.Combine(raiz, "x64")) })
         {
-            var found = Directory.EnumerateFiles(tmp, D3d9File, SearchOption.AllDirectories)
-                                 .FirstOrDefault(p => p.Replace('/', '\\').Contains($"\\{arch}\\"));
-            if (found is null) continue;
-            Directory.CreateDirectory(dest);
-            File.Copy(found, Path.Combine(dest, D3d9File), overwrite: true);
+            foreach (var nome in nomes)
+            {
+                var found = Directory.EnumerateFiles(tmp, nome, SearchOption.AllDirectories)
+                                     .FirstOrDefault(p => p.Replace('/', '\\').Contains($"\\{arch}\\"));
+                if (found is null) continue;
+                Directory.CreateDirectory(dest);
+                File.Copy(found, Path.Combine(dest, nome), overwrite: true);
+            }
         }
         try { Directory.Delete(tmp, true); File.Delete(tgz); } catch { }
-
-        if (!InLibrary) throw new InvalidOperationException(L.T("Dxvk_NoAsset"));
-        Log.Info($"dxvk: baixado para a biblioteca ({new FileInfo(LibraryD3d9_32).Length:N0} bytes)");
     }
 
     /// <summary>
@@ -181,5 +281,78 @@ public static class DxvkService
             var bak = Path.Combine(targetDir, n + ".pre-dxvk");
             if (File.Exists(bak)) { try { File.Move(bak, Path.Combine(targetDir, n), overwrite: true); } catch { } }
         }
+    }
+
+    // ---------------------------------------------------------------- Direct3D 10
+
+    /// <summary>
+    /// A rota D3D10 esta montada nesta pasta? Os CINCO arquivos, e o d3d10.dll sendo mesmo o do
+    /// DXVK — pelo ProductName do PE, que o DXVK preenche ("DXVK / Direct3D 10 Runtime"). O
+    /// tamanho nao serve aqui como serve no d3d9: um dxgi.dll de alguns MB tanto pode ser o do
+    /// DXVK quanto o proxy do ReShade. Exigir os cinco e o que separa a instalacao que roda de
+    /// um resto da 3.1 (so d3d10core + d3d11 + dxgi), que o ReShade derruba.
+    /// </summary>
+    public static bool IsDeployedD3d10(string targetDir) =>
+        D3d10Files.All(f => File.Exists(Path.Combine(targetDir, f)))
+        && EhDxvk(Path.Combine(targetDir, D3d10Files[0]));
+
+    /// <summary>
+    /// Poe o conjunto de D3D10 na pasta do jogo, guardando o que ja ocupava esses nomes.
+    ///
+    /// Guardar, e nao apagar, porque um d3d11.dll ou dxgi.dll ao lado do exe pode ser o proxy do
+    /// ReShade de uma instalacao anterior, um wrapper de outro mod ou uma DLL do sistema que o
+    /// jogo redistribui. Nenhum deles e nosso para apagar; todos voltam em <see cref="RemoveD3d10"/>.
+    /// O que ja e DXVK fica — e so sobrescrito pelo build da biblioteca (e assim que um resto da
+    /// 3.1 vira a 1.10.3, sem backup, porque os dois sao nossos).
+    /// </summary>
+    public static void DeployD3d10(string targetDir, bool jogo64Bits, IProgress<string>? progress = null)
+    {
+        if (!D3d10InLibrary(jogo64Bits)) throw new InvalidOperationException(L.T("Dxvk_NotInLibrary"));
+
+        var guardou = false;
+        foreach (var n in D3d10Files)
+        {
+            var p = Path.Combine(targetDir, n);
+            if (!File.Exists(p) || EhDxvk(p)) continue;
+            var bak = p + ".pre-dxvk";
+            if (File.Exists(bak)) File.Delete(bak);
+            File.Move(p, bak);
+            guardou = true;
+        }
+        if (guardou) progress?.Report(L.T("Dxvk_ReplacedD3d10"));
+
+        foreach (var n in D3d10Files)
+            File.Copy(LibraryD3d10(jogo64Bits, n), Path.Combine(targetDir, n), overwrite: true);
+
+        progress?.Report(L.T("Dxvk_DeployedD3d10"));
+        Log.Info($"dxvk: conjunto D3D10 ({(jogo64Bits ? "x64" : "x32")}) implantado em {targetDir}");
+    }
+
+    /// <summary>Tira o conjunto de D3D10 (so o que for DXVK) e devolve o que estava nos nomes.</summary>
+    public static void RemoveD3d10(string targetDir)
+    {
+        foreach (var n in D3d10Files)
+        {
+            var p = Path.Combine(targetDir, n);
+            try { if (File.Exists(p) && EhDxvk(p)) File.Delete(p); }
+            catch (Exception ex) { Log.Warn($"dxvk d3d10 remove {n}: {ex.Message}"); }
+
+            var bak = p + ".pre-dxvk";
+            if (!File.Exists(bak)) continue;
+            try { File.Move(bak, p, overwrite: true); }
+            catch (Exception ex) { Log.Warn($"dxvk d3d10 restaurar {n}: {ex.Message}"); }
+        }
+    }
+
+    /// <summary>Este arquivo e um build do DXVK? Pelo ProductName do recurso de versao, que o
+    /// DXVK preenche em todas as DLLs dele — o mesmo campo que o scanner de conflitos le.</summary>
+    private static bool EhDxvk(string path)
+    {
+        try
+        {
+            var v = System.Diagnostics.FileVersionInfo.GetVersionInfo(path);
+            return v.ProductName?.Contains("DXVK", StringComparison.OrdinalIgnoreCase) == true;
+        }
+        catch { return false; }
     }
 }

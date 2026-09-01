@@ -1,5 +1,80 @@
 # Changelog
 
+## v1.70.0
+
+Direct3D 10 deixou de ser recusado. O Just Cause 2 — o jogo que motivou a recusa — roda DLSS 5.
+
+### A API que nenhuma camada falava
+
+Até a 1.69 um jogo Direct3D 10 recebia uma mensagem própria: "o passe do DLSS 5 não alcança". Era
+verdade para cada peça da cadeia — o Feeder diz `D3D10 is not supported` em uma linha, o
+dgVoodoo2 entra como `D3D9.dll` e nunca vê um `D3D10CreateDevice1`, e o addon de NR é x64. Foi o
+Just Cause 2 que ensinou isso, do jeito caro: instalação inteira, coerente, e o jogo fechando ao
+criar o device.
+
+O que faltava era o mesmo movimento que já resolve o DX9: traduzir antes. O DXVK também traduz
+D3D10 para Vulkan, e em Vulkan a cadeia inteira já funciona — camada Vulkan do ReShade, metades
+de 32 bits com transporte Vulkan, host64. Um jogo D3D10 traduzido é, para o Feeder, um jogo
+Vulkan.
+
+### Por que a 1.10.3, e não a mais nova
+
+A escolha foi medida no Just Cause 2, três vezes, com a mesma cadeia:
+
+| DXVK | o que tem para D3D10 | resultado |
+|---|---|---|
+| 3.1 (atual) | `d3d10core.dll` + `d3d11.dll` + `dxgi.dll` | sem ReShade roda; com ReShade morre 3 s depois de abrir, com ou sem o Feeder |
+| wrappers da 1.10.3 sobre o core da 3.1 | `d3d10.dll` + `d3d10_1.dll` antigos | sai limpo em 2 s |
+| **1.10.3 inteiro** | os cinco arquivos | **roda, com o passe neural avaliando** |
+
+O ReShade.log da primeira linha explica o resultado. Desde a 2.0 o DXVK não traz `d3d10.dll` nem
+`d3d10_1.dll`, só a camada por baixo — então o jogo carrega os dois **do Windows**, e o ReShade
+(que está no processo pela camada Vulkan) instala "delayed hooks" neles e envolve o device D3D10 do
+DXVK num wrapper próprio. O processo cai logo depois, sem evento no Event Log. Na rota DX9 isso
+nunca acontece: o `d3d9.dll` carregado é o local do DXVK, e o hook no do sistema fica "Delayed"
+para sempre. A 1.10.3 é a última release com os dois wrappers próprios; com eles na pasta, o
+Windows nunca entra, e só existe o runtime Vulkan.
+
+Com o conjunto inteiro, no Just Cause 2 (32 bits, D3D10.1, RTX 5090, 2560x1440):
+
+```
+[feed32] effects: technique found, DLSS5_MV found, DLSS5_Depth found, DLSS5_MV_PROVIDER=3 (LumeniteFX Kernel) -> Lumenite_Kernel (enabled)
+[feed32] host spawned (pid 8444)
+[feed32] host connected (protocol v2)
+[feed32] vk: conjunto pronto 2560x1440 color=28 output=28 (host ngx 0x00000001, DLSS)
+[feed32] 600 frames: feed CPU 4.33 ms/frame | frame interval 6.08 ms (164.6 fps)
+```
+
+e no host64:
+
+```
+[DLSS 5 Neural Rendering] DLSS5 Generic: signed DLSSNR 310.8.0 D3D12 runtime initialized
+[DLSS 5 Neural Rendering] DLSS5 Generic: inline feature 18 evaluation succeeded (count=60, NR input 2560x1440 (guides 2560x1440), output 2560x1440 [native])
+```
+
+### O que muda para quem instala
+
+- A rota D3D10 baixa o DXVK 1.10.3 para uma subpasta própria da biblioteca (`dxvk\d3d10-1.10.3`);
+  a rota DX9 continua na release atual. As duas não se misturam.
+- Vão cinco arquivos para a pasta do jogo: `d3d10.dll`, `d3d10_1.dll`, `d3d10core.dll`,
+  `d3d11.dll`, `dxgi.dll`. O que ocupava esses nomes é guardado como `.pre-dxvk` e volta ao
+  remover. O `d3d9.dll` não vai: o Just Cause 2 o importa como fallback que nunca usa.
+- O ReShade entra como camada Vulkan, nunca como proxy — o `dxgi.dll` agora é do DXVK.
+- Não há escolha de tradutor: o dgVoodoo2 não cobre D3D10, então a tela mostra um aviso em vez
+  dos dois botões, e `--dgvoodoo` é ignorado com uma linha dizendo por quê.
+- A cadeia ganha o elo "Tradutor D3D10 (DXVK)"; o `--check` mostra `tradutor DX10`, e a API do
+  executável sai como `DX10` em vez do `DX12` permissivo que a heurística dava antes.
+- Aviso do que se perde: com o renderizador D3D10 traduzido, efeitos presos a ele somem das
+  opções — no Just Cause 2, o Bokeh e a água por GPU (CUDA com interop D3D10). A PCGamingWiki
+  documenta o mesmo; de quebra, é o Bokeh que derruba o FPS desse jogo em RTX 50.
+
+### Conhecido, e não deste release
+
+No processo de 32 bits o ReShade ainda tenta carregar o `renodx-dlss5.addon64` que a chave
+`LoadFromDllMain` da pasta do jogo aponta, e falha com erro 193 (DLL de 64 bits num processo de
+32). É inofensivo — o addon certo está no host64 — e é assim em toda rota de 32 bits, não só
+nesta.
+
 ## v1.69.0
 
 O DLSS 5 não ligava em RTX 40 — e a causa estava na última linha da verificação, depois de tudo

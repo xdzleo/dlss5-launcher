@@ -293,6 +293,11 @@ public class MainViewModel : ObservableObject
     private bool _mostraTradutorD3d9;
     public bool MostraTradutorD3d9 { get => _mostraTradutorD3d9; set => Set(ref _mostraTradutorD3d9, value); }
 
+    /// <summary>Jogo Direct3D 10: nao ha escolha de tradutor (so o DXVK cobre essa API), entao
+    /// em vez dos dois botoes aparece so o aviso de que o jogo passa a apresentar por Vulkan.</summary>
+    private bool _mostraTradutorD3d10;
+    public bool MostraTradutorD3d10 { get => _mostraTradutorD3d10; set => Set(ref _mostraTradutorD3d10, value); }
+
     /// <summary>
     /// Qual dos dois tradutores esta escolhido. So leitura — quem troca e
     /// <see cref="EscolherTradutorCommand"/>.
@@ -746,6 +751,12 @@ public class MainViewModel : ObservableObject
             var temTradutor = DxvkService.IsDeployed(targetDir) || DgVoodooService.IsDeployed(targetDir);
             Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Tradutor"), temTradutor));
         }
+        // Direct3D 10: so o DXVK traduz (a 1.10.3, com d3d10.dll proprio — ver
+        // DxvkService.D3d10Files). Sem ele a cadeia inteira pode estar verde e o jogo fecha ao
+        // criar o device — foi assim no Just Cause 2, quando a resposta do launcher a essa API
+        // ainda era uma recusa.
+        else if (DxvkService.AppliesD3d10(exePath))
+            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_TradutorD3d10"), DxvkService.IsDeployedD3d10(targetDir)));
 
         // Depois de TODOS os elos, nao antes: o calculo ficava acima dos dois ultimos, entao nem
         // um elo vermelho ali derrubava o "pronto".
@@ -1119,6 +1130,8 @@ public class MainViewModel : ObservableObject
         MostraTradutorD3d9 = exe is not null
                              && DgVoodooService.Applies(exe)
                              && PeUtils.Inspect(exe, readImports: false)?.Is64Bit == false;
+        // D3D10 e exclusivo do DXVK: aviso em vez de escolha (ver DxvkService.D3d10Files).
+        MostraTradutorD3d10 = !MostraTradutorD3d9 && DxvkService.AppliesD3d10(exe);
         if (MostraTradutorD3d9)
         {
             // O QUE ESTA NA PASTA manda, e nao o que a regra escolheria.

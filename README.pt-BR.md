@@ -36,6 +36,7 @@ está errado.
 | DirectX 11 | igual, através de um device D3D12 privado |
 | Vulkan | o ReShade entra como camada Vulkan |
 | **DirectX 9** | traduzido antes — DXVK ou dgVoodoo2, escolhido por jogo |
+| **DirectX 10** | traduzido pelo DXVK 1.10.3, a última release com `d3d10.dll` próprio — o único tradutor que cobre essa API |
 | **32 bits** | add-on de 32 bits no jogo, processo auxiliar de 64 ao lado |
 | sem DLSS nenhum | o contrato do DLSS é fabricado a partir do frame |
 | só FSR/XeSS | essas chamadas são redirecionadas para DLSS |
@@ -56,6 +57,20 @@ Medido numa máquina, com o mesmo add-on e o mesmo runtime: o *Resident Evil Rev
 **só** com DXVK (o dgVoodoo crasha antes do menu); o *Saints Row 2* roda **só** com dgVoodoo (o
 DXVK crasha aos ~25 s, depois de o DLSS já estar avaliando). Os conjuntos não se contêm, então a
 escolha fica na interface, lembrada por jogo.
+
+**DirectX 10 tem exatamente um tradutor, e não na versão mais nova.** O dgVoodoo2 entra como
+`D3D9.dll` e nunca vê um `D3D10CreateDevice1`; o README do Feeder diz `D3D10 is not supported` em
+uma linha. O DXVK cobre — mas esta rota usa o **DXVK 1.10.3**, a última release que traz
+`d3d10.dll` e `d3d10_1.dll` próprios, e isso foi medido, não preferido. Com o DXVK atual (só o
+`d3d10core.dll`) o jogo continua carregando o `d3d10_1.dll` do Windows; o ReShade, presente pela
+camada Vulkan, engancha nele e envolve o device D3D10 do DXVK, e o *Just Cause 2* morre três
+segundos depois de abrir, com ou sem o Feeder. Com os wrappers do próprio DXVK na pasta, as DLLs
+do sistema nunca carregam, o ReShade só vê Vulkan, e dali é o caminho do DX9 pelo DXVK: camada
+Vulkan, metades de 32 bits com transporte Vulkan, processo auxiliar de 64. Misturar wrapper antigo
+com core novo também não funciona, então os cinco arquivos vêm da 1.10.3. Não há o que escolher,
+então a interface mostra um aviso em vez de dois botões. Verificado no *Just Cause 2* (32 bits,
+D3D10.1): o auxiliar reporta o runtime DLSSNR inicializado e o passe neural avaliando a cada
+quadro. Até a v1.69 essa API era recusada de cara.
 
 Fazer o add-on de 32 bits falar Vulkan exigiu estender o Feeder: o build oficial aceita só D3D11
 (`only Direct3D 11 games are supported by the 32-bit add-on`, literal no fonte dele). Este

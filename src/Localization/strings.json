@@ -735,8 +735,48 @@
     "pt-BR": "Atualização disponível"
   },
   "Dlss5_Blocked_D3d10": {
-    "en": "This game renders in Direct3D 10, which the DLSS 5 pass cannot reach — it works with D3D11, D3D12 and Vulkan only.",
-    "pt-BR": "Este jogo renderiza em Direct3D 10, que o passe do DLSS 5 não alcança — ele trabalha só com D3D11, D3D12 e Vulkan."
+    "en": "This game renders in Direct3D 10. The only route is DXVK 1.10.3 (its own d3d10.dll → Vulkan), and it could not be fetched or installed — without it the game closes while creating the device.",
+    "pt-BR": "Este jogo renderiza em Direct3D 10. A única rota é o DXVK 1.10.3 (com d3d10.dll próprio → Vulkan), e ele não pôde ser baixado ou instalado — sem ele o jogo fecha ao criar o device."
+  },
+  "Dlss5_Step_DxvkD3d10": {
+    "en": "Direct3D 10 translated to Vulkan by DXVK {0} — the last release with its own d3d10.dll and d3d10_1.dll. With Windows' d3d10 never loaded, ReShade never hooks it, which is what kept killing the game.",
+    "pt-BR": "Direct3D 10 traduzido para Vulkan pelo DXVK {0} — a última release com d3d10.dll e d3d10_1.dll próprios. Sem o d3d10 do Windows carregado, o ReShade não o engancha, e era isso que derrubava o jogo."
+  },
+  "Dxvk_FetchingD3d10": {
+    "en": "Fetching DXVK {0} (the Direct3D 10 set)…",
+    "pt-BR": "Baixando o DXVK {0} (o conjunto de Direct3D 10)…"
+  },
+  "Dlss5_Step_DgVoodooNaoTraduzD3d10": {
+    "en": "--dgvoodoo ignored: dgVoodoo2 enters as D3D9.dll and never sees a Direct3D 10 device. DXVK is the only translator for D3D10.",
+    "pt-BR": "--dgvoodoo ignorado: o dgVoodoo2 entra como D3D9.dll e nunca vê um device Direct3D 10. O DXVK é o único tradutor para D3D10."
+  },
+  "Dlss5_Step_DgVoodooRemovedD3d10": {
+    "en": "dgVoodoo2 removed: this game renders in Direct3D 10, which a D3D9 wrapper never intercepts.",
+    "pt-BR": "dgVoodoo2 removido: este jogo renderiza em Direct3D 10, que um wrapper de D3D9 nunca intercepta."
+  },
+  "Dlss5_Manual_D3d10Dxvk": {
+    "en": "The game now renders through Vulkan (DXVK). Effects tied to its D3D10 renderer may vanish from the options — in Just Cause 2, the Bokeh filter and GPU water simulation.",
+    "pt-BR": "O jogo passa a renderizar por Vulkan (DXVK). Efeitos presos ao renderizador D3D10 dele podem sumir das opções — no Just Cause 2, o filtro Bokeh e a simulação de água por GPU."
+  },
+  "Dlss5_Link_TradutorD3d10": {
+    "en": "D3D10 translator (DXVK)",
+    "pt-BR": "Tradutor D3D10 (DXVK)"
+  },
+  "Dxvk_DeployedD3d10": {
+    "en": "DXVK installed for Direct3D 10: d3d10.dll, d3d10_1.dll, d3d10core.dll, d3d11.dll and dxgi.dll beside the executable.",
+    "pt-BR": "DXVK instalado para Direct3D 10: d3d10.dll, d3d10_1.dll, d3d10core.dll, d3d11.dll e dxgi.dll ao lado do executável."
+  },
+  "Dxvk_ReplacedD3d10": {
+    "en": "What occupied d3d10/d3d10_1/d3d10core/d3d11/dxgi was set aside (.pre-dxvk) — DXVK needs all five names.",
+    "pt-BR": "O que ocupava d3d10/d3d10_1/d3d10core/d3d11/dxgi foi guardado (.pre-dxvk) — o DXVK precisa dos cinco nomes."
+  },
+  "Main_D3d10Translator_Label": {
+    "en": "DirectX 10 translator: DXVK",
+    "pt-BR": "Tradutor de DirectX 10: DXVK"
+  },
+  "Main_D3d10Translator_Hint": {
+    "en": "Direct3D 10 game: translated to Vulkan by DXVK 1.10.3, the last release with its own d3d10.dll. It is the only translator that covers this API, so there is nothing to choose.",
+    "pt-BR": "Jogo Direct3D 10: traduzido para Vulkan pelo DXVK 1.10.3, a última release com d3d10.dll próprio. É o único tradutor que cobre esta API, então não há o que escolher."
   },
   "Dlss5_Blocked_No32": {
     "en": "This game is 32-bit and the pieces for that path could not be downloaded.",

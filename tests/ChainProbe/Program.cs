@@ -245,6 +245,12 @@ if (exe is not null && DgVoodooService.Applies(exe)
     elos.Add(("Tradutor", temTradutor,
               $"dxvk={DxvkService.IsDeployed(dir)}  dgvoodoo={DgVoodooService.IsDeployed(dir)}"));
 }
+// Direct3D 10: so o DXVK traduz (d3d10core.dll -> Vulkan); sem ele o jogo fecha ao criar o device.
+else if (DxvkService.AppliesD3d10(exe))
+{
+    elos.Add(("TradutorDX10", DxvkService.IsDeployedD3d10(dir),
+              $"dxvk-d3d10={DxvkService.IsDeployedD3d10(dir)}  (DXVK {DxvkService.D3d10Version}: d3d10+d3d10_1+d3d10core+d3d11+dxgi, ProductName DXVK)"));
+}
 
 // O portao que decide se o CARD de DLSS 5 sequer aparece na tela. E anterior a cadeia: se ele
 // fecha, os elos nem sao desenhados, e o sintoma e "o card nao aparece neste jogo".

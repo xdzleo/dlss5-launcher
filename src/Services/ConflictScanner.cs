@@ -165,8 +165,10 @@ public static class ConflictScanner
                                      Nivel.Bloqueio, PodeAfastar: false));
 
         // dgVoodoo e DXVK disputam o mesmo d3d9.dll — quem ficar por ultimo ganha, e o outro vira
-        // um arquivo que nunca carrega.
-        if (DxvkService.IsDeployed(dir) && DgVoodooService.IsDeployed(dir))
+        // um arquivo que nunca carrega. Na rota D3D10 do DXVK nao ha disputa de nome, mas o
+        // dgVoodoo ali e a mesma coisa: um D3D9.dll que o jogo carrega como fallback e nunca usa,
+        // resto da tentativa que fechava o Just Cause 2.
+        if ((DxvkService.IsDeployed(dir) || DxvkService.IsDeployedD3d10(dir)) && DgVoodooService.IsDeployed(dir))
             achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_DxvkDgVoodoo"),
                                      Nivel.Bloqueio, PodeAfastar: false));
 

@@ -483,6 +483,12 @@ public static class Cli
             Console.WriteLine($"  ponte DX11     : {(ponteAqui ? "sim" : "FALTA — sem ela o pass nao tem onde rodar")}");
         if (feederServe || feederAqui)
             Console.WriteLine($"  Feeder         : {(feederAqui ? "sim — este jogo nao tem DLSS, os dados sao gerados" : "FALTA — este jogo nao tem DLSS e precisa dele")}");
+        // Direct3D 10 so tem uma rota (DXVK, d3d10core.dll -> Vulkan), e sem ela o resto da
+        // cadeia nao tem onde rodar: o jogo fecha ao criar o device, como o Just Cause 2 fazia.
+        var traduzD3d10 = DxvkService.AppliesD3d10(exe);
+        var dxvkD3d10Aqui = traduzD3d10 && DxvkService.IsDeployedD3d10(target);
+        if (traduzD3d10)
+            Console.WriteLine($"  tradutor DX10  : {(dxvkD3d10Aqui ? $"DXVK {DxvkService.D3d10Version} (d3d10.dll proprio -> Vulkan)" : "FALTA — so o DXVK traduz D3D10; sem ele o jogo fecha ao criar o device")}");
         // O veredito olha a cadeia INTEIRA, do mesmo jeito que a interface. Antes ele so
         // enxergava ponte e Feeder: com o runtime pela metade ou o addon apagado, o diagnostico
         // dizia "pronto" enquanto o jogo abria sem nada.
@@ -504,6 +510,7 @@ public static class Cli
         if (!ligado) faltando.Add("interruptor");
         if (pedePonte && !ponteAqui) faltando.Add("ponte DX11");
         if (feederServe && !feederAqui) faltando.Add("Feeder");
+        if (traduzD3d10 && !dxvkD3d10Aqui) faltando.Add("tradutor DX10 (DXVK)");
 
         if (faltando.Count > 0 && (det.Offerable || feederServe))
         {
@@ -513,10 +520,10 @@ public static class Cli
         }
         if (!det.Offerable && !feederServe)
         {
-            // Sem DLSS e sem Feeder aplicavel, o motivo mais comum e a API do jogo — e dizer
-            // "falta DLSS" num jogo D3D10 manda a pessoa procurar uma opcao que nao existe.
-            Console.WriteLine(!det.HasDlss && exe is not null && !FeederService.Applies(exe, false, chegaD3d12)
-                ? "  => " + L.T("Dlss5_Blocked_D3d10")
+            // D3D10 ja nao e motivo de recusa (vai pelo DXVK; ver DxvkService.D3d10Files). O que
+            // sobra aqui e DLSS ausente sem addon na biblioteca, ou um executavel que nem e PE.
+            Console.WriteLine(exe is not null && !FeederService.Applies(exe, false, chegaD3d12)
+                ? "  => nao ofertavel: o executavel nao pode ser lido como PE"
                 : "  => nao ofertavel: falta DLSS no jogo ou um addon que saiba acionar o filtro");
             return 2;
         }
@@ -567,6 +574,15 @@ public static class Cli
             Console.WriteLine($"  tradutor DX9   : {rota}");
             Console.WriteLine($"  ReShade entra  : {(rota.StartsWith("DXVK") ? "camada Vulkan" : "proxy dxgi.dll")}");
             Console.WriteLine($"  metades 32 bits: {(rota.StartsWith("DXVK") ? "com transporte Vulkan" : "oficiais (D3D11)")}");
+        }
+        else if (DxvkService.AppliesD3d10(exe))
+        {
+            // Sem escolha a mostrar: e o unico tradutor que cobre D3D10. --dgvoodoo e ignorado.
+            Console.WriteLine($"  tradutor DX10  : DXVK {DxvkService.D3d10Version} (d3d10.dll proprio -> Vulkan) — o unico que traduz D3D10"
+                              + (forcarDgVoodoo ? "; --dgvoodoo ignorado" : ""));
+            Console.WriteLine("  ReShade entra  : camada Vulkan");
+            if (pe?.Is64Bit == false)
+                Console.WriteLine("  metades 32 bits: com transporte Vulkan");
         }
         else if (VulkanLayerService.Applies(exe))
             Console.WriteLine("  ReShade entra  : camada Vulkan (jogo Vulkan nativo)");

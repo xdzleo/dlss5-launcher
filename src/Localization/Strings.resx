@@ -779,7 +779,7 @@
     <comment>{0} = feature (Super Resolution etc), {1} = versao atual, {2} = versao nova.</comment>
   </data>
   <data name="Dlss5_Blocked_D3d10" xml:space="preserve">
-    <value>Este jogo renderiza em Direct3D 10, que o passe do DLSS 5 não alcança — ele trabalha só com D3D11, D3D12 e Vulkan.</value>
+    <value>Este jogo renderiza em Direct3D 10. A única rota é o DXVK 1.10.3 (com d3d10.dll próprio → Vulkan), e ele não pôde ser baixado ou instalado — sem ele o jogo fecha ao criar o device.</value>
   </data>
   <data name="Dlss5_Blocked_No32" xml:space="preserve">
     <value>Este jogo é de 32 bits e as peças desse caminho não puderam ser baixadas.</value>
@@ -848,6 +848,12 @@
   <data name="Dlss5_Link_Tradutor" xml:space="preserve">
     <value>Tradutor D3D9</value>
   </data>
+  <data name="Dlss5_Link_TradutorD3d10" xml:space="preserve">
+    <value>Tradutor D3D10 (DXVK)</value>
+  </data>
+  <data name="Dlss5_Manual_D3d10Dxvk" xml:space="preserve">
+    <value>O jogo passa a renderizar por Vulkan (DXVK). Efeitos presos ao renderizador D3D10 dele podem sumir das opções — no Just Cause 2, o filtro Bokeh e a simulação de água por GPU.</value>
+  </data>
   <data name="Dlss5_Manual_DgVoodoo" xml:space="preserve">
     <value>Este jogo passa pelo dgVoodoo2 agora. Se ele não abrir, apague o D3D9.dll da pasta do jogo para voltar.</value>
   </data>
@@ -896,8 +902,17 @@
   <data name="Dlss5_Step_DgVoodoo" xml:space="preserve">
     <value>DirectX 9 envolvido em DirectX 11 — sem isso nenhum shader de motion vectors sequer compila.</value>
   </data>
+  <data name="Dlss5_Step_DgVoodooNaoTraduzD3d10" xml:space="preserve">
+    <value>--dgvoodoo ignorado: o dgVoodoo2 entra como D3D9.dll e nunca vê um device Direct3D 10. O DXVK é o único tradutor para D3D10.</value>
+  </data>
+  <data name="Dlss5_Step_DgVoodooRemovedD3d10" xml:space="preserve">
+    <value>dgVoodoo2 removido: este jogo renderiza em Direct3D 10, que um wrapper de D3D9 nunca intercepta.</value>
+  </data>
   <data name="Dlss5_Step_Dxvk" xml:space="preserve">
     <value>DXVK instalado (rota Vulkan): para jogo DX9 que o dgVoodoo2 não consegue carregar.</value>
+  </data>
+  <data name="Dlss5_Step_DxvkD3d10" xml:space="preserve">
+    <value>Direct3D 10 traduzido para Vulkan pelo DXVK {0} — a última release com d3d10.dll e d3d10_1.dll próprios. Sem o d3d10 do Windows carregado, o ReShade não o engancha, e era isso que derrubava o jogo.</value>
   </data>
   <data name="Dlss5_Step_Feeder" xml:space="preserve">
     <value>DLSS5 Feeder instalado — este jogo não tem DLSS, então os dados são gerados para ele.</value>
@@ -953,14 +968,23 @@
   <data name="Dxvk_Deployed" xml:space="preserve">
     <value>DXVK instalado: o jogo passa a renderizar por Vulkan, onde os shaders de motion vector compilam.</value>
   </data>
+  <data name="Dxvk_DeployedD3d10" xml:space="preserve">
+    <value>DXVK instalado para Direct3D 10: d3d10.dll, d3d10_1.dll, d3d10core.dll, d3d11.dll e dxgi.dll ao lado do executável.</value>
+  </data>
   <data name="Dxvk_Fetching" xml:space="preserve">
     <value>Baixando o DXVK…</value>
+  </data>
+  <data name="Dxvk_FetchingD3d10" xml:space="preserve">
+    <value>Baixando o DXVK {0} (o conjunto de Direct3D 10)…</value>
   </data>
   <data name="Dxvk_NoAsset" xml:space="preserve">
     <value>Não encontrei um build do DXVK para baixar.</value>
   </data>
   <data name="Dxvk_NotInLibrary" xml:space="preserve">
     <value>O DXVK ainda não está na biblioteca.</value>
+  </data>
+  <data name="Dxvk_ReplacedD3d10" xml:space="preserve">
+    <value>O que ocupava d3d10/d3d10_1/d3d10core/d3d11/dxgi foi guardado (.pre-dxvk) — o DXVK precisa dos cinco nomes.</value>
   </data>
   <data name="Dxvk_ReplacedD3d9" xml:space="preserve">
     <value>O d3d9.dll anterior foi guardado (.pre-dxvk) — DXVK e dgVoodoo2 disputam o mesmo nome.</value>
@@ -1422,6 +1446,12 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Main_CheckUpdates" xml:space="preserve">
     <value>Ver atualizações</value>
     <comment>Usada no texto do botao e no AutomationProperties.Name.</comment>
+  </data>
+  <data name="Main_D3d10Translator_Hint" xml:space="preserve">
+    <value>Jogo Direct3D 10: traduzido para Vulkan pelo DXVK 1.10.3, a última release com d3d10.dll próprio. É o único tradutor que cobre esta API, então não há o que escolher.</value>
+  </data>
+  <data name="Main_D3d10Translator_Label" xml:space="preserve">
+    <value>Tradutor de DirectX 10: DXVK</value>
   </data>
   <data name="Main_D3d9Translator_Changed" xml:space="preserve">
     <value>Tradutor alterado — reinstale para valer.</value>

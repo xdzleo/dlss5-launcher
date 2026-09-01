@@ -92,6 +92,21 @@ public static class Dlss5Installer
         // proxy tem de ser dxgi.dll — nao d3d9.dll, que agora pertence ao dgVoodoo.
         var precisaDgVoodoo = DgVoodooService.Applies(exePath);
 
+        // Direct3D 10 e o terceiro caso de traducao, e o unico SEM escolha: so o DXVK cobre. O
+        // dgVoodoo entra como D3D9.dll e nunca ve um device D3D10; o Feeder diz "D3D10 is not
+        // supported". O DXVK traz o d3d10core.dll — a camada por baixo do d3d10.dll do Windows,
+        // que o proprio Windows resolve na pasta do jogo — e dali o jogo e Vulkan, como no DX9
+        // pelo DXVK. Ate a 1.69 isto era uma recusa; foi o Just Cause 2 que a motivou, e e o Just
+        // Cause 2 que passa por aqui agora. Ver DxvkService.D3d10Files.
+        var precisaDxvkD3d10 = DxvkService.AppliesD3d10(exePath);
+        if (precisaDxvkD3d10 && forcarDgVoodoo)
+        {
+            // --dgvoodoo num jogo D3D10 e um pedido que nao tem como atender. Dizer por que, em
+            // vez de obedecer em silencio e entregar a instalacao que fechava o jogo.
+            Step(L.T("Dlss5_Step_DgVoodooNaoTraduzD3d10"));
+            forcarDgVoodoo = false;
+        }
+
         // Duas rotas para o mesmo problema, e desde a 1.57 o DXVK e a primeira.
         //
         // O dgVoodoo2 entrega D3D11 e foi o caminho original. Ele derruba jogos que nao tem
@@ -107,23 +122,28 @@ public static class Dlss5Installer
         //
         // O dgVoodoo continua disponivel em --dgvoodoo, para o caso inverso: jogo que o DXVK
         // recuse e ele aceite. Nenhum dos dois cobre 100%, e por isso os dois ficam.
-        var usarDxvk = preferirDxvk && !forcarDgVoodoo && precisaDgVoodoo && ehJogo32Bits(exePath)
-                       && DxvkService.RecomendadoPara(exePath);
+        var usarDxvk = precisaDxvkD3d10
+                       || (preferirDxvk && !forcarDgVoodoo && precisaDgVoodoo && ehJogo32Bits(exePath)
+                           && DxvkService.RecomendadoPara(exePath));
 
         // Trocar de tradutor exige DESFAZER o outro, nao so instalar o novo. Os dois disputam o
         // d3d9.dll, e o resto da cadeia muda junto: o ReShade sai de camada Vulkan para proxy (ou
         // o contrario) e as metades de 32 bits trocam de build. Deixar o anterior para tras
         // significa duas DLLs disputando o mesmo nome e uma camada Vulkan registrada apontando
         // para um jogo que voltou a ser D3D11 — nos dois casos, nada carrega.
-        if (precisaDgVoodoo && ehJogo32Bits(exePath))
+        if ((precisaDgVoodoo && ehJogo32Bits(exePath)) || precisaDxvkD3d10)
         {
             if (usarDxvk)
             {
                 // indo para o DXVK: a camada e registrada adiante; aqui o dgVoodoo sai...
+                //
+                // Num jogo D3D10 ele sai pelo motivo oposto ao do D3D9: nao disputa o nome com
+                // ninguem, simplesmente nunca e chamado — e um D3D9.dll que o Just Cause 2
+                // importa como fallback e que o dgVoodoo tentaria inicializar em vao.
                 if (DgVoodooService.IsDeployed(targetDir))
                 {
                     DgVoodooService.Remove(targetDir);
-                    Step(L.T("Dlss5_Step_SwitchedToDxvk"));
+                    Step(L.T(precisaDxvkD3d10 ? "Dlss5_Step_DgVoodooRemovedD3d10" : "Dlss5_Step_SwitchedToDxvk"));
                 }
                 // ...e o proxy dxgi.dll do ReShade tambem, que era do caminho D3D11.
                 //
@@ -165,12 +185,34 @@ public static class Dlss5Installer
         {
             try
             {
-                await DxvkService.FetchAsync(progress, ct);
-                DxvkService.Deploy(targetDir, progress);
-                Step(L.T("Dlss5_Step_Dxvk"));
+                if (precisaDxvkD3d10)
+                {
+                    // Outro download, de outra versao: a 1.10.3, a ultima com d3d10.dll e
+                    // d3d10_1.dll proprios. Os cinco arquivos, no bitness do jogo; o d3d9.dll
+                    // fica de fora de proposito. Ver DxvkService.D3d10Files, que conta por que a
+                    // release atual nao serve aqui.
+                    await DxvkService.FetchD3d10Async(progress, ct);
+                    DxvkService.DeployD3d10(targetDir, jogo64Bits: !ehJogo32Bits(exePath), progress);
+                    Step(L.T("Dlss5_Step_DxvkD3d10", DxvkService.D3d10Version));
+                }
+                else
+                {
+                    await DxvkService.FetchAsync(progress, ct);
+                    DxvkService.Deploy(targetDir, progress);
+                    Step(L.T("Dlss5_Step_Dxvk"));
+                }
                 precisaDgVoodoo = false;   // os dois disputam o d3d9.dll; so um pode ficar
             }
-            catch (Exception ex) { Step(ex.Message); usarDxvk = false; }
+            catch (Exception ex)
+            {
+                Step(ex.Message);
+                usarDxvk = false;
+                // Sem o tradutor nao ha rota nenhuma para D3D10. Seguir adiante montaria a mesma
+                // instalacao que fechava o Just Cause 2 ao criar o device — cadeia verde, jogo
+                // morto. Parar aqui, com o motivo, e o unico resultado honesto.
+                if (precisaDxvkD3d10)
+                    return new Result(false, L.T("Dlss5_Blocked_D3d10"), steps, manual);
+            }
         }
 
         if (precisaDgVoodoo)
@@ -219,14 +261,10 @@ public static class Dlss5Installer
         // bloqueio antigo ainda vale. Antes ele valia para todo jogo sem DLSS.
         if (!temDlssNativo && !precisaOpti && !precisaFeeder)
         {
-            // D3D10 merece a sua propria recusa. A mensagem generica fala em "nao traz runtime de
-            // DLSS", o que soa como arquivo faltando — e manda o usuario procurar um download que
-            // nao existe. Aqui nao falta nada: nenhuma das tres camadas cobre a API. O Feeder diz
-            // "D3D10 is not supported" em uma linha; o dgVoodoo entra como D3D9.dll e nunca ve um
-            // D3D10CreateDevice1; e o addon de NR e x64, fora de alcance de um processo de 32 bits.
-            //
-            // Foi o Just Cause 2 que ensinou isto, e da forma cara: instalacao inteira, coerente,
-            // e o jogo fechando ao criar o device.
+            // Um jogo D3D10 normalmente nao chega aqui: desde a 1.70 ele vai pelo DXVK (acima) e
+            // o Feeder o aceita. Se chegou, o tradutor falhou e o bloqueio ja foi devolvido la —
+            // esta linha e so a rede de seguranca, com a mensagem que diz isso em vez da generica
+            // ("nao traz runtime de DLSS"), que mandaria procurar um download que nao existe.
             if (FeederService.RenderizaEmD3d10(exePath))
                 return new Result(false, L.T("Dlss5_Blocked_D3d10"), steps, manual);
 
@@ -450,6 +488,10 @@ public static class Dlss5Installer
                 // que funcionou: nao ha ganho de FPS (e DLAA), e MSAA/SSAA do jogo precisa sair.
                 manual.Add(L.T("Dlss5_Manual_FeederNoFps"));
                 manual.Add(L.T("Dlss5_Manual_FeederMsaa"));
+                // Traduzido, o renderizador D3D10 do jogo nao existe mais — e o que dependia
+                // dele some das opcoes. No Just Cause 2 sao o Bokeh e a agua por GPU (CUDA com
+                // interop D3D10). Dizer antes, senao parece que a instalacao quebrou o jogo.
+                if (precisaDxvkD3d10) manual.Add(L.T("Dlss5_Manual_D3d10Dxvk"));
             }
         }
         catch (Exception ex)
@@ -484,7 +526,7 @@ public static class Dlss5Installer
     public static bool ReachesD3D12(string? exePath) => exePath is null || LooksLikeD3D12(exePath);
 
     /// <summary>A API grafica em que um executavel renderiza.</summary>
-    public enum GraficosApi { Desconhecida, D3D9, D3D11, D3D12, Vulkan }
+    public enum GraficosApi { Desconhecida, D3D9, D3D10, D3D11, D3D12, Vulkan }
 
     /// <summary>Marca de que a Ponte e o Feeder convivem nesta pasta DE PROPOSITO — o jogo tem um
     /// executavel por API e os dois caminhos foram instalados juntos.</summary>
@@ -522,6 +564,10 @@ public static class Dlss5Installer
 
         if (VulkanLayerService.Applies(exePath)) return GraficosApi.Vulkan;
         if (DgVoodooService.Applies(exePath)) return GraficosApi.D3D9;
+        // Antes do D3D12, que responde "sim" no silencio: o Just Cause 2 nao menciona d3d11 nem
+        // d3d12, entao ReachesD3D12 o daria como D3D12 — e a tela chamaria de "DX12" um jogo de
+        // 2010 que vai pelo DXVK.
+        if (FeederService.RenderizaEmD3d10(exePath)) return GraficosApi.D3D10;
 
         if (exigirEvidencia && !MencionaApiDirectX(exePath)) return GraficosApi.Desconhecida;
 
@@ -549,13 +595,14 @@ public static class Dlss5Installer
             return true;
         // Carga tardia: o nome do modulo precisa estar no binario para chegar ao LoadLibrary.
         return ContainsAscii(exePath, "d3d12") || ContainsAscii(exePath, "d3d11")
-               || ContainsAscii(exePath, "dxgi");
+               || ContainsAscii(exePath, "d3d10") || ContainsAscii(exePath, "dxgi");
     }
 
     /// <summary>Nome curto da API, para a interface. "DX11", "Vulkan"...</summary>
     public static string ApiLabel(GraficosApi api) => api switch
     {
         GraficosApi.D3D9 => "DX9",
+        GraficosApi.D3D10 => "DX10",
         GraficosApi.D3D11 => "DX11",
         GraficosApi.D3D12 => "DX12",
         GraficosApi.Vulkan => "Vulkan",

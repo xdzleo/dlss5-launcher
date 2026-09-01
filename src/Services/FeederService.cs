@@ -176,38 +176,41 @@ public static class FeederService
     /// <summary>
     /// O Feeder e a resposta certa para este jogo?
     ///
-    /// Duas condicoes: nao ha DLSS nativo (com DLSS, a ponte faz o mesmo sem shader no meio) e o
-    /// executavel e 64 bits.
+    /// Uma condicao de verdade: nao ha DLSS nativo (com DLSS, a ponte faz o mesmo sem shader no
+    /// meio). O resto ja foi criterio e deixou de ser, um por versao:
     ///
-    /// D3D12 NAO desqualifica, ao contrario do que o README da v0.1.0 dizia ("64-bit DirectX 11
-    /// game only"). O binario da 0.5.0 se descreve como "D3D11 and D3D12 games without DLSS —
-    /// a private D3D12 device for D3D11 games, the game's own device for D3D12". Manter a regra
-    /// antiga barraria jogos que o addon atende hoje.
+    ///   D3D12    NAO desqualifica, ao contrario do que o README da v0.1.0 dizia ("64-bit
+    ///            DirectX 11 game only"). O binario da 0.5.0 se descreve como "D3D11 and D3D12
+    ///            games without DLSS — a private D3D12 device for D3D11 games, the game's own
+    ///            device for D3D12".
+    ///   32 bits  deixou de desqualificar na 0.6.0 do Feeder, que traz addon32 e um host auxiliar.
+    ///   D3D10    deixou de desqualificar na 1.70 do launcher — nao porque o Feeder passou a
+    ///            falar D3D10 (nao passou; o README dele continua dizendo "D3D10 is not
+    ///            supported"), e sim porque o DXVK traduz D3D10 para Vulkan pelo d3d10core.dll,
+    ///            e em Vulkan o Feeder ja funciona. O instalador poe o tradutor ANTES de chegar
+    ///            aqui; para o Feeder, um jogo D3D10 traduzido e um jogo Vulkan. Ver
+    ///            <see cref="DxvkService.D3d10Files"/>.
     /// </summary>
     public static bool Applies(string? exePath, bool jogoTemDlss, bool alcancaD3d12)
     {
         _ = alcancaD3d12; // ver acima: deixou de ser criterio na 0.5.0
-        // 32 bits tambem deixou de desqualificar: a 0.6.0 traz addon32 e um host auxiliar.
         if (jogoTemDlss || exePath is null) return false;
-        if (PeUtils.Inspect(exePath, readImports: false) is null) return false;
-        return !EhD3d10(exePath);
+        return PeUtils.Inspect(exePath, readImports: false) is not null;
     }
 
     /// <summary>
     /// O jogo renderiza em Direct3D 10?
     ///
-    /// O README do Feeder e de uma linha so: "D3D10 is not supported". O transporte compartilha
-    /// texturas por handle NT com um device D3D12, e as pontas que ele sabe abrir sao D3D11,
-    /// D3D12 e Vulkan — D3D10 nao esta entre elas.
+    /// Importa porque D3D10 e a API que NENHUMA camada da cadeia fala direto. O Feeder diz
+    /// "D3D10 is not supported" em uma linha: o transporte compartilha texturas por handle NT
+    /// com um device D3D12, e as pontas que ele sabe abrir sao D3D11, D3D12 e Vulkan. O dgVoodoo
+    /// tambem nao salva: ele entra como D3D9.dll e traduz D3D9 — um jogo que chama
+    /// D3D10CreateDevice1 direto nunca passa por ele.
     ///
-    /// O dgVoodoo tambem nao salva este caso: ele entra como D3D9.dll e traduz D3D9 para D3D11.
-    /// Um jogo que chama D3D10CreateDevice1 direto nunca passa por ele.
-    ///
-    /// Custou o Just Cause 2: instalacao inteira, coerente, e o jogo fechando ao criar o device.
-    /// </summary>
-    /// <summary>
-    /// Publico porque a razao da recusa importa para quem le a mensagem. Um jogo D3D10 nao esta
-    /// "faltando um arquivo": nenhuma das tres camadas cobre essa API, e nao ha o que baixar.
+    /// Custou o Just Cause 2, quando a resposta a esta pergunta era uma recusa: instalacao
+    /// inteira, coerente, e o jogo fechando ao criar o device. Hoje a resposta e o DXVK, que
+    /// traduz D3D10 para Vulkan (<see cref="DxvkService.D3d10Files"/>) — e esta pergunta e o que
+    /// manda o jogo por essa rota, no instalador, no plano do CLI e na cadeia da tela.
     /// </summary>
     public static bool RenderizaEmD3d10(string? exePath)
         => exePath is not null && File.Exists(exePath) && EhD3d10(exePath);

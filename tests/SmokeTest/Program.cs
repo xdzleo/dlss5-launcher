@@ -55,7 +55,9 @@ Check(pe is { Is64Bit: true }, $"PE bitness do exe fake = {(pe?.Is64Bit == true 
 // 3b. ExeLocator — real layouts that already fooled it once. Fixtures are copies of cmd.exe
 // (never executed); the "renders" ones get their ntdll.dll import renamed to d3d11.dll, same
 // length, so the headers stay valid and PeUtils sees a graphics import.
-string MakeExe(string path, bool bits64, bool renders, long padTo = 0)
+// `apiDll` troca qual API o fixture "importa": tem de ter os 9 caracteres de ntdll.dll — d3d11.dll
+// e d3d10.dll servem — para os cabecalhos do PE continuarem validos.
+string MakeExe(string path, bool bits64, bool renders, long padTo = 0, string apiDll = "d3d11.dll")
 {
     Directory.CreateDirectory(Path.GetDirectoryName(path)!);
     var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
@@ -63,7 +65,7 @@ string MakeExe(string path, bool bits64, bool renders, long padTo = 0)
     if (renders)
     {
         var from = System.Text.Encoding.ASCII.GetBytes("ntdll.dll\0");
-        var to = System.Text.Encoding.ASCII.GetBytes("d3d11.dll\0");
+        var to = System.Text.Encoding.ASCII.GetBytes(apiDll + "\0");
         for (int i = 0; ; )
         {
             int at = bytes.AsSpan(i).IndexOf(from);
@@ -157,6 +159,52 @@ var sbCands = ExeLocator.FindCandidates(new GameInfo
 }, null);
 Check(sbCands.FirstOrDefault() == sbReal,
     $"Stellar Blade → -Win64-Shipping.exe apesar do ExeHint da loja ({Path.GetFileName(sbCands.FirstOrDefault() ?? "-")})");
+
+// 3c. Direct3D 10: a API que o launcher recusava ate a 1.69, e que agora vai pelo DXVK
+// (d3d10core.dll -> Vulkan). O fixture importa d3d10.dll, como o Just Cause 2 faz em runtime.
+var jcRoot = Path.Combine(fakeRoot, "Just Cause 2");
+var jcExe = MakeExe(Path.Combine(jcRoot, "JustCause2.exe"), false, true, apiDll: "d3d10.dll");
+Check(FeederService.RenderizaEmD3d10(jcExe), "exe de 32 bits que importa d3d10.dll e lido como Direct3D 10");
+Check(DxvkService.AppliesD3d10(jcExe), "Direct3D 10 pede o DXVK (d3d10core.dll)");
+Check(!DgVoodooService.Applies(jcExe), "Direct3D 10 NAO e caso de dgVoodoo2 (ele so ve D3D9)");
+Check(!VulkanLayerService.Applies(jcExe), "Direct3D 10 nao e confundido com Vulkan nativo");
+var jcApi = Dlss5Installer.ApiDoExe(jcExe, exigirEvidencia: true);
+Check(jcApi == Dlss5Installer.GraficosApi.D3D10, $"ApiDoExe -> {Dlss5Installer.ApiLabel(jcApi)} (nao pode cair no DX12 permissivo)");
+Check(FeederService.Applies(jcExe, false, true), "o Feeder aceita o jogo D3D10 (traduzido, para ele e Vulkan)");
+var rotaJc = Dlss5Installer.Rotear(jcRoot, jcExe, false, true);
+Check(rotaJc.Feeder && !rotaJc.Ponte && !rotaJc.OptiScaler, "rota de D3D10 sem DLSS = Feeder (nem ponte, nem OptiScaler)");
+// a mesma heuristica nao pode confundir os dois vizinhos
+Check(!FeederService.RenderizaEmD3d10(smReal), "exe que importa d3d11.dll NAO e lido como D3D10");
+Check(Dlss5Installer.ApiDoExe(smReal, exigirEvidencia: true) != Dlss5Installer.GraficosApi.D3D10,
+    "exe D3D11 continua D3D11/D3D12, nao D3D10");
+
+// O conjunto D3D10 do DXVK na pasta falsa: download real, os tres arquivos, o que ja estava no
+// nome guardado e devolvido. E o que o instalador faz no Just Cause 2, sem o Just Cause 2.
+try
+{
+    await DxvkService.FetchD3d10Async();
+    Check(DxvkService.D3d10InLibrary(false) && DxvkService.D3d10InLibrary(true),
+        $"biblioteca tem o conjunto D3D10 (DXVK {DxvkService.D3d10Version}, 5 arquivos) de 32 e 64 bits");
+    File.WriteAllText(Path.Combine(jcRoot, "dxgi.dll"), "ocupante");   // algo ja sentado no nome
+    DxvkService.DeployD3d10(jcRoot, jogo64Bits: false);
+    Check(DxvkService.IsDeployedD3d10(jcRoot), "DXVK D3D10 implantado: 5 arquivos, ProductName DXVK");
+    // Os dois wrappers sao o que decide: sem d3d10.dll e d3d10_1.dll locais o ReShade engancha
+    // os do sistema e o jogo morre em 3 s (medido no Just Cause 2).
+    Check(File.Exists(Path.Combine(jcRoot, "d3d10.dll")) && File.Exists(Path.Combine(jcRoot, "d3d10_1.dll")),
+        "d3d10.dll e d3d10_1.dll proprios na pasta (o ReShade nao pode ver os do sistema)");
+    Check(File.Exists(Path.Combine(jcRoot, "dxgi.dll.pre-dxvk")), "o dxgi.dll que ja estava foi guardado como .pre-dxvk");
+    Check(!DxvkService.IsDeployed(jcRoot), "rota D3D10 NAO poe d3d9.dll (o jogo so o importa como fallback)");
+    Check(ConflictScanner.Scan(jcRoot, jcExe).All(c => c.Ferramenta != "DXVK" || c.Grau == ConflictScanner.Nivel.Info),
+        "o scanner de conflitos nao acusa o proprio DXVK no dxgi.dll/d3d11.dll");
+    DxvkService.DeployD3d10(jcRoot, jogo64Bits: false);   // de novo: idempotente, nao re-guarda
+    Check(File.ReadAllText(Path.Combine(jcRoot, "dxgi.dll.pre-dxvk")) == "ocupante", "reinstalar nao sobrescreve o backup com o proprio DXVK");
+    DxvkService.RemoveD3d10(jcRoot);
+    Check(!DxvkService.IsDeployedD3d10(jcRoot), "remover tira os cinco do DXVK");
+    Check(File.Exists(Path.Combine(jcRoot, "dxgi.dll")) && File.ReadAllText(Path.Combine(jcRoot, "dxgi.dll")) == "ocupante",
+        "remover devolve o dxgi.dll anterior");
+    Check(!File.Exists(Path.Combine(jcRoot, "d3d10core.dll")), "remover nao deixa d3d10core.dll para tras");
+}
+catch (Exception ex) { Check(false, $"DXVK D3D10 na pasta falsa: {ex.Message}"); }
 
 // 4. manifest
 var manifest = new ManifestService();
