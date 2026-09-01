@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.57.2
+
+**O interruptor não ligava em jogo de 32 bits pela rota DXVK** — e desta vez a causa foi
+encontrada executando o código, não deduzindo.
+
+A checagem de integridade do Feeder compara o **tamanho** do `dlss5-feed.addon32` instalado com o
+da cópia na biblioteca, para detectar arquivo corrompido. Só que na rota DXVK o addon instalado
+não é o da biblioteca: é o **embutido, com transporte Vulkan**, que tem mais código e por isso
+outro tamanho (56.832 contra 49.664 bytes). A comparação reprovava toda instalação Vulkan como
+"Feeder ausente", o elo ficava vermelho, `Dlss5Ready` nunca virava — e o botão seguia dizendo
+"instalar" num jogo que já estava rodando DLSS 5.
+
+Agora a checagem aceita as duas origens: a cópia da biblioteca **ou** a embutida.
+
+### Um teste que executa a decisão de verdade
+
+As três correções anteriores desse mesmo interruptor (v1.55.1, v1.57.1) foram feitas olhando
+arquivos no disco e raciocinando sobre o código — e as três erraram o elo. Nenhuma rodou a lógica
+que a interface roda.
+
+`tests/ChainProbe` agora executa exatamente a sequência de `BuildDlss5Chain` contra uma pasta de
+jogo real e imprime elo por elo, com o porquê de cada um:
+
+```
+dotnet build tests/ChainProbe && ChainProbe.exe "<pasta do jogo>"
+
+  [OK   ] ReShade    proxy=nenhum  camadaVulkan=True  jogo64=False
+  [FALHA] Feeder     pede=True  ativo=False
+  Dlss5Ready = False  -> o interruptor continua dizendo 'instalar'
+```
+
+Foi ele que apontou o elo certo em trinta segundos, depois de três tentativas erradas.
+
+Verificado nos três jogos de 32 bits desta máquina — ENSLAVED e RE Revelations 2 (rota DXVK) e
+Saints Row 2 (rota dgVoodoo, que não podia regredir): todos com `Dlss5Ready = True`.
+
+### O seletor de tradutor mudou de lugar
+
+Saiu de "instruções e detalhes", lá no fim da tela, e passou a viver **dentro do card do DLSS 5**,
+logo abaixo dos elos — que é onde a decisão pertence, junto com o interruptor que ela afeta.
+
+Continua sendo uma lista de escolha única, e não duas chaves, porque DXVK e dgVoodoo2 disputam o
+mesmo `d3d9.dll`: é um **ou** o outro, nunca os dois. Ao trocar, o que estava lá é guardado com
+sufixo `.pre-dxvk` em vez de apagado.
+
 ## v1.57.1
 
 **O interruptor não mudava em jogo da rota Vulkan.** Clicar instalava — a instalação ia inteira e

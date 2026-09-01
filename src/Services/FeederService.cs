@@ -152,12 +152,21 @@ public static class FeederService
 
         // Integridade contra a copia certa da biblioteca: o addon de 32 bits tem outro tamanho,
         // e compara-lo com o de 64 daria "corrompido" em toda instalacao de 32 bits.
+        //
+        // Na rota DXVK o addon32 instalado NAO e o da biblioteca: e o embutido, com transporte
+        // Vulkan, e ele tem outro tamanho por ter mais codigo. Comparar so com a biblioteca
+        // reprovava toda instalacao Vulkan como "Feeder ausente" — o elo ficava vermelho,
+        // Dlss5Ready nunca virava, e o interruptor seguia dizendo "instalar" depois de instalar
+        // e de o jogo estar rodando DLSS 5. Foi o que aconteceu no ENSLAVED.
         try
         {
-            var referencia = addon.EndsWith(Addon32File, StringComparison.OrdinalIgnoreCase)
-                ? LibraryAddon32 : LibraryAddon;
-            if (File.Exists(referencia)
-                && new FileInfo(addon).Length != new FileInfo(referencia).Length) return false;
+            var eh32 = addon.EndsWith(Addon32File, StringComparison.OrdinalIgnoreCase);
+            var tamanho = new FileInfo(addon).Length;
+            var referencia = eh32 ? LibraryAddon32 : LibraryAddon;
+            var bateComBiblioteca = File.Exists(referencia)
+                                    && tamanho == new FileInfo(referencia).Length;
+            var bateComEmbutido = eh32 && tamanho == TamanhoEmbutido(Addon32File);
+            if (File.Exists(referencia) && !bateComBiblioteca && !bateComEmbutido) return false;
         }
         catch { /* sem leitura, aceita o que esta la */ }
 
@@ -305,6 +314,22 @@ public static class FeederService
         ExtrairEmbutido("dlss5-feed-host64.exe", Path.Combine(host, Host64Exe));
         progress?.Report(L.T("Feeder_VulkanTransport"));
         Log.Info($"feeder: metades de 32 bits com transporte Vulkan implantadas em {targetDir}");
+    }
+
+    /// <summary>Tamanho do recurso embutido, para a checagem de integridade reconhecer o
+    /// addon do fork como uma copia legitima — e nao como arquivo corrompido.</summary>
+    private static long TamanhoEmbutido(string sufixo)
+    {
+        try
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var nome = asm.GetManifestResourceNames()
+                          .FirstOrDefault(n => n.EndsWith(sufixo, StringComparison.OrdinalIgnoreCase));
+            if (nome is null) return -1;
+            using var s = asm.GetManifestResourceStream(nome);
+            return s?.Length ?? -1;
+        }
+        catch { return -1; }
     }
 
     private static void ExtrairEmbutido(string sufixo, string destino)

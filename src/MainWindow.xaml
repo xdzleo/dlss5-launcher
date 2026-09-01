@@ -864,6 +864,26 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
 
+                                    <!-- Qual tradutor de D3D9 este jogo usa. So aparece em jogo DX9
+                                         de 32 bits, que e onde os dois existem.
+                                         Os dois disputam o mesmo d3d9.dll, entao e um OU outro —
+                                         nunca os dois ao mesmo tempo, e por isso e uma lista e nao
+                                         duas chaves. -->
+                                    <Border CornerRadius="7" Padding="10,8" Margin="0,10,0,0"
+                                            Background="#2A2438" BorderBrush="#5A4270" BorderThickness="1"
+                                            Visibility="{Binding MostraTradutorD3d9, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel>
+                                            <TextBlock Text="{loc:Tr Main_D3d9Translator_Label}" FontSize="11.5"
+                                                       FontWeight="SemiBold" Foreground="#D0A8F0"/>
+                                            <ComboBox ItemsSource="{Binding D3d9Translators}"
+                                                      SelectedItem="{Binding TradutorD3d9}"
+                                                      FontSize="11.5" Margin="0,6,0,0"/>
+                                            <TextBlock Text="{loc:Tr Main_D3d9Translator_Hint}" FontSize="10.5"
+                                                       TextWrapping="Wrap" Margin="0,6,0,0"
+                                                       Foreground="{StaticResource TextFaintBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+
                                     <!-- Ponte DX11 em uso: o jogo nao tem D3D12, e o pass so
                                          existe ali por causa dela. Aparece so onde ela esta. -->
                                     <Border CornerRadius="7" Padding="9,7" Margin="0,4,0,0"
@@ -1011,16 +1031,6 @@
                                     <ComboBox ItemsSource="{Binding ExeCandidates}" SelectedItem="{Binding SelectedExe}"
                                               FontSize="11.5"/>
 
-                                    <!-- So aparece em jogo DX9 de 32 bits, que e onde os dois tradutores
-                                         existem e onde a escolha muda o resultado. -->
-                                    <StackPanel Visibility="{Binding MostraTradutorD3d9, Converter={StaticResource BoolToVis}}">
-                                        <TextBlock Text="{loc:Tr Main_D3d9Translator_Label}"
-                                                   Style="{StaticResource SectionLabel}" Margin="0,14,0,6"/>
-                                        <ComboBox ItemsSource="{Binding D3d9Translators}"
-                                                  SelectedItem="{Binding TradutorD3d9}" FontSize="11.5"/>
-                                        <TextBlock Text="{loc:Tr Main_D3d9Translator_Hint}" Style="{StaticResource Caption}"
-                                                   TextWrapping="Wrap" Margin="0,6,0,0"/>
-                                    </StackPanel>
 
                                     <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0"
                                             Background="{StaticResource CardBrush}"
