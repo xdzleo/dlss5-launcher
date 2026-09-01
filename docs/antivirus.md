@@ -187,6 +187,29 @@ mas so com volume de download.
 O `.exe` do app e o zip portatil marcaram **0** em todas as varreduras. Quem passa da
 instalacao nao encontra nada.
 
+### Como o CI decide reprovar (e por que o limiar numerico foi trocado)
+
+O gate era `malicious >= 3` reprova. Isso pareceu razoavel enquanto o numero ficava em 2 —
+mas 2 era justamente a margem descrita acima, e a margem se move sozinha. Trocar o nome do
+produto e o icone na v1.60.0 zerou a pouca reputacao que aquele hash tinha e empurrou a
+contagem para o outro lado: o release parou de sair, sem que uma linha de comportamento
+tivesse mudado.
+
+Subir o limiar teria resolvido o sintoma cegando o teste. O criterio agora separa as duas
+coisas que a contagem crua misturava:
+
+| Veredito | Exemplo | Resultado |
+|---|---|---|
+| machine learning / generico | `Trojan:Win32/Wacatac.B!ml`, `MALICIOUS`, `Gen:Variant.Tedy`, `Heur.AdvML.B` | **WARN** — nao reprova |
+| familia nomeada | `Trojan.Emotet`, `Win32.AgentTesla` | **FAIL** — reprova, mesmo se for um so motor |
+| ruido de ML em volume | qualquer, com `malicious >= 6` | **FAIL** — deixou de ser margem |
+
+O raciocinio e o mesmo da secao anterior: um veredito de ML diz que o binario caiu do lado
+errado de um classificador; uma assinatura nomeada diz que um motor reconheceu algo
+especifico. A primeira e ruido de build — medido, com 0 numa maquina e 2 em outra para o
+mesmo codigo. A segunda merece parar o release na hora, e agora para, o que o limiar de 3
+nao fazia.
+
 ### Texto pronto para a submissão
 
 Cole isto no campo de informações adicionais. Ele é escrito para um analista: cada

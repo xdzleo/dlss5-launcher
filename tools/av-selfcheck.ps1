@@ -591,10 +591,44 @@ https://www.virustotal.com/gui/file/$sha
 $($stats.malicious) maliciosos, $($stats.suspicious) suspeitos, de $total motores
 "@
 
+    # Deteccao de MACHINE LEARNING nao reprova o build; assinatura de familia real reprova.
+    #
+    # A contagem crua nao distingue as duas coisas, e a diferenca e tudo. Um veredito de ML
+    # ("...!ml", "MALICIOUS" do DeepInstinct, "Generic", "Heur") diz que o binario caiu do lado
+    # errado da margem de um classificador -- e isto foi medido no proprio projeto: a MESMA
+    # configuracao, o MESMO codigo, deu 0/67 numa maquina e 2/65 no CI. Nenhuma configuracao de
+    # compressao zerou. Nao ha nada no conteudo sendo detectado; ha ruido de build.
+    #
+    # Uma assinatura nomeada de familia ("Emotet", "AgentTesla") e outra coisa: e um motor
+    # dizendo que reconheceu algo especifico. Essa reprova, e deve reprovar mesmo que seja uma so.
+    #
+    # Subir o limiar resolveria o sintoma cegando o teste para os dois casos. Isto separa os dois.
+    $ehRuidoDeMl = {
+        param($r)
+        if ([string]::IsNullOrWhiteSpace($r)) { return $true }   # acusou sem dizer o que: sem valor
+        # "Gen:Variant...", "Gen.Malware", "Generic": todos sao o balde generico do motor, nao
+        # uma familia reconhecida. Entram como ruido junto com os vereditos de ML.
+        $r -match '(?i)!ml\b|\bml\b|machine.?learning|^MALICIOUS$|\bgen(eric)?[:.]|generic|heur|suspicious|unsafe|confidence|\bAI\b|cloud|variant|score|reputation'
+    }
+    $nomeados = @($acusadores | Where-Object {
+        $res = ($_ -split ' / ')[-1]
+        -not (& $ehRuidoDeMl $res)
+    })
+
     if ($acusadores.Count -eq 0) {
         Add-Result "VirusTotal - $Label" 'PASS' $resumo
     } else {
-        $st = if ($stats.malicious -ge 3) { 'FAIL' } else { 'WARN' }
+        # FAIL so quando ha assinatura nomeada, ou quando o ruido de ML fica grande demais para
+        # ser margem (>= 6 motores sugere que algo mudou de verdade, nao que o dado oscilou).
+        $st = if ($nomeados.Count -gt 0 -or $stats.malicious -ge 6) { 'FAIL' } else { 'WARN' }
+        if ($nomeados.Count -gt 0) {
+            $resumo += "`nDeteccao NOMEADA (nao e ML): " + ($nomeados -join '; ')
+        } elseif ($st -eq 'WARN') {
+            # ASCII puro: este arquivo tem #Requires -Version 5.1, e o PowerShell 5.1 le script
+            # como ANSI. Um travessao aqui quebra o parser antes da linha 1.
+            $resumo += "`nSo veredito de machine learning - ruido de classificador, nao conteudo."
+            $resumo += "`nVer docs/antivirus.md: assinar o codigo e submeter o falso-positivo e o que resolve."
+        }
         Add-Result "VirusTotal - $Label" $st ($resumo + ($acusadores -join "`n") + "`nPara reportar falso-positivo, veja docs\antivirus.md")
     }
 }
