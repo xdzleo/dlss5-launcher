@@ -1,5 +1,64 @@
 # Changelog
 
+## v1.56.0
+
+**Uma segunda rota para jogo Direct3D 9, e com ela jogos que antes não tinham rota nenhuma.**
+
+O caminho DX9 → DLSS 5 sempre precisou de um tradutor: o ReShade em D3D9 para no Shader Model 3,
+então nenhum provedor de motion vectors compila. O dgVoodoo2 resolvia isso entregando D3D11 —
+quando funciona. Em jogo que ele derruba não havia o que fazer.
+
+E ele derruba jogos que não têm defeito nenhum. O Resident Evil Revelations 2 crasha com
+`0xc0000005` dentro do próprio `d3d9.dll` do dgVoodoo, em **toda** configuração testada (VRAM,
+`OutputAPI`, `PresentationModel`, `VideoCard`), com o binário de SHA idêntico ao que roda Saints
+Row 2 e Bully sem uma queixa. Sem dgVoodoo o jogo abre normal; com ele, morre antes do menu.
+
+O DXVK traduz D3D9 para **Vulkan** em vez de D3D11, e roda esses jogos. Só que isso muda o resto
+da cadeia inteira: o ReShade entra como camada Vulkan em vez de proxy `d3d9.dll`, e o add-on
+precisa falar Vulkan.
+
+### O add-on de 32 bits agora fala Vulkan
+
+O Feeder oficial recusa, e a linha é literal:
+
+```cpp
+if (dev_api->get_api() != reshade::api::device_api::d3d11)
+{ FeedDisable("only Direct3D 11 games are supported by the 32-bit add-on"); return; }
+```
+
+O launcher passa a embutir duas metades construídas do fonte do Feeder (MIT) com um transporte
+Vulkan somado, no mesmo desenho que o add-on de 64 bits já usava: **o host cria as texturas em
+D3D12 e o jogo as importa** com `VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT`.
+
+A direção não é escolha. Um recurso criado pelo Vulkan não pode ser aberto pelo
+`OpenSharedHandle` do D3D12; o contrário funciona. Num processo de 32 bits o único D3D12 da
+máquina está no host, então ele passa a ser quem cria — o protocolo do pipe foi para a v2 para
+carregar os handles no sentido inverso.
+
+São 124 KB embutidos em vez de baixados: é um fork, não existe em release público, e um download
+a mais é mais uma coisa para falhar offline.
+
+### Como usar
+
+A rota é opcional, e o dgVoodoo2 continua sendo o padrão — ele é o caminho testado em mais jogos,
+e o launcher não tem como saber qual dos dois um jogo aceita antes de tentar. Para os que o
+dgVoodoo derruba:
+
+```
+RenoDXLauncher.exe dlss5 "<jogo>" --dxvk
+```
+
+Medido no Resident Evil Revelations 2 (D3D9, 32 bits): `feature ready: 1920x1080 DLAA`, 1800
+frames avaliados, 64 fps, e o feed custando 0% do frame. O Lumenite Kernel compila — coisa
+impossível em D3D9 puro, e o motivo pelo qual o DXVK destrava a cadeia toda.
+
+### Também nesta versão
+
+O gerador de `.resx` ganhou um equivalente em PowerShell (`tools/gen_resx.ps1`), byte a byte igual
+ao de Python. As strings novas saíam cruas na tela porque o JSON é a fonte mas os `.resx` é que
+rodam, e a máquina de build não tinha Python — só o alias da Microsoft Store, que apenas abre a
+loja.
+
 ## v1.55.1
 
 **O interruptor não mudava depois de instalar, em todo jogo de 32 bits.** A instalação funcionava —

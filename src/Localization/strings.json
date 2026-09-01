@@ -1181,6 +1181,42 @@
     "en": "The Feeder is not in the library yet.",
     "pt-BR": "O Feeder ainda não está na biblioteca."
   },
+  "Dlss5_Step_Dxvk": {
+    "en": "DXVK installed (Vulkan route): for DX9 games dgVoodoo2 cannot carry.",
+    "pt-BR": "DXVK instalado (rota Vulkan): para jogo DX9 que o dgVoodoo2 não consegue carregar."
+  },
+  "Dlss5_Step_VulkanLayer32": {
+    "en": "32-bit ReShade Vulkan layer registered.",
+    "pt-BR": "Camada Vulkan do ReShade de 32 bits registrada."
+  },
+  "Dlss5_Step_VulkanLayerFailed": {
+    "en": "Could not register the 32-bit Vulkan layer — the game will not see ReShade.",
+    "pt-BR": "Não consegui registrar a camada Vulkan de 32 bits — o jogo não vai enxergar o ReShade."
+  },
+  "Feeder_VulkanTransport": {
+    "en": "32-bit halves with Vulkan transport installed (for the DXVK route).",
+    "pt-BR": "Metades de 32 bits com transporte Vulkan instaladas (para a rota DXVK)."
+  },
+  "Dxvk_Fetching": {
+    "en": "Fetching DXVK…",
+    "pt-BR": "Baixando o DXVK…"
+  },
+  "Dxvk_NoAsset": {
+    "en": "Could not find a DXVK build to download.",
+    "pt-BR": "Não encontrei um build do DXVK para baixar."
+  },
+  "Dxvk_NotInLibrary": {
+    "en": "DXVK is not in the library yet.",
+    "pt-BR": "O DXVK ainda não está na biblioteca."
+  },
+  "Dxvk_Deployed": {
+    "en": "DXVK installed: the game renders through Vulkan, where the motion-vector shaders compile.",
+    "pt-BR": "DXVK instalado: o jogo passa a renderizar por Vulkan, onde os shaders de motion vector compilam."
+  },
+  "Dxvk_ReplacedD3d9": {
+    "en": "The previous d3d9.dll was set aside (.pre-dxvk) — DXVK and dgVoodoo2 claim the same name.",
+    "pt-BR": "O d3d9.dll anterior foi guardado (.pre-dxvk) — DXVK e dgVoodoo2 disputam o mesmo nome."
+  },
   "Feeder_Updated": {
     "en": "DLSS5 Feeder updated ({0} game(s)).",
     "pt-BR": "DLSS5 Feeder atualizado ({0} jogo(s))."

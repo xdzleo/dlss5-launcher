@@ -281,6 +281,43 @@ public static class FeederService
     /// qualquer um, ele sobe e nao roda o pass — sem erro no lado do jogo, porque o jogo nem
     /// sabe que existe um host.
     /// </summary>
+    /// <summary>
+    /// As duas metades de 32 bits com transporte Vulkan, embutidas no launcher.
+    ///
+    /// O Feeder oficial so aceita D3D11 no add-on de 32 bits — a linha e literal:
+    ///     if (dev_api->get_api() != device_api::d3d11) FeedDisable("only Direct3D 11 ...")
+    /// Isso fecha a porta para todo jogo D3D9 de 32 bits que o dgVoodoo2 derruba, porque o
+    /// DXVK, que roda esses jogos, entrega Vulkan e nao D3D11.
+    ///
+    /// Estas sao construidas a partir do fonte do Feeder (MIT) com um transporte Vulkan somado,
+    /// no mesmo desenho que o add-on de 64 bits ja usa: o host cria as texturas em D3D12 e o
+    /// jogo as importa com VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT. A direcao importa
+    /// — um recurso criado pelo Vulkan nao pode ser aberto pelo OpenSharedHandle do D3D12.
+    ///
+    /// Vao embutidas (124 KB no total) em vez de baixadas: sao um fork, nao existem em release
+    /// publico, e um download a mais e mais uma coisa para falhar offline.
+    /// </summary>
+    public static void DeployBits32Vulkan(string targetDir, IProgress<string>? progress = null)
+    {
+        var host = Path.Combine(targetDir, Host64Dir);
+        Directory.CreateDirectory(host);
+        ExtrairEmbutido("dlss5-feed.addon32", Path.Combine(targetDir, Addon32File));
+        ExtrairEmbutido("dlss5-feed-host64.exe", Path.Combine(host, Host64Exe));
+        progress?.Report(L.T("Feeder_VulkanTransport"));
+        Log.Info($"feeder: metades de 32 bits com transporte Vulkan implantadas em {targetDir}");
+    }
+
+    private static void ExtrairEmbutido(string sufixo, string destino)
+    {
+        var asm = System.Reflection.Assembly.GetExecutingAssembly();
+        var nome = asm.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith(sufixo, StringComparison.OrdinalIgnoreCase))
+                   ?? throw new InvalidOperationException($"recurso embutido ausente: {sufixo}");
+        using var s = asm.GetManifestResourceStream(nome)!;
+        Directory.CreateDirectory(Path.GetDirectoryName(destino)!);
+        using var f = File.Create(destino);
+        s.CopyTo(f);
+    }
+
     public static async Task DeployBits32Async(string targetDir, ReShadeService reshade,
                                                IProgress<string>? progress = null,
                                                CancellationToken ct = default)

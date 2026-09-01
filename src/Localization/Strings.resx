@@ -111,12 +111,12 @@
     <value>não dá para verificar</value>
     <comment>pt: "não dá para verificar".</comment>
   </data>
-  <data name="Cli_Check_UpToDate" xml:space="preserve">
-    <value>atualizado</value>
-  </data>
   <data name="Cli_Check_UpdateAvailable" xml:space="preserve">
     <value>atualização disponível</value>
     <comment>pt: "atualização disponível".</comment>
+  </data>
+  <data name="Cli_Check_UpToDate" xml:space="preserve">
+    <value>atualizado</value>
   </data>
   <data name="Cli_Doctor_Catalog_Summary" xml:space="preserve">
     <value>{0} entradas ({1} ms), {2} com download, {3} com Steam appid</value>
@@ -155,13 +155,13 @@
   <data name="Cli_Doctor_ReShadeCache_None" xml:space="preserve">
     <value>nenhum</value>
   </data>
-  <data name="Cli_Doctor_ScannerRow" xml:space="preserve">
-    <value>{0,3} jogos  ({1} ms)</value>
-    <comment>O ",3" e alinhamento do string.Format, preserve.</comment>
-  </data>
   <data name="Cli_Doctor_Scanner_Folders" xml:space="preserve">
     <value>Pastas</value>
     <comment>Unico nome de scanner traduzivel; Steam, Epic, GOG, Xbox, Ubisoft, EA, Battle.net e Rockstar sao nomes proprios.</comment>
+  </data>
+  <data name="Cli_Doctor_ScannerRow" xml:space="preserve">
+    <value>{0,3} jogos  ({1} ms)</value>
+    <comment>O ",3" e alinhamento do string.Format, preserve.</comment>
   </data>
   <data name="Cli_Error_ExeNotFound" xml:space="preserve">
     <value>Não encontrei o executável do jogo. Rode exe {0} para ver os candidatos.</value>
@@ -504,6 +504,12 @@
   <data name="Dialog_Details_Label" xml:space="preserve">
     <value>INSTRUÇÕES E DETALHES</value>
   </data>
+  <data name="Dialog_Dlss_Desc" xml:space="preserve">
+    <value>O jogo roda a versão de DLSS com que foi lançado. Runtimes mais novos entram no lugar direto e costumam corrigir artefatos da versão antiga. Os originais ficam guardados e dá para voltar.</value>
+  </data>
+  <data name="Dialog_Dlss_Title" xml:space="preserve">
+    <value>Runtimes de DLSS</value>
+  </data>
   <data name="Dialog_DlssFix_Desc" xml:space="preserve">
     <value>Só use se notar piscadas ou artefatos.</value>
   </data>
@@ -512,12 +518,6 @@
   </data>
   <data name="Dialog_DlssFix_Title" xml:space="preserve">
     <value>DLSS Frame Generation piscando?</value>
-  </data>
-  <data name="Dialog_Dlss_Desc" xml:space="preserve">
-    <value>O jogo roda a versão de DLSS com que foi lançado. Runtimes mais novos entram no lugar direto e costumam corrigir artefatos da versão antiga. Os originais ficam guardados e dá para voltar.</value>
-  </data>
-  <data name="Dialog_Dlss_Title" xml:space="preserve">
-    <value>Runtimes de DLSS</value>
   </data>
   <data name="Dialog_EngineNotes_Desc" xml:space="preserve">
     <value>Regras da wiki do RenoDX que valem para todo jogo deste motor, mesmo quando a nota do jogo não as repete.</value>
@@ -532,10 +532,6 @@
   <data name="Dialog_History_Tooltip" xml:space="preserve">
     <value>Todas as versões deste mod, com data.</value>
   </data>
-  <data name="Dialog_InstallDir_Label" xml:space="preserve">
-    <value>PASTA DE INSTALAÇÃO</value>
-    <comment>Corrige o "PASTA DE INSTALACAO" sem cedilha nem til citado no briefing. Caixa alta e do estilo SectionLabel.</comment>
-  </data>
   <data name="Dialog_Install_Desc" xml:space="preserve">
     <value>Copia o ReShade e o addon do RenoDX para a pasta do executável acima.</value>
     <comment>Virou frase, com verbo, no lugar do "ReShade + addon do RenoDX ...".</comment>
@@ -544,15 +540,15 @@
     <value>Instalar mod HDR</value>
     <comment>Uma chave para o titulo do botao e para o AutomationProperties.Name, que antes divergiam ("Instalar mod HDR" x "Instalar mod").</comment>
   </data>
+  <data name="Dialog_InstallDir_Label" xml:space="preserve">
+    <value>PASTA DE INSTALAÇÃO</value>
+    <comment>Corrige o "PASTA DE INSTALACAO" sem cedilha nem til citado no briefing. Caixa alta e do estilo SectionLabel.</comment>
+  </data>
   <data name="Dialog_Maintainer_Label" xml:space="preserve">
     <value>CRIADO POR</value>
   </data>
   <data name="Dialog_Maintainer_Tooltip" xml:space="preserve">
     <value>Abre o perfil do autor no GitHub.</value>
-  </data>
-  <data name="Dialog_ModPage" xml:space="preserve">
-    <value>Abrir a página do mod</value>
-    <comment>Corrige o "Pagina do mod" sem acento citado no briefing. Comando e OpenNexusCommand, mas nem todo mod e do Nexus, entao o texto continua generico.</comment>
   </data>
   <data name="Dialog_Mod_Desc" xml:space="preserve">
     <value>O mod de HDR do jogo. Os controles finos ficam no overlay do próprio jogo — aperte Home jogando.</value>
@@ -565,6 +561,10 @@
   </data>
   <data name="Dialog_Mod_Unstable" xml:space="preserve">
     <value>Instável</value>
+  </data>
+  <data name="Dialog_ModPage" xml:space="preserve">
+    <value>Abrir a página do mod</value>
+    <comment>Corrige o "Pagina do mod" sem acento citado no briefing. Comando e OpenNexusCommand, mas nem todo mod e do Nexus, entao o texto continua generico.</comment>
   </data>
   <data name="Dialog_Neural_Desc" xml:space="preserve">
     <value>Roda o pós-processo neural da NVIDIA sobre o frame pronto. Melhora principalmente pele e rostos. Experimental.</value>
@@ -637,6 +637,94 @@
   <data name="Dialog_Update_Title" xml:space="preserve">
     <value>Atualização disponível</value>
     <comment>Title Case no en por ser titulo curto, conforme a regra de maiuscula.</comment>
+  </data>
+  <data name="Dlss_Failed" xml:space="preserve">
+    <value>Não deu para atualizar {0}: {1}</value>
+    <comment>{0} = nome do arquivo, {1} = mensagem do erro.</comment>
+  </data>
+  <data name="Dlss_Fg_Done" xml:space="preserve">
+    <value>{0} arquivo(s) do conjunto Streamline atualizado(s).</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Fg_Incomplete" xml:space="preserve">
+    <value>Falta o {0} na pasta de origem. Frame Generation só funciona se o conjunto inteiro for junto — troca pela metade é o que trava o jogo.</value>
+    <comment>{0} = arquivo faltando.</comment>
+  </data>
+  <data name="Dlss_Fg_NoSource" xml:space="preserve">
+    <value>Pasta não encontrada: {0}</value>
+    <comment>{0} = caminho.</comment>
+  </data>
+  <data name="Dlss_Fg_NoStreamline" xml:space="preserve">
+    <value>Este jogo não tem runtime do Streamline, então não há Frame Generation para atualizar.</value>
+  </data>
+  <data name="Dlss_Health_NotSigned" xml:space="preserve">
+    <value>{0} não é um runtime legítimo da NVIDIA ({1}). Troque pelo arquivo original do jogo.</value>
+    <comment>{0} = arquivo, {1} = detalhe da verificacao.</comment>
+  </data>
+  <data name="Dlss_Health_SlMismatch" xml:space="preserve">
+    <value>Os plugins do Streamline são de builds diferentes: {0}. Eles saem como um conjunto só — troca pela metade é o que trava o jogo na abertura. Use Restaurar, ou verifique os arquivos do jogo.</value>
+    <comment>{0} = versoes e arquivos encontrados.</comment>
+  </data>
+  <data name="Dlss_Index_Downloading" xml:space="preserve">
+    <value>Baixando {0} {1}…</value>
+    <comment>{0} = tipo (dlssnr, streamline), {1} = versão.</comment>
+  </data>
+  <data name="Dlss_Index_Extracting" xml:space="preserve">
+    <value>Extraindo {0}…</value>
+    <comment>{0} = tipo (dlssnr, streamline).</comment>
+  </data>
+  <data name="Dlss_Library_Empty" xml:space="preserve">
+    <value>Nenhum runtime de DLSS na biblioteca ainda. Faça a varredura primeiro — todo jogo com DLSS carrega um.</value>
+  </data>
+  <data name="Dlss_NotNvidia" xml:space="preserve">
+    <value>Não é assinado pela NVIDIA (assinante: {0}). Ignorado.</value>
+    <comment>{0} = subject do certificado encontrado.</comment>
+  </data>
+  <data name="Dlss_NotSwapped" xml:space="preserve">
+    <value>não é trocado — anda junto com o Streamline</value>
+  </data>
+  <data name="Dlss_Repair_Applying" xml:space="preserve">
+    <value>Aplicando o conjunto Streamline casado...</value>
+  </data>
+  <data name="Dlss_Repair_NoReference" xml:space="preserve">
+    <value>Não há conjunto Streamline completo na biblioteca nem backup para voltar. Aponte o launcher para uma pasta com um conjunto casado (os sl.* e o nvngx_dlssg.dll do mesmo build).</value>
+  </data>
+  <data name="Dlss_Repair_Partial" xml:space="preserve">
+    <value>{0} arquivo(s) restaurado(s), mas ainda ha problemas - verifique os arquivos do jogo.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Repair_Restored" xml:space="preserve">
+    <value>{0} arquivo(s) devolvido(s) ao original do jogo.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Searching" xml:space="preserve">
+    <value>Procurando runtimes de DLSS em {0}...</value>
+    <comment>{0} = nome da pasta sendo varrida.</comment>
+  </data>
+  <data name="Dlss_Skipped_Gen1" xml:space="preserve">
+    <value>{0} mantido em {1}: o DLSS 1.x é outra API, e substituí-lo desliga o DLSS do jogo.</value>
+  </data>
+  <data name="Dlss_Sweep_Button" xml:space="preserve">
+    <value>Restaurar tudo</value>
+  </data>
+  <data name="Dlss_Sweep_Done" xml:space="preserve">
+    <value>{0} arquivo(s) devolvido(s) ao original do jogo.</value>
+    <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Dlss_Sweep_Game" xml:space="preserve">
+    <value>Restaurando {0}...</value>
+    <comment>{0} = nome do jogo.</comment>
+  </data>
+  <data name="Dlss_Sweep_Locked" xml:space="preserve">
+    <value>{0} restaurado(s). Ainda em uso (feche o jogo e repita): {1}</value>
+    <comment>{0} = quantidade, {1} = lista.</comment>
+  </data>
+  <data name="Dlss_Sweep_Title" xml:space="preserve">
+    <value>Estes jogos estão com um runtime de DLSS que este launcher trocou:</value>
+  </data>
+  <data name="Dlss_Updating" xml:space="preserve">
+    <value>{0}: {1} -&gt; {2}</value>
+    <comment>{0} = feature (Super Resolution etc), {1} = versao atual, {2} = versao nova.</comment>
   </data>
   <data name="Dlss5_Blocked_D3d10" xml:space="preserve">
     <value>Este jogo renderiza em Direct3D 10, que o passe do DLSS 5 não alcança — ele trabalha só com D3D11, D3D12 e Vulkan.</value>
@@ -752,6 +840,9 @@
   <data name="Dlss5_Step_DgVoodoo" xml:space="preserve">
     <value>DirectX 9 envolvido em DirectX 11 — sem isso nenhum shader de motion vectors sequer compila.</value>
   </data>
+  <data name="Dlss5_Step_Dxvk" xml:space="preserve">
+    <value>DXVK instalado (rota Vulkan): para jogo DX9 que o dgVoodoo2 não consegue carregar.</value>
+  </data>
   <data name="Dlss5_Step_Feeder" xml:space="preserve">
     <value>DLSS5 Feeder instalado — este jogo não tem DLSS, então os dados são gerados para ele.</value>
   </data>
@@ -785,96 +876,26 @@
   <data name="Dlss5_Step_VulkanLayer" xml:space="preserve">
     <value>Jogo Vulkan: o ReShade entra como camada, porque aqui o dxgi.dll nunca é carregado.</value>
   </data>
+  <data name="Dlss5_Step_VulkanLayer32" xml:space="preserve">
+    <value>Camada Vulkan do ReShade de 32 bits registrada.</value>
+  </data>
   <data name="Dlss5_Step_VulkanLayerFailed" xml:space="preserve">
-    <value>Não consegui registrar a camada Vulkan: {0}</value>
+    <value>Não consegui registrar a camada Vulkan de 32 bits — o jogo não vai enxergar o ReShade.</value>
   </data>
-  <data name="Dlss_Failed" xml:space="preserve">
-    <value>Não deu para atualizar {0}: {1}</value>
-    <comment>{0} = nome do arquivo, {1} = mensagem do erro.</comment>
+  <data name="Dxvk_Deployed" xml:space="preserve">
+    <value>DXVK instalado: o jogo passa a renderizar por Vulkan, onde os shaders de motion vector compilam.</value>
   </data>
-  <data name="Dlss_Fg_Done" xml:space="preserve">
-    <value>{0} arquivo(s) do conjunto Streamline atualizado(s).</value>
-    <comment>{0} = quantidade.</comment>
+  <data name="Dxvk_Fetching" xml:space="preserve">
+    <value>Baixando o DXVK…</value>
   </data>
-  <data name="Dlss_Fg_Incomplete" xml:space="preserve">
-    <value>Falta o {0} na pasta de origem. Frame Generation só funciona se o conjunto inteiro for junto — troca pela metade é o que trava o jogo.</value>
-    <comment>{0} = arquivo faltando.</comment>
+  <data name="Dxvk_NoAsset" xml:space="preserve">
+    <value>Não encontrei um build do DXVK para baixar.</value>
   </data>
-  <data name="Dlss_Fg_NoSource" xml:space="preserve">
-    <value>Pasta não encontrada: {0}</value>
-    <comment>{0} = caminho.</comment>
+  <data name="Dxvk_NotInLibrary" xml:space="preserve">
+    <value>O DXVK ainda não está na biblioteca.</value>
   </data>
-  <data name="Dlss_Fg_NoStreamline" xml:space="preserve">
-    <value>Este jogo não tem runtime do Streamline, então não há Frame Generation para atualizar.</value>
-  </data>
-  <data name="Dlss_Health_NotSigned" xml:space="preserve">
-    <value>{0} não é um runtime legítimo da NVIDIA ({1}). Troque pelo arquivo original do jogo.</value>
-    <comment>{0} = arquivo, {1} = detalhe da verificacao.</comment>
-  </data>
-  <data name="Dlss_Health_SlMismatch" xml:space="preserve">
-    <value>Os plugins do Streamline são de builds diferentes: {0}. Eles saem como um conjunto só — troca pela metade é o que trava o jogo na abertura. Use Restaurar, ou verifique os arquivos do jogo.</value>
-    <comment>{0} = versoes e arquivos encontrados.</comment>
-  </data>
-  <data name="Dlss_Index_Downloading" xml:space="preserve">
-    <value>Baixando {0} {1}…</value>
-    <comment>{0} = tipo (dlssnr, streamline), {1} = versão.</comment>
-  </data>
-  <data name="Dlss_Index_Extracting" xml:space="preserve">
-    <value>Extraindo {0}…</value>
-    <comment>{0} = tipo (dlssnr, streamline).</comment>
-  </data>
-  <data name="Dlss_Library_Empty" xml:space="preserve">
-    <value>Nenhum runtime de DLSS na biblioteca ainda. Faça a varredura primeiro — todo jogo com DLSS carrega um.</value>
-  </data>
-  <data name="Dlss_NotNvidia" xml:space="preserve">
-    <value>Não é assinado pela NVIDIA (assinante: {0}). Ignorado.</value>
-    <comment>{0} = subject do certificado encontrado.</comment>
-  </data>
-  <data name="Dlss_NotSwapped" xml:space="preserve">
-    <value>não é trocado — anda junto com o Streamline</value>
-  </data>
-  <data name="Dlss_Repair_Applying" xml:space="preserve">
-    <value>Aplicando o conjunto Streamline casado...</value>
-  </data>
-  <data name="Dlss_Repair_NoReference" xml:space="preserve">
-    <value>Não há conjunto Streamline completo na biblioteca nem backup para voltar. Aponte o launcher para uma pasta com um conjunto casado (os sl.* e o nvngx_dlssg.dll do mesmo build).</value>
-  </data>
-  <data name="Dlss_Repair_Partial" xml:space="preserve">
-    <value>{0} arquivo(s) restaurado(s), mas ainda ha problemas - verifique os arquivos do jogo.</value>
-    <comment>{0} = quantidade.</comment>
-  </data>
-  <data name="Dlss_Repair_Restored" xml:space="preserve">
-    <value>{0} arquivo(s) devolvido(s) ao original do jogo.</value>
-    <comment>{0} = quantidade.</comment>
-  </data>
-  <data name="Dlss_Searching" xml:space="preserve">
-    <value>Procurando runtimes de DLSS em {0}...</value>
-    <comment>{0} = nome da pasta sendo varrida.</comment>
-  </data>
-  <data name="Dlss_Skipped_Gen1" xml:space="preserve">
-    <value>{0} mantido em {1}: o DLSS 1.x é outra API, e substituí-lo desliga o DLSS do jogo.</value>
-  </data>
-  <data name="Dlss_Sweep_Button" xml:space="preserve">
-    <value>Restaurar tudo</value>
-  </data>
-  <data name="Dlss_Sweep_Done" xml:space="preserve">
-    <value>{0} arquivo(s) devolvido(s) ao original do jogo.</value>
-    <comment>{0} = quantidade.</comment>
-  </data>
-  <data name="Dlss_Sweep_Game" xml:space="preserve">
-    <value>Restaurando {0}...</value>
-    <comment>{0} = nome do jogo.</comment>
-  </data>
-  <data name="Dlss_Sweep_Locked" xml:space="preserve">
-    <value>{0} restaurado(s). Ainda em uso (feche o jogo e repita): {1}</value>
-    <comment>{0} = quantidade, {1} = lista.</comment>
-  </data>
-  <data name="Dlss_Sweep_Title" xml:space="preserve">
-    <value>Estes jogos estão com um runtime de DLSS que este launcher trocou:</value>
-  </data>
-  <data name="Dlss_Updating" xml:space="preserve">
-    <value>{0}: {1} -&gt; {2}</value>
-    <comment>{0} = feature (Super Resolution etc), {1} = versao atual, {2} = versao nova.</comment>
+  <data name="Dxvk_ReplacedD3d9" xml:space="preserve">
+    <value>O d3d9.dll anterior foi guardado (.pre-dxvk) — DXVK e dgVoodoo2 disputam o mesmo nome.</value>
   </data>
   <data name="Error_CheckUpdates" xml:space="preserve">
     <value>Falha ao verificar atualizações: {0}. Verifique a conexão e tente de novo.</value>
@@ -984,6 +1005,9 @@
   </data>
   <data name="Feeder_Updated" xml:space="preserve">
     <value>DLSS5 Feeder atualizado ({0} jogo(s)).</value>
+  </data>
+  <data name="Feeder_VulkanTransport" xml:space="preserve">
+    <value>Metades de 32 bits com transporte Vulkan instaladas (para a rota DXVK).</value>
   </data>
   <data name="Guide_AntiCheat_Body" xml:space="preserve">
     <value>O ReShade com suporte a add-ons é uma build não assinada. Em jogos com EAC/BattlEye (Elden Ring, GTA Online) o risco é banimento: jogue offline. O launcher detecta esses jogos e avisa antes de instalar.</value>
@@ -1168,17 +1192,6 @@ Só continue se você for jogar OFFLINE.</value>
     <value>O indice do RenoDX recomenda estes valores:</value>
     <comment>Cortado o 'para este jogo' redundante; o card ja esta no contexto do jogo.</comment>
   </data>
-  <data name="Install_ModPage_Link" xml:space="preserve">
-    <value>Abrir a página do mod</value>
-    <comment>So o rotulo de fallback. Quando o manifesto traz 'label', o valor do manifesto continua ganhando.</comment>
-  </data>
-  <data name="Install_ModPage_Text" xml:space="preserve">
-    <value>O autor mantém uma página própria do mod, com as instruções dele.</value>
-    <comment>Corpo da nota cujo TITULO ficou literal por ser comparado em MainViewModel.cs:548.</comment>
-  </data>
-  <data name="Install_ModPage_Title" xml:space="preserve">
-    <value>Página do mod</value>
-  </data>
   <data name="Install_Mod_Cached" xml:space="preserve">
     <value>{0} já estava baixado — reaproveitando.</value>
     <comment>{0} = nome do arquivo.</comment>
@@ -1190,6 +1203,17 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Install_Mod_Downloading" xml:space="preserve">
     <value>Baixando {0}...</value>
     <comment>{0} = nome do arquivo do addon.</comment>
+  </data>
+  <data name="Install_ModPage_Link" xml:space="preserve">
+    <value>Abrir a página do mod</value>
+    <comment>So o rotulo de fallback. Quando o manifesto traz 'label', o valor do manifesto continua ganhando.</comment>
+  </data>
+  <data name="Install_ModPage_Text" xml:space="preserve">
+    <value>O autor mantém uma página própria do mod, com as instruções dele.</value>
+    <comment>Corpo da nota cujo TITULO ficou literal por ser comparado em MainViewModel.cs:548.</comment>
+  </data>
+  <data name="Install_ModPage_Title" xml:space="preserve">
+    <value>Página do mod</value>
   </data>
   <data name="Install_NoExe" xml:space="preserve">
     <value>Escolha o executável do jogo na lista acima.</value>
@@ -1222,13 +1246,6 @@ Só continue se você for jogar OFFLINE.</value>
     <value>(Este mod não tem ajustes de nits: HDR nativo.)</value>
     <comment>Parenteses fazem parte do texto; espaco separador fica no codigo.</comment>
   </data>
-  <data name="Install_ReShadeVersion_Text" xml:space="preserve">
-    <value>Este jogo exige o ReShade {0}. Versões mais novas podem não funcionar com o mod.</value>
-    <comment>{0} = numero de versao do manifesto.</comment>
-  </data>
-  <data name="Install_ReShadeVersion_Title" xml:space="preserve">
-    <value>Versão do ReShade</value>
-  </data>
   <data name="Install_ReShade_Chained" xml:space="preserve">
     <value>O ReShade já está aqui como {0}, carregado em cadeia por outro mod — nada a instalar.</value>
     <comment>{0} = nome do arquivo, ex. ReShade64.dll.</comment>
@@ -1255,6 +1272,13 @@ Só continue se você for jogar OFFLINE.</value>
   </data>
   <data name="Install_ReShade_VerifyingSignature" xml:space="preserve">
     <value>Conferindo a assinatura do ReShade...</value>
+  </data>
+  <data name="Install_ReShadeVersion_Text" xml:space="preserve">
+    <value>Este jogo exige o ReShade {0}. Versões mais novas podem não funcionar com o mod.</value>
+    <comment>{0} = numero de versao do manifesto.</comment>
+  </data>
+  <data name="Install_ReShadeVersion_Title" xml:space="preserve">
+    <value>Versão do ReShade</value>
   </data>
   <data name="Install_Rollback_Done" xml:space="preserve">
     <value>Falha ao baixar o mod. O ReShade recém-instalado foi removido e o jogo ficou como estava. Tente de novo.</value>
@@ -1336,20 +1360,6 @@ Só continue se você for jogar OFFLINE.</value>
     <value>Existe uma versão mais nova deste mod. Use o botão Atualizar, acima.</value>
     <comment>O '\n\n' que precede ficou no codigo, nao no recurso.</comment>
   </data>
-  <data name="Main_DlssFix_Applied" xml:space="preserve">
-    <value>Correção aplicada. Reinicie o jogo.</value>
-  </data>
-  <data name="Main_DlssFix_Apply" xml:space="preserve">
-    <value>Aplicar correção</value>
-    <comment>Rotulo de botao. Title Case no en.</comment>
-  </data>
-  <data name="Main_DlssFix_Remove" xml:space="preserve">
-    <value>Remover correção</value>
-    <comment>Rotulo de botao. Title Case no en.</comment>
-  </data>
-  <data name="Main_DlssFix_Removed" xml:space="preserve">
-    <value>Correção de DLSS removida.</value>
-  </data>
   <data name="Main_Dlss_AlreadyCurrent" xml:space="preserve">
     <value>Já está em dia — o jogo tem {0} runtime(s) na mesma versão da biblioteca ou acima.</value>
     <comment>{0} = quantidade.</comment>
@@ -1370,6 +1380,20 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Main_Dlss_Updated" xml:space="preserve">
     <value>{0} runtime(s) atualizado(s).</value>
     <comment>{0} = quantidade.</comment>
+  </data>
+  <data name="Main_DlssFix_Applied" xml:space="preserve">
+    <value>Correção aplicada. Reinicie o jogo.</value>
+  </data>
+  <data name="Main_DlssFix_Apply" xml:space="preserve">
+    <value>Aplicar correção</value>
+    <comment>Rotulo de botao. Title Case no en.</comment>
+  </data>
+  <data name="Main_DlssFix_Remove" xml:space="preserve">
+    <value>Remover correção</value>
+    <comment>Rotulo de botao. Title Case no en.</comment>
+  </data>
+  <data name="Main_DlssFix_Removed" xml:space="preserve">
+    <value>Correção de DLSS removida.</value>
   </data>
   <data name="Main_Empty_Hint" xml:space="preserve">
     <value>Mude a busca ou o filtro.</value>
@@ -1423,6 +1447,14 @@ Só continue se você for jogar OFFLINE.</value>
     <value>Mod genérico Unreal</value>
     <comment>Aparece no lugar do nome do autor (GameItemVm.MaintainerName).</comment>
   </data>
+  <data name="Main_Mod_Disabled" xml:space="preserve">
+    <value>Mod desativado: o arquivo foi renomeado para .disabled.</value>
+    <comment>'.disabled' e extensao de arquivo, nao traduzir.</comment>
+  </data>
+  <data name="Main_Mod_Enabled" xml:space="preserve">
+    <value>Mod ativado.</value>
+    <comment>Era 'Mod ATIVADO.' — caixa alta sem motivo, virou sentence case.</comment>
+  </data>
   <data name="Main_ModStatus_Stable" xml:space="preserve">
     <value>Estável</value>
   </data>
@@ -1435,14 +1467,6 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Main_ModStatus_Unstable_Tooltip" xml:space="preserve">
     <value>A wiki do RenoDX marca este mod como em construção: pode ter defeitos visuais ou travar.</value>
     <comment>"pode ter problemas" nao dizia nada; agora diz o que esperar.</comment>
-  </data>
-  <data name="Main_Mod_Disabled" xml:space="preserve">
-    <value>Mod desativado: o arquivo foi renomeado para .disabled.</value>
-    <comment>'.disabled' e extensao de arquivo, nao traduzir.</comment>
-  </data>
-  <data name="Main_Mod_Enabled" xml:space="preserve">
-    <value>Mod ativado.</value>
-    <comment>Era 'Mod ATIVADO.' — caixa alta sem motivo, virou sentence case.</comment>
   </data>
   <data name="Main_Monitor" xml:space="preserve">
     <value>Meu monitor</value>
@@ -1459,15 +1483,15 @@ Só continue se você for jogar OFFLINE.</value>
     <value>Escolher arquivo</value>
     <comment>Rotulo de botao. Title Case no en.</comment>
   </data>
-  <data name="Main_Neural_ImportTitle" xml:space="preserve">
-    <value>Selecione o nvngx_dlssnr.dll</value>
-    <comment>Titulo do seletor de arquivo. Nome de arquivo: nao traduzir.</comment>
-  </data>
   <data name="Main_Neural_Imported" xml:space="preserve">
     <value>Runtime na biblioteca. Agora dá para ligar em qualquer jogo compatível.</value>
   </data>
   <data name="Main_Neural_Importing" xml:space="preserve">
     <value>Copiando o runtime para a biblioteca...</value>
+  </data>
+  <data name="Main_Neural_ImportTitle" xml:space="preserve">
+    <value>Selecione o nvngx_dlssnr.dll</value>
+    <comment>Titulo do seletor de arquivo. Nome de arquivo: nao traduzir.</comment>
   </data>
   <data name="Main_Neural_Reasserted" xml:space="preserve">
     <value>O neural tinha sido desligado dentro do jogo (F6 ou o overlay) — religado.</value>
@@ -1548,12 +1572,12 @@ Só continue se você for jogar OFFLINE.</value>
   <data name="Main_Note_WikiHover_Title" xml:space="preserve">
     <value>Nota da wiki</value>
   </data>
+  <data name="Main_Note_WikiStatus_Indexed" xml:space="preserve">
+    <value>Publicado no índice oficial do RenoDX.</value>
+  </data>
   <data name="Main_Note_WikiStatus_InProgress" xml:space="preserve">
     <value>A wiki do RenoDX marca este mod como em construção. Espere falhas.</value>
     <comment>Antes: "...o mod ainda está sendo trabalhado e pode ter problemas." — gerundismo e hedge cortados.</comment>
-  </data>
-  <data name="Main_Note_WikiStatus_Indexed" xml:space="preserve">
-    <value>Publicado no índice oficial do RenoDX.</value>
   </data>
   <data name="Main_Note_WikiStatus_Title" xml:space="preserve">
     <value>Status na wiki</value>
@@ -1637,12 +1661,12 @@ Só o mod: mantém o ReShade instalado.</value>
     <value>Manual</value>
     <comment>Fallback do StoreLabel: jogo adicionado a mao.</comment>
   </data>
+  <data name="Main_Tile_Update_Tooltip" xml:space="preserve">
+    <value>Há uma build mais nova deste mod</value>
+  </data>
   <data name="Main_Tile_UpdateBadge" xml:space="preserve">
     <value>ATUALIZAR</value>
     <comment>Selo no canto da capa. Caixa alta de proposito, espaco de ~60px.</comment>
-  </data>
-  <data name="Main_Tile_Update_Tooltip" xml:space="preserve">
-    <value>Há uma build mais nova deste mod</value>
   </data>
   <data name="Main_UpdateAll_Body" xml:space="preserve">
     <value>Atualizar para a versão mais nova? Mods selecionados: {0}.
@@ -1767,12 +1791,12 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Neural_OrphanRrRemoved" xml:space="preserve">
     <value>Removido um runtime de Ray Reconstruction que uma versão antiga deixou aqui — ele fazia o launcher entender que este jogo tinha DLSS. O original foi guardado.</value>
   </data>
-  <data name="Neural_ReShadeInstalled" xml:space="preserve">
-    <value>ReShade instalado.</value>
-  </data>
   <data name="Neural_Remove_Locked" xml:space="preserve">
     <value>Não deu para apagar {0} — o arquivo está em uso. Feche o jogo e tente de novo; enquanto ele estiver lá a feature continua ativa no jogo.</value>
     <comment>{0} = nomes dos arquivos travados.</comment>
+  </data>
+  <data name="Neural_ReShadeInstalled" xml:space="preserve">
+    <value>ReShade instalado.</value>
   </data>
   <data name="Neural_Searching" xml:space="preserve">
     <value>Procurando o runtime neural em {0}...</value>
@@ -1909,11 +1933,11 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Deixe no padrão do mod.</value>
     <comment>"lavadas/acinzentadas" tinha as duas palavras para a mesma coisa; sobrou uma em cada frase, cada uma com um papel.</comment>
   </data>
-  <data name="Settings_HighlightSaturation_Label" xml:space="preserve">
-    <value>Saturação dos realces</value>
-  </data>
   <data name="Settings_Highlights_Label" xml:space="preserve">
     <value>Realces</value>
+  </data>
+  <data name="Settings_HighlightSaturation_Label" xml:space="preserve">
+    <value>Saturação dos realces</value>
   </data>
   <data name="Settings_HueCorrection_Label" xml:space="preserve">
     <value>Correção de matiz</value>

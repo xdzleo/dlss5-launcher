@@ -530,10 +530,14 @@ public static class Cli
     private static async Task<int> Dlss5Async(string[] rest)
     {
         var all = rest.Any(a => a is "--all" or "-a");
+        // A rota DXVK e opcional de proposito. O dgVoodoo2 segue como padrao por ser o caminho
+        // testado em mais jogos; --dxvk existe para os que ele derruba, e o launcher nao tem
+        // como saber qual e qual antes de tentar.
+        var dxvk = rest.Any(a => a is "--dxvk");
         var query = rest.FirstOrDefault(a => !a.StartsWith('-'));
         if (!all && string.IsNullOrWhiteSpace(query))
         {
-            Console.Error.WriteLine("uso: dlss5 <jogo> | dlss5 --all");
+            Console.Error.WriteLine("uso: dlss5 <jogo> [--dxvk] | dlss5 --all");
             return 1;
         }
 
@@ -562,7 +566,8 @@ public static class Cli
             var r = await Dlss5Installer.InstallAsync(g, target, ini, exe, state?.AddonPath,
                 index, reshade, ctx.Rhi,
                 // no modo --all so o resultado interessa; passo a passo poluiria dezenas de jogos
-                alvos.Count == 1 ? new Progress<string>(s => Console.WriteLine("  " + s)) : null);
+                alvos.Count == 1 ? new Progress<string>(s => Console.WriteLine("  " + s)) : null,
+                default, preferirDxvk: dxvk);
 
             if (r.Ok)
             {

@@ -40,7 +40,8 @@ public static class Dlss5Installer
     public static async Task<Result> InstallAsync(
         GameInfo game, string targetDir, string? iniPath, string? exePath, string? addonPath,
         DlssIndexService index, ReShadeService reshade, RhiManifestService? rhi = null,
-        IProgress<string>? progress = null, CancellationToken ct = default)
+        IProgress<string>? progress = null, CancellationToken ct = default,
+        bool preferirDxvk = false)
     {
         var steps = new List<string>();
         var manual = new List<string>();
@@ -90,6 +91,31 @@ public static class Dlss5Installer
         // Vem antes do ReShade de proposito: depois de envolvido, o jogo apresenta por dxgi, e o
         // proxy tem de ser dxgi.dll — nao d3d9.dll, que agora pertence ao dgVoodoo.
         var precisaDgVoodoo = DgVoodooService.Applies(exePath);
+
+        // Duas rotas para o mesmo problema, e a escolha nao e estetica.
+        //
+        // O dgVoodoo2 entrega D3D11 e e o padrao, porque e o caminho testado em mais jogos
+        // (Saints Row 2 e Bully rodam com ele). Mas ele derruba jogos que nao tem defeito
+        // nenhum: o Resident Evil Revelations 2 crasha com 0xc0000005 dentro do proprio
+        // d3d9.dll dele, em TODA configuracao testada — VRAM, OutputAPI, PresentationModel,
+        // VideoCard — com o binario identico (mesmo SHA) ao que roda o Saints Row 2.
+        //
+        // O DXVK traduz para Vulkan em vez de D3D11, e roda esses jogos. O preco e que o resto
+        // da cadeia muda: o ReShade entra como camada Vulkan, e o add-on de 32 bits precisa
+        // falar Vulkan — o que so o nosso transporte faz (o oficial recusa tudo que nao e D3D11).
+        var usarDxvk = preferirDxvk && precisaDgVoodoo && ehJogo32Bits(exePath);
+        if (usarDxvk)
+        {
+            try
+            {
+                await DxvkService.FetchAsync(progress, ct);
+                DxvkService.Deploy(targetDir, progress);
+                Step(L.T("Dlss5_Step_Dxvk"));
+                precisaDgVoodoo = false;   // os dois disputam o d3d9.dll; so um pode ficar
+            }
+            catch (Exception ex) { Step(ex.Message); usarDxvk = false; }
+        }
+
         if (precisaDgVoodoo)
         {
             try
@@ -103,6 +129,9 @@ public static class Dlss5Installer
             }
             catch (Exception ex) { Step(ex.Message); }
         }
+
+        static bool ehJogo32Bits(string? exe) =>
+            exe is not null && PeUtils.Inspect(exe, readImports: false)?.Is64Bit == false;
 
         var alcancaD3d12 = exePath is null || LooksLikeD3D12(exePath) || precisaDgVoodoo;
 
@@ -258,7 +287,11 @@ public static class Dlss5Installer
         // dxgi.dll na pasta nunca e carregado e a instalacao inteira fica inerte — sem sequer um
         // ReShade.log para dizer que falhou. Era o caso do DOOM Eternal, que recebia dxgi.dll e
         // a ponte de DX11 num jogo que nao tem uma linha de DirectX.
-        var precisaCamadaVulkan = !precisaDgVoodoo && ehVulkan;
+        // O DXVK TRANSFORMA o jogo em Vulkan, entao ele cai aqui como qualquer Vulkan nativo.
+        // Sem isto o instalador tentava por um proxy d3d9.dll do ReShade numa pasta onde o
+        // d3d9.dll ja pertence ao DXVK, e parava no guard de conflito de proxy — corretamente,
+        // porque dois donos do mesmo nome e o mesmo que nenhum.
+        var precisaCamadaVulkan = usarDxvk || (!precisaDgVoodoo && ehVulkan);
         if (precisaCamadaVulkan)
         {
             var bits64 = exePath is null
@@ -335,6 +368,18 @@ public static class Dlss5Installer
                 if (precisaHost64)
                 {
                     await FeederService.DeployBits32Async(targetDir, reshade, progress, ct);
+                    // Na rota DXVK o jogo apresenta por Vulkan, e o add-on oficial de 32 bits
+                    // recusa tudo que nao seja D3D11 — a linha e literal no fonte dele. As
+                    // metades com transporte Vulkan sobrescrevem as oficiais que acabaram de
+                    // ser copiadas; o host64 montado acima (ReShade, addon de NR, runtimes)
+                    // continua valendo, porque so o executavel do host muda.
+                    if (usarDxvk)
+                    {
+                        FeederService.DeployBits32Vulkan(targetDir, progress);
+                        var okLayer = await VulkanLayerService.DeployAsync(
+                            reshade, targetDir, jogo64Bits: false, progress);
+                        Step(okLayer ? L.T("Dlss5_Step_VulkanLayer32") : L.T("Dlss5_Step_VulkanLayerFailed"));
+                    }
                     Step(L.T("Dlss5_Step_Host64"));
                     // A janela do auxiliar aparece junto com o jogo na primeira vez. Sem aviso,
                     // isso parece coisa estranha se abrindo sozinha.

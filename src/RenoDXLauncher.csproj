@@ -9,7 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.55.1</Version>
+    <Version>1.56.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Idiomas que o app fala. Sem esta lista o SDK descarta os satelites de recurso,
          e so o idioma neutro (pt-BR, que fica no proprio assembly) sobreviveria.
@@ -71,6 +71,11 @@
        RenoDXLauncher.Localization.Strings, que e o que L.cs procura. -->
 
   <ItemGroup>
+    <!-- As duas metades de 32 bits com transporte Vulkan (124 KB), construidas do fonte do
+         DLSS5-Feeder (MIT) com o caminho Vulkan somado. Nao existem em release publico, entao
+         vao embutidas em vez de baixadas. Ver FeederService.DeployBits32Vulkan. -->
+    <EmbeddedResource Include="Assets\feeder-vk\dlss5-feed.addon32" />
+    <EmbeddedResource Include="Assets\feeder-vk\dlss5-feed-host64.exe" />
     <EmbeddedResource Include="Assets\settings_manifest.json" />
     <EmbeddedResource Include="Assets\Mods.fallback.md" />
     <EmbeddedResource Include="Assets\games-index.fallback.json" />
