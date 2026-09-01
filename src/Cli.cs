@@ -163,8 +163,7 @@ public static class Cli
             || known.Contains(MatchService.Normalize(MatchService.StripEditionSuffix(n)));
         var games = await StoreScanners.ScanAllAsync(Known);
         var config = LauncherConfig.Load();
-        foreach (var dir in config.ManualGameDirs.Where(Directory.Exists))
-            games.Add(FolderGameResolver.Resolve(dir, catalog));
+        games.AddRange(FolderGameResolver.ResolverPastasManuais(config.ManualGameDirs, catalog));
         return new Ctx(games, catalog, config, new ManifestService(), rhi);
     }
 

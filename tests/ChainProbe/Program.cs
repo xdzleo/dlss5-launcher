@@ -16,6 +16,27 @@ if (args.Contains("--luzes"))
     return 0;
 }
 
+// --capa "<nome>" [mais nomes...] tenta baixar a capa PELO NOME, como um jogo sem appid.
+// Sem isto a unica forma de saber se a busca acerta seria abrir o launcher e olhar os cards.
+if (args.Contains("--capa"))
+{
+    foreach (var nome in args.Where(a => !a.StartsWith("--")))
+    {
+        var g = new RenoDXLauncher.Models.GameInfo
+        {
+            Name = nome,
+            InstallDir = Path.GetTempPath(),
+            Store = RenoDXLauncher.Models.GameStore.Folder,
+        };
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var capa = await CoverService.GetCoverAsync(g, null);
+        sw.Stop();
+        var tam = capa is not null && File.Exists(capa) ? $"{new FileInfo(capa).Length / 1024} KB" : "-";
+        Console.WriteLine($"  {(capa is null ? "SEM CAPA" : "capa    "),-9} {sw.ElapsedMilliseconds,5} ms  {tam,-8} {nome}");
+        if (capa is not null) Console.WriteLine($"      {capa}");
+    }
+    return 0;
+}
 var dir = args.Length > 0 ? args[0] : null;
 if (dir is null || !Directory.Exists(dir))
 {
@@ -49,6 +70,19 @@ if (args.Contains("--enrich"))
     var achou = Directory.EnumerateFiles(dir, "renodx-*.addon*", opts).FirstOrDefault();
     sw.Stop();
     Console.WriteLine($"{sw.ElapsedMilliseconds,6} ms  {(achou is null ? "nada" : "achou")}  {Path.GetFileName(dir)}");
+    return 0;
+}
+
+// --pasta pergunta ao resolvedor o que ele acha que esta pasta e. Responde "por que este jogo
+// apareceu na lista com esse nome" sem ter de deduzir.
+if (args.Contains("--pasta"))
+{
+    var g = RenoDXLauncher.Services.FolderGameResolver.Resolve(dir, []);
+    Console.WriteLine($"  nome     : {g.Name}");
+    Console.WriteLine($"  store    : {g.Store}");
+    Console.WriteLine($"  pasta    : {g.InstallDir}");
+    Console.WriteLine($"  exeHint  : {g.ExeHint ?? "(nenhum)"}");
+    Console.WriteLine($"  candidatos: {string.Join(" | ", RenoDXLauncher.Services.FolderGameResolver.CandidateNames(dir))}");
     return 0;
 }
 

@@ -36,6 +36,19 @@ public static partial class CoverService
             if (FindLocalCover(game, steamAppIdHint) is { } local) return local;
 
             var appId = game.SteamAppId ?? steamAppIdHint;
+
+            // Sem appid: descobre um PELO NOME.
+            //
+            // Jogo que nao veio de loja nenhuma — um repack numa pasta, uma pasta adicionada a mao
+            // — nao tem appid, e ate aqui a busca simplesmente desistia e o card ficava com as
+            // iniciais num retangulo cinza. Sao justamente os jogos em que a capa mais ajuda:
+            // "Metal Gear Solid V The Phantom Pain" numa pasta de repack e uma linha de texto
+            // longa, enquanto a capa e reconhecida de relance.
+            //
+            // O catalogo da Steam serve de indice mesmo para quem nao comprou ali: quase todo jogo
+            // de PC tem uma pagina, e a arte de biblioteca esta num CDN publico. E o mesmo que o
+            // Playnite faz — resolver o nome num provedor de metadados e baixar a arte de la.
+            appId ??= await ResolverAppIdPorNomeAsync(game.Name);
             if (appId is null) return null;
 
             Directory.CreateDirectory(AppPaths.CoversDir);
@@ -53,18 +66,23 @@ public static partial class CoverService
                 $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg",
             })
             {
-                try
-                {
-                    var bytes = await Http.GetByteArrayAsync(url);
-                    if (bytes.Length < 500) continue;
-                    // write then move: a torn file would be cached forever as a broken image
-                    var temp = cached + ".tmp";
-                    await File.WriteAllBytesAsync(temp, bytes);
-                    File.Move(temp, cached, overwrite: true);
-                    return cached;
-                }
-                catch { /* try next url */ }
+                if (await BaixarAsync(url, cached) is { } ok) return ok;
             }
+
+            // Nenhum caminho SEM hash serviu. Vale a pena perguntar a loja.
+            //
+            // A Steam passou a guardar a arte sob um hash por asset, e os enderecos acima — os
+            // antigos, sem hash — so respondem para jogos ja lancados. Um titulo que ainda nao
+            // saiu tem pagina e tem arte, mas so a API sabe o hash dela: o Mortal Shell II e o
+            // LEGO Batman foram resolvidos para os appids certos e mesmo assim ficavam sem capa.
+            //
+            // O que volta e o header (460x215), e nao o retrato: cada asset tem o seu proprio
+            // hash, e o do retrato nao esta nesta resposta. O card ja aceita essa proporcao — ela
+            // era o ultimo item da lista acima —, e uma capa deitada e melhor do que um retangulo
+            // cinza com as iniciais.
+            if (await ArteDaLojaAsync(appId.Value) is { } doStore
+                && await BaixarAsync(doStore, cached) is { } ok2) return ok2;
+
             await File.WriteAllBytesAsync(miss, Array.Empty<byte>());
         }
         catch (Exception ex) { Log.Warn($"cover {game.Name}: {ex.Message}"); }
@@ -146,5 +164,134 @@ public static partial class CoverService
             return Directory.EnumerateFiles(folder, fileName, options).FirstOrDefault();
         }
         catch { return null; }
+    }
+
+    /// <summary>Baixa e grava, ou devolve null. Escreve num temporario e move: um arquivo cortado
+    /// no meio ficaria cacheado para sempre como imagem quebrada.</summary>
+    private static async Task<string?> BaixarAsync(string url, string destino)
+    {
+        try
+        {
+            var bytes = await Http.GetByteArrayAsync(url);
+            if (bytes.Length < 500) return null;
+            var temp = destino + ".tmp";
+            await File.WriteAllBytesAsync(temp, bytes);
+            File.Move(temp, destino, overwrite: true);
+            return destino;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>O endereco da arte segundo a propria loja — o unico lugar que conhece o hash do
+    /// asset. `filters=basic` mantem a resposta pequena.</summary>
+    private static async Task<string?> ArteDaLojaAsync(int appId)
+    {
+        try
+        {
+            var json = await Http.GetStringAsync(
+                $"https://store.steampowered.com/api/appdetails?appids={appId}&filters=basic");
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty(appId.ToString(), out var no)) return null;
+            if (!no.TryGetProperty("success", out var s) || !s.GetBoolean()) return null;
+            if (!no.TryGetProperty("data", out var d)) return null;
+            if (!d.TryGetProperty("header_image", out var h)) return null;
+            var url = h.GetString();
+            return string.IsNullOrWhiteSpace(url) ? null : url;
+        }
+        catch (Exception ex) { Log.Warn($"arte da loja {appId}: {ex.Message}"); return null; }
+    }
+
+    // ---------------------------------------------------------------- nome -> appid
+
+    /// <summary>Tags de release que atrapalham a busca: "(2026)", "[DODI]", "-CODEX", "v1.0.3",
+    /// "Repack". O nome que a loja conhece nao tem nenhuma delas.</summary>
+    [GeneratedRegex(@"[\[\(\{][^\]\)\}]*[\]\)\}]|[-_.](repack|multi\d*|proper|readnfo|codex|fitgirl|dodi|elamigos|plaza|skidrow|razor1911)\b|\bv?\d+(\.\d+){2,}\b",
+                    RegexOptions.IgnoreCase)]
+    private static partial Regex RuidoDeReleaseRegex();
+
+    /// <summary>
+    /// Acha o appid da Steam a partir do NOME do jogo.
+    ///
+    /// O endpoint de sugestao da comunidade responde JSON e nao pede chave nem cota registrada —
+    /// o que importa porque a API de releases ja nos custou 403 por cota anonima uma vez, e essa
+    /// licao esta no changelog da 1.59.
+    ///
+    /// A resposta e cacheada em disco pelos DOIS lados. O acerto poupa a rede; o erro poupa MAIS,
+    /// porque um nome que nao existe na Steam ("WinBox", o nome de uma pasta de repack que ficou
+    /// estranho) seria consultado de novo a cada abertura do launcher, para sempre.
+    /// </summary>
+    private static async Task<int?> ResolverAppIdPorNomeAsync(string nome)
+    {
+        if (string.IsNullOrWhiteSpace(nome)) return null;
+
+        var limpo = RuidoDeReleaseRegex().Replace(nome, " ");
+        limpo = Regex.Replace(limpo, @"[_\.]+", " ");
+        limpo = Regex.Replace(limpo, @"\s{2,}", " ").Trim(' ', '-', '–');
+        if (limpo.Length < 3) return null;
+
+        try
+        {
+            Directory.CreateDirectory(AppPaths.CoversDir);
+            var chave = Regex.Replace(limpo.ToLowerInvariant(), @"[^a-z0-9]+", "_").Trim('_');
+            var cacheNome = Path.Combine(AppPaths.CoversDir, $"nome_{chave}.appid");
+            if (File.Exists(cacheNome))
+            {
+                var txt = (await File.ReadAllTextAsync(cacheNome)).Trim();
+                // Vazio = "procurei e nao existe". Guardado por uma semana, como o .miss do CDN.
+                if (txt.Length == 0)
+                    return DateTime.UtcNow - File.GetLastWriteTimeUtc(cacheNome) < TimeSpan.FromDays(7)
+                           ? null : null;
+                return int.TryParse(txt, out var v) ? v : null;
+            }
+
+            var url = "https://steamcommunity.com/actions/SearchApps/" + Uri.EscapeDataString(limpo);
+            var json = await Http.GetStringAsync(url);
+
+            // A resposta e uma lista ordenada por relevancia; o primeiro cujo nome bate de forma
+            // razoavel e a escolha. Aceitar o primeiro sem conferir traria "Metal Gear Rising"
+            // para quem procurou "Metal Gear Solid V".
+            var appId = EscolherMelhor(json, limpo);
+            await File.WriteAllTextAsync(cacheNome, appId?.ToString() ?? "");
+            if (appId is not null) Log.Info($"capa: \"{nome}\" resolvido para appid {appId}");
+            return appId;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"resolver appid de \"{nome}\": {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// O melhor candidato da lista, ou nenhum.
+    ///
+    /// A comparacao e feita sobre o nome NORMALIZADO (so letras e digitos, minusculas) porque o
+    /// que separa "Marvel's Spider-Man 2" de "Marvels Spider Man 2" e so pontuacao. Exige que um
+    /// contenha o outro: isso aceita a diferenca de subtitulo e edicao, e recusa um jogo vizinho
+    /// da mesma franquia, que e o erro caro — uma capa errada e pior do que nenhuma, porque parece
+    /// certa.
+    /// </summary>
+    private static int? EscolherMelhor(string json, string procurado)
+    {
+        static string Norm(string s) => Regex.Replace(s.ToLowerInvariant(), @"[^a-z0-9]+", "");
+        var alvo = Norm(procurado);
+        if (alvo.Length < 3) return null;
+
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        if (doc.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array) return null;
+
+        foreach (var item in doc.RootElement.EnumerateArray())
+        {
+            if (!item.TryGetProperty("appid", out var a) || !item.TryGetProperty("name", out var n))
+                continue;
+            var cand = Norm(n.GetString() ?? "");
+            if (cand.Length < 3) continue;
+            if (!cand.Contains(alvo) && !alvo.Contains(cand)) continue;
+
+            var raw = a.ValueKind == System.Text.Json.JsonValueKind.Number
+                ? a.GetInt32().ToString() : a.GetString();
+            if (int.TryParse(raw, out var id)) return id;
+        }
+        return null;
     }
 }

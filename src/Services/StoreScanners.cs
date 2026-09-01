@@ -388,12 +388,20 @@ public static partial class StoreScanners
             using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
             using var rockstar = baseKey.OpenSubKey(@"SOFTWARE\Rockstar Games");
             if (rockstar is null) return games;
-            var skip = new[] { "Launcher", "Rockstar Games Launcher", "Social Club" };
+            // Comparacao por CONTEUDO, e nao por igualdade.
+            //
+            // A chave real chama-se "Rockstar Games Social Club", e a lista dizia "Social Club":
+            // `Contains` com igualdade nunca casava, e o Social Club — que e um servico de conta,
+            // nao um jogo — aparecia na grade com bolinha de DLSS 5 para instalar.
+            //
+            // "Steam" entrou junto pelo mesmo motivo: a Rockstar cria essa subchave para apontar a
+            // integracao, e ela virava um "jogo" chamado Steam.
+            var skip = new[] { "launcher", "social club", "steam", "rockstar games services" };
             foreach (var sub in rockstar.GetSubKeyNames())
             {
                 try
                 {
-                    if (skip.Contains(sub, StringComparer.OrdinalIgnoreCase)) continue;
+                    if (skip.Any(s => sub.Contains(s, StringComparison.OrdinalIgnoreCase))) continue;
                     using var k = rockstar.OpenSubKey(sub);
                     var dir = (k?.GetValue("InstallFolder") as string)?.TrimEnd('\\');
                     if (dir is null || !Directory.Exists(dir)) continue;

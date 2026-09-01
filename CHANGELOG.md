@@ -1,5 +1,60 @@
 # Changelog
 
+## v1.68.0
+
+### Capa para jogo que não veio de loja nenhuma
+
+Um repack numa pasta não tem appid, e a busca de capa desistia exatamente aí — o card ficava com as
+iniciais num retângulo cinza. São justamente os jogos em que a capa mais ajuda: "Metal Gear Solid V
+The Phantom Pain" numa pasta de repack é uma linha de texto longa, enquanto a capa se reconhece de
+relance.
+
+Agora o nome é resolvido num appid antes de buscar a arte, como o Playnite faz com os provedores de
+metadados dele. O catálogo da Steam serve de índice mesmo para quem não comprou lá: quase todo jogo
+de PC tem uma página, e a arte está num CDN público.
+
+O nome da pasta passa por uma limpeza primeiro — `(2026)`, `[Portable by SeleZen]`, `-CODEX`,
+`v1.0.3`, "Repack" — e a comparação é feita sobre o nome normalizado, sem pontuação, para que
+"Marvels Spider-Man 2" case com "Marvel's Spider-Man 2". Exige que um nome contenha o outro:
+aceita diferença de subtítulo e edição, e recusa um jogo vizinho da mesma franquia. Uma capa errada
+é pior do que nenhuma, porque parece certa.
+
+Quando os endereços antigos do CDN não respondem, a API da loja entra como segunda tentativa. A
+Steam passou a guardar a arte sob um hash por asset, e só a API sabe qual é — sem ela, um título
+ainda não lançado tem página, tem arte, e mesmo assim ficava sem capa.
+
+Medido nos nomes reais das pastas:
+
+| pasta | resultado |
+|---|---|
+| `Metal Gear Solid V The Phantom Pain` | appid 287700, capa 300×450 |
+| `Marvels Spider-Man 2 (2023-2025)` | appid 2651280, capa 300×450 |
+| `Mortal Shell II (2026)` | appid 2584270, header 460×215 (via API) |
+| `LEGO Batman … [Portable by SeleZen]` | appid 2215200, header 460×215 (via API) |
+| `WinBox`, `Social Club UI` | sem capa — corretamente |
+
+A resposta é guardada em disco pelos dois lados. O acerto poupa a rede; o erro poupa mais, porque
+um nome que não existe na Steam seria consultado a cada abertura, para sempre.
+
+### Duas coisas que não eram jogos
+
+**Rockstar Games Social Club** aparecia na grade com bolinha de DLSS 5 para instalar. A lista de
+exclusão do scanner dizia `"Social Club"` e comparava por igualdade — a chave do registro chama-se
+`Rockstar Games Social Club`, então nunca casava. Agora a comparação é por conteúdo, e `Steam`
+entrou na lista pelo mesmo motivo (a Rockstar cria essa subchave para apontar a integração).
+
+**WinBox** era pior: `C:\Users\Admin\Downloads` tinha sido adicionada como pasta de jogo. Sem um
+nome de pasta utilizável, o resolvedor cai no `ProductName` de algum executável lá dentro — e
+escolheu o de uma ferramenta de rede que por acaso estava baixada ali.
+
+Uma pasta que guarda muitas coisas sem relação entre si não é um jogo. Downloads, Desktop,
+Documentos, Program Files e a raiz de uma unidade passam a ser recusadas — na hora de adicionar,
+com uma explicação, e não silenciosamente na varredura.
+
+O filtro vive num lugar só. Quando ele estava só na interface, o WinBox sumiu da grade e continuou
+aparecendo no `list` — a mesma divergência entre duas cópias que já tinha travado o interruptor no
+Baldur's Gate 3.
+
 ## v1.67.0
 
 A chave de tradutor da versão anterior estava errada de duas formas ao mesmo tempo, e uma delas

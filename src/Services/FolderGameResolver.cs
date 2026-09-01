@@ -26,6 +26,66 @@ public static partial class FolderGameResolver
         "wingdk", "steamapps", "common", "launcher", "files",
     };
 
+    /// <summary>
+    /// Pastas que guardam MUITAS coisas sem relacao entre si.
+    ///
+    /// Uma dessas nunca e um jogo, e o estrago de trata-la como um so aparece de um jeito
+    /// desconcertante: sem um nome de pasta utilizavel, o resolvedor cai no ProductName de algum
+    /// executavel la dentro. `C:\Users\Admin\Downloads` virou um jogo chamado "WinBox" — o nome de
+    /// uma ferramenta de rede que por acaso estava baixada ali.
+    ///
+    /// Separado de <see cref="Containers"/> porque a resposta e outra: um "bin" ainda faz parte de
+    /// um jogo e o resolvedor deve SUBIR a arvore; uma "Downloads" nao faz parte de nada.
+    /// </summary>
+    private static readonly HashSet<string> PastasDoUsuario = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "downloads", "desktop", "documents", "documentos", "downloads (2)", "temp", "tmp",
+        "onedrive", "dropbox", "google drive", "music", "pictures", "videos", "public",
+        "program files", "program files (x86)", "programdata", "users", "appdata", "windows",
+    };
+
+    /// <summary>
+    /// As pastas manuais que de fato viram jogos.
+    ///
+    /// Existe para ser o UNICO lugar que aplica esse filtro. A interface e o CLI montam a lista de
+    /// jogos cada um por sua conta, e quando a guarda de deposito foi para so um dos dois o WinBox
+    /// sumiu da grade e continuou aparecendo no `list` — a mesma divergencia entre duas copias que
+    /// ja tinha travado o interruptor no Baldur's Gate 3.
+    /// </summary>
+    public static IEnumerable<GameInfo> ResolverPastasManuais(IEnumerable<string> dirs,
+                                                             IReadOnlyList<CatalogEntry> catalog)
+    {
+        foreach (var dir in dirs)
+        {
+            if (!Directory.Exists(dir)) continue;
+            if (EhDeposito(dir))
+            {
+                Log.Warn($"pasta manual ignorada (e um deposito, nao um jogo): {dir}");
+                continue;
+            }
+            yield return Resolve(dir, catalog);
+        }
+    }
+
+    /// <summary>
+    /// Esta pasta e um deposito, e nao um jogo?
+    ///
+    /// Vale tambem para a raiz de uma unidade: adicionar `D:\` como "um jogo" tem o mesmo problema,
+    /// e e um engano facil de cometer no seletor de pastas.
+    /// </summary>
+    public static bool EhDeposito(string dir)
+    {
+        try
+        {
+            var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dir));
+            // Raiz de unidade: "D:" depois do trim, ou o proprio caminho raiz.
+            if (Path.GetPathRoot(full)?.TrimEnd(Path.DirectorySeparatorChar)
+                    .Equals(full, StringComparison.OrdinalIgnoreCase) == true) return true;
+            return PastasDoUsuario.Contains(Path.GetFileName(full));
+        }
+        catch { return false; }
+    }
+
     [GeneratedRegex(@"[\[\(\{][^\]\)\}]*[\]\)\}]")]
     private static partial Regex BracketTagRegex();
 

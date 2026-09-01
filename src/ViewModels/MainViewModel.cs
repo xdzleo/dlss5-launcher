@@ -955,8 +955,10 @@ public class MainViewModel : ObservableObject
             var games = await StoreScanners.ScanAllAsync(KnownGame);
             // a hand-picked folder is named by whoever packed it, not by the developer — the
             // resolver reads the exe and the parent folders to find out which game it is
-            foreach (var dir in Config.ManualGameDirs.Where(Directory.Exists))
-                games.Add(FolderGameResolver.Resolve(dir, _catalogEntries));
+            // Pelo mesmo caminho que o CLI usa. Um deposito (Downloads, Desktop, a raiz de uma
+            // unidade) nao e um jogo: `C:\Users\Admin\Downloads` entrava na grade como um jogo
+            // chamado "WinBox" — o ProductName de uma ferramenta de rede baixada la.
+            games.AddRange(FolderGameResolver.ResolverPastasManuais(Config.ManualGameDirs, _catalogEntries));
 
             Games.Clear();
             foreach (var g in games)
@@ -2432,6 +2434,14 @@ public class MainViewModel : ObservableObject
         var dlg = new Microsoft.Win32.OpenFolderDialog { Title = L.T("Main_AddGame_FolderPickerTitle") };
         if (dlg.ShowDialog() != true) return;
         var dir = dlg.FolderName;
+        // Recusar na hora de adicionar, e nao so ignorar depois: escolher "Downloads" no seletor e
+        // um engano de um clique, e sem uma resposta o usuario nao descobre por que o jogo dele
+        // nao apareceu — ou por que apareceu com o nome errado.
+        if (FolderGameResolver.EhDeposito(dir))
+        {
+            StatusText = L.T("Main_AddGame_Deposito", Path.GetFileName(dir.TrimEnd('\\')));
+            return;
+        }
         if (!Config.ManualGameDirs.Contains(dir, StringComparer.OrdinalIgnoreCase))
         {
             Config.ManualGameDirs.Add(dir);

@@ -795,6 +795,10 @@
     "en": "No native DLSS — the effect is weaker here",
     "pt-BR": "Sem DLSS nativo — o efeito é mais fraco aqui"
   },
+  "Main_AddGame_Deposito": {
+    "en": "\"{0}\" holds many unrelated things, so it is not a game folder. Pick the game's own folder instead.",
+    "pt-BR": "\"{0}\" guarda muitas coisas sem relação entre si, então não é a pasta de um jogo. Escolha a pasta do jogo em si."
+  },
   "Dlss5_Link_Tradutor": {
     "en": "D3D9 translator",
     "pt-BR": "Tradutor D3D9"

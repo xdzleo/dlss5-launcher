@@ -1389,6 +1389,9 @@ Only continue if you are going to play OFFLINE.</value>
     <value>Install Warning ({0})</value>
     <comment>{0} = familia do mod vinda crua do manifesto (renodx / reshade / luma). Nome proprio, nao traduzir.</comment>
   </data>
+  <data name="Main_AddGame_Deposito" xml:space="preserve">
+    <value>"{0}" holds many unrelated things, so it is not a game folder. Pick the game's own folder instead.</value>
+  </data>
   <data name="Main_AddGame_FolderPickerTitle" xml:space="preserve">
     <value>Choose the game folder</value>
     <comment>Titulo do OpenFolderDialog.</comment>

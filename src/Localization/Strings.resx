@@ -1389,6 +1389,9 @@ Só continue se você for jogar OFFLINE.</value>
     <value>Aviso de instalação ({0})</value>
     <comment>{0} = familia do mod vinda crua do manifesto (renodx / reshade / luma). Nome proprio, nao traduzir.</comment>
   </data>
+  <data name="Main_AddGame_Deposito" xml:space="preserve">
+    <value>"{0}" guarda muitas coisas sem relação entre si, então não é a pasta de um jogo. Escolha a pasta do jogo em si.</value>
+  </data>
   <data name="Main_AddGame_FolderPickerTitle" xml:space="preserve">
     <value>Escolha a pasta do jogo</value>
     <comment>Titulo do OpenFolderDialog.</comment>
