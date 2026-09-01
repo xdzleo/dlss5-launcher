@@ -1823,6 +1823,18 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>Looking for the neural runtime in {0}...</value>
     <comment>{0} = nome da pasta sendo varrida.</comment>
   </data>
+  <data name="OptiNr_Deployed" xml:space="preserve">
+    <value>OptiScaler_DLSSNR installed. In game, Insert opens its overlay — neural rendering starts off there.</value>
+  </data>
+  <data name="OptiNr_Fetching" xml:space="preserve">
+    <value>Fetching OptiScaler_DLSSNR (second engine)…</value>
+  </data>
+  <data name="OptiNr_NoAsset" xml:space="preserve">
+    <value>Could not find an OptiScaler_DLSSNR build to download.</value>
+  </data>
+  <data name="OptiNr_NotInLibrary" xml:space="preserve">
+    <value>OptiScaler_DLSSNR is not in the library yet.</value>
+  </data>
   <data name="OptiScaler_BadHost" xml:space="preserve">
     <value>Refused to download from an unexpected host: {0}</value>
   </data>

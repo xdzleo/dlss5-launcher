@@ -924,8 +924,38 @@ public static class NeuralUpliftService
         /// so isso. Um build da comunidade com os kernels recompilados cobre as arquiteturas
         /// anteriores — nesse caso a GPU deixa de ser o limite, e quem trouxe o arquivo ja sabe
         /// o que trouxe.
+        ///
+        /// Desde a 1.59 isso deixou de exigir que o usuario ache o arquivo: os builds `.SF` do
+        /// ShortFuse estao no MESMO manifesto do RHI que o launcher ja consulta, e o indice passa
+        /// a escolher um deles quando a placa nao e Blackwell. Uma RTX 20/30/40 com tensor core
+        /// deixa de ser recusada — o custo do pass e maior nelas, o que a interface diz, mas
+        /// recusar quem consegue rodar era pior do que avisar.
+        ///
+        /// O que continua recusado e o que nao tem como rodar: placa nao-NVIDIA (nao existe NGX)
+        /// e NVIDIA sem tensor core (GTX/GT/MX).
         /// </summary>
-        public bool GpuOk => Blackwell || RuntimeIsCommunityBuild;
+        public bool GpuOk => Blackwell || RuntimeIsCommunityBuild || TemTensorCore;
+
+        /// <summary>
+        /// A placa tem tensor core? E a linha real: sem eles nao ha o que executar o modelo, com
+        /// qualquer build. GTX, GT e MX ficam de fora; RTX de qualquer geracao entra.
+        /// </summary>
+        public bool TemTensorCore =>
+            GpuName is { } n
+            && n.Contains("RTX", StringComparison.OrdinalIgnoreCase)
+            && !n.Contains("GTX", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Quanto o pass custa nesta placa. O modelo e FP8 com kernels de Blackwell; fora dela o
+        /// build `.SF` usa binarios patcheados (RTX 40) ou um caminho FP16 (RTX 20/30), e o preco
+        /// sobe bastante. Dizer isso antes evita a conclusao errada de "instalei e ficou lento".
+        /// </summary>
+        public string? CustoEstimado =>
+            !TemTensorCore ? null
+            : Blackwell ? "RTX 50"
+            : GpuName?.Contains("RTX 40", StringComparison.OrdinalIgnoreCase) == true
+              || GpuName?.Contains("RTX 4", StringComparison.OrdinalIgnoreCase) == true ? "RTX 40"
+            : "RTX 20/30";
 
         public bool Ready => GpuOk && DriverBranch >= MinDriverBranch && RuntimeInLibrary;
 
@@ -1414,8 +1444,15 @@ public static class NeuralUpliftService
                                                         CancellationToken ct = default)
     {
         if (File.Exists(LibraryRuntime)) return null;
-        var entry = index.Newest(DlssIndexService.KindNeural);
+
+        // O build tem de caber na GPU desta maquina. O modelo original e sm_120 (Blackwell); os
+        // builds `.SF` do ShortFuse acrescentam binarios para RTX 40 e um caminho FP16 para
+        // RTX 20/30. Baixar o errado dava o pior desfecho possivel: 158 MB, instalacao limpa, e
+        // o pass sem rodar na placa do usuario.
+        var blackwell = IsBlackwell(ProbeHost().GpuName);
+        var entry = index.NeuralFor(blackwell) ?? index.Newest(DlssIndexService.KindNeural);
         if (entry is null) { Log.Warn("neural runtime: index has no dlssnr entry"); return null; }
+        Log.Info($"neural runtime: escolhido {entry.Version} (blackwell={blackwell})");
 
         try
         {

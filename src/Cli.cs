@@ -527,16 +527,68 @@ public static class Cli
     /// Existe porque "instalar DLSS 5" nunca foi UMA coisa: sao sete, em ordem, e errar qualquer
     /// uma produz o mesmo silencio. Quem usa um launcher nao deveria precisar saber disso.
     /// </summary>
+    /// <summary>
+    /// O que a instalacao FARIA neste jogo, sem escrever nada.
+    ///
+    /// As decisoes que mais custam caro sao tomadas a partir do executavel — bitness, API, se
+    /// precisa de tradutor e qual — e todas acontecem antes de qualquer arquivo ser copiado.
+    /// Mostra-las aqui e barato; descobri-las depois de 158 MB e uma reinstalacao, nao.
+    /// </summary>
+    private static void ImprimirPlano(GameInfo g, string target, string? exe, bool forcarDgVoodoo)
+    {
+        Console.WriteLine($"[plano]   {g.Name}");
+        Console.WriteLine($"  pasta          : {target}");
+        Console.WriteLine($"  executavel     : {exe ?? "(nao encontrado)"}");
+
+        var pe = exe is null ? null : PeUtils.Inspect(exe, readImports: false);
+        var bits = pe is null ? "?" : pe.Is64Bit ? "64 bits" : "32 bits";
+        Console.WriteLine($"  arquitetura    : {bits}");
+
+        var host = NeuralUpliftService.ProbeHost();
+        Console.WriteLine($"  gpu            : {host.GpuName ?? "?"}"
+                          + (host.CustoEstimado is { } c ? $"   (custo do pass: {c})" : ""));
+        Console.WriteLine($"  driver         : {host.DriverBranch}"
+                          + (host.DriverBranch < NeuralUpliftService.MinDriverBranch
+                             ? $"   precisa de {NeuralUpliftService.MinDriverBranch}+" : ""));
+
+        var det = NeuralUpliftService.Detect(g.InstallDir, target, null);
+        var feederAtivo = FeederService.IsDeployed(target);
+        var temDlss = det.HasDlss && !feederAtivo;
+        Console.WriteLine($"  DLSS proprio   : {(temDlss ? "sim" : "nao")}");
+
+        var precisaTradutor = DgVoodooService.Applies(exe);
+        if (precisaTradutor && pe?.Is64Bit == false)
+        {
+            var rota = forcarDgVoodoo || !DxvkService.RecomendadoPara(exe) ? "dgVoodoo2 (D3D11)" : "DXVK (Vulkan)";
+            Console.WriteLine($"  tradutor DX9   : {rota}");
+            Console.WriteLine($"  ReShade entra  : {(rota.StartsWith("DXVK") ? "camada Vulkan" : "proxy dxgi.dll")}");
+            Console.WriteLine($"  metades 32 bits: {(rota.StartsWith("DXVK") ? "com transporte Vulkan" : "oficiais (D3D11)")}");
+        }
+        else if (VulkanLayerService.Applies(exe))
+            Console.WriteLine("  ReShade entra  : camada Vulkan (jogo Vulkan nativo)");
+        else
+            Console.WriteLine($"  ReShade entra  : proxy ({det.ReShadeDllName ?? "a decidir"})");
+
+        if (pe?.Is64Bit == false)
+            Console.WriteLine("  processo extra : host64 (o DLSS e x64; um jogo de 32 bits nao o carrega)");
+
+        Console.WriteLine("  (nada foi escrito — isto e so o plano)");
+    }
+
     private static async Task<int> Dlss5Async(string[] rest)
     {
         var all = rest.Any(a => a is "--all" or "-a");
         // O DXVK e a rota padrao para jogo DX9 de 32 bits. --dgvoodoo volta para o tradutor
         // antigo, no caso inverso: jogo que o DXVK recuse e o dgVoodoo aceite.
         var dgvoodoo = rest.Any(a => a is "--dgvoodoo");
+        // Diz o que FARIA, sem escrever nada. Um jogo por vez custa 158 MB de runtime e mexe em
+        // meia duzia de arquivos; poder ver a rota escolhida antes disso evita descobrir a
+        // decisao errada depois de instalar.
+        var soPlano = rest.Any(a => a is "--check" or "--dry-run");
         var query = rest.FirstOrDefault(a => !a.StartsWith('-'));
         if (!all && string.IsNullOrWhiteSpace(query))
         {
-            Console.Error.WriteLine("uso: dlss5 <jogo> [--dgvoodoo] | dlss5 --all");
+            Console.Error.WriteLine("uso: dlss5 <jogo> [--dgvoodoo] [--check] | dlss5 --all");
             return 1;
         }
 
@@ -561,6 +613,13 @@ public static class Cli
             var target = state?.TargetDir ?? g.InstallDir;
             var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
             var exe = state?.ExePath ?? ExeLocator.FindCandidates(g, null).FirstOrDefault();
+
+            if (soPlano)
+            {
+                ImprimirPlano(g, target, exe, dgvoodoo);
+                ok++;
+                continue;
+            }
 
             var r = await Dlss5Installer.InstallAsync(g, target, ini, exe, state?.AddonPath,
                 index, reshade, ctx.Rhi,

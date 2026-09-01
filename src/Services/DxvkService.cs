@@ -64,17 +64,22 @@ public static class DxvkService
     /// para os casos ja verificados em que ele perde — e so entra aqui o que foi testado
     /// dentro do jogo, nunca por suposicao.
     /// </summary>
+    /// <remarks>
+    /// Casado por PREFIXO, nao por nome exato. O Saints Row 2 tem dois executaveis — `sr2_pc.exe`
+    /// e `sr2_pc_unpatched.exe` — e o localizador escolhe o segundo. Uma lista de nomes exatos
+    /// deixava o jogo cair no DXVK apesar da excecao, e o `--check` foi quem mostrou isso.
+    /// </remarks>
     private static readonly string[] PreferemDgVoodoo =
     {
-        "sr2_pc.exe",   // Saints Row 2
+        "sr2_pc",   // Saints Row 2 (sr2_pc.exe e sr2_pc_unpatched.exe)
     };
 
     /// <summary>O DXVK e a rota recomendada para este executavel?</summary>
     public static bool RecomendadoPara(string? exePath)
     {
         if (exePath is null) return true;
-        var nome = Path.GetFileName(exePath);
-        return !PreferemDgVoodoo.Contains(nome, StringComparer.OrdinalIgnoreCase);
+        var nome = Path.GetFileNameWithoutExtension(exePath);
+        return !PreferemDgVoodoo.Any(p => nome.StartsWith(p, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>Este jogo esta rodando pela rota DXVK? (o d3d9.dll dele e o do DXVK)</summary>
@@ -96,15 +101,12 @@ public static class DxvkService
 
         progress?.Report(L.T("Dxvk_Fetching"));
         using var http = NewClient();
-        var api = $"https://api.github.com/repos/{Repo}/releases/latest";
-        var json = await http.GetStringAsync(api, ct);
 
-        // O asset e um .tar.gz — o formato que o projeto publica.
-        var url = System.Text.RegularExpressions.Regex
-            .Matches(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+dxvk-[0-9.]+\\.tar\\.gz)\"")
-            .Select(m => m.Groups[1].Value)
-            .FirstOrDefault(HostOk);
-        if (url is null) throw new InvalidOperationException(L.T("Dxvk_NoAsset"));
+        // Sem a API: ela limita a 60 requisicoes por hora por IP, e quem instala em varios jogos
+        // estoura isso e recebe 403 em tudo. A pagina publica de release nao tem cota.
+        var url = await GitHubReleaseService.LatestAssetAsync(
+            http, Repo, new System.Text.RegularExpressions.Regex(@"^dxvk-[0-9.]+\.tar\.gz$"), ct);
+        if (url is null || !HostOk(url)) throw new InvalidOperationException(L.T("Dxvk_NoAsset"));
 
         var tgz = Path.Combine(LibraryDir, "dxvk.tar.gz");
         await using (var s = await http.GetStreamAsync(url, ct))

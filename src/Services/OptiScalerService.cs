@@ -107,19 +107,15 @@ public static class OptiScalerService
             await BaixarAsync(http, SevenZipUrl, SevenZip, ct);
         }
 
-        // 2. o asset da release, resolvido pela API — o nome carrega data e build, entao
-        //    fixa-lo numa URL "latest/download" quebraria na proxima versao
-        var json = await http.GetStringAsync($"https://api.github.com/repos/{Repo}/releases/latest", ct);
-        using var doc = JsonDocument.Parse(json);
-        string? url = null;
-        foreach (var a in doc.RootElement.GetProperty("assets").EnumerateArray())
-        {
-            var nome = a.GetProperty("name").GetString() ?? "";
-            if (!nome.EndsWith(".7z", StringComparison.OrdinalIgnoreCase)) continue;
-            var u = a.GetProperty("browser_download_url").GetString() ?? "";
-            if (HostOk(u)) { url = u; break; }
-        }
-        if (url is null) throw new InvalidOperationException(L.T("OptiScaler_NoAsset"));
+        // 2. o asset da release — o nome carrega data e build, entao fixa-lo numa URL
+        //    "latest/download" quebraria na proxima versao.
+        //
+        //    Resolvido pela PAGINA de release, nao pela API: a API anonima limita a 60
+        //    requisicoes por hora por IP, e quem instala em varios jogos estoura isso e recebe
+        //    403 em tudo — sem nenhuma pista de que a causa e cota, nao rede.
+        var url = await GitHubReleaseService.LatestAssetAsync(
+            http, Repo, new System.Text.RegularExpressions.Regex(@"\.7z$"), ct);
+        if (url is null || !HostOk(url)) throw new InvalidOperationException(L.T("OptiScaler_NoAsset"));
 
         var pacote = Path.Combine(LibraryDir, "optiscaler.7z");
         try

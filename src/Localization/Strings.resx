@@ -1823,6 +1823,18 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Procurando o runtime neural em {0}...</value>
     <comment>{0} = nome da pasta sendo varrida.</comment>
   </data>
+  <data name="OptiNr_Deployed" xml:space="preserve">
+    <value>OptiScaler_DLSSNR instalado. No jogo, Insert abre o overlay dele — o neural rendering começa desligado.</value>
+  </data>
+  <data name="OptiNr_Fetching" xml:space="preserve">
+    <value>Baixando o OptiScaler_DLSSNR (segunda engine)…</value>
+  </data>
+  <data name="OptiNr_NoAsset" xml:space="preserve">
+    <value>Não encontrei um build do OptiScaler_DLSSNR para baixar.</value>
+  </data>
+  <data name="OptiNr_NotInLibrary" xml:space="preserve">
+    <value>O OptiScaler_DLSSNR ainda não está na biblioteca.</value>
+  </data>
   <data name="OptiScaler_BadHost" xml:space="preserve">
     <value>Recusei baixar de um endereço inesperado: {0}</value>
   </data>

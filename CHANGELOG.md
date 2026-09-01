@@ -1,5 +1,72 @@
 # Changelog
 
+## v1.59.0
+
+Quatro ideias vindas do [DLSS5oneclick](https://github.com/faisalkindi/DLSS5oneclick), depois de
+ler o código dele. Nenhuma é código copiado — são decisões boas que o nosso não tomava.
+
+### RTX 20, 30 e 40 deixam de ser recusadas
+
+O modelo de Neural Rendering original é FP8 com kernels `sm_120`, que só existem em Blackwell — e
+por isso o launcher recusava tudo abaixo de RTX 50, mandando o usuário achar um build alternativo
+por conta própria.
+
+Só que esse build **já estava no manifesto do RHI que o launcher consulta**: os `.SF`, do
+ShortFuse, que acrescentam binários patcheados para RTX 40 e um caminho FP16 para RTX 20/30. A
+ordenação nunca os escolhia porque `310.8.SF-v2` não é uma versão parseável — `Version.TryParse`
+falhava, a entrada caía para `0.0` e perdia para `310.8.0`. O launcher baixava 158 MB do build que
+a placa do usuário não roda.
+
+Agora o índice escolhe pela GPU: em Blackwell, o mais novo; fora dela, um `.SF`. A recusa fica só
+para o que realmente não tem como rodar — placa não-NVIDIA (não existe NGX) e NVIDIA sem tensor
+core (GTX/GT/MX). A interface passa a dizer o custo esperado (`RTX 50` · `RTX 40` · `RTX 20/30`),
+porque o preço do passe sobe bastante fora do Blackwell e "instalei e ficou lento" é uma conclusão
+fácil de tirar sem esse aviso.
+
+### O `HTTP 403` que ainda não te aconteceu
+
+A API do GitHub permite **60 requisições por hora por IP** quando anônima. O launcher consultava
+releases pela API em quatro serviços; quem instala em muitos jogos estoura a cota e passa a
+receber `403 Forbidden` em tudo — sem nenhuma pista de que a causa é cota, não rede.
+
+As páginas públicas de release não têm essa cota:
+
+```
+github.com/{repo}/releases/latest                 -> 302 para .../tag/{versão}
+github.com/{repo}/releases/expanded_assets/{tag}  -> HTML com os links
+```
+
+`GitHubReleaseService` passa a resolver assets por aí. Um `GITHUB_TOKEN` no ambiente ainda vale a
+pena (5000/hora) e é tentado primeiro; a página é o caminho normal, não o remendo.
+
+### `--check`: o que seria feito, sem escrever nada
+
+```
+dlss5 "Bully" --check
+
+  arquitetura    : 32 bits
+  gpu            : NVIDIA GeForce RTX 5090   (custo do pass: RTX 50)
+  DLSS proprio   : nao
+  tradutor DX9   : DXVK (Vulkan)
+  ReShade entra  : camada Vulkan
+  metades 32 bits: com transporte Vulkan
+  processo extra : host64 (o DLSS e x64; um jogo de 32 bits nao o carrega)
+  (nada foi escrito — isto e so o plano)
+```
+
+Achou um bug na primeira execução: o Saints Row 2 aparecia com DXVK apesar de estar na lista de
+exceções, porque o executável detectado é `sr2_pc_unpatched.exe` e a lista tinha só `sr2_pc.exe`.
+Passou a casar por prefixo.
+
+### Segunda engine para jogo com DLSS próprio
+
+`OptiScalerNrService` traz o fork [OptiScaler_DLSSNR](https://github.com/Dagherbou/OptiScaler_DLSSNR)
+do Dagherbou — OptiScaler com o passe de Neural Rendering embutido, que entra sozinho como
+`dxgi.dll`, sem ReShade nem add-on separado. As duas engines não convivem (ambas carregam como
+`dxgi.dll`), então a escolha é exclusiva. A remoção é guiada por um manifesto do que foi escrito:
+o pacote espalha vários arquivos na raiz do jogo, e adivinhar ali significaria apagar arquivo
+alheio.
+
 ## v1.58.1
 
 **Uma camada Vulkan por jogo era errado, e o Bully mostrou por quê.** Camada implícita é

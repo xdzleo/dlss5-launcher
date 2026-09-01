@@ -104,6 +104,41 @@ public class DlssIndexService
     }
 
     /// <summary>
+    /// O build de Neural Rendering que ESTA GPU consegue rodar.
+    ///
+    /// O modelo original (310.8.0) traz kernels sm_120 e roda so em Blackwell — e por isso que o
+    /// launcher recusava RTX 20/30/40 e mandava o usuario achar um arquivo sozinho. O manifesto
+    /// do RHI publica tambem os builds `.SF` (do ShortFuse), que acrescentam binarios patcheados
+    /// para RTX 40 e um caminho FP16 para RTX 20/30.
+    ///
+    /// A ordenacao normal nunca os escolhia: "310.8.SF-v2" nao e uma versao parseavel, entao
+    /// Version.TryParse falhava e a entrada caia para 0.0, atras do 310.8.0. O resultado era o
+    /// launcher baixar justamente o build que a placa do usuario nao roda.
+    ///
+    /// Em Blackwell qualquer um serve e o mais novo ganha; fora dela, so o `.SF` serve.
+    /// </summary>
+    public Entry? NeuralFor(bool blackwell)
+    {
+        if (!_byKind.TryGetValue(KindNeural, out var list) || list.Count == 0) return null;
+
+        static int Peso(Entry e) =>
+            e.Version.Contains("SF-v2", StringComparison.OrdinalIgnoreCase) ? 3
+            : e.Version.Contains(".SF", StringComparison.OrdinalIgnoreCase) ? 2
+            : 1;
+
+        var candidatos = blackwell ? list : list.Where(e => Peso(e) >= 2).ToList();
+        if (candidatos.Count == 0)
+        {
+            // Nenhum build multi-geracao no indice: devolve o que houver e deixa a checagem de
+            // GPU decidir, em vez de dizer "nao ha runtime" para quem so precisa de outro build.
+            Log.Warn("dlss index: nenhum build .SF listado; caindo no mais novo");
+            return Newest(KindNeural);
+        }
+        // Desempate pela ordem do proprio manifesto, que ja vem do mais novo para o mais antigo.
+        return candidatos.OrderByDescending(Peso).FirstOrDefault();
+    }
+
+    /// <summary>
     /// Download one entry's archive and unpack it into its own folder under the launcher's
     /// downloads directory. Reuses an already-unpacked copy so a retry after a failed install
     /// does not pull 158 MB again.

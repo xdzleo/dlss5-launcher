@@ -1225,6 +1225,22 @@
     "en": "32-bit halves with Vulkan transport installed (for the DXVK route).",
     "pt-BR": "Metades de 32 bits com transporte Vulkan instaladas (para a rota DXVK)."
   },
+  "OptiNr_Fetching": {
+    "en": "Fetching OptiScaler_DLSSNR (second engine)…",
+    "pt-BR": "Baixando o OptiScaler_DLSSNR (segunda engine)…"
+  },
+  "OptiNr_NoAsset": {
+    "en": "Could not find an OptiScaler_DLSSNR build to download.",
+    "pt-BR": "Não encontrei um build do OptiScaler_DLSSNR para baixar."
+  },
+  "OptiNr_NotInLibrary": {
+    "en": "OptiScaler_DLSSNR is not in the library yet.",
+    "pt-BR": "O OptiScaler_DLSSNR ainda não está na biblioteca."
+  },
+  "OptiNr_Deployed": {
+    "en": "OptiScaler_DLSSNR installed. In game, Insert opens its overlay — neural rendering starts off there.",
+    "pt-BR": "OptiScaler_DLSSNR instalado. No jogo, Insert abre o overlay dele — o neural rendering começa desligado."
+  },
   "Dxvk_Fetching": {
     "en": "Fetching DXVK…",
     "pt-BR": "Baixando o DXVK…"
