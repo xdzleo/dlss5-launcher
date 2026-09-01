@@ -58,7 +58,9 @@ var camadaVk = VulkanLayerService.IsRegistered(dir, bits64);
 var feederActive = FeederService.IsDeployed(dir);
 var bridgeActive = NeuralUpliftService.BridgeDeployed(dir);
 var alcancaD3d12 = Dlss5Installer.ReachesD3D12(exe);
-var temDlssNativo = det.HasDlss && !feederActive;
+// Espelha o launcher: a anulacao por Feeder presente saiu (o marcador .renodx-ours ja
+// impede a deteccao de contar os runtimes que o launcher copiou).
+var temDlssNativo = det.HasDlss;
 var pedePonte = temDlssNativo && !alcancaD3d12;
 var pedeFeeder = !temDlssNativo && FeederService.Applies(exe, temDlssNativo, alcancaD3d12);
 var rrEsperado = NeuralUpliftService.TemRuntimeLocal(dir);
@@ -81,6 +83,22 @@ var elos = new List<(string Nome, bool Ok, string Porque)>
 };
 if (pedePonte || bridgeActive) elos.Add(("Bridge", bridgeActive, $"pede={pedePonte}"));
 if (pedeFeeder || feederActive) elos.Add(("Feeder", feederActive, $"pede={pedeFeeder}  ativo={feederActive}"));
+
+// O portao que decide se o CARD de DLSS 5 sequer aparece na tela. E anterior a cadeia: se ele
+// fecha, os elos nem sao desenhados, e o sintoma e "o card nao aparece neste jogo".
+Console.WriteLine();
+Console.WriteLine("  --- o card de DLSS 5 aparece? ---");
+var feederServe = !temDlssNativo
+                  && FeederService.Applies(exe, temDlssNativo, alcancaD3d12)
+                  && (det.AddonSupportsNr || det.GenericAddonInLibrary);
+Console.WriteLine($"    Offerable            = {det.Offerable}");
+Console.WriteLine($"    temDlssNativo        = {temDlssNativo}   (HasDlss={det.HasDlss}, feeder={feederActive})");
+Console.WriteLine($"    FeederService.Applies= {FeederService.Applies(exe, temDlssNativo, alcancaD3d12)}");
+Console.WriteLine($"    AddonSupportsNr      = {det.AddonSupportsNr}");
+Console.WriteLine($"    GenericAddonInLibrary= {det.GenericAddonInLibrary}");
+Console.WriteLine($"    feederServe          = {feederServe}");
+Console.WriteLine($"    -> card {(det.Offerable || feederServe ? "APARECE" : "NAO APARECE")}");
+Console.WriteLine();
 
 var todosOk = true;
 foreach (var (nome, ok, porque) in elos)

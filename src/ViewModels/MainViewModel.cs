@@ -554,7 +554,9 @@ public class MainViewModel : ObservableObject
         BridgeActive = NeuralUpliftService.BridgeDeployed(targetDir);
 
         var alcancaD3d12 = Dlss5Installer.ReachesD3D12(exePath);
-        var temDlssNativo = det.HasDlss && !FeederActive;
+        // Ver a nota longa em CheckNeuralAsync: a anulacao por Feeder presente saiu porque o
+        // marcador `.renodx-ours` ja impede a deteccao de contar os runtimes que nos copiamos.
+        var temDlssNativo = det.HasDlss;
         var pedePonte = temDlssNativo && !alcancaD3d12;
         var pedeFeeder = !temDlssNativo && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12);
 
@@ -1063,14 +1065,38 @@ public class MainViewModel : ObservableObject
         // o pass era consumir o DLSS que o jogo ja tinha. Com o Feeder deixou de ser: um jogo
         // DX11 sem DLSS nenhum passa a ser atendivel, e esconder o cartao dele significaria que
         // o caminho existe no instalador e nao tem por onde ser pedido.
-        // Mesma correcao do instalador: depois da primeira instalacao os runtimes que copiamos
-        // ficam na pasta, e HasDlss passa a falar deles em vez do jogo.
-        var temDlssNativo = detection.HasDlss && !FeederService.IsDeployed(targetDir);
+        //
+        // O "&& !FeederService.IsDeployed" que existia aqui SAIU. Ele nasceu de um problema real
+        // — depois da primeira instalacao os runtimes que copiamos ficam na pasta, e a deteccao
+        // passava a falar deles em vez do jogo — mas resolvia isso anulando HasDlss sempre que o
+        // Feeder estivesse presente. O efeito era um jogo que TEM DLSS de fabrica passar a ser
+        // tratado como "sem DLSS proprio" assim que o Feeder era instalado, e receber o aviso de
+        // que o resultado ali e mais fraco. Aconteceu em Control, DOOM Eternal, Metro Exodus e
+        // varios outros: HasDlss=True e temDlssNativo=False ao mesmo tempo.
+        //
+        // O problema de origem ja tem a solucao certa: o marcador `.renodx-ours`, escrito em todo
+        // caminho que instala runtime e consultado pela deteccao, que pula os arquivos que o
+        // proprio launcher pos. Com ele, HasDlss ja fala so do jogo — e a anulacao virou um
+        // remendo duplicado que so destruia o caso legitimo.
+        var temDlssNativo = detection.HasDlss;
         var feederServe = !temDlssNativo
                           && FeederService.Applies(item.ChosenExe, temDlssNativo,
                                                    Dlss5Installer.ReachesD3D12(item.ChosenExe))
                           && (detection.AddonSupportsNr || detection.GenericAddonInLibrary);
-        if (!detection.Offerable && !feederServe) return;
+        // Ja instalado sempre aparece, mesmo que hoje o launcher nao se oferecesse para instalar.
+        //
+        // O portao so perguntava "da para oferecer?", e nunca "ja esta la?". No Ryse: Son of Rome
+        // o DLSS 5 esta instalado e a cadeia inteira verde, mas FeederService.Applies devolve
+        // false para aquele executavel — entao o card sumia da tela de um jogo que estava
+        // FUNCIONANDO. Sem card nao ha como ver o estado nem desinstalar: o launcher escondia o
+        // que ele mesmo tinha posto ali.
+        //
+        // Os criterios de oferta mudam entre versoes (heuristica de API, indice, GPU). O que foi
+        // instalado nao pode desaparecer da interface porque a regra de oferta mudou depois.
+        var jaInstalado = FeederService.IsDeployed(targetDir)
+                          || NeuralUpliftService.DeployedGenericAddon(targetDir) != null
+                          || NeuralUpliftService.BridgeDeployed(targetDir);
+        if (!detection.Offerable && !feederServe && !jaInstalado) return;
 
         // O runtime nao vem em driver nem em SDK publico: as unicas copias sao as que ja estao
         // nesta maquina. Procura sozinho antes de pedir que o usuario ache o arquivo na mao —

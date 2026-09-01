@@ -198,7 +198,9 @@ public static class Dlss5Installer
         // launcher, trocava o Feeder pela ponte e mandava o usuario ligar um DLSS que o jogo nao
         // tem. O Feeder ja implantado e a evidencia de que a decisao anterior foi essa.
         var feederJaAqui = FeederService.IsDeployed(targetDir);
-        var temDlssNativo = det.HasDlss && !feederJaAqui;
+        // O marcador `.renodx-ours` ja impede que a deteccao conte os runtimes que este launcher
+        // copiou, entao anular por Feeder presente so fazia jogo COM DLSS parecer sem.
+        var temDlssNativo = det.HasDlss;
 
         // A ponte e de DirectX 11 — ela engancha o device D3D11 do jogo para dar ao pass neural
         // um lugar onde rodar. Num jogo Vulkan nao ha device D3D11 nenhum: instala-la ali punha

@@ -469,7 +469,7 @@ public static class Cli
         var feederAqui = FeederService.IsDeployed(target);
         var ponteAqui = NeuralUpliftService.BridgeDeployed(target);
         var chegaD3d12 = Dlss5Installer.ReachesD3D12(exe);
-        var dlssNativo = det.HasDlss && !feederAqui;
+        var dlssNativo = det.HasDlss;   // o marcador .renodx-ours ja exclui o que nos copiamos
         var pedePonte = dlssNativo && !chegaD3d12;
         var feederServe = !dlssNativo
                           && FeederService.Applies(exe, dlssNativo, chegaD3d12)
@@ -553,7 +553,7 @@ public static class Cli
 
         var det = NeuralUpliftService.Detect(g.InstallDir, target, null);
         var feederAtivo = FeederService.IsDeployed(target);
-        var temDlss = det.HasDlss && !feederAtivo;
+        var temDlss = det.HasDlss;   // idem: ver a nota em MainViewModel.CheckNeuralAsync
         Console.WriteLine($"  DLSS proprio   : {(temDlss ? "sim" : "nao")}");
 
         var precisaTradutor = DgVoodooService.Applies(exe);
