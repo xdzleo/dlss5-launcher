@@ -776,7 +776,7 @@
   },
   "Main_D3d10Translator_Hint": {
     "en": "Direct3D 10 game: translated to Vulkan by DXVK 1.10.3, the last release with its own d3d10.dll. It is the only translator that covers this API, so there is nothing to choose.",
-    "pt-BR": "Jogo Direct3D 10: traduzido para Vulkan pelo DXVK 1.10.3, a última release com d3d10.dll próprio. É o único tradutor que cobre esta API, então não há o que escolher."
+    "pt-BR": "Jogo Direct3D 10: traduzido para Vulkan pelo DXVK 1.10.3, a última release com d3d10.dll próprio. É o único tradutor que cobre essa API, então não há o que escolher."
   },
   "Dlss5_Blocked_No32": {
     "en": "This game is 32-bit and the pieces for that path could not be downloaded.",

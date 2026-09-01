@@ -1448,7 +1448,7 @@ Só continue se você for jogar OFFLINE.</value>
     <comment>Usada no texto do botao e no AutomationProperties.Name.</comment>
   </data>
   <data name="Main_D3d10Translator_Hint" xml:space="preserve">
-    <value>Jogo Direct3D 10: traduzido para Vulkan pelo DXVK 1.10.3, a última release com d3d10.dll próprio. É o único tradutor que cobre esta API, então não há o que escolher.</value>
+    <value>Jogo Direct3D 10: traduzido para Vulkan pelo DXVK 1.10.3, a última release com d3d10.dll próprio. É o único tradutor que cobre essa API, então não há o que escolher.</value>
   </data>
   <data name="Main_D3d10Translator_Label" xml:space="preserve">
     <value>Tradutor de DirectX 10: DXVK</value>
