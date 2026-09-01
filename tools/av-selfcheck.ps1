@@ -743,6 +743,21 @@ foreach ($r in $skip) { Write-Host ('  SKIP: ' + $r.Check) -ForegroundColor Dark
 if ($env:GITHUB_STEP_SUMMARY) {
     $md = @('# Verificacao de artefatos', '', '| Teste | Status |', '|---|---|')
     foreach ($r in $script:Results) { $md += "| $($r.Check) | **$($r.Status)** |" }
+
+    # O DETALHE de cada FAIL e WARN vai junto.
+    #
+    # Sem isto a tabela dizia QUE reprovou e nunca POR QUE, e o motivo so existia no log do
+    # job -- que a API so entrega com token. Na pratica isso significava que uma falha no CI
+    # era indiagnosticavel de fora, e o unico caminho era republicar cegamente ate acertar.
+    # O step summary e parte da pagina publica do run: o motivo passa a ficar onde qualquer
+    # um consegue ler.
+    $comDetalhe = @($script:Results | Where-Object { $_.Status -eq 'FAIL' -or $_.Status -eq 'WARN' })
+    if ($comDetalhe.Count -gt 0) {
+        $md += @('', '## Detalhe')
+        foreach ($r in $comDetalhe) {
+            $md += @('', "### $($r.Status): $($r.Check)", '', '```', $r.Detail, '```')
+        }
+    }
     ($md -join "`n") | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
 }
 
