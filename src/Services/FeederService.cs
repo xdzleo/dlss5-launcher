@@ -309,7 +309,7 @@ public static class FeederService
     }
 
     /// <summary>
-    /// Faz o Feeder alocar no PRIMEIRO frame, em vez de esperar.
+    /// Tira a reconstrucao de aquecimento do Feeder, sem tocar no atraso de criacao.
     ///
     /// O padrao dele e `create_delay=60`: ele deixa passar 60 frames antes de criar as texturas
     /// compartilhadas. Em motor que reserva um pool de memoria proprio na largada — id Tech 7 e o
@@ -338,8 +338,29 @@ public static class FeederService
                 var chave = linhas[i].Split('=')[0].Trim();
                 var novo = chave switch
                 {
-                    "create_delay" => "create_delay=0",
+                    // warmup_rebuild sai, e so ele.
+                    //
+                    // Ele refaz a feature la pelo frame 180 para contornar o painel travar em
+                    // STANDBY — um problema que as builds "v45+" do addon nao tem mais, e que o
+                    // proprio Feeder pula automaticamente nelas. O que sobra e uma realocacao de
+                    // cinco texturas do tamanho da tela num momento arbitrario, que em motor com
+                    // pool proprio de memoria cai no pior instante possivel.
                     "warmup_rebuild" => "warmup_rebuild=0",
+
+                    // create_delay NAO e mexido, e isto ja foi aprendido do jeito caro.
+                    //
+                    // A tentacao e zera-lo: assim o Feeder aloca no primeiro quadro, antes de o
+                    // motor fechar o pool, e o "Failed to allocate video memory" do DOOM Eternal
+                    // some. Mas o README e explicito sobre o que esse atraso protege: "the DLSS 5
+                    // add-on arms its NGX hooks asynchronously, and calling in too early CAN
+                    // CRASH". Carregar um save e um re-init de runtime — o addon rearma os hooks
+                    // e o Feeder reconstroi a feature em cima disso. Zerado, o Final Fantasy XV
+                    // fechava sempre ao terminar de carregar, sem excecao no Event Log e sem
+                    // breadcrumb, porque nao e uma falha do Feeder: e uma chamada valida cedo
+                    // demais.
+                    //
+                    // Trocar um crash garantido por um problema de memoria que so aparece em
+                    // motor que reserva pool inteiro na largada e um mau negocio.
                     _ => null,
                 };
                 if (novo is not null && linhas[i] != novo) { linhas[i] = novo; mudou = true; }
@@ -579,6 +600,28 @@ public static class FeederService
 
         var destino = Path.Combine(targetDir, arquivo);
         if (File.Exists(destino) && new FileInfo(destino).Length == new FileInfo(origem).Length) return;
+
+        // Jogo com DLSS 1.0 fica INTOCADO, mesmo que isso custe o Feeder.
+        //
+        // A geracao 1.0 e outra API. Substituir a DLL nao a atualiza: o jogo passa a chamar uma
+        // implementacao que nao atende o contrato dele e MORRE — no Final Fantasy XV, sempre ao
+        // terminar de carregar o save, sem excecao no Event Log e sem breadcrumb, porque nao ha
+        // codigo quebrado: e uma chamada valida a uma DLL que nao a responde.
+        //
+        // O Feeder precisa desta runtime para criar a propria feature, entao os dois nao cabem no
+        // mesmo jogo: ou o DLSS nativo continua funcionando, ou entra o Feeder e o jogo perde o
+        // DLSS dele. Entre quebrar um jogo que funciona e nao instalar um recurso, nao instalar
+        // ganha — o usuario ainda tem o jogo.
+        //
+        // NeuralUpliftService.Detect ja nao conta DLSS 1.x como "tem DLSS", o que manda o jogo
+        // para o Feeder; esta guarda existe porque o caminho do Feeder chegava aqui e recolocava
+        // a runtime nova pela porta dos fundos, desfazendo aquela decisao sem dizer nada.
+        if (File.Exists(destino) && DlssRuntimeService.ReadVersion(destino) is { Major: 1 })
+        {
+            Log.Warn($"feeder: {targetDir} usa DLSS 1.x; runtime NAO substituido (o jogo quebraria)");
+            progress?.Report(L.T("Feeder_Dlss1_Skipped"));
+            return;
+        }
 
         // Mesma regra de todo runtime que este launcher escreve: a assinatura da NVIDIA decide.
         if (!DlssRuntimeService.IsGenuine(origem, out var porque))

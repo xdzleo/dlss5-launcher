@@ -94,7 +94,7 @@ public static class NeuralUpliftService
     /// A copia e um segundo arquivo, e nao um rename: o nome proprio continua sendo o do
     /// launcher, que e como ele sabe o que pode remover depois.
     /// </summary>
-    public static void GarantirNomeDoFeeder(string targetDir, IProgress<string>? progress = null)
+    public static void GarantirNomeDoFeeder(string targetDir, string iniPath, IProgress<string>? progress = null)
     {
         try
         {
@@ -111,7 +111,24 @@ public static class NeuralUpliftService
             var esperado = Path.Combine(targetDir, FeederEsperaAddon);
             if (File.Exists(esperado)
                 && new FileInfo(esperado).Length == new FileInfo(nosso).Length) return;
-            File.Copy(nosso, esperado, overwrite: true);
+
+            // MOVE, nao copia — e a diferenca derrubou o Final Fantasy XV.
+            //
+            // Com os dois nomes na pasta, o ReShade carrega o addon DUAS vezes: uma pelo
+            // LoadFromDllMain e outra pela varredura de *.addon64 do diretorio. Dois registros do
+            // mesmo addon no mesmo processo davam access violation (0xc0000005) na inicializacao.
+            //
+            // O nome proprio do launcher existe para ele saber o que pode remover depois; essa
+            // informacao passa a viver no marcador ao lado, e nao no nome do arquivo.
+            File.Move(nosso, esperado, overwrite: true);
+            File.WriteAllText(esperado + OursSuffix, "renomeado para o nome que o Feeder procura");
+
+            // O early-load ja foi escrito com o nome antigo pelo Apply; apontar para um arquivo
+            // que nao existe mais faz o ReShade responder "error code 126" e nao carregar nada.
+            var ini = new IniFile(iniPath);
+            RemoveFromEarlyLoad(ini, GenericAddonFile);
+            AddToEarlyLoad(ini, FeederEsperaAddon);
+            ini.Save();
             Log.Info($"neural: addon copiado como {FeederEsperaAddon} (o Feeder procura este nome)");
             progress?.Report(L.T("Neural_AddonFeederName"));
         }
@@ -419,7 +436,7 @@ public static class NeuralUpliftService
         var ini = new IniFile(iniPath);
         var atual = ini.Get(GenericSection, GenericEnableKey, ignoreCase: true);
         if (atual is null || atual.Trim() is "1" or "1.0" or "1.000000") return false;
-        ini.Set(GenericSection, GenericEnableKey, "1");
+        SetNeuralSwitch(ini, true);
         ini.Save();
         Log.Info($"neural: NeuralUplift estava '{atual}' em {iniPath}; devolvido para 1");
         return true;
@@ -864,10 +881,36 @@ public static class NeuralUpliftService
     private const string GenericSection = "RenoDX.DLSS5";
     private const string GenericEnableKey = "NeuralUplift";
 
+    /// <summary>
+    /// O build do addon com DX9/DX11/DX12 trocou o contrato inteiro: secao `[RENODX-DLSS]` e
+    /// chaves com prefixo `DirectNeuralRendering*`. Ele NAO le mais `[RenoDX.DLSS5] NeuralUplift`.
+    ///
+    /// Isto nao e um detalhe cosmetico: um jogo instalado por nos ficava com o addon na pasta, o
+    /// runtime ao lado, o ini gravado — e o addon carregava desligado, porque a unica chave que
+    /// ele consulta nao existia. A instalacao terminava limpa e nada acontecia na tela.
+    ///
+    /// As duas secoes sao escritas, porque a versao do addon que o usuario tem e desconhecida e
+    /// uma chave a mais num ini que ninguem le nao custa nada.
+    /// </summary>
+    private const string CurrentSection = "RENODX-DLSS";
+    private const string CurrentEnableKey = "DirectNeuralRenderingEnabled";
+
     /// <summary>An older in-house build used its own section. Cleared on remove so a leftover
     /// enable flag cannot switch a future build back on behind the user's back.</summary>
     private const string LegacySection = "RENODX-NEURAL";
     private const string LegacyEnableKey = "Enabled";
+
+    /// <summary>
+    /// Liga (ou desliga) o interruptor do Neural Rendering em todos os contratos conhecidos.
+    /// Centralizado porque estava espalhado por cinco pontos, e cada novo esquema do addon exigia
+    /// achar todos eles de novo — foi assim que o contrato novo passou despercebido.
+    /// </summary>
+    private static void SetNeuralSwitch(IniFile ini, bool on)
+    {
+        var flag = on ? "1" : "0";
+        ini.Set(CurrentSection, CurrentEnableKey, flag);
+        ini.Set(GenericSection, GenericEnableKey, flag);
+    }
 
     // ---------- host ----------
 
@@ -1084,6 +1127,24 @@ public static class NeuralUpliftService
                 // e a memoria certa: apagar o addon do Feeder nao faz o jogo ganhar DLSS.
                 if (File.Exists(f + OursSuffix)) continue;
 
+                // DLSS 1.x nao serve de contrato para o filtro neural, entao nao conta como
+                // "este jogo tem DLSS".
+                //
+                // A geracao 1.0 nao produz motion vectors nem jitter — ela usa um modelo treinado
+                // para aquele jogo especifico. O filtro neural entra POR CIMA do DLSS e le os
+                // buffers que ele monta; sem esses dados nao ha o que ler. Contar o DLSS 1.0 como
+                // valido mandava o jogo para a ponte, que instala tudo, arma os hooks e nunca
+                // captura contrato nenhum: log limpo, nada na tela.
+                //
+                // Aconteceu no Final Fantasy XV, um dos poucos titulos dessa geracao. Tratado como
+                // "sem DLSS", ele vai para o Feeder, que FABRICA motion vectors e depth por shader
+                // — que e exatamente o caso de uso do Feeder.
+                if (DlssRuntimeService.ReadVersion(f) is { Major: 1 })
+                {
+                    Log.Info($"neural detect: {Path.GetFileName(f)} e DLSS 1.x; nao conta como DLSS nativo");
+                    continue;
+                }
+
                 hasDlss = true;
                 break;
             }
@@ -1132,7 +1193,8 @@ public static class NeuralUpliftService
         // a game running the community build under its own name — it fell through to the preset
         // key, found nothing, and reported "off" for a game whose ini plainly said NeuralUplift=1.
         // A UI that says off while the feature runs is worse than one that says nothing.
-        var value = ini.Get(GenericSection, GenericEnableKey, ignoreCase: true)
+        var value = ini.Get(CurrentSection, CurrentEnableKey, ignoreCase: true)
+                    ?? ini.Get(GenericSection, GenericEnableKey, ignoreCase: true)
                     ?? ini.Get(SettingsService.PresetSection, EnableKey, ignoreCase: true)
                     ?? ini.Get(LegacySection, LegacyEnableKey, ignoreCase: true);
         if (value is null) return false;
@@ -1184,7 +1246,7 @@ public static class NeuralUpliftService
         {
             progress?.Report(L.T("Neural_DeployingAddon"));
             File.Copy(LibraryAddon, Path.Combine(targetDir, GenericAddonFile), overwrite: true);
-            ini.Set(GenericSection, GenericEnableKey, "1");
+            SetNeuralSwitch(ini, true);
         }
         // Whichever addon drives it, it has to be up before the game's DLSS SDK is.
         if (DeployedGenericAddon(targetDir) is { } deployedAddon)
@@ -1196,7 +1258,7 @@ public static class NeuralUpliftService
             // nesta passada. Sem isto, instalar num jogo cujo mod proprio dirige o NR deixava
             // [RenoDX.DLSS5] como estava — inclusive em 0, se alguem tivesse apertado F6 antes.
             // Instalar tem de significar ligado, sem excecao.
-            ini.Set(GenericSection, GenericEnableKey, "1");
+            SetNeuralSwitch(ini, true);
         }
         if (!useGenericAddon)
         {
@@ -1220,7 +1282,7 @@ public static class NeuralUpliftService
         {
             var ini = new IniFile(iniPath);
             ini.Set(SettingsService.PresetSection, EnableKey, "0.000000");
-            ini.Set(GenericSection, GenericEnableKey, "0");
+            SetNeuralSwitch(ini, false);
             ini.Set(LegacySection, LegacyEnableKey, "0");
             // Only our own name comes back out of the early-load list. A community build the
             // user deployed themselves keeps its entry, or turning our copy off would stop
@@ -1537,7 +1599,7 @@ public static class NeuralUpliftService
         // sobe antes do device, entao a carga antecipada precisa estar la tambem.
         var ini = new IniFile(Path.Combine(hostDir, "ReShade.ini"));
         AddToEarlyLoad(ini, "renodx-dlss5.addon64");
-        ini.Set(GenericSection, GenericEnableKey, "1");
+        SetNeuralSwitch(ini, true);
         ini.Save();
 
         progress?.Report(L.T("Neural_Host64Deployed"));

@@ -315,7 +315,7 @@ public static class Dlss5Installer
                 FeederService.Configure(targetDir, iniPath, progress);
                 // O Feeder resolve o addon de NR por nome literal; sem esta copia ele entrega
                 // frames com o pass sem quem o dirija, e diz isso so no proprio log.
-                NeuralUpliftService.GarantirNomeDoFeeder(targetDir, progress);
+                NeuralUpliftService.GarantirNomeDoFeeder(targetDir, iniPath, progress);
                 FeederService.AjustarAlocacao(targetDir, progress);
                 Step(L.T("Dlss5_Step_Feeder"));
 

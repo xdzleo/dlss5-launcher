@@ -1,5 +1,62 @@
 # Changelog
 
+## v1.55.0
+
+Quatro correções, todas vindas de jogo real. A primeira é a que mais importa: havia uma classe
+inteira de instalação que terminava com tudo no lugar e o recurso desligado.
+
+### O addon trocou de contrato, e o launcher não sabia
+
+O build do addon da comunidade que adicionou DX9/DX11/DX12 **trocou o esquema de configuração
+inteiro**. Onde antes se lia `[RenoDX.DLSS5]` com a chave `NeuralUplift`, agora se lê
+`[RENODX-DLSS]` com chaves `DirectNeuralRendering*` — e a versão nova não consulta mais a antiga.
+
+O efeito era silencioso do pior jeito: o addon ia para a pasta, o runtime de 158 MB ia junto, o ini
+era gravado, a instalação terminava sem erro nenhum — e o addon subia desligado, porque a única
+chave que ele lê não existia. Nada na tela, nada no log, nada para o usuário desconfiar.
+
+Agora as duas seções são escritas, e `IsApplied` consulta a nova primeiro. A versão do addon que
+cada usuário tem é desconhecida, e uma chave a mais num ini que ninguém lê não custa nada.
+
+O interruptor também deixou de estar espalhado por cinco pontos do arquivo e passou a viver em uma
+função só. Foi justamente o espalhamento que deixou o contrato novo passar batido: cada esquema
+novo exigia achar os cinco lugares de novo.
+
+### DLSS 1.0 não é DLSS antigo, é outra API
+
+A geração 1.0 não usa motion vectors, tem modelo treinado por jogo e um contrato de chamada
+distinto. Trocar essa DLL por uma 310.x não atualiza nada: **desliga** o DLSS do jogo, porque a
+implementação nova não atende as chamadas que ele faz.
+
+A comparação de versão sozinha não protegia — 1.0.11 é menor que 310.8, então a troca parecia um
+upgrade óbvio. Aconteceu no Final Fantasy XV, e o sintoma era o jogo fechar ao terminar de carregar
+o save, sem exceção no Event Log e sem breadcrumb: não há código quebrado, é uma chamada válida a
+uma DLL que não a responde.
+
+Três guardas agora: `DlssRuntimeService.Apply` pula runtime 1.x, `NeuralUpliftService.Detect` não
+conta 1.x como "tem DLSS", e o caminho do Feeder se recusa a sobrescrever uma runtime 1.x — esta
+última porque o Feeder chegava por trás e recolocava a 310.x, desfazendo a decisão sem avisar.
+
+Entre quebrar um jogo que funciona e não instalar um recurso, não instalar ganha.
+
+### `create_delay` volta a ser respeitado
+
+A tentação era zerá-lo: o Feeder passa a alocar no primeiro quadro, antes de o motor fechar o pool,
+e o "Failed to allocate video memory" do DOOM Eternal some. Mas o README do Feeder é explícito
+sobre o que esse atraso protege — o addon arma os hooks NGX de forma assíncrona, e chamar cedo
+demais **trava**. Carregar um save é um re-init de runtime; com o atraso zerado, o Final Fantasy XV
+fechava toda vez que terminava de carregar.
+
+Trocar um crash garantido por um problema de memória que só aparece em motor que reserva o pool
+inteiro na largada é mau negócio. Agora só o `warmup_rebuild` sai — ele reconstrói a feature lá
+pelo frame 180 para contornar um problema que as builds "v45+" do addon não têm mais.
+
+### O addon era copiado, não movido
+
+`GarantirNomeDoFeeder` copiava o addon em vez de mover. O resultado era o mesmo binário carregado
+duas vezes — uma pelo early-load e outra pela varredura de diretório — e carga dupla de addon é
+`0xc0000005` na certa. Agora move, e corrige a entrada de early-load junto.
+
 ## v1.37.0
 
 Caçada a bugs com dois revisores independentes, um na camada de serviços e outro na de interface.

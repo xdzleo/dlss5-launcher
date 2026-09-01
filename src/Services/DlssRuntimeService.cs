@@ -269,6 +269,25 @@ public static class DlssRuntimeService
             if (!library.TryGetValue(game.FileName, out var lib)) continue;
             if (lib.Version <= game.Version) { current++; continue; }
 
+            // DLSS 1.x nao e uma versao antiga do DLSS atual — e outra API.
+            //
+            // A geracao 1.0 nao usa motion vectors, tem um modelo treinado por jogo e um contrato
+            // de chamada distinto. Trocar essa DLL por uma 310.x nao atualiza nada: DESLIGA o DLSS
+            // do jogo, porque a implementacao nova nao atende as chamadas que ele faz. E como o
+            // filtro neural entra por cima do DLSS, ele fica sem contrato para capturar — a
+            // instalacao termina limpa, o log mostra os hooks armados, e nada acontece na tela.
+            //
+            // Aconteceu no Final Fantasy XV (nvngx_dlss.dll 1.0.11), um dos poucos titulos dessa
+            // geracao. A comparacao de versao sozinha nao protege: 1.0.11 e menor que 310.8, entao
+            // a troca parecia um upgrade obvio.
+            if (game.Version is { Major: 1 })
+            {
+                current++;
+                notes.Add(L.T("Dlss_Skipped_Gen1", game.Feature, game.Version.ToString()));
+                Log.Info($"dlss apply: {game.Path} mantido em {game.Version} (DLSS 1.x, API incompativel)");
+                continue;
+            }
+
             var backup = game.Path + BackupSuffix;
             try
             {

@@ -851,6 +851,9 @@
     <value>Looking for DLSS runtimes in {0}...</value>
     <comment>{0} = nome da pasta sendo varrida.</comment>
   </data>
+  <data name="Dlss_Skipped_Gen1" xml:space="preserve">
+    <value>{0} kept at {1}: DLSS 1.x is a different API, and replacing it turns the game's DLSS off.</value>
+  </data>
   <data name="Dlss_Sweep_Button" xml:space="preserve">
     <value>Restore all</value>
   </data>
@@ -954,6 +957,9 @@
   </data>
   <data name="Feeder_DeployingSr" xml:space="preserve">
     <value>Copying the Super Resolution runtime (this game has none of its own)…</value>
+  </data>
+  <data name="Feeder_Dlss1_Skipped" xml:space="preserve">
+    <value>This game uses DLSS 1.0: its runtime was left untouched, because replacing it breaks the game. DLSS 5 is not available here.</value>
   </data>
   <data name="Feeder_EarlyAlloc" xml:space="preserve">
     <value>Feeder set to allocate on the first frame, before the engine closes its memory pool.</value>

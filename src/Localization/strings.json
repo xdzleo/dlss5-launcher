@@ -1013,6 +1013,10 @@
     "note": "{0} = nome da pasta sendo varrida.",
     "pt-BR": "Procurando runtimes de DLSS em {0}..."
   },
+  "Dlss_Skipped_Gen1": {
+    "en": "{0} kept at {1}: DLSS 1.x is a different API, and replacing it turns the game's DLSS off.",
+    "pt-BR": "{0} mantido em {1}: o DLSS 1.x é outra API, e substituí-lo desliga o DLSS do jogo."
+  },
   "Dlss_Sweep_Button": {
     "en": "Restore all",
     "pt-BR": "Restaurar tudo"
@@ -1144,6 +1148,10 @@
   "Feeder_DeployingSr": {
     "en": "Copying the Super Resolution runtime (this game has none of its own)…",
     "pt-BR": "Copiando o runtime de Super Resolution (este jogo não tem o dele)…"
+  },
+  "Feeder_Dlss1_Skipped": {
+    "en": "This game uses DLSS 1.0: its runtime was left untouched, because replacing it breaks the game. DLSS 5 is not available here.",
+    "pt-BR": "Este jogo usa DLSS 1.0: o runtime dele ficou intocado, porque substituí-lo quebra o jogo. O DLSS 5 não fica disponível aqui."
   },
   "Feeder_EarlyAlloc": {
     "en": "Feeder set to allocate on the first frame, before the engine closes its memory pool.",
