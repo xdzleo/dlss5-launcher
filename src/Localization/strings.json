@@ -786,12 +786,13 @@
     "pt-BR": "Ponte DX11 atualizada ({0} jogo(s))."
   },
   "Dlss5_Feeder_Notice": {
-    "en": "A game with DLSS hands the motion of every object to the filter. Here a shader has to guess it from the image, so the neural pass has less to work with and the gain is smaller than in a DLSS game. There is no FPS gain either — it runs at full resolution.",
-    "pt-BR": "Um jogo com DLSS entrega ao filtro o movimento de cada objeto. Aqui um shader precisa adivinhar isso pela imagem, então o passe neural tem menos com que trabalhar e o ganho é menor do que num jogo com DLSS. Também não há ganho de FPS — ele roda na resolução cheia."
+    "en": "The motion data is estimated from the image instead of coming from the engine, so the effect is subtler. No FPS gain — it runs at full resolution.",
+    "note": "Curto de proposito: e um aviso num card, nao documentacao. Duas frases, a primeira dizendo a causa e a segunda o que nao esperar.",
+    "pt-BR": "O movimento é estimado pela imagem em vez de vir do jogo, então o efeito é mais sutil. Sem ganho de FPS — roda na resolução cheia."
   },
   "Dlss5_Feeder_Title": {
-    "en": "This game has no DLSS of its own — what you get here is weaker",
-    "pt-BR": "Este jogo não tem DLSS próprio — o resultado aqui é mais fraco"
+    "en": "No native DLSS — the effect is weaker here",
+    "pt-BR": "Sem DLSS nativo — o efeito é mais fraco aqui"
   },
   "Dlss5_Link_Addon": {
     "en": "Addon",

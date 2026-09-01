@@ -349,8 +349,37 @@ public static class ExeLocator
         catch { return Enumerable.Empty<string>(); }
     }
 
+    /// <summary>
+    /// Lista de .exe por pasta, guardada entre chamadas.
+    ///
+    /// A varredura desce cinco niveis e custa ~27 ms num jogo de 3865 arquivos — medido com
+    /// tests/ChainProbe --timing, onde era de longe o item mais caro do carregamento de detalhe.
+    /// O conteudo nao muda entre um clique e outro, mas a varredura era refeita a cada clique:
+    /// navegar entre jogos pagava o preco toda vez, inclusive ao voltar para um ja visto.
+    ///
+    /// A invalidacao e explicita (Invalidar), chamada por quem escreve na pasta do jogo. Um TTL
+    /// curto cobre o resto — alguem instalando um mod por fora enquanto o launcher esta aberto.
+    /// </summary>
+    private static readonly Dictionary<string, (DateTime Quando, List<string> Exes)> _cacheExes =
+        new(StringComparer.OrdinalIgnoreCase);
+    private static readonly TimeSpan ValidadeCache = TimeSpan.FromSeconds(30);
+    private static readonly object _travaCache = new();
+
+    /// <summary>Esquece a varredura desta pasta. Chamar depois de instalar ou remover.</summary>
+    public static void Invalidar(string? pasta)
+    {
+        if (pasta is null) return;
+        lock (_travaCache) { _cacheExes.Remove(pasta); }
+    }
+
     private static IEnumerable<string> SafeEnumerate(string root)
     {
+        lock (_travaCache)
+        {
+            if (_cacheExes.TryGetValue(root, out var c) && DateTime.UtcNow - c.Quando < ValidadeCache)
+                return c.Exes;
+        }
+
         var options = new EnumerationOptions
         {
             IgnoreInaccessible = true,
@@ -358,7 +387,11 @@ public static class ExeLocator
             MaxRecursionDepth = 5,
             AttributesToSkip = FileAttributes.ReparsePoint,
         };
-        try { return Directory.EnumerateFiles(root, "*.exe", options); }
+        List<string> achados;
+        try { achados = Directory.EnumerateFiles(root, "*.exe", options).ToList(); }
         catch { return Enumerable.Empty<string>(); }
+
+        lock (_travaCache) { _cacheExes[root] = (DateTime.UtcNow, achados); }
+        return achados;
     }
 }

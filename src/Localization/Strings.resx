@@ -766,10 +766,11 @@
     <value>Ponte DX11 atualizada ({0} jogo(s)).</value>
   </data>
   <data name="Dlss5_Feeder_Notice" xml:space="preserve">
-    <value>Um jogo com DLSS entrega ao filtro o movimento de cada objeto. Aqui um shader precisa adivinhar isso pela imagem, então o passe neural tem menos com que trabalhar e o ganho é menor do que num jogo com DLSS. Também não há ganho de FPS — ele roda na resolução cheia.</value>
+    <value>O movimento é estimado pela imagem em vez de vir do jogo, então o efeito é mais sutil. Sem ganho de FPS — roda na resolução cheia.</value>
+    <comment>Curto de proposito: e um aviso num card, nao documentacao. Duas frases, a primeira dizendo a causa e a segunda o que nao esperar.</comment>
   </data>
   <data name="Dlss5_Feeder_Title" xml:space="preserve">
-    <value>Este jogo não tem DLSS próprio — o resultado aqui é mais fraco</value>
+    <value>Sem DLSS nativo — o efeito é mais fraco aqui</value>
   </data>
   <data name="Dlss5_Link_Addon" xml:space="preserve">
     <value>Addon</value>

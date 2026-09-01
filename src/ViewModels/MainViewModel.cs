@@ -993,6 +993,10 @@ public class MainViewModel : ObservableObject
         // Este e o ponto por onde instalar, remover e trocar de tradutor passam, entao vale
         // para os tres.
         _detailItem?.RefreshLuzes();
+
+        // A varredura de .exe da pasta e cacheada; instalar acabou de escrever la dentro
+        // (host64\, vklayer\, proxies), entao a lista guardada pode estar velha.
+        ExeLocator.Invalidar(_detailItem?.Game.InstallDir);
     }
 
     /// <summary>

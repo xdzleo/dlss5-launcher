@@ -39,6 +39,21 @@ public static class Timing
         total.Stop();
         Console.WriteLine();
         Console.WriteLine($"  {"TOTAL",-34} {total.ElapsedMilliseconds,6} ms");
+
+        // Segunda passada: e o que o usuario sente ao voltar para um jogo ja visto. A varredura
+        // de .exe e cacheada, entao aqui ela deve custar perto de zero.
+        Console.WriteLine();
+        Console.WriteLine("  --- segunda selecao do mesmo jogo (com cache) ---");
+        var t2 = Stopwatch.StartNew();
+        Medir("ExeLocator.FindCandidates", () =>
+        {
+            var g = new GameInfo { Name = Path.GetFileName(dir), InstallDir = dir, Store = GameStore.Folder };
+            _ = ExeLocator.FindCandidates(g, null).ToList();
+        });
+        Medir("NeuralUpliftService.Detect", () => _ = NeuralUpliftService.Detect(dir, dir, null));
+        Medir("AddonService.GetState", () => _ = AddonService.GetState(dir, exe));
+        t2.Stop();
+        Console.WriteLine($"  {"TOTAL (2a vez)",-34} {t2.ElapsedMilliseconds,6} ms");
     }
 
     private static void Medir(string nome, Action acao)
