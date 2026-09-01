@@ -795,6 +795,94 @@
     "en": "No native DLSS — the effect is weaker here",
     "pt-BR": "Sem DLSS nativo — o efeito é mais fraco aqui"
   },
+  "Api_Titulo": {
+    "en": "Graphics API",
+    "pt-BR": "API gráfica"
+  },
+  "Api_Varias": {
+    "en": "This game ships one executable per API. DLSS 5 takes a different path depending on which one you play — pick the one you actually launch.",
+    "pt-BR": "Este jogo tem um executável por API. O DLSS 5 segue um caminho diferente conforme o que você joga — escolha o que você abre de verdade."
+  },
+  "Api_Rota_Direta": {
+    "en": "direct",
+    "pt-BR": "direta"
+  },
+  "Api_Escolher": {
+    "en": "Install for this one",
+    "pt-BR": "Instalar para este"
+  },
+  "Api_Atual": {
+    "en": "selected",
+    "pt-BR": "selecionado"
+  },
+  "Conflito_Titulo": {
+    "en": "Other mods in this folder",
+    "pt-BR": "Outros mods nesta pasta"
+  },
+  "Conflito_Nenhum": {
+    "en": "Nothing else here competes with DLSS 5.",
+    "pt-BR": "Não há nada aqui disputando espaço com o DLSS 5."
+  },
+  "Conflito_Resumo": {
+    "en": "{0} found — {1} block DLSS 5 from working.",
+    "pt-BR": "{0} encontrados — {1} impedem o DLSS 5 de funcionar."
+  },
+  "Conflito_Botao_Afastar": {
+    "en": "Move the blocking ones aside",
+    "pt-BR": "Afastar os que bloqueiam"
+  },
+  "Conflito_Botao_Explicar": {
+    "en": "Renames them with a suffix — nothing is deleted, and removing the suffix puts them back.",
+    "pt-BR": "Renomeia com um sufixo — nada é apagado, e tirar o sufixo devolve tudo ao lugar."
+  },
+  "Conflito_Afastado": {
+    "en": "Moved aside: {0} ({1})",
+    "pt-BR": "Afastado: {0} ({1})"
+  },
+  "Conflito_Porque_Proxy": {
+    "en": "{1} occupies {0} — the slot our ReShade needs to load. While it sits there, the DLSS 5 chain never starts in this executable.",
+    "pt-BR": "O {1} ocupa o {0} — a vaga que o nosso ReShade precisa para carregar. Enquanto ele estiver aí, a cadeia do DLSS 5 não começa neste executável."
+  },
+  "Conflito_Porque_OptiScaler": {
+    "en": "Hooks the same NGX entry points the neural pass uses. Two things redirecting DLSS at once is not a configuration — the launcher installs its own OptiScaler when it is the right path.",
+    "pt-BR": "Engancha os mesmos pontos de NGX que o pass neural usa. Duas coisas redirecionando o DLSS ao mesmo tempo não é configuração — o launcher instala o OptiScaler dele quando esse é o caminho certo."
+  },
+  "Conflito_Porque_FakeNvapi": {
+    "en": "Spoofs the NVIDIA API. The addon asks the driver which GPU this is to pick the model build, and gets an answer that is not the real card.",
+    "pt-BR": "Falsifica a API da NVIDIA. O addon pergunta ao driver qual é a GPU para escolher a build do modelo, e recebe uma resposta que não é a placa de verdade."
+  },
+  "Conflito_Porque_DlssgFsr3": {
+    "en": "Replaces frame generation, not upscaling — it does not compete with the neural pass. Listed so you know it is here.",
+    "pt-BR": "Substitui a geração de quadros, não o upscaling — não concorre com o pass neural. Está na lista só para você saber que ele está aí."
+  },
+  "Conflito_Porque_SpecialK": {
+    "en": "Injects into the same process and can take the proxy slot. Usually coexists, but it is the first thing to remove if the game stops opening.",
+    "pt-BR": "Injeta no mesmo processo e pode tomar a vaga do proxy. Costuma conviver, mas é a primeira coisa a tirar se o jogo parar de abrir."
+  },
+  "Conflito_Porque_DlssTweaks": {
+    "en": "Overrides DLSS presets and resolution scale underneath us, so what you set in the launcher may not be what runs.",
+    "pt-BR": "Sobrescreve presets e escala do DLSS por baixo, então o que você ajusta no launcher pode não ser o que roda."
+  },
+  "Conflito_Porque_Generico": {
+    "en": "Another tool is installed here. It does not appear to compete with DLSS 5.",
+    "pt-BR": "Há outra ferramenta instalada aqui. Não parece disputar espaço com o DLSS 5."
+  },
+  "Conflito_Porque_PonteFeeder": {
+    "en": "The Bridge and the Feeder are both deployed here, and they are mutually exclusive. Reinstall DLSS 5 to leave only the one this game needs.",
+    "pt-BR": "A Ponte e o Feeder estão os dois nesta pasta, e eles são mutuamente exclusivos. Reinstale o DLSS 5 para ficar só com o que este jogo precisa."
+  },
+  "Conflito_Porque_DxvkDgVoodoo": {
+    "en": "DXVK and dgVoodoo2 both claim d3d9.dll. Only one can load; the other is a file that never runs. Reinstall and pick one translator.",
+    "pt-BR": "DXVK e dgVoodoo2 disputam o mesmo d3d9.dll. Só um carrega; o outro é um arquivo que nunca roda. Reinstale escolhendo um tradutor."
+  },
+  "Conflito_Porque_ReShadeDuplo": {
+    "en": "ReShade would load twice in the same process — once through the Vulkan layer, once through this proxy. That is the known cause of a 0xc0000005 crash at startup.",
+    "pt-BR": "O ReShade entraria duas vezes no mesmo processo — uma pela camada Vulkan e outra por este proxy. Essa é a causa conhecida do crash 0xc0000005 logo no start."
+  },
+  "Conflito_Porque_Restos": {
+    "en": "{0} renamed leftovers from earlier attempts. Harmless on their own, but they make the folder hard to read — including for the launcher.",
+    "pt-BR": "{0} restos renomeados de tentativas anteriores. Inofensivos sozinhos, mas deixam a pasta difícil de ler — inclusive para o launcher."
+  },
   "Dlss5_Link_Addon": {
     "en": "Addon",
     "pt-BR": "Addon"

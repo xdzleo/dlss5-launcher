@@ -136,3 +136,27 @@ public class NoteColorConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>
+/// Gravidade de um conflito → a cor da pastilha.
+///
+/// As tres cores nao sao decoracao: elas dizem se o usuario precisa fazer algo. Vermelho e
+/// "isto impede o DLSS 5 de funcionar"; ambar e "pode atrapalhar"; cinza e "esta aqui, e voce
+/// deveria saber". O texto sozinho nao separa esses tres numa lista de seis linhas.
+/// </summary>
+public class NivelColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var hex = value is ConflictScanner.Nivel n ? n switch
+        {
+            ConflictScanner.Nivel.Bloqueio => "#E8756A",
+            ConflictScanner.Nivel.Aviso => "#E8B860",
+            _ => "#8A8F98",
+        } : "#8A8F98";
+        return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

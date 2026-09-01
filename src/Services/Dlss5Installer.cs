@@ -202,35 +202,12 @@ public static class Dlss5Installer
         // copiou, entao anular por Feeder presente so fazia jogo COM DLSS parecer sem.
         var temDlssNativo = det.HasDlss;
 
-        // A ponte e de DirectX 11 — ela engancha o device D3D11 do jogo para dar ao pass neural
-        // um lugar onde rodar. Num jogo Vulkan nao ha device D3D11 nenhum: instala-la ali punha
-        // um addon inerte na pasta e, pior, o passo manual mandava "abra pelo executavel de
-        // DirectX 11", que no DOOM Eternal nao existe.
-        var ehVulkan = VulkanLayerService.Applies(exePath);
-        var precisaPonte = temDlssNativo && !alcancaD3d12 && !ehVulkan;
-
-        // Jogo com FSR ou XeSS proprio e sem DLSS: o OptiScaler redireciona o upscaler que ele ja
-        // tem. Vem ANTES do Feeder na decisao, e por um motivo de qualidade, nao de gosto — o
-        // jogo ja calcula motion vectors e depth corretos para o proprio upscaler, enquanto o
-        // Feeder teria de reconstruir os dois por fora, com um shader. Dado do engine ganha de
-        // dado fabricado sempre que existe.
-        var upscaler = OptiScalerService.AchaUpscaler(targetDir);
-        var precisaOpti = !temDlssNativo && !ehVulkan && upscaler is not null
-                          && OptiScalerService.Applies(targetDir, temDlssNativo);
-
-        // Jogo Vulkan vai para o Feeder MESMO tendo DLSS proprio, e a razao esta no addon: ele
-        // engancha `NVSDK_NGX_D3D12_EvaluateFeature_C`, uma funcao de Direct3D 12. Um jogo Vulkan
-        // chama a familia NVSDK_NGX_VULKAN_*, que o addon nao procura — ele carrega, nao acha o
-        // que enganchar, e ainda assim tenta alocar os buffers do pass. O sintoma que chega ao
-        // usuario e "Failed to allocate video memory" numa placa com 32 GB livres, e no log:
-        //   ERROR | [DLSS 5 Neural Rendering] vtable::Hook(Failed to find NVSDK_NGX_D3D12_...)
-        //
-        // O Feeder resolve porque nao depende do NGX do jogo: ele cria um device D3D12 PROPRIO e
-        // importa as texturas do VkDevice por memoria externa. E o caminho que o autor documenta
-        // para Vulkan, e o que faz o DOOM 2016 funcionar na tabela de status dele.
-        var precisaFeeder = (!temDlssNativo && !precisaOpti
-                             && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12))
-                            || (ehVulkan && FeederService.Applies(exePath, false, true));
+        var rota = Rotear(targetDir, exePath, temDlssNativo, alcancaD3d12);
+        var ehVulkan = rota.EhVulkan;
+        var upscaler = rota.Upscaler;
+        var precisaPonte = rota.Ponte;
+        var precisaOpti = rota.OptiScaler;
+        var precisaFeeder = rota.Feeder;
 
         // Sem DLSS, sem OptiScaler e sem Feeder aplicavel, nao ha o que fazer — e so aqui que o
         // bloqueio antigo ainda vale. Antes ele valia para todo jogo sem DLSS.
@@ -480,6 +457,93 @@ public static class Dlss5Installer
     /// <summary>O executavel alcanca D3D12? Null (exe desconhecido) responde SIM, como o resto
     /// da heuristica: so um NAO bem fundamentado desvia do caminho normal.</summary>
     public static bool ReachesD3D12(string? exePath) => exePath is null || LooksLikeD3D12(exePath);
+
+    /// <summary>A API grafica em que um executavel renderiza.</summary>
+    public enum GraficosApi { Desconhecida, D3D9, D3D11, D3D12, Vulkan }
+
+    /// <summary>
+    /// Em que API este executavel renderiza.
+    ///
+    /// A resposta ja era calculada em tres lugares diferentes, cada um respondendo a sua propria
+    /// pergunta (cabe dgVoodoo? cabe a camada Vulkan? alcanca D3D12?) e nenhum dizendo o nome da
+    /// API. Um jogo como o Baldur's Gate 3 tem um executavel por API na MESMA pasta, e sem esse
+    /// nome nao ha como mostrar ao usuario o que ele esta escolhendo.
+    ///
+    /// A ordem das perguntas nao e arbitraria: <see cref="ReachesD3D12"/> responde "sim" no
+    /// silencio — um binario que nao menciona API nenhuma e tratado como D3D12 para nao barrar
+    /// sem base — entao ele tem de vir DEPOIS dos testes que exigem evidencia positiva.
+    /// </summary>
+    public static GraficosApi ApiDoExe(string? exePath)
+    {
+        if (exePath is null || !File.Exists(exePath)) return GraficosApi.Desconhecida;
+        if (VulkanLayerService.Applies(exePath)) return GraficosApi.Vulkan;
+        if (DgVoodooService.Applies(exePath)) return GraficosApi.D3D9;
+        if (ReachesD3D12(exePath)) return GraficosApi.D3D12;
+        return GraficosApi.D3D11;
+    }
+
+    /// <summary>Nome curto da API, para a interface. "DX11", "Vulkan"...</summary>
+    public static string ApiLabel(GraficosApi api) => api switch
+    {
+        GraficosApi.D3D9 => "DX9",
+        GraficosApi.D3D11 => "DX11",
+        GraficosApi.D3D12 => "DX12",
+        GraficosApi.Vulkan => "Vulkan",
+        _ => "?",
+    };
+
+    /// <summary>Qual das tres camadas serve este jogo, e por que. Ver <see cref="Rotear"/>.</summary>
+    public readonly record struct Rota(bool Ponte, bool OptiScaler, bool Feeder,
+                                       bool EhVulkan, string? Upscaler);
+
+    /// <summary>
+    /// A decisao de caminho, em um lugar so.
+    ///
+    /// Ela existia duas vezes — aqui e na tela de detalhe — e as duas copias sairam do lugar. A
+    /// tela nao tinha o termo `!ehVulkan` da ponte, entao no Baldur's Gate 3 ela cobrava a Ponte
+    /// de um jogo que o instalador tinha, corretamente, mandado para o Feeder. O elo ficava
+    /// vermelho para sempre e o interruptor nao ligava, sem nada que o usuario pudesse clicar
+    /// para resolver. Duas copias de uma regra de tres termos so vao divergir de novo; uma
+    /// funcao nao pode.
+    ///
+    ///   D3D12                  -> nada no meio, o pass roda no device do jogo
+    ///   DX11 + tem DLSS        -> ponte: um segundo device D3D12 reproduz o contrato do jogo
+    ///   DX11 + NAO tem DLSS    -> Feeder: nao ha contrato para reproduzir, entao ele FABRICA um
+    /// </summary>
+    public static Rota Rotear(string targetDir, string? exePath, bool temDlssNativo, bool alcancaD3d12)
+    {
+        // A ponte e de DirectX 11 — ela engancha o device D3D11 do jogo para dar ao pass neural
+        // um lugar onde rodar. Num jogo Vulkan nao ha device D3D11 nenhum: instala-la ali punha
+        // um addon inerte na pasta e, pior, o passo manual mandava "abra pelo executavel de
+        // DirectX 11", que no DOOM Eternal nao existe.
+        var ehVulkan = VulkanLayerService.Applies(exePath);
+        var ponte = temDlssNativo && !alcancaD3d12 && !ehVulkan;
+
+        // Jogo com FSR ou XeSS proprio e sem DLSS: o OptiScaler redireciona o upscaler que ele ja
+        // tem. Vem ANTES do Feeder na decisao, e por um motivo de qualidade, nao de gosto — o
+        // jogo ja calcula motion vectors e depth corretos para o proprio upscaler, enquanto o
+        // Feeder teria de reconstruir os dois por fora, com um shader. Dado do engine ganha de
+        // dado fabricado sempre que existe.
+        var upscaler = OptiScalerService.AchaUpscaler(targetDir);
+        var opti = !temDlssNativo && !ehVulkan && upscaler is not null
+                   && OptiScalerService.Applies(targetDir, temDlssNativo);
+
+        // Jogo Vulkan vai para o Feeder MESMO tendo DLSS proprio, e a razao esta no addon: ele
+        // engancha `NVSDK_NGX_D3D12_EvaluateFeature_C`, uma funcao de Direct3D 12. Um jogo Vulkan
+        // chama a familia NVSDK_NGX_VULKAN_*, que o addon nao procura — ele carrega, nao acha o
+        // que enganchar, e ainda assim tenta alocar os buffers do pass. O sintoma que chega ao
+        // usuario e "Failed to allocate video memory" numa placa com 32 GB livres, e no log:
+        //   ERROR | [DLSS 5 Neural Rendering] vtable::Hook(Failed to find NVSDK_NGX_D3D12_...)
+        //
+        // O Feeder resolve porque nao depende do NGX do jogo: ele cria um device D3D12 PROPRIO e
+        // importa as texturas do VkDevice por memoria externa. E o caminho que o autor documenta
+        // para Vulkan, e o que faz o DOOM 2016 funcionar na tabela de status dele.
+        var feeder = (!temDlssNativo && !opti
+                      && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12))
+                     || (ehVulkan && FeederService.Applies(exePath, false, true));
+
+        return new Rota(ponte, opti, feeder, ehVulkan, upscaler);
+    }
 
     private static bool LooksLikeD3D12(string exePath)
     {

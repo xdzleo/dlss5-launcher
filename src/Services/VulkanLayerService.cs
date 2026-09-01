@@ -227,7 +227,10 @@ public static class VulkanLayerService
         catch (Exception ex) { Log.Warn($"vulkan layer dir: {ex.Message}"); }
     }
 
-    private static bool ContemTexto(string path, string alvo)
+    /// <summary>O binario menciona este nome de modulo em algum lugar? Responde por carga tardia
+    /// (LoadLibrary), que nao aparece na tabela de importacao. Usado tambem pelo
+    /// <see cref="ConflictScanner"/> para saber se um proxy ao lado do exe chega a ser aberto.</summary>
+    internal static bool ContemTexto(string path, string alvo)
     {
         try
         {

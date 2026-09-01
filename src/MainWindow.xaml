@@ -20,6 +20,7 @@
         <local:TextToVisConverter x:Key="TextToVis"/>
         <local:NoteColorConverter x:Key="NoteBg"/>
         <local:NoteColorConverter x:Key="NoteBorder" Border="True"/>
+        <local:NivelColorConverter x:Key="NivelToBrush"/>
 
         <!-- ===== one piece of guidance: where to do it, who said it, and the exact text ===== -->
         <DataTemplate x:Key="NoteCard">
@@ -919,7 +920,7 @@
                                          concluir que instalou errado. -->
                                     <Border CornerRadius="7" Padding="10,8" Margin="0,4,0,0"
                                             Background="#33291B" BorderBrush="#8A6A30" BorderThickness="1"
-                                            Visibility="{Binding FeederActive, Converter={StaticResource BoolToVis}}">
+                                            Visibility="{Binding MostraAvisoSemDlss, Converter={StaticResource BoolToVis}}">
                                         <DockPanel>
                                             <Path DockPanel.Dock="Left" Data="{StaticResource IconWarning}"
                                                   Fill="#E8B860" Stretch="Uniform" Width="14" Height="14"
@@ -933,6 +934,114 @@
                                                            Foreground="{StaticResource TextFaintBrush}"/>
                                             </StackPanel>
                                         </DockPanel>
+                                    </Border>
+
+                                    <!-- Um executavel por API na mesma pasta (o Baldur's Gate 3
+                                         tem um Vulkan e um DX11). A rota do DLSS 5 muda com a
+                                         escolha, e ate agora o launcher escolhia sozinho e nao
+                                         dizia qual. So aparece quando ha mais de uma API. -->
+                                    <Border CornerRadius="7" Padding="10,8" Margin="0,9,0,0"
+                                            Background="#1E2B33" BorderBrush="#395566" BorderThickness="1"
+                                            Visibility="{Binding TemVariasApis, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel>
+                                            <TextBlock Text="{loc:Tr Api_Titulo}" FontSize="11.5"
+                                                       FontWeight="SemiBold" Foreground="#8FD0F0"/>
+                                            <TextBlock Text="{loc:Tr Api_Varias}" FontSize="11"
+                                                       TextWrapping="Wrap" LineHeight="16" Margin="0,3,0,6"
+                                                       Foreground="{StaticResource TextFaintBrush}"/>
+                                            <ItemsControl ItemsSource="{Binding ApisDoJogo}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Margin="0,3,0,0" Padding="7,5" HorizontalContentAlignment="Stretch"
+                                                                Command="{Binding DataContext.EscolherApiCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                AutomationProperties.Name="{Binding Exe}">
+                                                            <DockPanel>
+                                                                <Border DockPanel.Dock="Left" CornerRadius="4"
+                                                                        Padding="6,2" Margin="0,0,8,0"
+                                                                        VerticalAlignment="Center"
+                                                                        Background="#26404F">
+                                                                    <TextBlock Text="{Binding Api}" FontSize="10.5"
+                                                                               FontWeight="SemiBold" Foreground="#9FD8F2"/>
+                                                                </Border>
+                                                                <!-- A rota que ESTE executavel pediria: Ponte, Feeder
+                                                                     ou direta. E o que muda com a escolha, entao fica
+                                                                     visivel antes de instalar, nao depois. -->
+                                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Rota}"
+                                                                           FontSize="10.5" VerticalAlignment="Center"
+                                                                           Margin="8,0,0,0"
+                                                                           Foreground="{StaticResource TextFaintBrush}"/>
+                                                                <Path DockPanel.Dock="Right" Data="{StaticResource IconCheck}"
+                                                                      Fill="#7BD88F" Stretch="Uniform" Width="11" Height="11"
+                                                                      VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                      ToolTip="{loc:Tr Api_Atual}"
+                                                                      Visibility="{Binding Escolhido, Converter={StaticResource BoolToVis}}"/>
+                                                                <TextBlock Text="{Binding Exe}" FontSize="11"
+                                                                           VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis"/>
+                                                            </DockPanel>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- O que MAIS esta na pasta. A cadeia toda verde e o jogo sem
+                                         DLSS nenhum e um estado que existe: outro mod ocupando a
+                                         vaga do proxy, falsificando a NVAPI, ou duas metades
+                                         nossas juntas por historico. Sem isto na tela o usuario
+                                         reinstala por cima, que nao resolve. -->
+                                    <Border CornerRadius="7" Padding="10,8" Margin="0,9,0,0"
+                                            Background="#2B2A1E" BorderBrush="#6E6438" BorderThickness="1"
+                                            Visibility="{Binding TemConflitos, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Right" Padding="10,6"
+                                                        VerticalAlignment="Top" Margin="8,0,0,0"
+                                                        Command="{Binding AfastarConflitosCommand}"
+                                                        ToolTip="{loc:Tr Conflito_Botao_Explicar}"
+                                                        Visibility="{Binding TemBloqueio, Converter={StaticResource BoolToVis}}">
+                                                    <TextBlock Text="{loc:Tr Conflito_Botao_Afastar}" FontSize="11.5"/>
+                                                </Button>
+                                                <StackPanel>
+                                                    <TextBlock Text="{loc:Tr Conflito_Titulo}" FontSize="11.5"
+                                                               FontWeight="SemiBold" Foreground="#E4D89A"/>
+                                                    <TextBlock Text="{Binding ConflitosResumo}" FontSize="11"
+                                                               TextWrapping="Wrap" Margin="0,2,0,0"
+                                                               Foreground="{StaticResource TextFaintBrush}"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                            <ItemsControl ItemsSource="{Binding Conflitos}" Margin="0,7,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,4,0,0">
+                                                            <DockPanel>
+                                                                <Border DockPanel.Dock="Left" CornerRadius="4"
+                                                                        Padding="6,2" Margin="0,0,8,0"
+                                                                        VerticalAlignment="Center"
+                                                                        Background="{Binding Grau, Converter={StaticResource NivelToBrush}}">
+                                                                    <TextBlock Text="{Binding Grau}" FontSize="10"
+                                                                               FontWeight="SemiBold" Foreground="#12100A"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Ferramenta}" FontSize="10.5"
+                                                                           DockPanel.Dock="Right" Margin="8,0,0,0"
+                                                                           VerticalAlignment="Center"
+                                                                           Foreground="{StaticResource TextFaintBrush}"/>
+                                                                <TextBlock Text="{Binding Arquivo}" FontSize="11"
+                                                                           VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis"/>
+                                                            </DockPanel>
+                                                            <TextBlock Text="{Binding Porque}" FontSize="10.5"
+                                                                       TextWrapping="Wrap" LineHeight="15"
+                                                                       Margin="0,2,0,0"
+                                                                       Foreground="{StaticResource TextFaintBrush}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
                                     </Border>
 
                                     <!-- por que esta maquina nao pode ligar -->

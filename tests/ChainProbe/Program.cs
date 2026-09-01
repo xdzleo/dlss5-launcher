@@ -25,6 +25,42 @@ if (args.Contains("--timing"))
     return 0;
 }
 
+// --conflitos diz o que MAIS esta na pasta. E a resposta para "instalei e nao acontece nada"
+// quando a cadeia inteira esta verde: outro mod sentado na vaga que o nosso ReShade precisa.
+if (args.Contains("--conflitos"))
+{
+    var lista = ConflictScanner.Scan(dir, exe);
+    if (lista.Count == 0) { Console.WriteLine("  (nada disputando espaco)"); return 0; }
+    foreach (var c in lista)
+        Console.WriteLine($"  [{c.Grau,-8}] {c.Arquivo,-32} {c.Ferramenta,-16} "
+                          + $"{(c.PodeAfastar ? "afastavel" : "-")}\n     {c.Porque}");
+    return 0;
+}
+
+// --api lista TODOS os executaveis da pasta com a API de cada um e a rota que cada um pediria.
+// E o que responde "este jogo tem mais de uma API?" sem abrir o jogo -- e, no caso do Baldur's
+// Gate 3, se os dois executaveis carregam o mesmo proxy (que seria carga dupla do ReShade).
+if (args.Contains("--api"))
+{
+    foreach (var f in Directory.EnumerateFiles(dir, "*.exe").OrderByDescending(f => new FileInfo(f).Length))
+    {
+        var pe = PeUtils.Inspect(f);
+        var api = Dlss5Installer.ApiDoExe(f);
+        var d3d12 = Dlss5Installer.ReachesD3D12(f);
+        var r = Dlss5Installer.Rotear(dir, f, NeuralUpliftService.Detect(dir, dir, null).HasDlss, d3d12);
+        var interessa = pe?.Imports
+            .Where(i => i.StartsWith("d3d", StringComparison.OrdinalIgnoreCase)
+                        || i.Equals("dxgi.dll", StringComparison.OrdinalIgnoreCase)
+                        || i.StartsWith("vulkan", StringComparison.OrdinalIgnoreCase))
+            .ToArray() ?? [];
+        Console.WriteLine($"  {Path.GetFileName(f),-34} {Dlss5Installer.ApiLabel(api),-7} "
+                          + $"{(pe?.Is64Bit == false ? "32b" : "64b")}  "
+                          + $"rota={(r.Ponte ? "Ponte" : r.OptiScaler ? "Opti" : r.Feeder ? "Feeder" : "direta")}");
+        Console.WriteLine($"     imports graficos: {(interessa.Length > 0 ? string.Join(", ", interessa) : "(nenhum)")}");
+    }
+    return 0;
+}
+
 Console.WriteLine($"pasta : {dir}");
 Console.WriteLine($"exe   : {exe ?? "(nenhum)"}");
 Console.WriteLine();
@@ -61,8 +97,11 @@ var alcancaD3d12 = Dlss5Installer.ReachesD3D12(exe);
 // Espelha o launcher: a anulacao por Feeder presente saiu (o marcador .renodx-ours ja
 // impede a deteccao de contar os runtimes que o launcher copiou).
 var temDlssNativo = det.HasDlss;
-var pedePonte = temDlssNativo && !alcancaD3d12;
-var pedeFeeder = !temDlssNativo && FeederService.Applies(exe, temDlssNativo, alcancaD3d12);
+// A mesma funcao que o launcher e o instalador usam -- esta sonda tinha a propria copia da
+// regra, que e exatamente como o bug do Baldur's Gate 3 passou despercebido aqui.
+var rota = Dlss5Installer.Rotear(dir, exe, temDlssNativo, alcancaD3d12);
+var pedePonte = rota.Ponte && !feederActive;
+var pedeFeeder = rota.Feeder && !bridgeActive;
 var rrEsperado = NeuralUpliftService.TemRuntimeLocal(dir);
 var neuralApplied = NeuralUpliftService.IsApplied(dir, ini, null);
 

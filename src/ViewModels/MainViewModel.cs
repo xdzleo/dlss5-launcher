@@ -80,6 +80,8 @@ public class MainViewModel : ObservableObject
             foreach (var g in Games) g.RaiseLocalizedText();
         };
         ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
+        AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && TemBloqueio);
+        EscolherApiCommand = new RelayCommand<OpcaoApi>(EscolherApi, _ => !Busy);
         DlssCommand = new AsyncRelayCommand(ToggleDlssAsync, () => !Busy);
         DlssRepairCommand = new AsyncRelayCommand(RepairDlssAsync, () => !Busy);
         RestoreAllDlssCommand = new AsyncRelayCommand(RestoreAllDlssAsync, () => !Busy);
@@ -444,6 +446,173 @@ public class MainViewModel : ObservableObject
 
     public ObservableCollection<ChainLink> Dlss5Chain { get; } = new();
 
+    // ----- o que MAIS esta na pasta -----
+    //
+    // A cadeia toda verde e o jogo sem DLSS nenhum e um estado que existe, e ate agora nao tinha
+    // explicacao na tela: outro mod na mesma pasta ocupando a vaga, falsificando a NVAPI que o
+    // addon consulta, ou duas metades nossas que ficaram juntas por historico. O usuario nao tem
+    // como adivinhar isso, e instalar de novo por cima nao resolve.
+
+    public ObservableCollection<ConflictScanner.Conflito> Conflitos { get; } = new();
+
+    private bool _temConflitos;
+    /// <summary>Ha algo na pasta que valha mostrar. Controla o cartao inteiro.</summary>
+    public bool TemConflitos
+    {
+        get => _temConflitos;
+        private set { _temConflitos = value; OnPropertyChanged(nameof(TemConflitos)); }
+    }
+
+    private bool _temBloqueio;
+    /// <summary>Ao menos um conflito impede a cadeia de funcionar — muda a cor do cartao e
+    /// habilita o botao de afastar.</summary>
+    public bool TemBloqueio
+    {
+        get => _temBloqueio;
+        private set
+        {
+            _temBloqueio = value;
+            OnPropertyChanged(nameof(TemBloqueio));
+            // Sem isto o botao nasce desabilitado e so acorda no proximo RaiseAll: o cartao
+            // aparecia com o botao morto exatamente no jogo que precisava dele.
+            AfastarConflitosCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    private string _conflitosResumo = "";
+    public string ConflitosResumo
+    {
+        get => _conflitosResumo;
+        private set { _conflitosResumo = value; OnPropertyChanged(nameof(ConflitosResumo)); }
+    }
+
+    /// <summary>
+    /// Tira do caminho os conflitos que bloqueiam, e relê a pasta.
+    ///
+    /// So os de grau Bloqueio, e so os que o scanner marcou como afastaveis. Um Aviso e uma
+    /// leitura nossa que pode estar errada, e um Info costuma ser um mod que o usuario instalou
+    /// de proposito — mexer neles sem ele pedir seria apagar o trabalho de outra pessoa. Nada e
+    /// apagado de qualquer forma: os arquivos ganham um sufixo que o usuario tira quando quiser.
+    /// </summary>
+    private void AfastarConflitos()
+    {
+        var alvo = Conflitos.Where(c => c.Grau == ConflictScanner.Nivel.Bloqueio && c.PodeAfastar).ToList();
+        if (alvo.Count == 0) return;
+
+        var n = ConflictScanner.Afastar(alvo, new Progress<string>(Log.Info));
+        Log.Info($"conflitos afastados: {n}");
+
+        // A pasta mudou, entao tudo que foi lido dela esta velho -- inclusive a cadeia, que pode
+        // ter destravado justamente por causa disto.
+        var dir = Selected?.TargetDir;
+        if (dir is not null)
+        {
+            ExeLocator.Invalidar(dir);
+            Selected?.RefreshState();
+            Selected?.RefreshLuzes();
+            _ = LoadDetailSafeAsync();
+        }
+    }
+
+    /// <summary>Relê a pasta e atualiza o cartao de conflitos.</summary>
+    private void BuildConflitos(string targetDir, string? exePath)
+    {
+        Conflitos.Clear();
+        var achados = ConflictScanner.Scan(targetDir, exePath);
+        foreach (var c in achados) Conflitos.Add(c);
+
+        var bloqueios = achados.Count(c => c.Grau == ConflictScanner.Nivel.Bloqueio);
+        TemConflitos = achados.Count > 0;
+        TemBloqueio = bloqueios > 0;
+        ConflitosResumo = achados.Count == 0
+            ? L.T("Conflito_Nenhum")
+            : L.T("Conflito_Resumo", achados.Count, bloqueios);
+    }
+
+    // ----- em que API este jogo renderiza -----
+    //
+    // Um jogo pode ter um executavel por API na mesma pasta (o Baldur's Gate 3 tem um Vulkan e um
+    // DX11), e a rota do DLSS 5 muda com essa escolha: Vulkan vai para o Feeder, DX11 com DLSS
+    // proprio vai para a Ponte. Ate agora o launcher escolhia sozinho, pelo maior executavel, e
+    // nao dizia qual tinha escolhido.
+
+    /// <param name="Api">Nome curto, para a interface: "Vulkan", "DX11".</param>
+    /// <param name="Rota">Que caminho do DLSS 5 este executavel pediria.</param>
+    public record OpcaoApi(string ExePath, string Exe, string Api, string Rota, bool Escolhido);
+
+    public ObservableCollection<OpcaoApi> ApisDoJogo { get; } = new();
+
+    private bool _temVariasApis;
+    /// <summary>Ha mais de uma API para escolher nesta pasta.</summary>
+    public bool TemVariasApis
+    {
+        get => _temVariasApis;
+        private set { _temVariasApis = value; OnPropertyChanged(nameof(TemVariasApis)); }
+    }
+
+    private string _apiAtual = "";
+    /// <summary>A API do executavel que esta selecionado agora.</summary>
+    public string ApiAtual
+    {
+        get => _apiAtual;
+        private set { _apiAtual = value; OnPropertyChanged(nameof(ApiAtual)); }
+    }
+
+    /// <summary>
+    /// Passa a mirar o executavel desta API.
+    ///
+    /// Nao instala nada: so muda o alvo. Tudo o mais — a rota, os elos, o interruptor — deriva de
+    /// qual executavel esta selecionado, entao trocar o alvo ja recalcula a tela inteira, e o
+    /// usuario ve o que a escolha muda ANTES de instalar. Instalar continua sendo o botao de
+    /// instalar.
+    /// </summary>
+    private void EscolherApi(OpcaoApi opcao)
+    {
+        if (Selected is null || opcao.Escolhido) return;
+        // Pelo mesmo caminho do seletor de executavel que ja existe: ele fixa a escolha na
+        // config, refaz a deteccao de neural na ordem certa e avisa quando o mod ficou na pasta
+        // anterior. Reescrever isso aqui seria uma segunda copia para sair do lugar depois --
+        // que e exatamente o bug que abriu este trabalho.
+        SelectedExe = opcao.ExePath;
+    }
+
+    /// <summary>Lista os executaveis da pasta com a API e a rota de cada um.</summary>
+    private void BuildApis(string targetDir, string? exePath)
+    {
+        ApisDoJogo.Clear();
+        ApiAtual = "";
+        try
+        {
+            var det = NeuralUpliftService.Detect(targetDir, targetDir, null);
+            // So a pasta do alvo, sem recursao: os executaveis que disputam a mesma instalacao
+            // moram lado a lado (bg3.exe e bg3_dx11.exe no mesmo `bin`). Descer a arvore traria
+            // launchers, crash handlers e desinstaladores, que nao sao escolha de API nenhuma.
+            var exes = Directory.EnumerateFiles(targetDir, "*.exe", SearchOption.TopDirectoryOnly)
+                .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
+                .Take(12);
+            foreach (var f in exes)
+            {
+                var api = Dlss5Installer.ApiDoExe(f);
+                if (api == Dlss5Installer.GraficosApi.Desconhecida) continue;
+
+                var r = Dlss5Installer.Rotear(targetDir, f, det.HasDlss, Dlss5Installer.ReachesD3D12(f));
+                var escolhido = string.Equals(f, exePath, StringComparison.OrdinalIgnoreCase);
+                var rota = r.Ponte ? L.T("Dlss5_Link_Bridge")
+                         : r.OptiScaler ? "OptiScaler"
+                         : r.Feeder ? L.T("Dlss5_Link_Feeder")
+                         : L.T("Api_Rota_Direta");
+
+                var label = Dlss5Installer.ApiLabel(api);
+                if (escolhido) ApiAtual = label;
+                ApisDoJogo.Add(new OpcaoApi(f, Path.GetFileName(f), label, rota, escolhido));
+            }
+        }
+        catch (Exception ex) { Log.Warn($"apis em {targetDir}: {ex.Message}"); }
+
+        // Uma so API nao e escolha: o seletor so aparece quando ha de fato o que escolher.
+        TemVariasApis = ApisDoJogo.Select(a => a.Api).Distinct().Count() > 1;
+    }
+
     private bool _dlss5Ready;
     /// <summary>
     /// Todos os elos no lugar. E o que o interruptor reflete.
@@ -477,11 +646,26 @@ public class MainViewModel : ObservableObject
     }
 
     private bool _feederActive;
-    /// <summary>O Feeder esta em uso neste jogo — o jogo nao tem DLSS proprio.</summary>
+    /// <summary>O Feeder esta em uso neste jogo.</summary>
     public bool FeederActive
     {
         get => _feederActive;
         set { _feederActive = value; OnPropertyChanged(nameof(FeederActive)); }
+    }
+
+    private bool _mostraAvisoSemDlss;
+    /// <summary>
+    /// Mostrar o aviso de que o resultado e mais fraco por falta de DLSS no jogo.
+    ///
+    /// Separado de FeederActive de proposito: o Feeder pode estar instalado num jogo que TEM
+    /// DLSS, por decisao de uma versao anterior do launcher, e nesse caso o aviso contradiria a
+    /// propria tela. A condicao que o texto descreve e a ausencia de DLSS, nao a presenca do
+    /// Feeder.
+    /// </summary>
+    public bool MostraAvisoSemDlss
+    {
+        get => _mostraAvisoSemDlss;
+        set { _mostraAvisoSemDlss = value; OnPropertyChanged(nameof(MostraAvisoSemDlss)); }
     }
 
     /// <summary>Recolhe o estado de cada elo para os indicadores do cartao.</summary>
@@ -557,8 +741,26 @@ public class MainViewModel : ObservableObject
         // Ver a nota longa em CheckNeuralAsync: a anulacao por Feeder presente saiu porque o
         // marcador `.renodx-ours` ja impede a deteccao de contar os runtimes que nos copiamos.
         var temDlssNativo = det.HasDlss;
-        var pedePonte = temDlssNativo && !alcancaD3d12;
-        var pedeFeeder = !temDlssNativo && FeederService.Applies(exePath, temDlssNativo, alcancaD3d12);
+
+        // A MESMA funcao que o instalador usa para escolher o caminho. Esta tela tinha a propria
+        // copia da regra, sem o termo de Vulkan, e cobrava a Ponte num jogo que o instalador
+        // tinha mandado para o Feeder -- elo vermelho que nenhum clique resolvia.
+        var rota = Dlss5Installer.Rotear(targetDir, exePath, temDlssNativo, alcancaD3d12);
+
+        // E o que JA esta instalado tem precedencia sobre o que a regra escolheria hoje. Ponte e
+        // Feeder sao exclusivos, e a resposta pode mudar entre uma instalacao e a seguinte
+        // (deteccao corrigida, jogo atualizado). Um caminho instalado e completo nao e um elo
+        // faltando: trocar de caminho e reinstalar, e e assim que deve ser pedido.
+        var pedePonte = rota.Ponte && !FeederActive;
+        var pedeFeeder = rota.Feeder && !BridgeActive;
+
+        // O aviso "sem DLSS nativo" segue a AUSENCIA de DLSS, nao a presenca do Feeder.
+        //
+        // Ele estava preso a FeederActive, e o texto fala de outra coisa: que os motion vectors
+        // sao estimados por shader porque o jogo nao os fornece. Num jogo que TEM DLSS e ficou
+        // com o Feeder instalado -- Baldur's Gate 3, por exemplo -- o aviso aparecia dizendo que
+        // o jogo nao tem DLSS, contradizendo a propria tela logo acima.
+        MostraAvisoSemDlss = FeederActive && !temDlssNativo;
 
         if (pedePonte || BridgeActive)
             Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Bridge"), BridgeActive));
@@ -568,6 +770,11 @@ public class MainViewModel : ObservableObject
         // Depois de TODOS os elos, nao antes: o calculo ficava acima dos dois ultimos, entao nem
         // um elo vermelho ali derrubava o "pronto".
         Dlss5Ready = Dlss5Chain.All(l => l.Ok);
+
+        // As duas leituras que explicam o que a cadeia sozinha nao explica: o que mais esta na
+        // pasta, e em que API cada executavel renderiza.
+        BuildConflitos(targetDir, exePath);
+        BuildApis(targetDir, exePath);
     }
 
     /// <summary>O runtime falta na biblioteca — o único bloqueio que o usuário resolve aqui
@@ -666,6 +873,8 @@ public class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(ModStateText));
     }
     public AsyncRelayCommand ImportNeuralRuntimeCommand { get; }
+    public RelayCommand AfastarConflitosCommand { get; }
+    public RelayCommand<OpcaoApi> EscolherApiCommand { get; }
     public AsyncRelayCommand DlssCommand { get; }
     public AsyncRelayCommand DlssRepairCommand { get; }
     public AsyncRelayCommand RestoreAllDlssCommand { get; }
@@ -724,6 +933,7 @@ public class MainViewModel : ObservableObject
         Dlss5Command.RaiseCanExecuteChanged();
         ModCommand.RaiseCanExecuteChanged();
         ImportNeuralRuntimeCommand.RaiseCanExecuteChanged();
+        AfastarConflitosCommand.RaiseCanExecuteChanged();
         DlssCommand.RaiseCanExecuteChanged();
         DlssRepairCommand.RaiseCanExecuteChanged();
         RestoreAllDlssCommand.RaiseCanExecuteChanged();

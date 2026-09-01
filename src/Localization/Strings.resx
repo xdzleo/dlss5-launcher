@@ -62,6 +62,21 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Api_Atual" xml:space="preserve">
+    <value>selecionado</value>
+  </data>
+  <data name="Api_Escolher" xml:space="preserve">
+    <value>Instalar para este</value>
+  </data>
+  <data name="Api_Rota_Direta" xml:space="preserve">
+    <value>direta</value>
+  </data>
+  <data name="Api_Titulo" xml:space="preserve">
+    <value>API gráfica</value>
+  </data>
+  <data name="Api_Varias" xml:space="preserve">
+    <value>Este jogo tem um executável por API. O DLSS 5 segue um caminho diferente conforme o que você joga — escolha o que você abre de verdade.</value>
+  </data>
   <data name="App_Name" xml:space="preserve">
     <value>DLSS 5 Launcher</value>
     <comment>Nome do produto: nao traduzir.</comment>
@@ -475,6 +490,57 @@
   <data name="Common_Yes" xml:space="preserve">
     <value>Sim</value>
     <comment>Chave Common_* — pode ja estar sendo criada por outro arquivo; deve existir uma definicao so.</comment>
+  </data>
+  <data name="Conflito_Afastado" xml:space="preserve">
+    <value>Afastado: {0} ({1})</value>
+  </data>
+  <data name="Conflito_Botao_Afastar" xml:space="preserve">
+    <value>Afastar os que bloqueiam</value>
+  </data>
+  <data name="Conflito_Botao_Explicar" xml:space="preserve">
+    <value>Renomeia com um sufixo — nada é apagado, e tirar o sufixo devolve tudo ao lugar.</value>
+  </data>
+  <data name="Conflito_Nenhum" xml:space="preserve">
+    <value>Não há nada aqui disputando espaço com o DLSS 5.</value>
+  </data>
+  <data name="Conflito_Porque_DlssgFsr3" xml:space="preserve">
+    <value>Substitui a geração de quadros, não o upscaling — não concorre com o pass neural. Está na lista só para você saber que ele está aí.</value>
+  </data>
+  <data name="Conflito_Porque_DlssTweaks" xml:space="preserve">
+    <value>Sobrescreve presets e escala do DLSS por baixo, então o que você ajusta no launcher pode não ser o que roda.</value>
+  </data>
+  <data name="Conflito_Porque_DxvkDgVoodoo" xml:space="preserve">
+    <value>DXVK e dgVoodoo2 disputam o mesmo d3d9.dll. Só um carrega; o outro é um arquivo que nunca roda. Reinstale escolhendo um tradutor.</value>
+  </data>
+  <data name="Conflito_Porque_FakeNvapi" xml:space="preserve">
+    <value>Falsifica a API da NVIDIA. O addon pergunta ao driver qual é a GPU para escolher a build do modelo, e recebe uma resposta que não é a placa de verdade.</value>
+  </data>
+  <data name="Conflito_Porque_Generico" xml:space="preserve">
+    <value>Há outra ferramenta instalada aqui. Não parece disputar espaço com o DLSS 5.</value>
+  </data>
+  <data name="Conflito_Porque_OptiScaler" xml:space="preserve">
+    <value>Engancha os mesmos pontos de NGX que o pass neural usa. Duas coisas redirecionando o DLSS ao mesmo tempo não é configuração — o launcher instala o OptiScaler dele quando esse é o caminho certo.</value>
+  </data>
+  <data name="Conflito_Porque_PonteFeeder" xml:space="preserve">
+    <value>A Ponte e o Feeder estão os dois nesta pasta, e eles são mutuamente exclusivos. Reinstale o DLSS 5 para ficar só com o que este jogo precisa.</value>
+  </data>
+  <data name="Conflito_Porque_Proxy" xml:space="preserve">
+    <value>O {1} ocupa o {0} — a vaga que o nosso ReShade precisa para carregar. Enquanto ele estiver aí, a cadeia do DLSS 5 não começa neste executável.</value>
+  </data>
+  <data name="Conflito_Porque_ReShadeDuplo" xml:space="preserve">
+    <value>O ReShade entraria duas vezes no mesmo processo — uma pela camada Vulkan e outra por este proxy. Essa é a causa conhecida do crash 0xc0000005 logo no start.</value>
+  </data>
+  <data name="Conflito_Porque_Restos" xml:space="preserve">
+    <value>{0} restos renomeados de tentativas anteriores. Inofensivos sozinhos, mas deixam a pasta difícil de ler — inclusive para o launcher.</value>
+  </data>
+  <data name="Conflito_Porque_SpecialK" xml:space="preserve">
+    <value>Injeta no mesmo processo e pode tomar a vaga do proxy. Costuma conviver, mas é a primeira coisa a tirar se o jogo parar de abrir.</value>
+  </data>
+  <data name="Conflito_Resumo" xml:space="preserve">
+    <value>{0} encontrados — {1} impedem o DLSS 5 de funcionar.</value>
+  </data>
+  <data name="Conflito_Titulo" xml:space="preserve">
+    <value>Outros mods nesta pasta</value>
   </data>
   <data name="DgVoodoo_Deployed" xml:space="preserve">
     <value>dgVoodoo2 instalado — o jogo agora apresenta por DirectX 11.</value>

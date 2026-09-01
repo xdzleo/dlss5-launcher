@@ -62,6 +62,21 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Api_Atual" xml:space="preserve">
+    <value>selected</value>
+  </data>
+  <data name="Api_Escolher" xml:space="preserve">
+    <value>Install for this one</value>
+  </data>
+  <data name="Api_Rota_Direta" xml:space="preserve">
+    <value>direct</value>
+  </data>
+  <data name="Api_Titulo" xml:space="preserve">
+    <value>Graphics API</value>
+  </data>
+  <data name="Api_Varias" xml:space="preserve">
+    <value>This game ships one executable per API. DLSS 5 takes a different path depending on which one you play — pick the one you actually launch.</value>
+  </data>
   <data name="App_Name" xml:space="preserve">
     <value>DLSS 5 Launcher</value>
     <comment>Nome do produto: nao traduzir.</comment>
@@ -475,6 +490,57 @@
   <data name="Common_Yes" xml:space="preserve">
     <value>Yes</value>
     <comment>Chave Common_* — pode ja estar sendo criada por outro arquivo; deve existir uma definicao so.</comment>
+  </data>
+  <data name="Conflito_Afastado" xml:space="preserve">
+    <value>Moved aside: {0} ({1})</value>
+  </data>
+  <data name="Conflito_Botao_Afastar" xml:space="preserve">
+    <value>Move the blocking ones aside</value>
+  </data>
+  <data name="Conflito_Botao_Explicar" xml:space="preserve">
+    <value>Renames them with a suffix — nothing is deleted, and removing the suffix puts them back.</value>
+  </data>
+  <data name="Conflito_Nenhum" xml:space="preserve">
+    <value>Nothing else here competes with DLSS 5.</value>
+  </data>
+  <data name="Conflito_Porque_DlssgFsr3" xml:space="preserve">
+    <value>Replaces frame generation, not upscaling — it does not compete with the neural pass. Listed so you know it is here.</value>
+  </data>
+  <data name="Conflito_Porque_DlssTweaks" xml:space="preserve">
+    <value>Overrides DLSS presets and resolution scale underneath us, so what you set in the launcher may not be what runs.</value>
+  </data>
+  <data name="Conflito_Porque_DxvkDgVoodoo" xml:space="preserve">
+    <value>DXVK and dgVoodoo2 both claim d3d9.dll. Only one can load; the other is a file that never runs. Reinstall and pick one translator.</value>
+  </data>
+  <data name="Conflito_Porque_FakeNvapi" xml:space="preserve">
+    <value>Spoofs the NVIDIA API. The addon asks the driver which GPU this is to pick the model build, and gets an answer that is not the real card.</value>
+  </data>
+  <data name="Conflito_Porque_Generico" xml:space="preserve">
+    <value>Another tool is installed here. It does not appear to compete with DLSS 5.</value>
+  </data>
+  <data name="Conflito_Porque_OptiScaler" xml:space="preserve">
+    <value>Hooks the same NGX entry points the neural pass uses. Two things redirecting DLSS at once is not a configuration — the launcher installs its own OptiScaler when it is the right path.</value>
+  </data>
+  <data name="Conflito_Porque_PonteFeeder" xml:space="preserve">
+    <value>The Bridge and the Feeder are both deployed here, and they are mutually exclusive. Reinstall DLSS 5 to leave only the one this game needs.</value>
+  </data>
+  <data name="Conflito_Porque_Proxy" xml:space="preserve">
+    <value>{1} occupies {0} — the slot our ReShade needs to load. While it sits there, the DLSS 5 chain never starts in this executable.</value>
+  </data>
+  <data name="Conflito_Porque_ReShadeDuplo" xml:space="preserve">
+    <value>ReShade would load twice in the same process — once through the Vulkan layer, once through this proxy. That is the known cause of a 0xc0000005 crash at startup.</value>
+  </data>
+  <data name="Conflito_Porque_Restos" xml:space="preserve">
+    <value>{0} renamed leftovers from earlier attempts. Harmless on their own, but they make the folder hard to read — including for the launcher.</value>
+  </data>
+  <data name="Conflito_Porque_SpecialK" xml:space="preserve">
+    <value>Injects into the same process and can take the proxy slot. Usually coexists, but it is the first thing to remove if the game stops opening.</value>
+  </data>
+  <data name="Conflito_Resumo" xml:space="preserve">
+    <value>{0} found — {1} block DLSS 5 from working.</value>
+  </data>
+  <data name="Conflito_Titulo" xml:space="preserve">
+    <value>Other mods in this folder</value>
   </data>
   <data name="DgVoodoo_Deployed" xml:space="preserve">
     <value>dgVoodoo2 in place — the game now presents through DirectX 11.</value>
