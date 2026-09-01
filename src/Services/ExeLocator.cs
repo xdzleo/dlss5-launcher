@@ -357,12 +357,14 @@ public static class ExeLocator
     /// O conteudo nao muda entre um clique e outro, mas a varredura era refeita a cada clique:
     /// navegar entre jogos pagava o preco toda vez, inclusive ao voltar para um ja visto.
     ///
-    /// A invalidacao e explicita (Invalidar), chamada por quem escreve na pasta do jogo. Um TTL
-    /// curto cobre o resto — alguem instalando um mod por fora enquanto o launcher esta aberto.
+    /// A invalidacao e explicita (Invalidar), chamada por quem escreve na pasta do jogo. O TTL
+    /// e longo de proposito: ele existe so para o caso de alguem mexer na pasta por fora com o
+    /// launcher aberto, e um TTL curto anularia o pre-aquecimento — a varredura de todos os
+    /// jogos feita na abertura teria expirado antes do primeiro clique.
     /// </summary>
     private static readonly Dictionary<string, (DateTime Quando, List<string> Exes)> _cacheExes =
         new(StringComparer.OrdinalIgnoreCase);
-    private static readonly TimeSpan ValidadeCache = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ValidadeCache = TimeSpan.FromMinutes(15);
     private static readonly object _travaCache = new();
 
     /// <summary>Esquece a varredura desta pasta. Chamar depois de instalar ou remover.</summary>
@@ -370,6 +372,19 @@ public static class ExeLocator
     {
         if (pasta is null) return;
         lock (_travaCache) { _cacheExes.Remove(pasta); }
+    }
+
+    /// <summary>
+    /// Varre a pasta e guarda o resultado, sem devolver nada.
+    ///
+    /// Serve para aquecer o cache na abertura do launcher, enquanto o usuario ainda esta lendo a
+    /// lista: quando ele clicar num jogo, a varredura ja aconteceu. E o mesmo trabalho, so que
+    /// feito quando ninguem esta esperando por ele.
+    /// </summary>
+    public static void Preaquecer(string? pasta)
+    {
+        if (pasta is null) return;
+        try { _ = SafeEnumerate(pasta).ToList(); } catch { }
     }
 
     private static IEnumerable<string> SafeEnumerate(string root)

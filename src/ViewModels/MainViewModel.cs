@@ -777,6 +777,24 @@ public class MainViewModel : ObservableObject
             var ct = cts.Token;
             _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), ct));
             _ = Task.Run(() => CheckSwappedRuntimesAsync(Games.Select(g => g.Game.InstallDir).ToList()!));
+
+            // Aquece a varredura de .exe de TODOS os jogos enquanto o usuario le a lista.
+            //
+            // Essa varredura desce cinco niveis e custa ~27 ms por jogo grande; feita ao clicar,
+            // e a maior parte da espera para o card aparecer. Feita aqui, acontece quando ninguem
+            // esta esperando, e o clique encontra o resultado pronto (medido: 27 ms -> 0 ms).
+            //
+            // Sequencial de proposito: sao dezenas de pastas, e disparar tudo de uma vez disputaria
+            // o disco justamente com o BackgroundEnrich, que a tela esta esperando.
+            var pastas = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).ToList();
+            _ = Task.Run(() =>
+            {
+                foreach (var d in pastas)
+                {
+                    if (ct.IsCancellationRequested) return;
+                    ExeLocator.Preaquecer(d);
+                }
+            }, ct);
         }
         catch (Exception ex)
         {
