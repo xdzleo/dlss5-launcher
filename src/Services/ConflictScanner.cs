@@ -155,7 +155,12 @@ public static class ConflictScanner
     {
         // Ponte e Feeder na mesma pasta. Nao e hipotese: uma versao anterior deste launcher lia um
         // runtime NOSSO como sendo do jogo, trocava de caminho e deixava o anterior para tras.
-        if (FeederService.IsDeployed(dir) && NeuralUpliftService.BridgeDeployed(dir))
+        //
+        // A marca de multi-API isenta: num jogo com um executavel por API os dois sao instalados
+        // juntos de proposito, e acusar isso seria a tela chamando de defeito o que ela mesma
+        // acabou de fazer.
+        if (!Dlss5Installer.MultiApiInstalado(dir)
+            && FeederService.IsDeployed(dir) && NeuralUpliftService.BridgeDeployed(dir))
             achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_PonteFeeder"),
                                      Nivel.Bloqueio, PodeAfastar: false));
 

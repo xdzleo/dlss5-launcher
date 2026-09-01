@@ -62,21 +62,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Api_Atual" xml:space="preserve">
-    <value>selected</value>
-  </data>
-  <data name="Api_Escolher" xml:space="preserve">
-    <value>Install for this one</value>
-  </data>
-  <data name="Api_Rota_Direta" xml:space="preserve">
-    <value>direct</value>
-  </data>
-  <data name="Api_Titulo" xml:space="preserve">
-    <value>Graphics API</value>
-  </data>
-  <data name="Api_Varias" xml:space="preserve">
-    <value>This game ships one executable per API. DLSS 5 takes a different path depending on which one you play — pick the one you actually launch.</value>
-  </data>
   <data name="App_Name" xml:space="preserve">
     <value>DLSS 5 Launcher</value>
     <comment>Nome do produto: nao traduzir.</comment>
@@ -916,6 +901,9 @@
   </data>
   <data name="Dlss5_Step_Host64" xml:space="preserve">
     <value>32-bit game: a 64-bit helper process runs the neural pass, since DLSS itself is 64-bit only.</value>
+  </data>
+  <data name="Dlss5_Step_MultiApi" xml:space="preserve">
+    <value>Set up for every graphics API this game ships</value>
   </data>
   <data name="Dlss5_Step_OptiScaler" xml:space="preserve">
     <value>OptiScaler bridge: this game has {0} but no DLSS, so {0} is redirected to it.</value>

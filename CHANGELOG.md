@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.65.0
+
+Uma tela que pedia escolhas demais, e uma delas era inventada.
+
+### O painel de controle do dgVoodoo virou uma "escolha de API"
+
+Na Bayonetta, o cartão de API gráfica listava `dgVoodooCpl.exe` como se fosse uma alternativa —
+rotulado **DX12**, ao lado do jogo em DX9. `dgVoodooCpl.exe` é o painel de configuração do próprio
+dgVoodoo, um arquivo que *nós* colocamos ali.
+
+A causa é uma função permissiva usada para a coisa errada: `ReachesD3D12` responde "sim" quando o
+binário não menciona API nenhuma. Isso é **certo para rotear** — não barrar um jogo sem base — e
+errado para escrever na tela. Agora exibir exige evidência positiva, e o que não dá sinal de
+renderizar em nada simplesmente não aparece.
+
+### O cartão de escolha de API saiu
+
+Ele empurrava uma decisão técnica para quem só quer o DLSS 5 funcionando. No lugar dele, o
+instalador cobre **todas** as APIs da pasta de uma vez.
+
+Isso é possível porque os dois caminhos não disputam arquivo nenhum: a Ponte é um addon próprio
+(`dlss5-dx11-bridge.addon64`), e o Feeder é o addon neural sob outro nome mais os shaders em
+`reshade-shaders`. Qual deles trabalha é decidido em tempo de execução — num processo Vulkan a
+Ponte não encontra device D3D11 e fica quieta.
+
+A evidência de que um addon fora do seu contexto é inofensivo estava na própria pasta do Baldur's
+Gate: o addon neural já convivia ali com a rota Feeder, em Vulkan, funcionando.
+
+Uma marca (`.dlss5-multi-api`) registra que a convivência é intencional, para o scanner de
+conflitos não acusar como defeito a instalação que a tela acabou de fazer.
+
+Das 42 pastas testadas, só o Baldur's Gate 3 muda de comportamento — é o único com um executável
+por API.
+
+### O tradutor de D3D9 virou chave
+
+Era uma caixa de seleção com dois itens, o que obriga a abrir e ler para descobrir que só existe uma
+outra opção. Agora os dois lados ficam visíveis e a troca é um clique — o gesto certo para "se
+crashar com um, tente o outro".
+
+É a **única** escolha que continua na tela, e por um motivo: não há resposta certa. O Resident Evil
+Revelations 2 só roda com DXVK; o Saints Row 2 só roda com dgVoodoo2. Não dá para deduzir qual serve
+sem abrir o jogo.
+
 ## v1.64.0
 
 O Baldur's Gate 3 não ligava, e a causa não era o Baldur's Gate 3.

@@ -81,7 +81,6 @@ public class MainViewModel : ObservableObject
         };
         ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
         AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && TemBloqueio);
-        EscolherApiCommand = new RelayCommand<OpcaoApi>(EscolherApi, _ => !Busy);
         DlssCommand = new AsyncRelayCommand(ToggleDlssAsync, () => !Busy);
         DlssRepairCommand = new AsyncRelayCommand(RepairDlssAsync, () => !Busy);
         RestoreAllDlssCommand = new AsyncRelayCommand(RestoreAllDlssAsync, () => !Busy);
@@ -291,7 +290,31 @@ public class MainViewModel : ObservableObject
         new() { "DXVK (Vulkan)", "dgVoodoo2 (D3D11)" };
 
     private bool _mostraTradutorD3d9;
-    public bool MostraTradutorD3d9 { get => _mostraTradutorD3d9; set => Set(ref _mostraTradutorD3d9, value); }
+    public bool MostraTradutorD3d9
+    {
+        get => _mostraTradutorD3d9;
+        set { if (Set(ref _mostraTradutorD3d9, value)) OnPropertyChanged(nameof(UsarDxvk)); }
+    }
+
+    /// <summary>
+    /// O mesmo par de opcoes, como chave.
+    ///
+    /// Sao exatamente dois, exclusivos, e a diferenca entre eles nao cabe num rotulo de lista: uma
+    /// caixa de selecao com dois itens obriga a abrir, ler e escolher para descobrir que so ha um
+    /// outro. Uma chave mostra os dois lados de uma vez e troca com um clique — que e o gesto
+    /// certo para "se crashar com um, tente o outro".
+    /// </summary>
+    public bool UsarDxvk
+    {
+        get => _tradutorD3d9 is null || _tradutorD3d9.StartsWith("DXVK", StringComparison.Ordinal);
+        set
+        {
+            var alvo = value ? D3d9Translators[0] : D3d9Translators[1];
+            if (alvo == _tradutorD3d9) return;
+            TradutorD3d9 = alvo;                 // faz a troca de verdade (reinstala se preciso)
+            OnPropertyChanged(nameof(UsarDxvk));
+        }
+    }
 
     private string? _tradutorD3d9;
     public string? TradutorD3d9
@@ -310,6 +333,7 @@ public class MainViewModel : ObservableObject
             // reinstala sozinha; se nao esta, a preferencia fica guardada para a primeira vez.
             if (Dlss5Ready || FeederActive) _ = TrocarTradutorAsync();
             else DetailStatus = L.T("Main_D3d9Translator_Changed");
+            OnPropertyChanged(nameof(UsarDxvk));
         }
     }
 
@@ -529,89 +553,15 @@ public class MainViewModel : ObservableObject
             : L.T("Conflito_Resumo", achados.Count, bloqueios);
     }
 
-    // ----- em que API este jogo renderiza -----
+    // A API grafica de cada executavel continua sendo detectada -- ela decide a rota -- mas nao e
+    // mais uma pergunta para o usuario.
     //
-    // Um jogo pode ter um executavel por API na mesma pasta (o Baldur's Gate 3 tem um Vulkan e um
-    // DX11), e a rota do DLSS 5 muda com essa escolha: Vulkan vai para o Feeder, DX11 com DLSS
-    // proprio vai para a Ponte. Ate agora o launcher escolhia sozinho, pelo maior executavel, e
-    // nao dizia qual tinha escolhido.
+    // O cartao que a expunha pedia uma decisao tecnica de quem so quer o DLSS 5 funcionando, e
+    // errava feio em jogo de 32 bits: na Bayonetta ele listava o painel de controle do dgVoodoo
+    // como se fosse uma alternativa de "DX12". Agora o instalador cobre TODAS as APIs da pasta de
+    // uma vez (Dlss5Installer.RotearPasta), e a unica escolha que sobra na tela e a que nao tem
+    // resposta certa: DXVK ou dgVoodoo2, nos jogos D3D9.
 
-    /// <param name="Api">Nome curto, para a interface: "Vulkan", "DX11".</param>
-    /// <param name="Rota">Que caminho do DLSS 5 este executavel pediria.</param>
-    public record OpcaoApi(string ExePath, string Exe, string Api, string Rota, bool Escolhido);
-
-    public ObservableCollection<OpcaoApi> ApisDoJogo { get; } = new();
-
-    private bool _temVariasApis;
-    /// <summary>Ha mais de uma API para escolher nesta pasta.</summary>
-    public bool TemVariasApis
-    {
-        get => _temVariasApis;
-        private set { _temVariasApis = value; OnPropertyChanged(nameof(TemVariasApis)); }
-    }
-
-    private string _apiAtual = "";
-    /// <summary>A API do executavel que esta selecionado agora.</summary>
-    public string ApiAtual
-    {
-        get => _apiAtual;
-        private set { _apiAtual = value; OnPropertyChanged(nameof(ApiAtual)); }
-    }
-
-    /// <summary>
-    /// Passa a mirar o executavel desta API.
-    ///
-    /// Nao instala nada: so muda o alvo. Tudo o mais — a rota, os elos, o interruptor — deriva de
-    /// qual executavel esta selecionado, entao trocar o alvo ja recalcula a tela inteira, e o
-    /// usuario ve o que a escolha muda ANTES de instalar. Instalar continua sendo o botao de
-    /// instalar.
-    /// </summary>
-    private void EscolherApi(OpcaoApi opcao)
-    {
-        if (Selected is null || opcao.Escolhido) return;
-        // Pelo mesmo caminho do seletor de executavel que ja existe: ele fixa a escolha na
-        // config, refaz a deteccao de neural na ordem certa e avisa quando o mod ficou na pasta
-        // anterior. Reescrever isso aqui seria uma segunda copia para sair do lugar depois --
-        // que e exatamente o bug que abriu este trabalho.
-        SelectedExe = opcao.ExePath;
-    }
-
-    /// <summary>Lista os executaveis da pasta com a API e a rota de cada um.</summary>
-    private void BuildApis(string targetDir, string? exePath)
-    {
-        ApisDoJogo.Clear();
-        ApiAtual = "";
-        try
-        {
-            var det = NeuralUpliftService.Detect(targetDir, targetDir, null);
-            // So a pasta do alvo, sem recursao: os executaveis que disputam a mesma instalacao
-            // moram lado a lado (bg3.exe e bg3_dx11.exe no mesmo `bin`). Descer a arvore traria
-            // launchers, crash handlers e desinstaladores, que nao sao escolha de API nenhuma.
-            var exes = Directory.EnumerateFiles(targetDir, "*.exe", SearchOption.TopDirectoryOnly)
-                .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
-                .Take(12);
-            foreach (var f in exes)
-            {
-                var api = Dlss5Installer.ApiDoExe(f);
-                if (api == Dlss5Installer.GraficosApi.Desconhecida) continue;
-
-                var r = Dlss5Installer.Rotear(targetDir, f, det.HasDlss, Dlss5Installer.ReachesD3D12(f));
-                var escolhido = string.Equals(f, exePath, StringComparison.OrdinalIgnoreCase);
-                var rota = r.Ponte ? L.T("Dlss5_Link_Bridge")
-                         : r.OptiScaler ? "OptiScaler"
-                         : r.Feeder ? L.T("Dlss5_Link_Feeder")
-                         : L.T("Api_Rota_Direta");
-
-                var label = Dlss5Installer.ApiLabel(api);
-                if (escolhido) ApiAtual = label;
-                ApisDoJogo.Add(new OpcaoApi(f, Path.GetFileName(f), label, rota, escolhido));
-            }
-        }
-        catch (Exception ex) { Log.Warn($"apis em {targetDir}: {ex.Message}"); }
-
-        // Uma so API nao e escolha: o seletor so aparece quando ha de fato o que escolher.
-        TemVariasApis = ApisDoJogo.Select(a => a.Api).Distinct().Count() > 1;
-    }
 
     private bool _dlss5Ready;
     /// <summary>
@@ -771,10 +721,8 @@ public class MainViewModel : ObservableObject
         // um elo vermelho ali derrubava o "pronto".
         Dlss5Ready = Dlss5Chain.All(l => l.Ok);
 
-        // As duas leituras que explicam o que a cadeia sozinha nao explica: o que mais esta na
-        // pasta, e em que API cada executavel renderiza.
+        // A leitura que explica o que a cadeia sozinha nao explica: o que MAIS esta na pasta.
         BuildConflitos(targetDir, exePath);
-        BuildApis(targetDir, exePath);
     }
 
     /// <summary>O runtime falta na biblioteca — o único bloqueio que o usuário resolve aqui
@@ -874,7 +822,6 @@ public class MainViewModel : ObservableObject
     }
     public AsyncRelayCommand ImportNeuralRuntimeCommand { get; }
     public RelayCommand AfastarConflitosCommand { get; }
-    public RelayCommand<OpcaoApi> EscolherApiCommand { get; }
     public AsyncRelayCommand DlssCommand { get; }
     public AsyncRelayCommand DlssRepairCommand { get; }
     public AsyncRelayCommand RestoreAllDlssCommand { get; }

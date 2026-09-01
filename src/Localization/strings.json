@@ -795,25 +795,9 @@
     "en": "No native DLSS — the effect is weaker here",
     "pt-BR": "Sem DLSS nativo — o efeito é mais fraco aqui"
   },
-  "Api_Titulo": {
-    "en": "Graphics API",
-    "pt-BR": "API gráfica"
-  },
-  "Api_Varias": {
-    "en": "This game ships one executable per API. DLSS 5 takes a different path depending on which one you play — pick the one you actually launch.",
-    "pt-BR": "Este jogo tem um executável por API. O DLSS 5 segue um caminho diferente conforme o que você joga — escolha o que você abre de verdade."
-  },
-  "Api_Rota_Direta": {
-    "en": "direct",
-    "pt-BR": "direta"
-  },
-  "Api_Escolher": {
-    "en": "Install for this one",
-    "pt-BR": "Instalar para este"
-  },
-  "Api_Atual": {
-    "en": "selected",
-    "pt-BR": "selecionado"
+  "Dlss5_Step_MultiApi": {
+    "en": "Set up for every graphics API this game ships",
+    "pt-BR": "Configurado para todas as APIs gráficas deste jogo"
   },
   "Conflito_Titulo": {
     "en": "Other mods in this folder",

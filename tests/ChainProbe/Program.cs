@@ -72,7 +72,13 @@ if (args.Contains("--api"))
     foreach (var f in Directory.EnumerateFiles(dir, "*.exe").OrderByDescending(f => new FileInfo(f).Length))
     {
         var pe = PeUtils.Inspect(f);
-        var api = Dlss5Installer.ApiDoExe(f);
+        // Como a tela: so o que da sinal positivo de API entra na lista.
+        var api = Dlss5Installer.ApiDoExe(f, exigirEvidencia: true);
+        if (api == Dlss5Installer.GraficosApi.Desconhecida)
+        {
+            Console.WriteLine($"  {Path.GetFileName(f),-34} (fora da lista: sem evidencia de API)");
+            continue;
+        }
         var d3d12 = Dlss5Installer.ReachesD3D12(f);
         var r = Dlss5Installer.Rotear(dir, f, NeuralUpliftService.Detect(dir, dir, null).HasDlss, d3d12);
         var interessa = pe?.Imports
@@ -85,6 +91,11 @@ if (args.Contains("--api"))
                           + $"rota={(r.Ponte ? "Ponte" : r.OptiScaler ? "Opti" : r.Feeder ? "Feeder" : "direta")}");
         Console.WriteLine($"     imports graficos: {(interessa.Length > 0 ? string.Join(", ", interessa) : "(nenhum)")}");
     }
+    // A rota da PASTA: a uniao do que todos os executaveis pedem. E o que o instalador cobre
+    // agora, para o usuario nao ter de escolher API nenhuma.
+    var uniao = Dlss5Installer.RotearPasta(dir, exe, NeuralUpliftService.Detect(dir, dir, null).HasDlss);
+    Console.WriteLine($"  --> pasta: Ponte={uniao.Ponte}  Feeder={uniao.Feeder}  Opti={uniao.OptiScaler}"
+                      + $"  multi-API={(uniao.Ponte && uniao.Feeder ? "SIM" : "nao")}");
     return 0;
 }
 

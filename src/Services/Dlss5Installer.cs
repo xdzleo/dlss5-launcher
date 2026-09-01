@@ -202,8 +202,14 @@ public static class Dlss5Installer
         // copiou, entao anular por Feeder presente so fazia jogo COM DLSS parecer sem.
         var temDlssNativo = det.HasDlss;
 
-        var rota = Rotear(targetDir, exePath, temDlssNativo, alcancaD3d12);
+        // A pasta inteira, e nao so o executavel escolhido: se o jogo tem um exe por API, os dois
+        // caminhos sao instalados de uma vez e o usuario nao precisa saber que a escolha existia.
+        var rota = RotearPasta(targetDir, exePath, temDlssNativo);
         var ehVulkan = rota.EhVulkan;
+        // Os dois caminhos ao mesmo tempo e uma instalacao INTENCIONAL, e nao o residuo de uma
+        // troca mal feita. A marca diz isso para quem ler a pasta depois -- o scanner de
+        // conflitos, e o proximo reinstalar.
+        var multiApi = rota.Ponte && rota.Feeder;
         var upscaler = rota.Upscaler;
         var precisaPonte = rota.Ponte;
         var precisaOpti = rota.OptiScaler;
@@ -368,13 +374,16 @@ public static class Dlss5Installer
             Step(det.UsesGeneric ? L.T("Dlss5_Step_AddonGeneric") : L.T("Dlss5_Step_AddonGame"));
             if (precisaPonte)
             {
-                FeederService.Remove(targetDir); // ver acima: os dois nunca convivem
+                // A remocao do Feeder vale para o caso EXCLUSIVO: um jogo com uma API so, em que
+                // ter os dois e residuo de uma troca. Quando a pasta tem um exe por API, os dois
+                // sao pedidos de proposito e tirar um desfaria metade do trabalho.
+                if (!multiApi) FeederService.Remove(targetDir);
                 NeuralUpliftService.DeployBridge(targetDir, progress);
                 Step(L.T("Dlss5_Step_Bridge"));
-                // O jogo DX11 tem mais de um executavel (o Baldur's Gate tem um Vulkan e um DX11),
-                // e a ponte so tem o que enganchar num deles. Dizer qual e a diferenca entre
-                // funcionar e "instalei e nao vi nada".
-                manual.Add(L.T("Dlss5_Manual_UseDx11Exe"));
+                // Com os dois caminhos instalados nao ha mais executavel "certo" para abrir — que
+                // era o unico motivo deste aviso existir. Ele so vale quando so a Ponte foi
+                // instalada e o jogo tem mais de um executavel.
+                if (!multiApi) manual.Add(L.T("Dlss5_Manual_UseDx11Exe"));
             }
             if (precisaOpti)
             {
@@ -389,10 +398,11 @@ public static class Dlss5Installer
             }
             if (precisaFeeder)
             {
-                // Exclusivos, e o autor do Feeder e explicito quanto a isso. Uma pasta pode ter
-                // as duas por historico — o Sonic ficou assim depois de o launcher ter lido, por
-                // engano, um runtime nosso como sendo do jogo e ter escolhido a ponte.
-                NeuralUpliftService.RemoveBridge(targetDir);
+                // Exclusivos quando o jogo tem uma API so — e uma pasta podia ter as duas por
+                // historico: o Sonic ficou assim depois de o launcher ter lido, por engano, um
+                // runtime nosso como sendo do jogo e ter escolhido a ponte. Num jogo com um exe
+                // por API a convivencia e o objetivo, e nao o defeito.
+                if (!multiApi) NeuralUpliftService.RemoveBridge(targetDir);
                 FeederService.Deploy(targetDir, progress);
                 FeederService.Configure(targetDir, iniPath, progress);
                 // O Feeder resolve o addon de NR por nome literal; sem esta copia ele entrega
@@ -400,6 +410,21 @@ public static class Dlss5Installer
                 NeuralUpliftService.GarantirNomeDoFeeder(targetDir, iniPath, progress);
                 FeederService.AjustarAlocacao(targetDir, progress);
                 Step(L.T("Dlss5_Step_Feeder"));
+
+                // Ponte E Feeder na mesma pasta, de proposito, porque o jogo tem um executavel
+                // por API. A marca separa isso do caso que o scanner de conflitos deve acusar:
+                // duas metades que ficaram juntas por historico. Sem ela, a instalacao correta
+                // seria reportada como defeito na propria tela que acabou de faze-la.
+                if (multiApi)
+                {
+                    try
+                    {
+                        File.WriteAllText(Path.Combine(targetDir, MarcaMultiApi),
+                                          DateTime.UtcNow.ToString("o"));
+                        Step(L.T("Dlss5_Step_MultiApi"));
+                    }
+                    catch (Exception ex) { Log.Warn($"marca multi-api: {ex.Message}"); }
+                }
 
                 if (precisaHost64)
                 {
@@ -461,6 +486,14 @@ public static class Dlss5Installer
     /// <summary>A API grafica em que um executavel renderiza.</summary>
     public enum GraficosApi { Desconhecida, D3D9, D3D11, D3D12, Vulkan }
 
+    /// <summary>Marca de que a Ponte e o Feeder convivem nesta pasta DE PROPOSITO — o jogo tem um
+    /// executavel por API e os dois caminhos foram instalados juntos.</summary>
+    public const string MarcaMultiApi = ".dlss5-multi-api";
+
+    /// <summary>Esta pasta foi instalada para mais de uma API?</summary>
+    public static bool MultiApiInstalado(string targetDir) =>
+        File.Exists(Path.Combine(targetDir, MarcaMultiApi));
+
     /// <summary>
     /// Em que API este executavel renderiza.
     ///
@@ -473,13 +506,50 @@ public static class Dlss5Installer
     /// silencio — um binario que nao menciona API nenhuma e tratado como D3D12 para nao barrar
     /// sem base — entao ele tem de vir DEPOIS dos testes que exigem evidencia positiva.
     /// </summary>
-    public static GraficosApi ApiDoExe(string? exePath)
+    /// <param name="exigirEvidencia">
+    /// Para EXIBIR, e nao para rotear. Sem isto, um binario que nao menciona API nenhuma volta
+    /// como D3D12 — o padrao permissivo do <see cref="ReachesD3D12"/>, correto para decidir
+    /// caminho (nao barrar sem base) e errado para escrever na tela. Foi assim que o painel de
+    /// controle do dgVoodoo apareceu na Bayonetta como se fosse uma escolha de "DX12".
+    /// </param>
+    public static GraficosApi ApiDoExe(string? exePath, bool exigirEvidencia = false)
     {
         if (exePath is null || !File.Exists(exePath)) return GraficosApi.Desconhecida;
+
+        // Ferramentas que o proprio launcher deixa na pasta. Nunca sao o jogo, e listar uma delas
+        // como alternativa de API e oferecer ao usuario uma escolha que nao existe.
+        if (EhFerramentaNossa(exePath)) return GraficosApi.Desconhecida;
+
         if (VulkanLayerService.Applies(exePath)) return GraficosApi.Vulkan;
         if (DgVoodooService.Applies(exePath)) return GraficosApi.D3D9;
+
+        if (exigirEvidencia && !MencionaApiDirectX(exePath)) return GraficosApi.Desconhecida;
+
         if (ReachesD3D12(exePath)) return GraficosApi.D3D12;
         return GraficosApi.D3D11;
+    }
+
+    /// <summary>Executaveis que acompanham o que NOS implantamos — painel do dgVoodoo, instalador
+    /// do ReShade. Um jogo nunca e um deles.</summary>
+    private static bool EhFerramentaNossa(string exePath)
+    {
+        var nome = Path.GetFileNameWithoutExtension(exePath);
+        return nome.StartsWith("dgVoodoo", StringComparison.OrdinalIgnoreCase)
+               || nome.StartsWith("ReShade", StringComparison.OrdinalIgnoreCase)
+               || nome.StartsWith("dlss5-feed", StringComparison.OrdinalIgnoreCase)
+               || nome.Equals("OptiScaler", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>O binario da algum sinal positivo de renderizar em DirectX?</summary>
+    private static bool MencionaApiDirectX(string exePath)
+    {
+        var pe = PeUtils.Inspect(exePath);
+        if (pe is not null && pe.Imports.Any(i => i.Equals("dxgi.dll", StringComparison.OrdinalIgnoreCase)
+                                                  || i.StartsWith("d3d1", StringComparison.OrdinalIgnoreCase)))
+            return true;
+        // Carga tardia: o nome do modulo precisa estar no binario para chegar ao LoadLibrary.
+        return ContainsAscii(exePath, "d3d12") || ContainsAscii(exePath, "d3d11")
+               || ContainsAscii(exePath, "dxgi");
     }
 
     /// <summary>Nome curto da API, para a interface. "DX11", "Vulkan"...</summary>
@@ -543,6 +613,57 @@ public static class Dlss5Installer
                      || (ehVulkan && FeederService.Applies(exePath, false, true));
 
         return new Rota(ponte, opti, feeder, ehVulkan, upscaler);
+    }
+
+    /// <summary>
+    /// A rota da PASTA: a uniao do que cada executavel dela precisa.
+    ///
+    /// Um jogo moderno pode trazer um executavel por API — o Baldur's Gate 3 tem um Vulkan e um
+    /// DX11 no mesmo `bin`. Perguntar ao usuario qual ele joga e empurrar para ele uma decisao
+    /// tecnica que nao e dele: ele quer o DLSS 5 funcionando, e nao saber que a Ponte engancha
+    /// D3D11 e o Feeder importa memoria externa do VkDevice.
+    ///
+    /// Instalar os dois e possivel porque eles nao disputam arquivo nenhum: a Ponte e um addon
+    /// proprio (`dlss5-dx11-bridge.addon64`), o Feeder e o addon neural sob outro nome mais os
+    /// shaders em `reshade-shaders`. O que cada processo usa e decidido em tempo de execucao —
+    /// num processo Vulkan a Ponte nao acha device D3D11 para enganchar e fica quieta.
+    ///
+    /// A evidencia de que addon fora do seu contexto e inofensivo esta na propria pasta do
+    /// Baldur's Gate: o addon neural ja convive ali com a rota Feeder, em Vulkan, funcionando.
+    /// </summary>
+    public static Rota RotearPasta(string targetDir, string? exeEscolhido, bool temDlssNativo)
+    {
+        var uniao = Rotear(targetDir, exeEscolhido, temDlssNativo, ReachesD3D12(exeEscolhido));
+        foreach (var f in ExesComApi(targetDir))
+        {
+            if (string.Equals(f, exeEscolhido, StringComparison.OrdinalIgnoreCase)) continue;
+            var r = Rotear(targetDir, f, temDlssNativo, ReachesD3D12(f));
+            uniao = uniao with
+            {
+                Ponte = uniao.Ponte || r.Ponte,
+                Feeder = uniao.Feeder || r.Feeder,
+                // O OptiScaler fica de fora da uniao: ele reescreve o upscaler do jogo, e dois
+                // redirecionadores no mesmo lugar e o caso que o codigo ja trata como bug.
+                Upscaler = uniao.Upscaler ?? r.Upscaler,
+            };
+        }
+        return uniao;
+    }
+
+    /// <summary>Executaveis da pasta que dao sinal positivo de renderizar em alguma API.</summary>
+    public static IEnumerable<string> ExesComApi(string targetDir)
+    {
+        List<string> achados = [];
+        try
+        {
+            foreach (var f in Directory.EnumerateFiles(targetDir, "*.exe", SearchOption.TopDirectoryOnly)
+                         .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
+                         .Take(12))
+                if (ApiDoExe(f, exigirEvidencia: true) != GraficosApi.Desconhecida)
+                    achados.Add(f);
+        }
+        catch (Exception ex) { Log.Warn($"exes com api em {targetDir}: {ex.Message}"); }
+        return achados;
     }
 
     private static bool LooksLikeD3D12(string exePath)
