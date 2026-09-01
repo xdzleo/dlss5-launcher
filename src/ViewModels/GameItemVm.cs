@@ -150,6 +150,53 @@ public class GameItemVm : ObservableObject
         _ => "Main_Badge_None",
     });
 
+    // ----- os dois recursos, lado a lado -----
+    //
+    // Um selo unico dizia "ENABLED" e nao dizia ENABLED O QUE: o launcher instala duas coisas
+    // independentes, e um jogo pode ter DLSS 5 rodando com o mod HDR desligado, ou o contrario.
+    // Duas bolinhas nomeadas dizem o estado dos dois de uma olhada, sem abrir o jogo.
+    //
+    // Cinza nao e "desligado": e "nao existe para este jogo". A diferenca importa — vermelho
+    // convida a clicar, cinza avisa que nao ha o que clicar.
+
+    /// <summary>Verde = ligado · vermelho = presente e desligado · cinza = indisponível.</summary>
+    public enum Luz { Cinza, Vermelha, Verde }
+
+    /// <summary>DLSS 5 neste jogo. Nunca fica cinza: o Feeder atende jogo sem DLSS nenhum,
+    /// então a opção existe em qualquer título que o launcher liste.</summary>
+    public Luz LuzDlss5 => Dlss5Ligado ? Luz.Verde : Luz.Vermelha;
+
+    /// <summary>
+    /// O mod HDR do RenoDX. Cinza quando não há mod para este jogo — e é a maioria: o catálogo
+    /// cobre uma lista específica de títulos, e prometer um interruptor que não existe é pior do
+    /// que dizer que não existe.
+    /// </summary>
+    public Luz LuzHdr =>
+        Mod is null && _state?.AddonPath is null ? Luz.Cinza
+        : _state?.AddonEnabled == true ? Luz.Verde
+        : Luz.Vermelha;
+
+    /// <summary>
+    /// O interruptor de DLSS 5 está ligado nesta pasta?
+    ///
+    /// Lê a chave que o addon consulta, nos dois contratos: o novo (`[RENODX-DLSS]`) e o antigo
+    /// (`[RenoDX.DLSS5]`). A cadeia completa só é medida na tela de detalhe, que é onde há tempo
+    /// de tocar o disco; aqui a lista precisa de algo barato o bastante para dezenas de jogos.
+    /// </summary>
+    public bool Dlss5Ligado
+    {
+        get
+        {
+            if (TargetDir is null) return false;
+            try
+            {
+                var ini = _state?.IniPath ?? Path.Combine(TargetDir, "ReShade.ini");
+                return File.Exists(ini) && NeuralUpliftService.IsApplied(TargetDir, ini, _state?.AddonPath);
+            }
+            catch { return false; }
+        }
+    }
+
     public void RefreshState()
     {
         if (TargetDir is null) { State = null; return; }

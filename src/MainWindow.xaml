@@ -132,48 +132,57 @@
                             <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold"
                                        Foreground="White" TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding Name}" MaxHeight="34" TextWrapping="Wrap"/>
+                            <!-- Os dois recursos, lado a lado.
+                                 Um selo unico dizia "ENABLED" sem dizer ENABLED O QUE: sao duas
+                                 coisas independentes, e um jogo pode ter DLSS 5 rodando com o mod
+                                 HDR desligado, ou o contrario.
+                                 Cinza nao e "desligado", e "nao existe para este jogo" — vermelho
+                                 convida a clicar, cinza avisa que nao ha o que clicar. -->
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                                 <Ellipse Width="7" Height="7" VerticalAlignment="Center">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="#5A6272"/>
+                                            <Setter Property="Fill" Value="{StaticResource RedBrush}"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Badge}" Value="Enabled">
+                                                <DataTrigger Binding="{Binding LuzDlss5}" Value="Verde">
                                                     <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="UpdateAvailable">
-                                                    <Setter Property="Fill" Value="{StaticResource OrangeBrush}"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="Disabled">
-                                                    <Setter Property="Fill" Value="#8A93A3"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="Available">
-                                                    <Setter Property="Fill" Value="{StaticResource BlueBrush}"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="NexusOnly">
-                                                    <Setter Property="Fill" Value="{StaticResource PurpleBrush}"/>
+                                                <DataTrigger Binding="{Binding LuzDlss5}" Value="Cinza">
+                                                    <Setter Property="Fill" Value="#5A6272"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
-                                <TextBlock Text="{Binding BadgeText}" FontSize="9.5" FontWeight="SemiBold"
-                                           Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="DLSS 5" FontSize="9.5" FontWeight="SemiBold"
+                                           Margin="5,0,0,0" VerticalAlignment="Center"
+                                           Foreground="#96A0B2"/>
+
+                                <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="12,0,0,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="{StaticResource RedBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LuzHdr}" Value="Verde">
+                                                    <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding LuzHdr}" Value="Cinza">
+                                                    <Setter Property="Fill" Value="#3E4553"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="RenoDX HDR" FontSize="9.5" FontWeight="SemiBold"
+                                           Margin="5,0,0,0" VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="#96A0B2"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Badge}" Value="Enabled">
-                                                    <Setter Property="Foreground" Value="#7FE3B8"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="UpdateAvailable">
-                                                    <Setter Property="Foreground" Value="#F5C65E"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="Available">
-                                                    <Setter Property="Foreground" Value="#9CC4F5"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Badge}" Value="NexusOnly">
-                                                    <Setter Property="Foreground" Value="#BFB0F0"/>
+                                                <!-- indisponivel: o rotulo apaga junto com a bolinha,
+                                                     senao parece um interruptor esperando clique -->
+                                                <DataTrigger Binding="{Binding LuzHdr}" Value="Cinza">
+                                                    <Setter Property="Foreground" Value="#5A6272"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
