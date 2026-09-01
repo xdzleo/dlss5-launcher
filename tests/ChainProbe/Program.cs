@@ -76,7 +76,14 @@ if (args.Contains("--api"))
         var api = Dlss5Installer.ApiDoExe(f, exigirEvidencia: true);
         if (api == Dlss5Installer.GraficosApi.Desconhecida)
         {
-            Console.WriteLine($"  {Path.GetFileName(f),-34} (fora da lista: sem evidencia de API)");
+            // Os imports interessam MAIS quando o exe e recusado: e a unica forma de saber se a
+            // recusa esta certa (utilitario) ou se o jogo resolve a API de um jeito que a nossa
+            // deteccao nao ve -- que foi o caso do Hitman: Blood Money.
+            var im = PeUtils.Inspect(f)?.Imports ?? [];
+            Console.WriteLine($"  {Path.GetFileName(f),-34} (recusado: sem evidencia de API)");
+            Console.WriteLine($"     dgVoodoo.Applies={DgVoodooService.Applies(f)}  "
+                              + $"32b={PeUtils.Inspect(f, readImports: false)?.Is64Bit == false}");
+            Console.WriteLine($"     imports ({im.Count}): {string.Join(", ", im.Take(18))}");
             continue;
         }
         var d3d12 = Dlss5Installer.ReachesD3D12(f);
@@ -160,6 +167,15 @@ var elos = new List<(string Nome, bool Ok, string Porque)>
 };
 if (pedePonte || bridgeActive) elos.Add(("Bridge", bridgeActive, $"pede={pedePonte}"));
 if (pedeFeeder || feederActive) elos.Add(("Feeder", feederActive, $"pede={pedeFeeder}  ativo={feederActive}"));
+// Espelha o launcher: sem tradutor, um jogo D3D9 nao tem onde o pass rodar -- e a cadeia ficava
+// toda verde mesmo assim.
+if (exe is not null && DgVoodooService.Applies(exe)
+    && PeUtils.Inspect(exe, readImports: false)?.Is64Bit == false)
+{
+    var temTradutor = DxvkService.IsDeployed(dir) || DgVoodooService.IsDeployed(dir);
+    elos.Add(("Tradutor", temTradutor,
+              $"dxvk={DxvkService.IsDeployed(dir)}  dgvoodoo={DgVoodooService.IsDeployed(dir)}"));
+}
 
 // O portao que decide se o CARD de DLSS 5 sequer aparece na tela. E anterior a cadeia: se ele
 // fecha, os elos nem sao desenhados, e o sintoma e "o card nao aparece neste jogo".

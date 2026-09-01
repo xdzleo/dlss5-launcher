@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.66.0
+
+O Hitman: Blood Money aparecia com a cadeia inteira verde e "instalado". Não havia `d3d9.dll`
+nenhum na pasta, o proxy era um `dxgi.dll` que um jogo D3D9 nunca carrega, e nada rodava.
+
+### Executáveis empacotados liam como "sem API gráfica"
+
+`HitmanBloodMoney.exe` importa exatamente **uma** DLL: `kernel32.dll`. Isso não é um jogo sem API
+gráfica — é a assinatura de um protetor de 2006 (SecuROM, SafeDisc) que remonta a tabela de imports
+em tempo de execução. Nenhuma varredura estática acha D3D9 ali, nem no import nem nas strings,
+porque o binário está comprimido.
+
+O estrago era silencioso e encadeado:
+
+1. sem sinal de D3D9, `DgVoodooService.Applies` respondia não
+2. sem sinal de nada, `ReachesD3D12` respondia **sim** — o padrão permissivo do silêncio
+3. o jogo virava "alcança D3D12", e o launcher instalava o Feeder **sem tradutor**
+4. e ainda deixava um proxy `dxgi.dll` que aquele processo nunca abre
+
+Quando o próprio binário não pode falar, a pasta fala. Duas evidências, as duas fortes: `d3dx9_27.dll`
+distribuído junto (a D3DX9 é a biblioteca auxiliar do D3D9 e de mais nada), e o `configure.exe` ao
+lado, sem empacotamento, importando `d3d9.dll` de forma limpa — um utilitário que abre um device
+D3D9 para enumerar adaptadores só existe num jogo D3D9.
+
+A regra é estreita de propósito: só vale quando o executável está **empacotado** (tabela de imports
+degenerada, uma ou duas DLLs). Fora disso, a leitura normal decide. Das 42 pastas testadas, os
+únicos jogos detectados como D3D9 continuam sendo os genuinamente antigos de 32 bits — nenhum
+título moderno foi arrastado junto.
+
+### A cadeia não checava o tradutor
+
+Esse é o motivo de a tela poder dizer "instalado" sobre uma instalação que não roda. Sem tradutor
+não há o que enganchar: o ReShade em D3D9 puro para no Shader Model 3 e nenhum provedor de motion
+vectors compila; e a API não tem handle compartilhado nem fence, que é por onde as texturas chegam
+ao device D3D12 do passe.
+
+Agora há um elo **Tradutor D3D9**, mostrado só nos jogos que precisam de um. O Hitman: Blood Money
+passa a acusar vermelho ali — reinstalar resolve.
+
 ## v1.65.0
 
 Uma tela que pedia escolhas demais, e uma delas era inventada.

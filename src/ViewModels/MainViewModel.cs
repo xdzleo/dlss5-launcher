@@ -717,6 +717,22 @@ public class MainViewModel : ObservableObject
         if (pedeFeeder || FeederActive)
             Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Feeder"), FeederActive));
 
+        // O tradutor de D3D9, quando o jogo precisa de um.
+        //
+        // Faltava, e a falta era invisivel: o Hitman: Blood Money aparecia com a cadeia INTEIRA
+        // verde e "instalado", sem `d3d9.dll` nenhum na pasta e com um proxy dxgi.dll que um jogo
+        // D3D9 nunca carrega. Nada rodava, e a tela dizia que estava tudo certo.
+        //
+        // Sem tradutor nao ha o que enganchar: o ReShade em D3D9 puro para no Shader Model 3 e
+        // nenhum provedor de motion vectors compila; e a API nao tem handle compartilhado nem
+        // fence, que e por onde as texturas chegam ao device D3D12 do pass.
+        if (exePath is not null && DgVoodooService.Applies(exePath)
+            && PeUtils.Inspect(exePath, readImports: false)?.Is64Bit == false)
+        {
+            var temTradutor = DxvkService.IsDeployed(targetDir) || DgVoodooService.IsDeployed(targetDir);
+            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Tradutor"), temTradutor));
+        }
+
         // Depois de TODOS os elos, nao antes: o calculo ficava acima dos dois ultimos, entao nem
         // um elo vermelho ali derrubava o "pronto".
         Dlss5Ready = Dlss5Chain.All(l => l.Ok);

@@ -845,6 +845,9 @@
   <data name="Dlss5_Link_Switch" xml:space="preserve">
     <value>Neural uplift</value>
   </data>
+  <data name="Dlss5_Link_Tradutor" xml:space="preserve">
+    <value>D3D9 translator</value>
+  </data>
   <data name="Dlss5_Manual_DgVoodoo" xml:space="preserve">
     <value>This game runs through dgVoodoo2 now. If it fails to start, delete D3D9.dll from the game folder to go back.</value>
   </data>

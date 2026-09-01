@@ -795,6 +795,10 @@
     "en": "No native DLSS — the effect is weaker here",
     "pt-BR": "Sem DLSS nativo — o efeito é mais fraco aqui"
   },
+  "Dlss5_Link_Tradutor": {
+    "en": "D3D9 translator",
+    "pt-BR": "Tradutor D3D9"
+  },
   "Dlss5_Step_MultiApi": {
     "en": "Set up for every graphics API this game ships",
     "pt-BR": "Configurado para todas as APIs gráficas deste jogo"

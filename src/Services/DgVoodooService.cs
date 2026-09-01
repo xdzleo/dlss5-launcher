@@ -131,6 +131,24 @@ public static class DgVoodooService
         // em tempo de execucao.
         var importaD3d9 = pe.Imports.Any(i => i.Equals("d3d9.dll", StringComparison.OrdinalIgnoreCase));
         var importaD3dx9 = pe.Imports.Any(i => i.StartsWith("d3dx9_", StringComparison.OrdinalIgnoreCase));
+
+        // Executavel EMPACOTADO: a tabela de importacao nao existe para ser lida.
+        //
+        // O `HitmanBloodMoney.exe` importa exatamente uma DLL — `kernel32.dll` — e mais nada. Isso
+        // nao e um jogo sem API grafica: e a assinatura de um protetor de 2006 (SecuROM, SafeDisc)
+        // que remonta os imports em tempo de execucao. Nenhuma varredura estatica vai achar d3d9
+        // ali, nem no import nem nas strings, porque o binario esta comprimido.
+        //
+        // O estrago era silencioso e grave: sem sinal de D3D9, `ReachesD3D12` respondia "sim" (o
+        // padrao permissivo do silencio), o jogo era tratado como se alcancasse D3D12, e o
+        // launcher instalava o Feeder SEM tradutor nenhum — mais um proxy dxgi.dll que um jogo
+        // D3D9 nunca carrega. A cadeia ficava toda verde e nada rodava.
+        //
+        // Quando o proprio binario nao pode falar, a pasta fala. E a mesma qualidade de evidencia
+        // que ja aceitamos do import de D3DX9 ("quem linka a D3DX9 esta decidido"), so que lida de
+        // outro lugar.
+        if (!importaD3d9 && !importaD3dx9 && EhEmpacotado(pe) && PastaEhD3d9(exePath)) return true;
+
         if (!importaD3d9 && !importaD3dx9) return false;
 
         // Quem linka a D3DX9 esta decidido: e D3D9. A varredura de strings abaixo existe para o
@@ -328,5 +346,55 @@ public static class DgVoodooService
             }
         }
         catch (Exception ex) { Log.Warn($"dgvoodoo remove {targetDir}: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// A tabela de importacao deste binario esta comprimida?
+    ///
+    /// Um executavel de jogo real importa dezenas de DLLs — kernel32, user32, a runtime C, a API
+    /// grafica, audio, rede. Um que importa uma ou duas e um stub de descompressao: o protetor
+    /// remonta o resto so depois de o processo comecar. Nao ha o que ler ali, e tratar esse
+    /// silencio como "nao usa API grafica" e ler a ausencia de dados como dado.
+    /// </summary>
+    private static bool EhEmpacotado(PeUtils.PeInfo pe) => pe.Imports.Count <= 2;
+
+    /// <summary>
+    /// A PASTA tem evidencia de Direct3D 9, mesmo que o executavel nao possa ser lido.
+    ///
+    /// Duas fontes, as duas fortes. A D3DX9 e a biblioteca auxiliar do D3D9 e de mais nada — quem
+    /// a distribui renderiza em D3D9 (o Hitman: Blood Money traz `d3dx9_27.dll`). E um utilitario
+    /// vizinho que ABRE um device D3D9 para enumerar adaptadores so existe num jogo D3D9: o
+    /// `configure.exe` do mesmo Hitman importa `d3d9.dll` de forma limpa, sem empacotamento.
+    /// </summary>
+    private static bool PastaEhD3d9(string exePath)
+    {
+        var dir = Path.GetDirectoryName(exePath);
+        if (dir is null) return false;
+        try
+        {
+            if (Directory.EnumerateFiles(dir, "d3dx9_*.dll", SearchOption.TopDirectoryOnly).Any())
+                return true;
+
+            // Nenhum sinal de API moderna na pasta desfaz a conclusao: um jogo que traz d3d11 ou
+            // d3d12 ao lado nao e caso de traducao, por mais empacotado que o exe esteja.
+            foreach (var moderna in new[] { "d3d11.dll", "d3d12.dll", "d3d10.dll" })
+            {
+                var p = Path.Combine(dir, moderna);
+                // So conta se for a DLL do SISTEMA redistribuida, e nao um wrapper que NOS pomos.
+                if (File.Exists(p) && !File.Exists(p + ".renodx-ours")) return false;
+            }
+
+            foreach (var vizinho in Directory.EnumerateFiles(dir, "*.exe", SearchOption.TopDirectoryOnly))
+            {
+                if (string.Equals(vizinho, exePath, StringComparison.OrdinalIgnoreCase)) continue;
+                var pv = PeUtils.Inspect(vizinho);
+                if (pv is null || EhEmpacotado(pv)) continue;
+                if (pv.Imports.Any(i => i.Equals("d3d9.dll", StringComparison.OrdinalIgnoreCase)
+                                        || i.StartsWith("d3dx9_", StringComparison.OrdinalIgnoreCase)))
+                    return true;
+            }
+        }
+        catch (Exception ex) { Log.Warn($"pasta d3d9 {dir}: {ex.Message}"); }
+        return false;
     }
 }
