@@ -16,6 +16,41 @@ if (args.Contains("--luzes"))
     return 0;
 }
 
+// --indice mostra qual build o indice escolhe para cada tipo de placa. Fecha a ponta de cima da
+// mesma pergunta que --runtime fecha embaixo: em RTX 40 tem de sair um `.SF`.
+if (args.Contains("--indice"))
+{
+    var idx = new DlssIndexService();
+    await idx.LoadAsync();
+    foreach (var bw in new[] { true, false })
+    {
+        var e = idx.NeuralFor(bw);
+        Console.WriteLine($"  blackwell={bw,-5} -> {e?.Version ?? "(nenhum)"}");
+        if (e is not null) Console.WriteLine($"      {e.Url}");
+    }
+    return 0;
+}
+
+// --runtime <caminho do nvngx_dlssnr.dll> <versao> <url> diz se este build seria ACEITO.
+// Existe porque um hash fixado no codigo que nao bate e um bug invisivel aqui e fatal la: em
+// RTX 40 o launcher baixava 111 MB do build certo e recusava na ultima linha.
+if (args.Contains("--runtime"))
+{
+    var livres = args.Where(a => !a.StartsWith("--")).ToArray();
+    if (livres.Length < 3) { Console.Error.WriteLine("uso: --runtime <dll> <versao> <url>"); return 1; }
+    var (arq, versao, url) = (livres[0], livres[1], livres[2]);
+
+    var assinado = DlssRuntimeService.IsGenuine(arq, out var porqueAssin);
+    Console.WriteLine($"  assinatura NVIDIA : {(assinado ? "OK" : "NAO")}  ({porqueAssin})");
+
+    var entrada = new DlssIndexService.Entry(DlssIndexService.KindNeural, versao, url);
+    var aceito = NeuralUpliftService.BuildDaComunidadeConfiavel(entrada, arq, out var porque);
+    Console.WriteLine($"  build da comunidade: {(aceito ? "ACEITO" : "recusado")}"
+                      + (aceito ? "" : $"  -> {porque}"));
+    Console.WriteLine($"  => o launcher {(assinado || aceito ? "INSTALA" : "RECUSA")} este runtime");
+    return assinado || aceito ? 0 : 2;
+}
+
 // --capa "<nome>" [mais nomes...] tenta baixar a capa PELO NOME, como um jogo sem appid.
 // Sem isto a unica forma de saber se a busca acerta seria abrir o launcher e olhar os cards.
 if (args.Contains("--capa"))

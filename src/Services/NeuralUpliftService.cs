@@ -1434,11 +1434,66 @@ public static class NeuralUpliftService
     /// ships in no driver and no public SDK, so a user without a game that bundles it had no way
     /// to get past the "runtime missing" blocker except to go find a 158 MB DLL on their own.
     ///
-    /// It is installed only if NVIDIA signed it and the digest is intact — the same check every
+    /// It is installed only if NVIDIA signed it and the digest is intact, or — for the community
+    /// rebuilds that exist precisely because the NVIDIA one is Blackwell-only — if the origin is
+    /// the pinned RHI repo AND the SHA-256 matches a value checked by hand (see
+    /// <see cref="BuildsDaComunidade"/>). Both are the same check every
     /// runtime this launcher writes has to pass. A tampered mirror produces a refusal here, not a
     /// swapped DLL in a game folder.
     /// </summary>
     /// <returns>The version installed, or null when the index had nothing or the file failed the check.</returns>
+    /// <summary>
+    /// Builds da comunidade que este launcher aceita sem assinatura da NVIDIA, por SHA-256.
+    ///
+    /// Sao rebuilds do ShortFuse publicados no indice do RHI: eles acrescentam binarios para
+    /// RTX 40 e um caminho FP16 para RTX 20/30, coisas que o modelo original (kernels sm_120, so
+    /// Blackwell) nao tem. Patchear o binario invalida o Authenticode, entao nenhum deles pode
+    /// passar pela checagem de assinatura — e sem esta lista as RTX 20/30/40 ficam sem runtime.
+    ///
+    /// O valor foi conferido baixando o arquivo do endereco que o manifesto publica e calculando
+    /// o hash. Um asset de release do GitHub e imutavel, entao o hash e uma ancora estavel: se o
+    /// arquivo mudar, ele deixa de casar e a recusa volta — que e exatamente o comportamento
+    /// desejado.
+    /// </summary>
+    private static readonly Dictionary<string, string> BuildsDaComunidade =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["310.8.SF-v2"] = "6EB209E764F39872625DEBD6ABAF45E2BB6322F6F270F781F70C059AE30B3927",
+        };
+
+    /// <summary>Origem fixada no RHI + SHA-256 conferido. Ver <see cref="BuildsDaComunidade"/>.
+    /// `internal` para a sonda de testes poder exercitar a decisao contra o arquivo de verdade —
+    /// um hash fixado que nao bate e um bug silencioso que so aparece na maquina do usuario.</summary>
+    internal static bool BuildDaComunidadeConfiavel(DlssIndexService.Entry entry, string dll,
+                                                    out string porque)
+    {
+        porque = "";
+        if (!BuildsDaComunidade.TryGetValue(entry.Version, out var esperado))
+        {
+            porque = L.T("Neural_Fetch_UnknownCommunity", entry.Version);
+            return false;
+        }
+        // O indice ja recusa url fora do RHI, mas isto e barato e a consequencia de errar aqui e
+        // gravar 158 MB de origem desconhecida numa pasta de jogo.
+        if (!entry.Url.StartsWith("https://github.com/RankFTW/", StringComparison.OrdinalIgnoreCase))
+        {
+            porque = L.T("Neural_Fetch_BadOrigin", entry.Url);
+            return false;
+        }
+        try
+        {
+            using var s = File.OpenRead(dll);
+            var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(s));
+            if (!hash.Equals(esperado, StringComparison.OrdinalIgnoreCase))
+            {
+                porque = L.T("Neural_Fetch_HashMismatch", entry.Version, hash[..16]);
+                return false;
+            }
+            return true;
+        }
+        catch (Exception ex) { porque = ex.Message; return false; }
+    }
+
     public static async Task<string?> FetchRuntimeAsync(DlssIndexService index,
                                                         IProgress<string>? progress = null,
                                                         CancellationToken ct = default)
@@ -1460,10 +1515,29 @@ public static class NeuralUpliftService
             var dll = Directory.EnumerateFiles(dir, RuntimeFile, SearchOption.AllDirectories).FirstOrDefault();
             if (dll is null) { Log.Warn($"neural runtime: {RuntimeFile} not in the archive"); return null; }
 
+            // A assinatura continua sendo a porta principal — e nao pode ser a UNICA.
+            //
+            // Os builds `.SF` sao binarios PATCHEADOS: e disso que vem o suporte a RTX 40 e o
+            // caminho FP16 para RTX 20/30. Patch quebra o Authenticode, entao o arquivo volta como
+            // `NotSigned` e a checagem o rejeitava — justamente o unico build que serve a essas
+            // placas. O efeito era o pior possivel: em RTX 40 o launcher escolhia o build certo,
+            // baixava 111 MB, recusava na ultima linha e o DLSS 5 nunca ligava. Em Blackwell nada
+            // disso aparecia, porque la o build e o original assinado pela NVIDIA.
+            //
+            // Para esses, a confianca vem de outro lugar, e nao de "confie no nome": a origem tem
+            // de ser o repositorio do RHI que o indice ja fixa, e o SHA-256 tem de bater com um
+            // valor conferido a mao e escrito aqui. Um build `.SF` que nao esteja nessa lista e
+            // recusado com o nome dele na mensagem — melhor pedir uma atualizacao do launcher do
+            // que aceitar 158 MB nao assinados de procedencia desconhecida.
             if (!DlssRuntimeService.IsGenuine(dll, out var why))
             {
-                Log.Warn($"neural runtime rejected: {why}");
-                throw new InvalidOperationException(L.T("Neural_Fetch_NotGenuine", why));
+                if (!BuildDaComunidadeConfiavel(entry, dll, out var porque))
+                {
+                    Log.Warn($"neural runtime rejected: {why} / {porque}");
+                    throw new InvalidOperationException(L.T("Neural_Fetch_NotGenuine", porque));
+                }
+                Log.Info($"neural runtime: {entry.Version} aceito como build da comunidade "
+                         + "(sem assinatura NVIDIA; origem e SHA-256 conferidos)");
             }
             if (new FileInfo(dll).Length < 32L * 1024 * 1024)
                 throw new InvalidOperationException(L.T("Neural_Import_TooSmall"));

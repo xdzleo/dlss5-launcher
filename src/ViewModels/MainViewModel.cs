@@ -1338,7 +1338,9 @@ public class MainViewModel : ObservableObject
 
             // Nenhuma cópia nesta máquina. O runtime não vem em driver nem em SDK público, então
             // sem isto o usuário fica travado num bloqueio que ele não tem como resolver — a não
-            // ser saindo para procurar um DLL de 158 MB. Só é instalado se a NVIDIA assinou.
+            // ser saindo para procurar um DLL de 158 MB. Instalado só com assinatura da NVIDIA —
+            // ou, nos rebuilds da comunidade que atendem RTX 20/30/40, com origem no RHI e
+            // SHA-256 conferido.
             if (found is null)
             {
                 try

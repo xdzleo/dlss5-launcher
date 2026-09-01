@@ -1,5 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- A sonda de testes precisa exercitar decisoes que nao sao API publica do launcher — a
+       aceitacao de um build da comunidade pelo SHA-256, por exemplo. Um hash fixado que nao bate
+       e um bug silencioso que so apareceria na maquina do usuario. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="ChainProbe" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -9,7 +16,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.68.0</Version>
+    <Version>1.69.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Idiomas que o app fala. Sem esta lista o SDK descarta os satelites de recurso,
          e so o idioma neutro (pt-BR, que fica no proprio assembly) sobreviveria.

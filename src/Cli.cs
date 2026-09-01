@@ -352,8 +352,13 @@ public static class Cli
         if (!det.Offerable) { Console.WriteLine("  neural: jogo nao elegivel (sem DLSS)"); return 0; }
 
         // O runtime nao vem em driver nem em SDK publico: quando nao ha copia na maquina, o
-        // indice do RHI e a unica origem. Instalado so se a NVIDIA assinou.
-        if (!det.Host.RuntimeInLibrary && det.Host.Blackwell
+        // indice do RHI e a unica origem.
+        //
+        // A condicao era `det.Host.Blackwell`, e sobrou de quando so a serie 50 era atendida:
+        // numa RTX 40 o CLI nem TENTAVA buscar, e reportava "sem runtime" para uma placa que
+        // roda o build `.SF`. Quem decide se a placa serve e GpuOk — que ja cobre tensor core
+        // de qualquer geracao —, e nao a arquitetura.
+        if (!det.Host.RuntimeInLibrary && det.Host.GpuOk
             && det.Host.DriverBranch >= NeuralUpliftService.MinDriverBranch)
         {
             var index = new DlssIndexService();

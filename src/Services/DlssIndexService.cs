@@ -134,8 +134,18 @@ public class DlssIndexService
             Log.Warn("dlss index: nenhum build .SF listado; caindo no mais novo");
             return Newest(KindNeural);
         }
-        // Desempate pela ordem do proprio manifesto, que ja vem do mais novo para o mais antigo.
-        return candidatos.OrderByDescending(Peso).FirstOrDefault();
+
+        // Em Blackwell ganha o ORIGINAL; fora dela, o `.SF` mais novo.
+        //
+        // A ordenacao era `OrderByDescending(Peso)` para os dois casos, e com isso o `.SF` ficava
+        // em primeiro tambem em Blackwell — o oposto do que este metodo diz fazer. Numa serie 50 o
+        // build da NVIDIA e a referencia: e ele que a placa foi feita para rodar (FP8, kernels
+        // sm_120), e e o unico assinado, o que evita depender do hash fixado no launcher.
+        //
+        // O peso 1 e o original, entao "menor peso primeiro" o escolhe.
+        return blackwell
+            ? candidatos.OrderBy(Peso).FirstOrDefault()
+            : candidatos.OrderByDescending(Peso).FirstOrDefault();
     }
 
     /// <summary>

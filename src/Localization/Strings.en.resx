@@ -1844,9 +1844,18 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>The downloaded addon does not match the expected bytes ({0}). It was not installed.</value>
     <comment>{0} = hash ou tamanho recebido.</comment>
   </data>
+  <data name="Neural_Fetch_BadOrigin" xml:space="preserve">
+    <value>The build did not come from the RHI repository ({0}).</value>
+  </data>
+  <data name="Neural_Fetch_HashMismatch" xml:space="preserve">
+    <value>"{0}" does not match the hash on file (got {1}…). The file changed since it was checked.</value>
+  </data>
   <data name="Neural_Fetch_NotGenuine" xml:space="preserve">
     <value>The downloaded runtime is not signed by NVIDIA with an intact digest ({0}). It was not installed.</value>
     <comment>{0} = detalhe da verificação de assinatura.</comment>
+  </data>
+  <data name="Neural_Fetch_UnknownCommunity" xml:space="preserve">
+    <value>"{0}" is a community rebuild this launcher does not know yet, so it is not signed by NVIDIA and its hash is not on file. Update the launcher — refusing 158 MB of unverified code is the safe answer here.</value>
   </data>
   <data name="Neural_Fetched" xml:space="preserve">
     <value>Neural runtime {0} downloaded and verified.</value>

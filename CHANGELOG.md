@@ -1,5 +1,57 @@
 # Changelog
 
+## v1.69.0
+
+O DLSS 5 não ligava em RTX 40 — e a causa estava na última linha da verificação, depois de tudo
+dar certo.
+
+### O build que serve à sua placa era o único que a checagem recusava
+
+O modelo original da NVIDIA traz kernels `sm_120` e roda só em Blackwell. Para RTX 20/30/40 existem
+os rebuilds `.SF` do ShortFuse, publicados no mesmo manifesto do RHI que o launcher já consulta — e
+desde a v1.59 o índice escolhe corretamente um deles quando a placa não é série 50.
+
+Só que **patchear um binário invalida a assinatura Authenticode**. O `.SF-v2` volta como
+`NotSigned`, e a última linha da instalação exigia assinatura da NVIDIA:
+
+```
+NeuralFor(false) → escolhe 310.8.SF-v2   ✓
+baixa 111 MB                              ✓
+IsGenuine → NotSigned → REJEITADO         ✗
+```
+
+O usuário via o download inteiro acontecer e, no fim, nenhum runtime — e a cadeia travada sem
+explicação acionável.
+
+A assinatura continua sendo a porta principal. O que mudou é que ela deixou de ser a **única**:
+um rebuild da comunidade é aceito quando a origem é o repositório do RHI que o índice já fixa **e**
+o SHA-256 bate com um valor conferido à mão e escrito no código. Um `.SF` fora dessa lista é
+recusado com o nome da versão na mensagem — pedir uma atualização do launcher é melhor do que
+aceitar 158 MB não assinados de procedência desconhecida.
+
+Verificado nos três casos: o build correto passa, uma versão desconhecida é recusada, e uma origem
+fora do RHI é recusada.
+
+### E acertava a placa errada
+
+A escolha por peso colocava o `.SF` em primeiro **também em Blackwell** — o oposto do que o método
+diz fazer. Numa série 50 o build da NVIDIA é a referência: é ele que a placa foi feita para rodar,
+e é o único assinado, o que evita depender de um hash fixado.
+
+Isso significa que a busca de runtime estava quebrada para **todas** as placas numa instalação
+limpa, e não só nas RTX 40 — quem já tinha o arquivo de antes não percebia.
+
+| placa | build | verificação |
+|---|---|---|
+| RTX 50 | `310.8.0` | assinatura NVIDIA — `Valid` |
+| RTX 20/30/40 | `310.8.SF-v2` | origem RHI + SHA-256 conferido |
+
+### O CLI nem tentava
+
+`dlss5 <jogo>` só buscava o runtime se a placa fosse Blackwell — resquício de quando só a série 50
+era atendida. Numa RTX 40 ele reportava "sem runtime" para uma placa que roda o `.SF` perfeitamente.
+Quem decide se a placa serve é a checagem de tensor core, não a arquitetura.
+
 ## v1.68.0
 
 ### Capa para jogo que não veio de loja nenhuma
