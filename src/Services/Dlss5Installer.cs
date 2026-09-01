@@ -147,7 +147,20 @@ public static class Dlss5Installer
         // Sem DLSS, sem OptiScaler e sem Feeder aplicavel, nao ha o que fazer — e so aqui que o
         // bloqueio antigo ainda vale. Antes ele valia para todo jogo sem DLSS.
         if (!temDlssNativo && !precisaOpti && !precisaFeeder)
+        {
+            // D3D10 merece a sua propria recusa. A mensagem generica fala em "nao traz runtime de
+            // DLSS", o que soa como arquivo faltando — e manda o usuario procurar um download que
+            // nao existe. Aqui nao falta nada: nenhuma das tres camadas cobre a API. O Feeder diz
+            // "D3D10 is not supported" em uma linha; o dgVoodoo entra como D3D9.dll e nunca ve um
+            // D3D10CreateDevice1; e o addon de NR e x64, fora de alcance de um processo de 32 bits.
+            //
+            // Foi o Just Cause 2 que ensinou isto, e da forma cara: instalacao inteira, coerente,
+            // e o jogo fechando ao criar o device.
+            if (FeederService.RenderizaEmD3d10(exePath))
+                return new Result(false, L.T("Dlss5_Blocked_D3d10"), steps, manual);
+
             return new Result(false, L.T("Dlss5_Blocked_NoDlss"), steps, manual);
+        }
 
         if (precisaPonte)
         {

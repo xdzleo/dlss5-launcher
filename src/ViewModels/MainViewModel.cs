@@ -463,9 +463,34 @@ public class MainViewModel : ObservableObject
             early = list.Split(',').Any(e => e.Trim()
                 .Equals(Path.GetFileName(addon), StringComparison.OrdinalIgnoreCase));
         }
+
+        // No caminho de 32 bits quem carrega o addon e o ReShade do host64\, com o ini DELE — o da
+        // raiz nunca lista carga antecipada, porque o processo do jogo nao carrega addon de 64
+        // bits. Medir so a raiz deixava este elo vermelho num jogo perfeitamente instalado.
+        var iniHost64 = Path.Combine(targetDir, FeederService.Host64Dir, "ReShade.ini");
+        if (!early && File.Exists(iniHost64))
+        {
+            var list = new IniFile(iniHost64).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "";
+            early = list.Split(',').Any(e => e.Trim()
+                .Equals("renodx-dlss5.addon64", StringComparison.OrdinalIgnoreCase));
+        }
+        // Num jogo de 32 bits o pass neural nao roda no processo do jogo: roda no host64\, e e LA
+        // que o addon e os runtimes moram. O proprio DeployBits32Async os tira da raiz de
+        // proposito — sao 271 MB que um processo de 32 bits nao carrega.
+        //
+        // A cadeia media so a raiz, entao um jogo de 32 bits corretamente instalado exibia os elos
+        // "addon" e "neural" em vermelho para sempre, Dlss5Ready nunca virava true, e o interruptor
+        // continuava dizendo "instalar" depois de instalar. O Hitman: Absolution avaliou 7200
+        // frames com DLSS 5 enquanto a interface o mostrava como nao instalado.
+        var host64 = Path.Combine(targetDir, FeederService.Host64Dir);
+        var noHost64 = Directory.Exists(host64);
+        var addonNoHost64 = noHost64 && File.Exists(Path.Combine(host64, "renodx-dlss5.addon64"));
+        var runtimeNoHost64 = noHost64
+            && File.Exists(Path.Combine(host64, NeuralUpliftService.RuntimeFile));
+
         Dlss5Chain.Add(new ChainLink("ReShade", det.ReShadeDllName is not null));
-        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Addon"), det.AddonSupportsNr));
-        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Neural"), det.RuntimeDeployed));
+        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Addon"), det.AddonSupportsNr || addonNoHost64));
+        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Neural"), det.RuntimeDeployed || runtimeNoHost64));
         // O Ray Reconstruction so e exigido onde o jogo resolve runtimes na propria pasta. Onde
         // quem resolve e o driver, nao implantamos nada (um runtime parcial na pasta do
         // executavel quebra a resolucao do NGX) — e cobrar o arquivo aqui deixaria a cadeia

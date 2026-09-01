@@ -196,6 +196,13 @@ public static class FeederService
     ///
     /// Custou o Just Cause 2: instalacao inteira, coerente, e o jogo fechando ao criar o device.
     /// </summary>
+    /// <summary>
+    /// Publico porque a razao da recusa importa para quem le a mensagem. Um jogo D3D10 nao esta
+    /// "faltando um arquivo": nenhuma das tres camadas cobre essa API, e nao ha o que baixar.
+    /// </summary>
+    public static bool RenderizaEmD3d10(string? exePath)
+        => exePath is not null && File.Exists(exePath) && EhD3d10(exePath);
+
     private static bool EhD3d10(string exePath)
     {
         var pe = PeUtils.Inspect(exePath);

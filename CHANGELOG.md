@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.55.1
+
+**O interruptor não mudava depois de instalar, em todo jogo de 32 bits.** A instalação funcionava —
+o Hitman: Absolution avaliou 7200 frames com DLSS 5 enquanto a interface continuava dizendo
+"instalar".
+
+A cadeia de elos media a pasta do jogo, e num jogo de 32 bits o pass neural não roda lá: roda no
+`host64\`, e é lá que o addon e os runtimes moram. O próprio `DeployBits32Async` os tira da raiz de
+propósito, porque são 271 MB que um processo de 32 bits nunca carregaria. Três elos — `addon`,
+`neural` e `carga antecipada` — ficavam vermelhos para sempre, `Dlss5Ready` nunca virava true, e o
+botão continuava oferecendo instalar o que já estava instalado e rodando.
+
+Agora os três procuram também em `host64\`, e o elo de carga antecipada lê o `ReShade.ini` de lá —
+o da raiz nunca lista carga antecipada, porque o processo do jogo não carrega addon de 64 bits.
+
+**A recusa do Direct3D 10 dizia a coisa errada.** Um jogo D3D10 caía na mensagem genérica "não traz
+runtime de DLSS", que soa como arquivo faltando e manda o usuário procurar um download que não
+existe. Aqui não falta nada: o Feeder diz "D3D10 is not supported" em uma linha, o dgVoodoo entra
+como `D3D9.dll` e nunca vê um `D3D10CreateDevice1`, e o addon de NR é x64, fora de alcance de um
+processo de 32 bits. A string específica já existia no projeto e nunca era usada — agora é.
+
+Foi o Just Cause 2 que expôs as duas: ele é D3D10, e o Hitman: Absolution — D3D11 de 32 bits, o
+caso que funciona — expôs o interruptor travado.
+
 ## v1.55.0
 
 Quatro correções, todas vindas de jogo real. A primeira é a que mais importa: havia uma classe
