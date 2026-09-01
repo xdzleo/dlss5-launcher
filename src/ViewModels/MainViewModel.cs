@@ -81,6 +81,7 @@ public class MainViewModel : ObservableObject
         };
         ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
         AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && TemBloqueio);
+        EscolherTradutorCommand = new RelayCommand<string>(EscolherTradutor, _ => !Busy);
         DlssCommand = new AsyncRelayCommand(ToggleDlssAsync, () => !Busy);
         DlssRepairCommand = new AsyncRelayCommand(RepairDlssAsync, () => !Busy);
         RestoreAllDlssCommand = new AsyncRelayCommand(RestoreAllDlssAsync, () => !Busy);
@@ -290,30 +291,43 @@ public class MainViewModel : ObservableObject
         new() { "DXVK (Vulkan)", "dgVoodoo2 (D3D11)" };
 
     private bool _mostraTradutorD3d9;
-    public bool MostraTradutorD3d9
-    {
-        get => _mostraTradutorD3d9;
-        set { if (Set(ref _mostraTradutorD3d9, value)) OnPropertyChanged(nameof(UsarDxvk)); }
-    }
+    public bool MostraTradutorD3d9 { get => _mostraTradutorD3d9; set => Set(ref _mostraTradutorD3d9, value); }
 
     /// <summary>
-    /// O mesmo par de opcoes, como chave.
+    /// Qual dos dois tradutores esta escolhido. So leitura — quem troca e
+    /// <see cref="EscolherTradutorCommand"/>.
     ///
-    /// Sao exatamente dois, exclusivos, e a diferenca entre eles nao cabe num rotulo de lista: uma
-    /// caixa de selecao com dois itens obriga a abrir, ler e escolher para descobrir que so ha um
-    /// outro. Uma chave mostra os dois lados de uma vez e troca com um clique — que e o gesto
-    /// certo para "se crashar com um, tente o outro".
+    /// Isto ja foi uma chave liga/desliga, e a chave estava errada de duas formas ao mesmo tempo.
+    /// O botao ia para a DIREITA quando o DXVK estava ativo, e o rotulo do DXVK fica a ESQUERDA:
+    /// a posicao dizia uma coisa e a cor dizia outra. E o proprio formato mentia — trilho verde de
+    /// um lado, cinza do outro, e a semantica de ligado/desligado, so que o dgVoodoo2 nao e o
+    /// DXVK desligado: e a outra opcao, do mesmo nivel.
+    ///
+    /// Dois botoes lado a lado, com o escolhido preenchido, nao tem esses dois problemas: nao ha
+    /// posicao para contradizer, e nenhum dos dois parece a ausencia do outro.
     /// </summary>
-    public bool UsarDxvk
+    public bool UsarDxvk =>
+        _tradutorD3d9 is null || _tradutorD3d9.StartsWith("DXVK", StringComparison.Ordinal);
+
+    /// <summary>O outro lado, para o XAML poder pintar os dois sem converter nada.</summary>
+    public bool UsarDgVoodoo => !UsarDxvk;
+
+    /// <summary>Troca o tradutor. "dxvk" ou "dgvoodoo".</summary>
+    private void EscolherTradutor(string qual)
     {
-        get => _tradutorD3d9 is null || _tradutorD3d9.StartsWith("DXVK", StringComparison.Ordinal);
-        set
-        {
-            var alvo = value ? D3d9Translators[0] : D3d9Translators[1];
-            if (alvo == _tradutorD3d9) return;
-            TradutorD3d9 = alvo;                 // faz a troca de verdade (reinstala se preciso)
-            OnPropertyChanged(nameof(UsarDxvk));
-        }
+        var alvo = qual == "dxvk" ? D3d9Translators[0] : D3d9Translators[1];
+        if (alvo == _tradutorD3d9) return;
+        TradutorD3d9 = alvo;   // faz a troca de verdade (reinstala se ja estiver instalado)
+    }
+
+    /// <summary>Avisa a interface de qual dos dois esta aceso. Chamado sempre que o tradutor muda
+    /// E sempre que a tela de detalhe recarrega — sem a segunda parte, trocar de jogo deixava os
+    /// botoes mostrando a escolha do jogo ANTERIOR.</summary>
+    private void RaiseTradutor()
+    {
+        OnPropertyChanged(nameof(TradutorD3d9));
+        OnPropertyChanged(nameof(UsarDxvk));
+        OnPropertyChanged(nameof(UsarDgVoodoo));
     }
 
     private string? _tradutorD3d9;
@@ -333,7 +347,7 @@ public class MainViewModel : ObservableObject
             // reinstala sozinha; se nao esta, a preferencia fica guardada para a primeira vez.
             if (Dlss5Ready || FeederActive) _ = TrocarTradutorAsync();
             else DetailStatus = L.T("Main_D3d9Translator_Changed");
-            OnPropertyChanged(nameof(UsarDxvk));
+            RaiseTradutor();
         }
     }
 
@@ -838,6 +852,7 @@ public class MainViewModel : ObservableObject
     }
     public AsyncRelayCommand ImportNeuralRuntimeCommand { get; }
     public RelayCommand AfastarConflitosCommand { get; }
+    public RelayCommand<string> EscolherTradutorCommand { get; }
     public AsyncRelayCommand DlssCommand { get; }
     public AsyncRelayCommand DlssRepairCommand { get; }
     public AsyncRelayCommand RestoreAllDlssCommand { get; }
@@ -897,6 +912,9 @@ public class MainViewModel : ObservableObject
         ModCommand.RaiseCanExecuteChanged();
         ImportNeuralRuntimeCommand.RaiseCanExecuteChanged();
         AfastarConflitosCommand.RaiseCanExecuteChanged();
+        // Sem isto os dois botoes do tradutor ficam mortos apos a primeira troca: o CanExecute
+        // olha Busy, e Busy so volta ao normal no finally de quem fez a troca.
+        EscolherTradutorCommand.RaiseCanExecuteChanged();
         DlssCommand.RaiseCanExecuteChanged();
         DlssRepairCommand.RaiseCanExecuteChanged();
         RestoreAllDlssCommand.RaiseCanExecuteChanged();
@@ -1101,10 +1119,27 @@ public class MainViewModel : ObservableObject
                              && PeUtils.Inspect(exe, readImports: false)?.Is64Bit == false;
         if (MostraTradutorD3d9)
         {
-            var escolhido = Config.D3d9Translator.TryGetValue(item.Key, out var v) ? v
-                            : (DxvkService.RecomendadoPara(exe) ? "dxvk" : "dgvoodoo");
+            // O QUE ESTA NA PASTA manda, e nao o que a regra escolheria.
+            //
+            // Isto mostrava a preferencia calculada, e ela pode nao ser o que o jogo usa: o Saints
+            // Row 2 rodava com o d3d9.dll do dgVoodoo (485 KB no disco) enquanto a tela dizia
+            // DXVK, porque a config estava vazia e o padrao foi recalculado. Um controle que diz
+            // qual tradutor esta em uso tem de LER o tradutor em uso — a preferencia salva so vale
+            // enquanto nada foi instalado ainda.
+            //
+            // Mesma regra que a cadeia ja segue desde o Baldur's Gate 3: instalado ganha de
+            // deduzido.
+            var dir = item.TargetDir;
+            var escolhido =
+                dir is not null && DxvkService.IsDeployed(dir) ? "dxvk"
+                : dir is not null && DgVoodooService.IsDeployed(dir) ? "dgvoodoo"
+                : Config.D3d9Translator.TryGetValue(item.Key, out var v) ? v
+                : (DxvkService.RecomendadoPara(exe) ? "dxvk" : "dgvoodoo");
             _tradutorD3d9 = escolhido == "dgvoodoo" ? D3d9Translators[1] : D3d9Translators[0];
-            OnPropertyChanged(nameof(TradutorD3d9));
+            // Os TRES avisos, e nao so o de TradutorD3d9: sao os dois booleanos que pintam os
+            // botoes. Sem eles, abrir um jogo dgVoodoo depois de um DXVK mostrava a escolha do
+            // jogo anterior — o campo mudava e a tela nao ficava sabendo.
+            RaiseTradutor();
         }
 
         // O que o card precisa para APARECER vem primeiro, e so isso e esperado.

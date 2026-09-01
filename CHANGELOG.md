@@ -1,9 +1,41 @@
 # Changelog
 
+## v1.67.0
+
+A chave de tradutor da versão anterior estava errada de duas formas ao mesmo tempo, e uma delas
+fazia a tela mentir sobre qual tradutor o jogo usa.
+
+### A chave dizia uma coisa com a posição e outra com a cor
+
+Com o DXVK ativo, o botão ia para a **direita** — e o rótulo do DXVK fica à **esquerda**. Quem
+olhasse a posição lia "dgVoodoo2"; quem olhasse a cor lia "DXVK".
+
+E o formato em si mentia: trilho verde de um lado, cinza do outro, é a semântica de ligado e
+desligado. O dgVoodoo2 não é o DXVK desligado — é a outra opção, do mesmo nível.
+
+Agora são dois botões lado a lado, com o escolhido preenchido. Não há posição para contradizer, e
+nenhum dos dois parece a ausência do outro.
+
+### E mostrava a preferência, não o tradutor em uso
+
+Este era o problema de verdade. O controle lia a preferência salva e, quando não havia nenhuma,
+recalculava um padrão — em vez de olhar o que está na pasta.
+
+No Saints Row 2 isso significava a tela dizer **DXVK** enquanto o `d3d9.dll` no disco tinha 485 KB,
+que é o do dgVoodoo2. Um controle que diz qual tradutor está em uso tem de ler o tradutor em uso; a
+preferência só vale enquanto nada foi instalado ainda.
+
+É a mesma regra que a cadeia já segue desde o Baldur's Gate 3: **instalado ganha de deduzido**.
+
+### Trocar de jogo deixava o controle no estado do jogo anterior
+
+Faltavam as notificações dos dois booleanos que pintam os botões. O campo mudava por baixo e a
+tela não ficava sabendo.
+
 ## v1.66.0
 
-O Hitman: Blood Money aparecia com a cadeia inteira verde e "instalado". Não havia `d3d9.dll`
-nenhum na pasta, o proxy era um `dxgi.dll` que um jogo D3D9 nunca carrega, e nada rodava.
+O Hitman: Blood Money não mostrava o seletor de tradutor de DirectX 9 que os outros jogos D3D9
+mostram — e o motivo estava no executável dele.
 
 ### Executáveis empacotados liam como "sem API gráfica"
 
@@ -12,12 +44,12 @@ gráfica — é a assinatura de um protetor de 2006 (SecuROM, SafeDisc) que remo
 em tempo de execução. Nenhuma varredura estática acha D3D9 ali, nem no import nem nas strings,
 porque o binário está comprimido.
 
-O estrago era silencioso e encadeado:
+O efeito era encadeado:
 
 1. sem sinal de D3D9, `DgVoodooService.Applies` respondia não
-2. sem sinal de nada, `ReachesD3D12` respondia **sim** — o padrão permissivo do silêncio
-3. o jogo virava "alcança D3D12", e o launcher instalava o Feeder **sem tradutor**
-4. e ainda deixava um proxy `dxgi.dll` que aquele processo nunca abre
+2. o cartão do tradutor não aparecia, porque a condição dele é exatamente essa
+3. e, numa instalação nova, `ReachesD3D12` responderia **sim** — o padrão permissivo do silêncio —
+   tratando um jogo de 2006 como se alcançasse D3D12
 
 Quando o próprio binário não pode falar, a pasta fala. Duas evidências, as duas fortes: `d3dx9_27.dll`
 distribuído junto (a D3DX9 é a biblioteca auxiliar do D3D9 e de mais nada), e o `configure.exe` ao
@@ -31,13 +63,12 @@ título moderno foi arrastado junto.
 
 ### A cadeia não checava o tradutor
 
-Esse é o motivo de a tela poder dizer "instalado" sobre uma instalação que não roda. Sem tradutor
-não há o que enganchar: o ReShade em D3D9 puro para no Shader Model 3 e nenhum provedor de motion
-vectors compila; e a API não tem handle compartilhado nem fence, que é por onde as texturas chegam
-ao device D3D12 do passe.
+A tela podia dizer "instalado" sobre uma pasta sem tradutor nenhum, e nesse estado não há o que
+enganchar: o ReShade em D3D9 puro para no Shader Model 3 e nenhum provedor de motion vectors
+compila; e a API não tem handle compartilhado nem fence, que é por onde as texturas chegam ao
+device D3D12 do passe.
 
-Agora há um elo **Tradutor D3D9**, mostrado só nos jogos que precisam de um. O Hitman: Blood Money
-passa a acusar vermelho ali — reinstalar resolve.
+Agora há um elo **Tradutor D3D9**, mostrado só nos jogos que precisam de um.
 
 ## v1.65.0
 

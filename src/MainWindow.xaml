@@ -889,44 +889,51 @@
                                             Visibility="{Binding MostraTradutorD3d9, Converter={StaticResource BoolToVis}}">
                                         <StackPanel>
                                             <DockPanel>
-                                                <!-- Os dois lados sempre visiveis, e a chave entre
-                                                     eles. Numa lista de dois itens o usuario tem
-                                                     de abrir para descobrir qual e o outro. -->
-                                                <TextBlock DockPanel.Dock="Right" Text="dgVoodoo2"
-                                                           FontSize="11.5" VerticalAlignment="Center"
-                                                           Margin="8,0,0,0">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="#D0A8F0"/>
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding UsarDxvk}" Value="True">
-                                                                    <Setter Property="Foreground" Value="#6A6478"/>
-                                                                    <Setter Property="FontWeight" Value="Normal"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                                <ToggleButton DockPanel.Dock="Right" VerticalAlignment="Center"
-                                                              Margin="8,0,0,0"
-                                                              Style="{StaticResource Switch}"
-                                                              IsChecked="{Binding UsarDxvk, Mode=TwoWay}"
-                                                              AutomationProperties.Name="{loc:Tr Main_D3d9Translator_Label}"/>
-                                                <TextBlock DockPanel.Dock="Right" Text="DXVK"
-                                                           FontSize="11.5" VerticalAlignment="Center">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="#6A6478"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding UsarDxvk}" Value="True">
-                                                                    <Setter Property="Foreground" Value="#D0A8F0"/>
-                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
+                                                <!-- Dois botoes, o escolhido preenchido.
+                                                     Nao e uma chave liga/desliga: o dgVoodoo2 nao e
+                                                     o DXVK desligado, e a outra opcao, do mesmo
+                                                     nivel. E uma chave ainda punha o botao a
+                                                     direita com o rotulo da esquerda aceso — a
+                                                     posicao contradizia a cor. -->
+                                                <Border DockPanel.Dock="Right" CornerRadius="7"
+                                                        Background="#241E30" BorderBrush="#4A3A63"
+                                                        BorderThickness="1" Padding="2"
+                                                        VerticalAlignment="Center" Margin="8,0,0,0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Content="DXVK"
+                                                                Command="{Binding EscolherTradutorCommand}"
+                                                                CommandParameter="dxvk"
+                                                                AutomationProperties.Name="DXVK">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding UsarDxvk}" Value="True">
+                                                                            <Setter Property="Background" Value="#6B4FA0"/>
+                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                        <Button Content="dgVoodoo2"
+                                                                Command="{Binding EscolherTradutorCommand}"
+                                                                CommandParameter="dgvoodoo"
+                                                                AutomationProperties.Name="dgVoodoo2">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding UsarDgVoodoo}" Value="True">
+                                                                            <Setter Property="Background" Value="#6B4FA0"/>
+                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Border>
                                                 <TextBlock Text="{loc:Tr Main_D3d9Translator_Label}" FontSize="11.5"
                                                            VerticalAlignment="Center"
                                                            FontWeight="SemiBold" Foreground="#D0A8F0"/>

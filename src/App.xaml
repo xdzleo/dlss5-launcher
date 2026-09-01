@@ -253,6 +253,38 @@
                 </Setter>
             </Style>
 
+            <!-- Um lado de um par de opcoes. O escolhido e PREENCHIDO pelo chamador; este estilo e
+                 o estado apagado. Nao ha "ligado" e "desligado" aqui: os dois sao opcoes do mesmo
+                 nivel, e por isso nenhum dos dois some quando o outro esta ativo. -->
+            <Style x:Key="SegBtn" TargetType="Button">
+                <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="Padding" Value="13,5"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="#9A93AD"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" CornerRadius="5" Background="{TemplateBinding Background}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Opacity" Value="0.82"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.45"/>
+                                    <Setter Property="Cursor" Value="Arrow"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- Pastilha de um elo da cadeia: verde quando esta no lugar, apagada quando falta.
                  O ponto e poder ler QUAL peca falta sem abrir log nenhum. -->
             <Style x:Key="ChainChip" TargetType="Border">
