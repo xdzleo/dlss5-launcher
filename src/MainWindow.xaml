@@ -262,17 +262,22 @@
             </Border.Background>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <Border Width="30" Height="30" CornerRadius="8" Margin="0,0,11,0">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#FF8A3D" Offset="0"/>
-                                <GradientStop Color="#E5622F" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <TextBlock Text="R" FontSize="17" FontWeight="Bold" Foreground="#14100A"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <!-- Mesma identidade do icone: fundo escuro, o "5" em verde-lima -> ciano.
+                         O laranja com "R" era do RenoDX, que e uma das coisas que o launcher
+                         instala, nao o que ele e. -->
+                    <Border Width="30" Height="30" CornerRadius="8" Margin="0,0,11,0"
+                            Background="#0E1116" BorderBrush="#2A3340" BorderThickness="1">
+                        <TextBlock Text="5" FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock.Foreground>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#BEFF78" Offset="0"/>
+                                    <GradientStop Color="#3CD2FF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </TextBlock.Foreground>
+                        </TextBlock>
                     </Border>
-                    <TextBlock Text="RenoDX" FontSize="19" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock Text="DLSS 5" FontSize="19" FontWeight="Bold" VerticalAlignment="Center"/>
                     <TextBlock Text="Launcher" FontSize="19" FontWeight="Light" Margin="7,0,0,0"
                                Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
                 </StackPanel>

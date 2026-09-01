@@ -16,7 +16,7 @@
 #define AppName       "DLSS 5 Launcher"
 #define AppExeName    "RenoDXLauncher.exe"
 #define AppPublisher  "xdzleo"
-#define AppURL        "https://github.com/xdzleo/renodx-launcher"
+#define AppURL        "https://github.com/xdzleo/dlss5-launcher"
 #define AppCopyright  "Copyright (c) 2026 xdzleo. MIT License."
 
 #ifndef SourceDir

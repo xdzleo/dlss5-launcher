@@ -6,7 +6,7 @@
 
 **Um clique põe o DLSS 5 Neural Rendering nos seus jogos — inclusive DirectX 9 e títulos de 32 bits, que nenhum outro instalador alcança.**
 
-[![Release](https://img.shields.io/github/v/release/xdzleo/renodx-launcher?style=flat-square)](https://github.com/xdzleo/renodx-launcher/releases/latest)
+[![Release](https://img.shields.io/github/v/release/xdzleo/dlss5-launcher?style=flat-square)](https://github.com/xdzleo/dlss5-launcher/releases/latest)
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-blue?style=flat-square)](LICENSE)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=flat-square)](#instalar)
 
@@ -65,7 +65,7 @@ usava — o host cria as texturas em D3D12 e o jogo as importa com
 
 ## Instalar
 
-1. Baixe o `DLSS5Launcher-setup.exe` do [último release](https://github.com/xdzleo/renodx-launcher/releases/latest).
+1. Baixe o `DLSS5Launcher-setup.exe` do [último release](https://github.com/xdzleo/dlss5-launcher/releases/latest).
 2. Rode, escolha o jogo, aperte o interruptor de DLSS 5.
 3. No jogo: **Home** abre o ReShade, **F6** liga e desliga o passe neural.
 
@@ -142,8 +142,8 @@ doctor                  checagem do ambiente
 ## Compilar
 
 ```
-git clone https://github.com/xdzleo/renodx-launcher
-cd renodx-launcher
+git clone https://github.com/xdzleo/dlss5-launcher
+cd dlss5-launcher
 dotnet build src/RenoDXLauncher.csproj -c Release
 ```
 

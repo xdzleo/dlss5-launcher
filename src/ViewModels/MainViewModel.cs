@@ -967,6 +967,12 @@ public class MainViewModel : ObservableObject
         await CheckNeuralAsync(token);
         await RefreshDlssAsync(token);
         await LoadSettingsSafeAsync(token);
+
+        // As bolinhas do card vivem no GameItemVm, nao nesta view model, e nada as tocava
+        // depois de instalar: o interruptor daqui ficava verde e a bolinha do card, vermelha.
+        // Este e o ponto por onde instalar, remover e trocar de tradutor passam, entao vale
+        // para os tres.
+        _detailItem?.RefreshLuzes();
     }
 
     /// <summary>

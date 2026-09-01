@@ -8,9 +8,9 @@ assinado sai sozinho ao criar uma tag `vX.Y.Z`.
 
 1. Acesse <https://signpath.org/apply> (programa gratuito para open-source).
 2. Preencha com os dados do projeto:
-   - Repositório: `https://github.com/xdzleo/renodx-launcher`
+   - Repositório: `https://github.com/xdzleo/dlss5-launcher`
    - Licença: **MIT** (já está no repo, arquivo `LICENSE`)
-   - Link da política de assinatura: `https://github.com/xdzleo/renodx-launcher/blob/master/docs/code-signing-policy.md`
+   - Link da política de assinatura: `https://github.com/xdzleo/dlss5-launcher/blob/master/docs/code-signing-policy.md`
 3. Aguarde a aprovação da SignPath Foundation. Eles revisam manualmente.
 
 > Requisitos que o projeto **já cumpre**: licença OSI (MIT), código público, mantido, já

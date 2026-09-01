@@ -106,11 +106,19 @@ public class GameItemVm : ObservableObject
         private set
         {
             _state = value;
+            // O estado do DLSS 5 e relido AQUI, uma vez por mudanca de estado, e nao a cada
+            // leitura da propriedade: a lista pinta os cards muitas vezes, e um File.Exists +
+            // parse de ini por repintura deixava a selecao de jogo visivelmente lenta.
+            _dlss5Ligado = LerDlss5Ligado();
             OnPropertyChanged(nameof(State));
             OnPropertyChanged(nameof(Badge));
             OnPropertyChanged(nameof(BadgeText));
             OnPropertyChanged(nameof(IsInstalled));
             OnPropertyChanged(nameof(IsEnabled));
+            // Sem estas duas as bolinhas so mudavam de cor quando a lista era reconstruida:
+            // instalar deixava o interruptor verde e o card do jogo vermelho ao mesmo tempo.
+            OnPropertyChanged(nameof(LuzDlss5));
+            OnPropertyChanged(nameof(LuzHdr));
         }
     }
 
@@ -177,24 +185,43 @@ public class GameItemVm : ObservableObject
         : Luz.Vermelha;
 
     /// <summary>
-    /// O interruptor de DLSS 5 está ligado nesta pasta?
+    /// O interruptor de DLSS 5 está ligado nesta pasta.
     ///
+    /// Guardado, não recalculado: quem lê é o binding das bolinhas, e a lista repinta os cards
+    /// muitas vezes — fazer I/O de disco a cada repintura deixava a seleção de jogo lenta de um
+    /// jeito perceptível. O valor é atualizado quando o estado muda, que é quando ele pode mudar.
+    /// </summary>
+    private bool _dlss5Ligado;
+    public bool Dlss5Ligado => _dlss5Ligado;
+
+    /// <summary>
     /// Lê a chave que o addon consulta, nos dois contratos: o novo (`[RENODX-DLSS]`) e o antigo
     /// (`[RenoDX.DLSS5]`). A cadeia completa só é medida na tela de detalhe, que é onde há tempo
-    /// de tocar o disco; aqui a lista precisa de algo barato o bastante para dezenas de jogos.
+    /// de tocar o disco; aqui basta o interruptor.
     /// </summary>
-    public bool Dlss5Ligado
+    private bool LerDlss5Ligado()
     {
-        get
+        if (TargetDir is null) return false;
+        try
         {
-            if (TargetDir is null) return false;
-            try
-            {
-                var ini = _state?.IniPath ?? Path.Combine(TargetDir, "ReShade.ini");
-                return File.Exists(ini) && NeuralUpliftService.IsApplied(TargetDir, ini, _state?.AddonPath);
-            }
-            catch { return false; }
+            var ini = _state?.IniPath ?? Path.Combine(TargetDir, "ReShade.ini");
+            return File.Exists(ini) && NeuralUpliftService.IsApplied(TargetDir, ini, _state?.AddonPath);
         }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Relê o estado das duas luzes e avisa a interface.
+    ///
+    /// Chamado depois de instalar ou remover: sem isto, o interruptor da tela de detalhe virava
+    /// verde e a bolinha do card continuava vermelha, porque nada tinha mexido em State.
+    /// </summary>
+    public void RefreshLuzes()
+    {
+        _dlss5Ligado = LerDlss5Ligado();
+        OnPropertyChanged(nameof(Dlss5Ligado));
+        OnPropertyChanged(nameof(LuzDlss5));
+        OnPropertyChanged(nameof(LuzHdr));
     }
 
     public void RefreshState()

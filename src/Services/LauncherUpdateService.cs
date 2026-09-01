@@ -23,7 +23,7 @@ public sealed record LauncherRelease(Version Version, string Tag, string SetupUr
 /// </summary>
 public static class LauncherUpdateService
 {
-    private const string Repo = "xdzleo/renodx-launcher";
+    private const string Repo = "xdzleo/dlss5-launcher";
 
     /// <summary>Hosts de onde um asset pode vir. A URL sai da API, mas a API e um servidor — se
     /// ela apontar o binario para outro lugar, nao seguimos.</summary>

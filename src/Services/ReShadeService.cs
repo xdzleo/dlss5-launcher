@@ -74,7 +74,7 @@ public partial class ReShadeService
         // hotlink); sem ele o download e recusado. Fica, com o porque escrito aqui para
         // ninguem ler como evasao.
         http.DefaultRequestHeaders.UserAgent.ParseAdd(
-            $"RenoDXLauncher/{ThisVersion} (+https://github.com/xdzleo/renodx-launcher)");
+            $"RenoDXLauncher/{ThisVersion} (+https://github.com/xdzleo/dlss5-launcher)");
         http.DefaultRequestHeaders.Referrer = new Uri("https://reshade.me");
 
         string version = PinnedVersion;

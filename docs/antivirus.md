@@ -1,4 +1,4 @@
-﻿# Antivírus acusando o RenoDX Launcher
+﻿# Antivírus acusando o DLSS 5 Launcher
 
 Esta página tem dois públicos: quem baixou e levou um susto, e quem mantém o projeto e
 precisa resolver.
@@ -216,11 +216,11 @@ Cole isto no campo de informações adicionais. Ele é escrito para um analista:
 afirmação é verificável no repositório, e é por isso que as verificações do CI existem.
 **Troque o hash, a versão e o link do build a cada release.**
 
-> RenoDX Launcher is an open-source (MIT) manager for RenoDX HDR game mods.
-> Source: https://github.com/xdzleo/renodx-launcher
+> DLSS 5 Launcher is an open-source (MIT) one-click installer for DLSS 5 Neural Rendering, and a manager for RenoDX HDR game mods.
+> Source: https://github.com/xdzleo/dlss5-launcher
 >
 > This exact file was produced by GitHub Actions, not on a developer machine:
-> https://github.com/xdzleo/renodx-launcher/actions/runs/32233599158 (commit `20c0247`).
+> https://github.com/xdzleo/dlss5-launcher/actions/runs/32233599158 (commit `20c0247`).
 > SHA-256: `e5ea09223e605c53e9f37ac5b0041e2c49c69622244927249bfb17b2716884b8`
 >
 > The application does not inject code into other processes. The source tree contains no

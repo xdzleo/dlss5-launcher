@@ -11,7 +11,7 @@ All commits are made by, or reviewed by, the project owner before a release tag 
 
 ## Build & signing process
 
-1. Source is public at <https://github.com/xdzleo/renodx-launcher> under the MIT license.
+1. Source is public at <https://github.com/xdzleo/dlss5-launcher> under the MIT license.
 2. Releases are built **exclusively by GitHub Actions** (`.github/workflows/release.yml`) on a
    clean hosted runner — never on a local machine. The build is a standard
    `dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false`.
