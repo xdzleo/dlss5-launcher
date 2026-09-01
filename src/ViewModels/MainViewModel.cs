@@ -517,7 +517,14 @@ public class MainViewModel : ObservableObject
         var runtimeNoHost64 = noHost64
             && File.Exists(Path.Combine(host64, NeuralUpliftService.RuntimeFile));
 
-        Dlss5Chain.Add(new ChainLink("ReShade", det.ReShadeDllName is not null));
+        // Em jogo Vulkan — nativo ou D3D9 traduzido pelo DXVK — o ReShade entra como CAMADA, e
+        // um proxy dxgi.dll nunca e carregado. Medir so o proxy deixava este elo vermelho para
+        // sempre numa instalacao correta, e como Dlss5Ready exige a cadeia inteira, o interruptor
+        // continuava dizendo "instalar" depois de instalar. Foi o que apareceu no ENSLAVED: a
+        // instalacao ia toda para Binaries\Win32, completa, e a interface mostrava desligado.
+        var bits64Jogo = exePath is null || PeUtils.Inspect(exePath, readImports: false)?.Is64Bit != false;
+        var camadaVk = VulkanLayerService.IsRegistered(targetDir, bits64Jogo);
+        Dlss5Chain.Add(new ChainLink("ReShade", det.ReShadeDllName is not null || camadaVk));
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Addon"), det.AddonSupportsNr || addonNoHost64));
         Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Neural"), det.RuntimeDeployed || runtimeNoHost64));
         // O Ray Reconstruction so e exigido onde o jogo resolve runtimes na propria pasta. Onde

@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.57.1
+
+**O interruptor não mudava em jogo da rota Vulkan.** Clicar instalava — a instalação ia inteira e
+correta para o disco — e a interface continuava mostrando "desligado", então parecia que o botão
+não fazia nada.
+
+O elo "ReShade" da cadeia media a presença de um proxy `dxgi.dll` na pasta do jogo. Mas em jogo
+Vulkan — nativo, ou D3D9 traduzido pelo DXVK — o ReShade entra como **camada**, e proxy nenhum é
+carregado: a ausência do `dxgi.dll` ali é o funcionamento correto, não a falha. O elo ficava
+vermelho para sempre, e como `Dlss5Ready` exige a cadeia inteira, o interruptor nunca virava.
+
+Agora o elo aceita as duas formas: proxy **ou** camada Vulkan registrada.
+
+Apareceu no ENSLAVED: Odyssey to the West, um Unreal Engine 3 de 32 bits. A instalação ia toda
+para `Binaries\Win32` — DXVK, camada Vulkan, addon32 com transporte Vulkan, `host64` completo — e
+a tela mostrava quatro elos vermelhos. É a terceira vez que o mesmo padrão aparece (v1.55.1 foi o
+`host64\`), e sempre pela mesma causa: a cadeia media um caminho que aquela rota deliberadamente
+não usa.
+
 ## v1.57.0
 
 **O tradutor de DirectX 9 virou uma escolha sua, na interface.** Jogo DX9 de 32 bits agora mostra
