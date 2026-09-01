@@ -43,6 +43,42 @@ public static class VulkanLayerService
     private const string LayerName = "VK_LAYER_renodx_neural";
     private const string SubDir = "vklayer";
 
+    /// <summary>
+    /// Uma camada por JOGO era errado, e de um jeito que so aparece com varios jogos instalados.
+    ///
+    /// Camada Vulkan implicita e GLOBAL: o registro fica em HKLM e o loader a aplica a TODO
+    /// aplicativo Vulkan da maquina, nao so ao jogo em cuja pasta o arquivo mora. Registrar uma
+    /// por jogo dava cinco entradas com o MESMO nome de camada (VK_LAYER_renodx_neural) — o
+    /// loader escolhe uma por ordem, e o Bully acabou carregando o ReShade32.dll que estava
+    /// dentro da pasta do Resident Evil Revelations 2. Funcionou por coincidencia, porque e o
+    /// mesmo binario; desinstalar aquele jogo levaria este junto.
+    ///
+    /// Agora a camada vive UMA vez, na biblioteca do launcher, e as pastas de jogo nao entram
+    /// mais no registro. O ReShade ja decide sozinho em qual processo se ativa (pela presenca do
+    /// ReShade.ini ao lado do executavel), entao uma camada atende todos os jogos.
+    /// </summary>
+    private static string SharedLayerDir { get; } = Path.Combine(AppPaths.DataDir, "vklayer");
+
+    /// <summary>Entradas antigas, uma por pasta de jogo, que este launcher registrou.
+    /// Removidas ao registrar a compartilhada, para nao sobrar nome duplicado.</summary>
+    private static void LimparRegistrosPorJogo(bool jogo64Bits)
+    {
+        try
+        {
+            using var k = Registry.LocalMachine.OpenSubKey(jogo64Bits ? Key64 : Key32, writable: true);
+            if (k is null) return;
+            foreach (var nome in k.GetValueNames())
+            {
+                // so as nossas: terminam em \vklayer\ReShade.json e NAO sao a compartilhada
+                if (!nome.EndsWith(Path.Combine(SubDir, "ReShade.json"), StringComparison.OrdinalIgnoreCase)) continue;
+                if (nome.StartsWith(SharedLayerDir, StringComparison.OrdinalIgnoreCase)) continue;
+                k.DeleteValue(nome, throwOnMissingValue: false);
+                Log.Info($"vulkan layer: entrada por jogo removida ({nome})");
+            }
+        }
+        catch (Exception ex) { Log.Warn($"vulkan layer: nao consegui limpar entradas antigas: {ex.Message}"); }
+    }
+
     private const string Key64 = @"SOFTWARE\Khronos\Vulkan\ImplicitLayers";
     private const string Key32 = @"SOFTWARE\WOW6432Node\Khronos\Vulkan\ImplicitLayers";
 
@@ -85,7 +121,9 @@ public static class VulkanLayerService
         catch { return false; }
     }
 
-    private static string LayerDir(string targetDir) => Path.Combine(targetDir, SubDir);
+    /// <summary>A camada e uma so, na biblioteca — nao mais uma por pasta de jogo.
+    /// O parametro fica por compatibilidade com quem ja chamava assim.</summary>
+    private static string LayerDir(string targetDir) => SharedLayerDir;
     private static string ManifestPath(string targetDir) =>
         Path.Combine(LayerDir(targetDir), "ReShade.json");
 
@@ -134,6 +172,12 @@ public static class VulkanLayerService
 
         try
         {
+            // Antes de registrar a compartilhada, tira as entradas por jogo que versoes
+            // anteriores deixaram. Sem isto sobram varias com o MESMO nome de camada, e o loader
+            // escolhe uma delas por ordem — foi assim que o Bully carregou o ReShade que estava
+            // na pasta do Resident Evil Revelations 2.
+            LimparRegistrosPorJogo(jogo64Bits);
+
             using var k = Registry.LocalMachine.CreateSubKey(jogo64Bits ? Key64 : Key32);
             if (k is null) return false;
             k.SetValue(json, 0, RegistryValueKind.DWord);   // 0 = habilitada
@@ -152,21 +196,32 @@ public static class VulkanLayerService
 
     /// <summary>Tira o registro e os arquivos. Deixar a entrada apontando para um arquivo que
     /// nao existe mais quebraria todo aplicativo Vulkan, entao a remocao nao e opcional.</summary>
+    /// <summary>
+    /// Tira a camada DESTE jogo.
+    ///
+    /// A camada compartilhada NAO e desregistrada aqui, e a pasta dela nao e apagada: ela atende
+    /// todos os jogos, e derrubar por causa de um deles levaria os outros junto. Ela tambem nao
+    /// custa nada onde nao e usada — o ReShade so se ativa num processo que tenha ReShade.ini ao
+    /// lado do executavel, e sem isso a camada carrega e sai.
+    ///
+    /// O que sai e a entrada por jogo, se este jogo ainda tiver uma de uma versao anterior, e a
+    /// pasta vklayer\ que ficou dentro dele.
+    /// </summary>
     public static void Remove(string targetDir)
     {
-        var json = ManifestPath(targetDir);
-        foreach (var (raiz, sub) in new[] { (Registry.LocalMachine, Key64), (Registry.LocalMachine, Key32) })
+        var antigo = Path.Combine(targetDir, SubDir, "ReShade.json");
+        foreach (var sub in new[] { Key64, Key32 })
         {
             try
             {
-                using var k = raiz.OpenSubKey(sub, writable: true);
-                if (k?.GetValue(json) is not null) k.DeleteValue(json, throwOnMissingValue: false);
+                using var k = Registry.LocalMachine.OpenSubKey(sub, writable: true);
+                if (k?.GetValue(antigo) is not null) k.DeleteValue(antigo, throwOnMissingValue: false);
             }
             catch (Exception ex) { Log.Warn($"vulkan layer remove: {ex.Message}"); }
         }
         try
         {
-            var dir = LayerDir(targetDir);
+            var dir = Path.Combine(targetDir, SubDir);
             if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
         }
         catch (Exception ex) { Log.Warn($"vulkan layer dir: {ex.Message}"); }

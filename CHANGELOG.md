@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.58.1
+
+**Uma camada Vulkan por jogo era errado, e o Bully mostrou por quê.** Camada implícita é
+**global**: o registro fica em HKLM e o loader a aplica a *todo* aplicativo Vulkan da máquina, não
+só ao jogo em cuja pasta o arquivo mora.
+
+Registrar uma por jogo dava, nesta máquina, **cinco entradas com o mesmo nome de camada**
+(`VK_LAYER_renodx_neural`). O loader escolhe uma por ordem — e o Bully acabou carregando o
+`ReShade32.dll` que estava **dentro da pasta do Resident Evil Revelations 2**:
+
+```
+Initializing ReShade (32-bit) loaded from
+  D:\...\RESIDENT EVIL REVELATIONS 2\vklayer\ReShade32.dll
+into  ...\Bully Scholarship Edition\Bully.exe
+```
+
+Funcionava por coincidência, porque é o mesmo binário. Desinstalar aquele jogo levaria os outros
+junto, e o comportamento com nomes duplicados não é definido.
+
+Agora a camada vive **uma vez**, na biblioteca do launcher, e as pastas de jogo saem do registro —
+inclusive as entradas que versões anteriores deixaram, limpas na primeira instalação. Uma camada
+atende todos os jogos porque o ReShade já decide sozinho onde se ativa, pela presença do
+`ReShade.ini` ao lado do executável.
+
+Desinstalar de um jogo **não** derruba a camada compartilhada, pelo mesmo motivo: ela serve os
+outros, e onde não é usada não custa nada (carrega e sai).
+
+Verificado nos três jogos de 32 bits: cinco registros viraram um, e Bully, ENSLAVED e RE
+Revelations 2 seguem com a cadeia completa.
+
 ## v1.58.0
 
 **Trocar o tradutor agora troca de verdade.** Antes o seletor só gravava a preferência e pedia
