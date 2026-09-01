@@ -109,6 +109,58 @@ public static class Dlss5Installer
         // recuse e ele aceite. Nenhum dos dois cobre 100%, e por isso os dois ficam.
         var usarDxvk = preferirDxvk && !forcarDgVoodoo && precisaDgVoodoo && ehJogo32Bits(exePath)
                        && DxvkService.RecomendadoPara(exePath);
+
+        // Trocar de tradutor exige DESFAZER o outro, nao so instalar o novo. Os dois disputam o
+        // d3d9.dll, e o resto da cadeia muda junto: o ReShade sai de camada Vulkan para proxy (ou
+        // o contrario) e as metades de 32 bits trocam de build. Deixar o anterior para tras
+        // significa duas DLLs disputando o mesmo nome e uma camada Vulkan registrada apontando
+        // para um jogo que voltou a ser D3D11 — nos dois casos, nada carrega.
+        if (precisaDgVoodoo && ehJogo32Bits(exePath))
+        {
+            if (usarDxvk)
+            {
+                // indo para o DXVK: a camada e registrada adiante; aqui o dgVoodoo sai...
+                if (DgVoodooService.IsDeployed(targetDir))
+                {
+                    DgVoodooService.Remove(targetDir);
+                    Step(L.T("Dlss5_Step_SwitchedToDxvk"));
+                }
+                // ...e o proxy dxgi.dll do ReShade tambem, que era do caminho D3D11.
+                //
+                // Deixa-lo seria pior que lixo: o DXVK usa DXGI por dentro, entao ele CARREGARIA
+                // esse proxy — e o ReShade entraria duas vezes no mesmo processo, uma pela camada
+                // e outra pelo proxy. Carga dupla e a receita conhecida de 0xc0000005.
+                var proxy = Path.Combine(targetDir, "dxgi.dll");
+                var ehNosso = false;
+                if (File.Exists(proxy))
+                {
+                    try
+                    {
+                        ehNosso = System.Diagnostics.FileVersionInfo.GetVersionInfo(proxy)
+                            .ProductName?.Contains("ReShade", StringComparison.OrdinalIgnoreCase) == true;
+                    }
+                    catch { }
+                }
+                if (ehNosso)
+                {
+                    try
+                    {
+                        var guardado = proxy + ".pre-dxvk";
+                        if (File.Exists(guardado)) File.Delete(proxy);
+                        else File.Move(proxy, guardado);
+                        Step(L.T("Dlss5_Step_ProxyRemovedForVulkan"));
+                    }
+                    catch (Exception ex) { Log.Warn($"dxvk: nao consegui tirar o proxy dxgi.dll: {ex.Message}"); }
+                }
+            }
+            else if (DxvkService.IsDeployed(targetDir))
+            {
+                // voltando ao dgVoodoo: tira o DXVK E a camada Vulkan, que nao serve a D3D11.
+                DxvkService.Remove(targetDir);
+                VulkanLayerService.Remove(targetDir);
+                Step(L.T("Dlss5_Step_SwitchedToDgVoodoo"));
+            }
+        }
         if (usarDxvk)
         {
             try

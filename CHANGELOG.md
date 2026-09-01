@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.58.0
+
+**Trocar o tradutor agora troca de verdade.** Antes o seletor só gravava a preferência e pedia
+para reinstalar — o que era um beco sem saída: com o DLSS 5 já ligado, o interruptor **remove** em
+vez de reinstalar, então não havia caminho pela interface. Agora, se já estiver instalado, trocar
+reinstala sozinho.
+
+E reinstalar não é só pôr o novo: é **desfazer o outro**. A troca move quatro peças de uma vez, e
+deixar qualquer uma para trás quebra tudo em silêncio.
+
+| | DXVK | dgVoodoo2 |
+| --- | --- | --- |
+| `d3d9.dll` | DXVK | dgVoodoo2 |
+| ReShade | camada Vulkan registrada | proxy `dxgi.dll` |
+| `addon32` | build com transporte Vulkan | build oficial (D3D11) |
+| camada Vulkan | registrada | removida |
+
+Verificado nos dois sentidos, com o estado do disco lido antes e depois de cada troca.
+
+### O proxy que sobrava era pior que lixo
+
+Ao voltar para o DXVK, o `dxgi.dll` do ReShade continuava na pasta. Isso não é sujeira inofensiva:
+**o DXVK usa DXGI por dentro**, então ele carregaria esse proxy — e o ReShade entraria duas vezes
+no mesmo processo, uma pela camada e outra pelo proxy. Carga dupla de ReShade é a receita
+conhecida de `0xc0000005`.
+
+Agora o proxy é guardado como `.pre-dxvk` ao entrar na rota Vulkan, e devolvido ao voltar para o
+dgVoodoo. Nada é apagado: as duas trocas são reversíveis.
+
 ## v1.57.2
 
 **O interruptor não ligava em jogo de 32 bits pela rota DXVK** — e desta vez a causa foi

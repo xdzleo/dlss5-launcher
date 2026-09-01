@@ -852,6 +852,9 @@
   <data name="Dlss5_Step_OptiScaler" xml:space="preserve">
     <value>OptiScaler bridge: this game has {0} but no DLSS, so {0} is redirected to it.</value>
   </data>
+  <data name="Dlss5_Step_ProxyRemovedForVulkan" xml:space="preserve">
+    <value>ReShade proxy (dxgi.dll) set aside: DXVK uses DXGI internally and would load ReShade twice.</value>
+  </data>
   <data name="Dlss5_Step_ReShade" xml:space="preserve">
     <value>ReShade installed as {0}.</value>
   </data>
@@ -872,6 +875,12 @@
   </data>
   <data name="Dlss5_Step_StreamlineLeft" xml:space="preserve">
     <value>Streamline set still has {0} problem(s).</value>
+  </data>
+  <data name="Dlss5_Step_SwitchedToDgVoodoo" xml:space="preserve">
+    <value>DXVK and the Vulkan layer removed: back to D3D11, where the layer would serve nothing.</value>
+  </data>
+  <data name="Dlss5_Step_SwitchedToDxvk" xml:space="preserve">
+    <value>dgVoodoo2 removed: the two claim the same d3d9.dll, so only one can stay.</value>
   </data>
   <data name="Dlss5_Step_VulkanLayer" xml:space="preserve">
     <value>Vulkan game: ReShade goes in as a layer, since dxgi.dll is never loaded here.</value>
@@ -1360,6 +1369,9 @@ Only continue if you are going to play OFFLINE.</value>
   </data>
   <data name="Main_D3d9Translator_Label" xml:space="preserve">
     <value>DirectX 9 translator</value>
+  </data>
+  <data name="Main_D3d9Translator_Reinstalled" xml:space="preserve">
+    <value>Translator switched and reinstalled — the game now renders through the new one.</value>
   </data>
   <data name="Main_Detail_ModInPreviousFolder" xml:space="preserve">
     <value>A mod is still installed in the previous folder ({0}). Remove it there, or switch back to that executable.</value>

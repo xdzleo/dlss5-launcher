@@ -1189,6 +1189,22 @@
     "en": "The two cover different games and neither covers all. If the game crashes with one, switch and reinstall.",
     "pt-BR": "Os dois cobrem jogos diferentes e nenhum cobre todos. Se o jogo crashar com um, troque e reinstale."
   },
+  "Main_D3d9Translator_Reinstalled": {
+    "en": "Translator switched and reinstalled — the game now renders through the new one.",
+    "pt-BR": "Tradutor trocado e reinstalado — o jogo passa a renderizar pelo novo."
+  },
+  "Dlss5_Step_ProxyRemovedForVulkan": {
+    "en": "ReShade proxy (dxgi.dll) set aside: DXVK uses DXGI internally and would load ReShade twice.",
+    "pt-BR": "Proxy do ReShade (dxgi.dll) guardado: o DXVK usa DXGI por dentro e carregaria o ReShade duas vezes."
+  },
+  "Dlss5_Step_SwitchedToDxvk": {
+    "en": "dgVoodoo2 removed: the two claim the same d3d9.dll, so only one can stay.",
+    "pt-BR": "dgVoodoo2 removido: os dois disputam o mesmo d3d9.dll, então só um pode ficar."
+  },
+  "Dlss5_Step_SwitchedToDgVoodoo": {
+    "en": "DXVK and the Vulkan layer removed: back to D3D11, where the layer would serve nothing.",
+    "pt-BR": "DXVK e a camada Vulkan removidos: de volta ao D3D11, onde a camada não serviria."
+  },
   "Main_D3d9Translator_Changed": {
     "en": "Translator changed — reinstall for it to take effect.",
     "pt-BR": "Tradutor alterado — reinstale para valer."

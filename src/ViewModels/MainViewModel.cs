@@ -300,9 +300,14 @@ public class MainViewModel : ObservableObject
             if (!Set(ref _tradutorD3d9, value) || value is null || Selected is null) return;
             Config.D3d9Translator[Selected.Key] = value.StartsWith("DXVK") ? "dxvk" : "dgvoodoo";
             Config.Save();
-            // Trocar o tradutor troca o d3d9.dll, o modo do ReShade (camada x proxy) e as
-            // metades de 32 bits. Nada disso e reaproveitavel: quem trocar precisa reinstalar.
-            DetailStatus = L.T("Main_D3d9Translator_Changed");
+
+            // Trocar o tradutor troca o d3d9.dll, o modo do ReShade (camada x proxy) e as metades
+            // de 32 bits — tudo de uma vez. Antes isto so gravava a preferencia e pedia para
+            // reinstalar, o que era um beco: com o DLSS 5 ja ligado, o interruptor REMOVE em vez
+            // de reinstalar, entao nao havia caminho pela interface. Se ja esta instalado, a troca
+            // reinstala sozinha; se nao esta, a preferencia fica guardada para a primeira vez.
+            if (Dlss5Ready || FeederActive) _ = TrocarTradutorAsync();
+            else DetailStatus = L.T("Main_D3d9Translator_Changed");
         }
     }
 
@@ -1374,6 +1379,34 @@ public class MainViewModel : ObservableObject
         if (!item.IsInstalled) await InstallAsync();
         else await RemoveAsync();
         RaiseModState();
+    }
+
+    /// <summary>
+    /// Reinstala com o tradutor recem-escolhido. E uma instalacao inteira de proposito: o
+    /// instalador ja sabe desfazer o tradutor anterior (e a camada Vulkan dele, quando for o
+    /// caso) antes de por o novo, e refazer a cadeia toda em cima.
+    /// </summary>
+    private async Task TrocarTradutorAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+        var ini = item.State?.IniPath ?? System.IO.Path.Combine(item.TargetDir, "ReShade.ini");
+        var escolha = Config.D3d9Translator.TryGetValue(item.Key, out var t) ? t : null;
+        ActionBusy = true;
+        try
+        {
+            var r = await Dlss5Installer.InstallAsync(
+                item.Game, item.TargetDir, ini, item.ChosenExe, item.State?.AddonPath,
+                _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s),
+                default,
+                preferirDxvk: escolha != "dgvoodoo",
+                forcarDgVoodoo: escolha == "dgvoodoo");
+            DetailStatus = r.Ok ? L.T("Main_D3d9Translator_Reinstalled")
+                                : r.Blocker ?? string.Join("; ", r.Steps);
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
     }
 
     private async Task ToggleDlss5Async()
