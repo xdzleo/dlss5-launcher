@@ -502,7 +502,8 @@
     <value>Escreve os nits do seu monitor nas configurações deste jogo.</value>
   </data>
   <data name="Dialog_Details_Label" xml:space="preserve">
-    <value>INSTRUÇÕES E DETALHES</value>
+    <value>INSTRUÇÕES RENODX HDR</value>
+    <comment>O painel trata do mod HDR do RenoDX, nao do DLSS 5, que tem card proprio acima. O rotulo generico fazia parecer que ali havia instrucoes das duas coisas.</comment>
   </data>
   <data name="Dialog_Dlss_Desc" xml:space="preserve">
     <value>O jogo roda a versão de DLSS com que foi lançado. Runtimes mais novos entram no lugar direto e costumam corrigir artefatos da versão antiga. Os originais ficam guardados e dá para voltar.</value>

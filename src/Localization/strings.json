@@ -557,8 +557,9 @@
     "pt-BR": "Escreve os nits do seu monitor nas configurações deste jogo."
   },
   "Dialog_Details_Label": {
-    "en": "INSTRUCTIONS AND DETAILS",
-    "pt-BR": "INSTRUÇÕES E DETALHES"
+    "en": "RENODX HDR INSTRUCTIONS",
+    "note": "O painel trata do mod HDR do RenoDX, nao do DLSS 5, que tem card proprio acima. O rotulo generico fazia parecer que ali havia instrucoes das duas coisas.",
+    "pt-BR": "INSTRUÇÕES RENODX HDR"
   },
   "Dialog_DlssFix_Desc": {
     "en": "Apply only if you see flicker or artifacts.",

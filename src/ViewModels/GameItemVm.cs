@@ -241,6 +241,17 @@ public class GameItemVm : ObservableObject
             OnPropertyChanged(nameof(TargetDir));
         }
         if (state != null) State = state;
+
+        // As luzes sao lidas AQUI tambem, e nao so no setter de State.
+        //
+        // `state` e null em jogo sem mod do RenoDX -- que e a maioria da lista -- e nesse caso o
+        // setter nunca rodava. O resultado era a bolinha de DLSS 5 nascer vermelha em todo jogo,
+        // inclusive nos que estavam com o DLSS 5 instalado, e so acertar quando o usuario
+        // clicasse no jogo (o que dispara RefreshLuzes por outro caminho).
+        //
+        // O estado do DLSS 5 nao depende de haver mod HDR: sao duas coisas independentes, que e
+        // exatamente o motivo de existirem duas bolinhas.
+        RefreshLuzes();
     }
 
     /// <summary>Find an existing RenoDX install anywhere in the game dir (installed manually or by

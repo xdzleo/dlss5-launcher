@@ -502,7 +502,8 @@
     <value>Writes your monitor's nits into this game's settings.</value>
   </data>
   <data name="Dialog_Details_Label" xml:space="preserve">
-    <value>INSTRUCTIONS AND DETAILS</value>
+    <value>RENODX HDR INSTRUCTIONS</value>
+    <comment>O painel trata do mod HDR do RenoDX, nao do DLSS 5, que tem card proprio acima. O rotulo generico fazia parecer que ali havia instrucoes das duas coisas.</comment>
   </data>
   <data name="Dialog_Dlss_Desc" xml:space="preserve">
     <value>A game runs whatever DLSS build it shipped with. Newer runtimes are drop-in and usually fix the artefacts of an old one. The originals are kept and can be put back.</value>
