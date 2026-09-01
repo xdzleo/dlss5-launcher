@@ -1,5 +1,83 @@
 # Changelog
 
+## v1.64.0
+
+O Baldur's Gate 3 não ligava, e a causa não era o Baldur's Gate 3.
+
+### A regra de escolha de caminho existia em duas cópias
+
+O launcher decide entre três caminhos — Ponte, OptiScaler e Feeder — conforme o jogo ter DLSS
+próprio e alcançar D3D12. Essa decisão estava escrita **duas vezes**: uma no instalador, outra na
+tela de detalhe. E as duas saíram do lugar.
+
+| | instalador | tela |
+|---|---|---|
+| pede a Ponte quando | `temDlss && !alcançaD3D12 && !éVulkan` | `temDlss && !alcançaD3D12` |
+
+O Baldur's Gate 3 é Vulkan. O instalador mandou para o Feeder de propósito: o addon engancha
+`NVSDK_NGX_D3D12_EvaluateFeature_C`, e um jogo Vulkan chama a família `NVSDK_NGX_VULKAN_*`, que ele
+não procura. A tela, sem o termo de Vulkan, cobrava a Ponte de um jogo cujo Feeder estava instalado
+e funcionando — elo vermelho permanente, interruptor travado, e nada que o usuário pudesse clicar.
+
+Agora existe uma função só, `Dlss5Installer.Rotear`, chamada pelo instalador, pela tela e pela
+sonda de testes. Duas cópias de uma regra de três termos só vão divergir de novo.
+
+Junto: o que **já está instalado** passa a ter precedência sobre o que a regra escolheria hoje.
+Trocar de caminho é uma reinstalação, não um elo faltando — e a resposta pode mudar entre uma
+instalação e a seguinte, quando a detecção é corrigida ou o jogo é atualizado.
+
+### O aviso "sem DLSS nativo" aparecia em jogo com DLSS nativo
+
+Ele estava preso a "o Feeder está instalado", e o texto fala de outra coisa: que os motion vectors
+são estimados por shader porque o jogo não os fornece. Num jogo que tem DLSS e ficou com o Feeder,
+o aviso contradizia a própria tela logo acima. Agora ele segue a ausência de DLSS, que é a condição
+que ele descreve.
+
+### O que MAIS está na pasta do jogo
+
+Uma pasta de jogo não é nossa. Antes de o launcher chegar nela já passaram OptiScaler, fakenvapi,
+dlssg-to-fsr3, Special K, um ReShade instalado à mão, um dgVoodoo de um tutorial de 2019 — e cada
+um ocupa exatamente os mesmos slots de que precisamos.
+
+O `bin` do Baldur's Gate 3 tinha **quatro** empilhados, com o OptiScaler sentado num `dxgi.dll` de
+25 MB. O resultado não era um erro na tela: era o caminho DX11 simplesmente não carregando.
+
+O cartão novo diz o que está ali, o que colide com o quê, e deixa a decisão com o usuário — parte
+dessas ferramentas ele pode querer manter (o dlssg-to-fsr3 é geração de quadros, e não concorre com
+o passe neural). Nada é apagado: o que sai ganha um sufixo reversível.
+
+Os graus são conservadores de propósito. A primeira versão desta varredura acusava o **nosso
+próprio ReShade** em 38 das 42 pastas testadas, e o teste de carga dupla disparava em 34 — a camada
+Vulkan é registrada num caminho global, então `IsRegistered` responde "sim" para qualquer pasta.
+Corrigidos contra a varredura real, sobrou 1 bloqueio provado (Bayonetta, com DXVK e dgVoodoo2
+disputando o mesmo `d3d9.dll`) e 5 avisos.
+
+### Escolher a API gráfica
+
+Um jogo pode ter um executável por API na mesma pasta, e a rota do DLSS 5 muda com a escolha: o
+`bg3.exe` é Vulkan e vai para o Feeder; o `bg3_dx11.exe` importa `d3d11.dll` e vai para a Ponte. Até
+agora o launcher escolhia sozinho, pelo maior executável, e não dizia qual tinha escolhido.
+
+O cartão só aparece quando há mais de uma API — o DOOM Eternal, que é só Vulkan, não mostra nada.
+
+Instalar nas duas ao mesmo tempo não é possível hoje, e o motivo não é o que parece: os dois
+executáveis entram por portas diferentes, então não haveria carga dupla do ReShade. O obstáculo é
+que os dois addons ficariam na mesma pasta, sob um `ReShade.ini` só, e o addon da Ponte entraria
+também no processo Vulkan — que é exatamente o caso do `Failed to allocate video memory` numa placa
+com memória sobrando.
+
+### As bolinhas acendem na abertura
+
+Havia **duas** portas fechadas na varredura de fundo, não uma: ela só rodava em jogo com mod HDR no
+catálogo, e só avisava a interface quando encontrava alguma coisa. O DLSS 5 não depende do mod HDR —
+é a razão de existirem duas bolinhas — então a maioria da lista nascia vermelha até o clique
+disparar a releitura por outro caminho.
+
+Vermelho por não ter sido lido e vermelho por estar desligado são a mesma cor na tela, e foi por
+isso que o defeito passou tanto tempo parecendo cosmético.
+
+Medido, não deduzido: 59 jogos varridos em 183 ms, 49 bolinhas verdes antes de qualquer clique.
+
 ## v1.59.0
 
 Quatro ideias vindas do [DLSS5oneclick](https://github.com/faisalkindi/DLSS5oneclick), depois de

@@ -9,7 +9,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.63.1</Version>
+    <Version>1.64.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Idiomas que o app fala. Sem esta lista o SDK descarta os satelites de recurso,
          e so o idioma neutro (pt-BR, que fica no proprio assembly) sobreviveria.
