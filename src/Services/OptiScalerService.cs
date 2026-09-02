@@ -88,6 +88,25 @@ public static class OptiScalerService
     public static bool IsOurs(string targetDir) => File.Exists(Path.Combine(targetDir, OursMarker));
 
     /// <summary>
+    /// Foi este launcher que pos o OptiScaler aqui, contando as instalacoes de ANTES da marca?
+    ///
+    /// O build anterior implantava sem escrever marca nenhuma, e a desinstalacao, que so
+    /// consultava a marca antes de chamar <see cref="Remove"/>, deixava para sempre o OptiScaler
+    /// que o proprio launcher tinha posto. A assinatura que sobra desse build e o proxy identico
+    /// byte a byte ao da biblioteca, ou a copia guardada `.renodx-bak` ao lado do proxy — que so
+    /// este launcher cria. <see cref="IsOurs"/> continua respondendo so pela marca, para quem
+    /// precisa da resposta estrita.
+    /// </summary>
+    public static bool IsOursOrLegacy(string targetDir)
+    {
+        var proxy = Path.Combine(targetDir, ProxyName);
+        return IsOurs(targetDir)
+               || File.Exists(proxy + OursSuffix)
+               || File.Exists(proxy + BackupSuffix)
+               || Iguais(proxy, LibraryDll);
+    }
+
+    /// <summary>
     /// Este jogo tem FSR ou XeSS proprio, e nao tem DLSS?
     ///
     /// A evidencia e o binario do upscaler na pasta, nao uma string no executavel: um jogo pode
@@ -377,17 +396,30 @@ public static class OptiScalerService
     /// So sai o que e nosso: o que tem copia guardada volta ao nome original; o que tem marca (ou
     /// e identico ao da biblioteca, de uma instalacao anterior a marca) e apagado; o que nao e
     /// nem uma coisa nem outra fica, porque apagar sem copia nao se desfaz.
+    ///
+    /// Uma copia guardada que e o NOSSO proprio arquivo nao e o estado de antes de nos: o build
+    /// anterior, ao reinstalar por cima de uma instalacao sem marca, guardava o OptiScaler que ele
+    /// mesmo tinha posto como se fosse do usuario, e devolve-la seria reinstalar. Ela e descartada,
+    /// e o arquivo que ela "protegia" sai pela mesma prova.
     /// </summary>
     public static void Remove(string targetDir)
     {
         try
         {
+            // Decidido antes de mexer em qualquer arquivo: a assinatura das instalacoes de antes
+            // da marca e o proprio proxy, que sai logo abaixo.
+            var nosso = IsOursOrLegacy(targetDir);
+
             var alvo = Path.Combine(targetDir, ProxyName);
             var backup = alvo + BackupSuffix;
             var marca = alvo + OursSuffix;
+            if (File.Exists(backup) && Iguais(backup, LibraryDll))
+            {
+                Log.Info($"optiscaler remove: {ProxyName}{BackupSuffix} e o nosso proprio arquivo; descartado");
+                File.Delete(backup);
+            }
             if (File.Exists(backup)) { File.Copy(backup, alvo, overwrite: true); File.Delete(backup); }
-            else if (File.Exists(alvo) && (File.Exists(marca) || IsOurs(targetDir) || Iguais(alvo, LibraryDll)))
-                File.Delete(alvo);
+            else if (File.Exists(alvo) && (nosso || File.Exists(marca))) File.Delete(alvo);
             else if (File.Exists(alvo)) Log.Warn($"optiscaler remove: {ProxyName} em {targetDir} nao e nosso; fica");
             if (File.Exists(marca)) File.Delete(marca);
 
@@ -395,9 +427,20 @@ public static class OptiScalerService
             var iniBackup = ini + BackupSuffix;
             var iniMarca = Path.Combine(targetDir, OursMarker);
             var iniEraNosso = false;
+            if (File.Exists(iniBackup) && Iguais(iniBackup, LibraryIni))
+            {
+                Log.Info($"optiscaler remove: {IniName}{BackupSuffix} e o nosso proprio arquivo; descartado");
+                File.Delete(iniBackup);
+            }
             if (File.Exists(iniBackup)) { File.Copy(iniBackup, ini, overwrite: true); File.Delete(iniBackup); }
             else if (File.Exists(ini) && (File.Exists(iniMarca) || Iguais(ini, LibraryIni)))
             { File.Delete(ini); iniEraNosso = true; }
+            // Instalacao de antes da marca com um ini que ja nao bate com o da biblioteca: o
+            // OptiScaler o reescreve quando o usuario salva no overlay, e nao ha copia guardada
+            // que diga o que havia antes. Sem o proxy ele e inerte, e apagar sem copia nao se
+            // desfaz — fica, e o log diz por que.
+            else if (File.Exists(ini) && nosso)
+                Log.Warn($"optiscaler remove: {IniName} em {targetDir} foi alterado depois de instalado e nao tem copia; fica");
             if (File.Exists(iniMarca)) File.Delete(iniMarca);
 
             // O log e de quem rodou. Se o ini era do usuario, o OptiScaler tambem era, e o log
