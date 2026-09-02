@@ -79,9 +79,33 @@ public static class Authenticode
     /// ESPERADO para certificado auto-assinado - nao e sinal de adulteracao, mas tambem nao e
     /// prova de identidade: e o que separa "diz que e a NVIDIA" de "uma CA confirma que e".
     /// <see cref="DlssRuntimeService.IsGenuine"/> exige os dois. Revogacao nao e consultada
-    /// (WTD_REVOKE_NONE), entao o veredito nao depende de rede.
+    /// (WTD_REVOKE_NONE) e a busca de intermediarios e so em cache (WTD_CACHE_ONLY_URL_RETRIEVAL),
+    /// entao a chamada em si nao sai para a rede — mas o veredito DEPENDE do repositorio de raizes
+    /// da maquina, que o Windows preenche sob demanda pela rede (Automatic Root Certificates
+    /// Update). Numa maquina offline, ou com essa atualizacao bloqueada por politica, a raiz que
+    /// emitiu o certificado da NVIDIA pode nunca ter chegado, e um arquivo genuino volta como
+    /// CERT_E_UNTRUSTEDROOT. <see cref="RootStoreMissingIssuer"/> separa esse caso do auto-assinado.
     /// </param>
-    public readonly record struct Result(bool DigestIntact, bool ChainTrusted, string? Sha256Thumbprint, string? Subject, string Detail);
+    public readonly record struct Result(bool DigestIntact, bool ChainTrusted, string? Sha256Thumbprint, string? Subject, string Detail)
+    {
+        /// <summary>Codigo bruto do WinVerifyTrust (S_OK, CERT_E_UNTRUSTEDROOT, ...).</summary>
+        public uint TrustStatus { get; init; }
+
+        /// <summary>Issuer do certificado do signatario. Igual ao Subject num auto-assinado.</summary>
+        public string? Issuer { get; init; }
+
+        /// <summary>
+        /// A cadeia falhou por raiz ausente ou incompleta, e o certificado NAO e auto-assinado:
+        /// alguem de fora emitiu o certificado, e o que falta e a raiz desse emissor no
+        /// repositorio da maquina. Num auto-assinado o issuer e o proprio subject, e nao ha raiz
+        /// nenhuma a instalar — dizer "falta a raiz" ali seria mandar a pessoa procurar algo que
+        /// nao existe.
+        /// </summary>
+        public bool RootStoreMissingIssuer =>
+            TrustStatus is CERT_E_UNTRUSTEDROOT or CERT_E_CHAINING
+            && Issuer is not null && Subject is not null
+            && !string.Equals(Issuer, Subject, StringComparison.Ordinal);
+    }
 
     public static Result Verify(string filePath)
     {
@@ -144,7 +168,7 @@ public static class Authenticode
         string detail = rc switch
         {
             S_OK                    => "assinatura valida e cadeia confiavel",
-            CERT_E_UNTRUSTEDROOT    => "assinatura integra, raiz nao confiavel (certificado auto-assinado)",
+            CERT_E_UNTRUSTEDROOT    => "assinatura integra, raiz nao confiavel (auto-assinado, ou raiz ausente do repositorio da maquina)",
             CERT_E_UNTRUSTEDTESTROOT => "assinatura integra, raiz de teste",
             CERT_E_CHAINING         => "assinatura integra, cadeia incompleta",
             CERT_E_EXPIRED          => "assinatura integra, certificado expirado",
@@ -153,7 +177,7 @@ public static class Authenticode
             _                       => $"WinVerifyTrust retornou 0x{rc:X8}",
         };
 
-        string? thumb = null, subject = null;
+        string? thumb = null, subject = null, issuer = null;
         if (digestIntact)
         {
             try
@@ -168,11 +192,16 @@ public static class Authenticode
                 using var cert = X509CertificateLoader.LoadCertificate(raw);
                 thumb   = Convert.ToHexString(cert.GetCertHash(HashAlgorithmName.SHA256));
                 subject = cert.Subject;
+                issuer  = cert.Issuer;
             }
             catch (Exception ex) { detail += $" (nao consegui ler o certificado: {ex.Message})"; }
         }
 
-        return new Result(digestIntact, chainTrusted, thumb, subject, detail);
+        return new Result(digestIntact, chainTrusted, thumb, subject, detail)
+        {
+            TrustStatus = rc,
+            Issuer      = issuer,
+        };
     }
 
     /// <summary>

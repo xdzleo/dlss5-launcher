@@ -126,7 +126,14 @@ public static class DlssRuntimeService
         // integro, e passava por aqui. Uma CA de verdade nao emite esse nome para outra empresa.
         if (!r.ChainTrusted)
         {
-            detail = L.T("Dlss_UntrustedChain", r.Detail);
+            // A mesma recusa tem duas causas com consertos opostos. Auto-assinado com nome de
+            // NVIDIA: nao ha o que fazer, o arquivo e falso. Certificado emitido por uma CA cuja
+            // raiz nunca chegou ao repositorio da maquina (offline, ou atualizacao automatica de
+            // raizes bloqueada por politica): o arquivo e genuino e o conserto e na maquina. Um
+            // "nao assinado" generico escondia o segundo caso atras do primeiro.
+            detail = r.RootStoreMissingIssuer
+                ? L.T("Dlss_MissingRoot", r.Issuer ?? "?", r.Detail)
+                : L.T("Dlss_UntrustedChain", r.Detail);
             return false;
         }
         return true;
@@ -363,21 +370,28 @@ public static class DlssRuntimeService
         // do jogo — de onde AutoDiscoverStreamlineSet o levava para a biblioteca. Abortar por
         // causa dele fazia TODO Corrigir de TODO jogo falhar, para sempre, sem nada a consertar
         // no conjunto em si. Pular e registrar e o certo: o conjunto continua coerente sem ele.
-        var recusados = new List<string>();
+        var recusados = new List<(string Path, string Why)>();
         foreach (var src in source)
         {
             if (IsGenuine(src, out var why)) continue;
             if (Path.GetFileName(src).Equals(NeuralUpliftService.RuntimeFile, StringComparison.OrdinalIgnoreCase))
             {
                 Log.Warn($"dlss fg: {src} ignorado, nao acompanha o conjunto: {why}");
-                recusados.Add(src);
+                recusados.Add((src, why));
                 continue;
             }
             throw new InvalidOperationException(L.T("Dlss_NotNvidia", why));
         }
-        source.RemoveAll(recusados.Contains);
+        source.RemoveAll(f => recusados.Any(r => r.Path == f));
         if (source.Count == 0)
-            throw new InvalidOperationException(L.T("Dlss_Fg_NoSource", sourceDir));
+        {
+            // A pasta existe e tinha arquivo — so que tudo o que tinha foi recusado. Dizer "pasta
+            // nao encontrada" aqui mandava a pessoa conferir um caminho que estava certo; o que
+            // ela precisa saber e qual arquivo foi recusado e por que.
+            var (caminho, motivo) = recusados[0];
+            throw new InvalidOperationException(
+                L.T("Dlss_Fg_AllRefused", sourceDir, Path.GetFileName(caminho), motivo));
+        }
 
         // TODA pasta que tem um interposer, mais a do executavel.
         //

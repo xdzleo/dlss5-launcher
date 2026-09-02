@@ -95,18 +95,26 @@ public partial class SettingsWindow : Window
         };
         if (dlg.ShowDialog() != true) return;
 
+        // Copia intermediaria com o nome certo, quando o arquivo escolhido veio renomeado. Vive
+        // so durante o import: sao 158 MB, e uma copia esquecida a cada import era o que enchia
+        // o disco em silencio.
+        string? staged = null;
         try
         {
             // O seletor aceita "nvngx_dlssnr (2).dll" — o nome que o navegador da a uma segunda
-            // copia — mas o import exige o nome exato. Copiar para um temporario com o nome
+            // copia — mas o import exige o nome exato. Copiar para um intermediario com o nome
             // certo evita mandar a pessoa renomear arquivo para satisfazer o programa.
+            //
+            // Na pasta de cache do app, e nao em %TEMP%: e a regra do projeto (ver
+            // AppPaths.CacheDir) — DLL de 158 MB aparecendo em %TEMP% e o par de atributos que
+            // antivirus pontua como "binario suspeito".
             var origem = dlg.FileName;
             if (!Path.GetFileName(origem).Equals("nvngx_dlssnr.dll", StringComparison.OrdinalIgnoreCase))
             {
-                var tmp = Path.Combine(Path.GetTempPath(), "renodx-import", "nvngx_dlssnr.dll");
-                Directory.CreateDirectory(Path.GetDirectoryName(tmp)!);
-                File.Copy(origem, tmp, overwrite: true);
-                origem = tmp;
+                staged = Path.Combine(AppPaths.CacheDir, "import", "nvngx_dlssnr.dll");
+                Directory.CreateDirectory(Path.GetDirectoryName(staged)!);
+                File.Copy(origem, staged, overwrite: true);
+                origem = staged;
             }
 
             NeuralUpliftService.ImportRuntime(origem);
@@ -117,6 +125,16 @@ public partial class SettingsWindow : Window
                 ok: !NeuralUpliftService.RuntimeIsCommunityBuild);
         }
         catch (Exception ex) { Say(ex.Message, false); }
+        finally
+        {
+            // O ImportRuntime ja copiou o arquivo para a biblioteca (ou falhou antes); a copia
+            // intermediaria e nossa, nao do usuario, e o original dele fica onde estava.
+            if (staged is not null)
+            {
+                try { File.Delete(staged); }
+                catch (Exception ex) { Log.Warn($"settings: copia intermediaria do runtime nao apagada: {ex.Message}"); }
+            }
+        }
     }
 
     private void Say(string texto, bool ok)

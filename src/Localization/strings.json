@@ -1140,6 +1140,16 @@
     "note": "{0} = subject do certificado encontrado.",
     "pt-BR": "Não é assinado pela NVIDIA (assinante: {0}). Ignorado."
   },
+  "Dlss_MissingRoot": {
+    "en": "The signature names NVIDIA, but this machine's root certificate store is missing the root that issued it ({0}); Windows could not verify the chain ({1}). Connect to the internet so Windows can fetch the root, or install it, then try again. Skipped.",
+    "note": "{0} = issuer do certificado do signatário, {1} = diagnóstico do WinVerifyTrust.",
+    "pt-BR": "A assinatura diz NVIDIA, mas o repositório de certificados raiz da máquina não tem a raiz que a emitiu ({0}); o Windows não conseguiu verificar a cadeia ({1}). Conecte à internet para o Windows buscar a raiz, ou instale a raiz, e tente de novo. Ignorado."
+  },
+  "Dlss_Fg_AllRefused": {
+    "en": "No usable Streamline set in {0}: the only file found there, {1}, was refused ({2}).",
+    "note": "{0} = pasta de origem, {1} = arquivo recusado, {2} = motivo da recusa.",
+    "pt-BR": "Não há conjunto Streamline utilizável em {0}: o único arquivo encontrado ali, {1}, foi recusado ({2})."
+  },
   "Dlss_UntrustedChain": {
     "en": "The signature names NVIDIA but its certificate chain does not reach a trusted root ({0}). Skipped.",
     "note": "{0} = diagnóstico do WinVerifyTrust (ex.: raiz não confiável, certificado auto-assinado).",
