@@ -336,20 +336,27 @@ public static class Cli
 
         Console.WriteLine($"{g.Name}");
 
+        // O codigo de saida segue o mesmo contrato de `neural` e `dlss5`: 0 so quando a cadeia
+        // ficou inteira, 2 quando algum elo falhou ou o jogo nao pode receber o filtro. Cada
+        // passo engole a propria excecao para que os seguintes ainda rodem e o usuario leia
+        // tudo de uma vez — mas engolir nao pode virar "deu certo" para quem encadeia
+        // `fix ... && start jogo`.
+        var falhou = false;
+
         // 1. runtimes
         try
         {
             var r = DlssRuntimeService.Repair(g.InstallDir, target, new Progress<string>(s => Console.WriteLine("  " + s)));
             Console.WriteLine($"  runtimes: {r.Updated} arquivo(s)");
         }
-        catch (Exception ex) { Console.WriteLine($"  runtimes: {ex.Message}"); }
+        catch (Exception ex) { Console.WriteLine($"  runtimes: {ex.Message}"); falhou = true; }
 
         // 2. cadeia que carrega o filtro
         NeuralUpliftService.AutoDiscoverAddon(ctx.Games.Select(x => x.InstallDir).Where(d => d is not null)!);
         try { await NeuralUpliftService.FetchAddonAsync(new Progress<string>(s => Console.WriteLine("  " + s))); }
         catch (Exception ex) { Console.WriteLine($"  addon: {ex.Message}"); }
         var det = NeuralUpliftService.Detect(g.InstallDir, target, state?.AddonPath);
-        if (!det.Offerable) { Console.WriteLine("  neural: jogo nao elegivel (sem DLSS)"); return 0; }
+        if (!det.Offerable) { Console.WriteLine("  neural: jogo nao elegivel (sem DLSS)"); return 2; }
 
         // O runtime nao vem em driver nem em SDK publico: quando nao ha copia na maquina, o
         // indice do RHI e a unica origem.
@@ -373,24 +380,43 @@ public static class Cli
             det = NeuralUpliftService.Detect(g.InstallDir, target, state?.AddonPath);
         }
 
-        if (det.Host.Blocker is { } b) { Console.WriteLine($"  neural: {b}"); return 0; }
+        if (det.Host.Blocker is { } b) { Console.WriteLine($"  neural: {b}"); return 2; }
 
-        if (det.NeedsReShade && exe is not null)
+        // Tres desfechos distintos, e o texto tem de distinguir os tres: instalado agora, ja
+        // estava, ou NAO DEU para instalar. O `else` antigo juntava os dois ultimos e dizia
+        // "ja presente" quando o Detect acabara de dizer que faltava — e a copia de 158 MB
+        // seguia adiante para uma pasta sem nada que a carregasse.
+        if (det.NeedsReShade)
         {
+            if (exe is null)
+            {
+                Console.WriteLine("  reshade: AUSENTE — executavel nao encontrado, nao ha onde por o proxy (veja `exe`)");
+                return 2;
+            }
             var dep = await new ReShadeService().DeployAsync(target, exe, null, null,
                 new Progress<string>(s => Console.WriteLine("  " + s)));
-            Console.WriteLine($"  reshade: {(dep.Success ? "instalado (" + dep.DllName + ")" : dep.Message)}");
+            if (!dep.Success)
+            {
+                Console.WriteLine($"  reshade: {dep.Message}");
+                return 2;
+            }
+            Console.WriteLine($"  reshade: instalado ({dep.DllName})");
         }
-        else Console.WriteLine("  reshade: ja presente");
+        else if (det.ReShadeDllName is { } dll) Console.WriteLine($"  reshade: ja presente ({dll})");
+        else Console.WriteLine("  reshade: o addon do jogo aciona o filtro sozinho");
 
         if (!NeuralUpliftService.IsApplied(target, ini, state?.AddonPath))
         {
-            NeuralUpliftService.Apply(target, ini, det.UsesGeneric, new Progress<string>(s => Console.WriteLine("  " + s)));
-            Console.WriteLine("  neural: addon + runtime instalados e ligados");
+            try
+            {
+                NeuralUpliftService.Apply(target, ini, det.UsesGeneric, new Progress<string>(s => Console.WriteLine("  " + s)));
+                Console.WriteLine("  neural: addon + runtime instalados e ligados");
+            }
+            catch (Exception ex) { Console.WriteLine($"  neural: {ex.Message}"); falhou = true; }
         }
         else Console.WriteLine("  neural: ja ligado");
 
-        return 0;
+        return falhou ? 2 : 0;
     }
 
     /// <summary>
@@ -424,8 +450,13 @@ public static class Cli
         var det = NeuralUpliftService.Detect(g.InstallDir, target, state?.AddonPath);
         var host = det.Host;
 
+        // Quem decide se a placa serve e GpuOk, nao a arquitetura: uma RTX 20/30/40 roda o
+        // build `.SF`. O texto antigo dizia "so serie 50" para essas placas e, tres linhas
+        // depois, "pronto para aplicar" — o usuario lia a primeira e desistia.
         Console.WriteLine($"  GPU            : {host.GpuName ?? "nenhuma NVIDIA encontrada"}"
-                          + (host.Blackwell ? " (Blackwell, ok)" : " — os kernels sao sm_120, so serie 50"));
+                          + (host.Blackwell ? " (Blackwell, ok)"
+                             : host.GpuOk ? $" (ok, build .SF; custo do pass: {host.CustoEstimado ?? "?"})"
+                             : " — sem tensor core nao ha o que rode o modelo"));
         Console.WriteLine($"  driver         : branch {host.DriverBranch}"
                           + (host.DriverBranch >= NeuralUpliftService.MinDriverBranch
                              ? " (ok)" : $" — precisa de {NeuralUpliftService.MinDriverBranch}+"));
@@ -439,7 +470,10 @@ public static class Cli
             // que o usuário resolve de um que ele não tem como resolver.
             var index = new DlssIndexService();
             await index.LoadAsync();
-            var entry = index.Newest(DlssIndexService.KindNeural);
+            // O mesmo build que o FetchRuntimeAsync vai escolher. `Newest` ordena por versao
+            // parseavel e os `.SF` caem para 0.0, entao numa RTX 40 ele nomeava justamente o
+            // 310.8.0 — o unico build que a placa nao roda.
+            var entry = index.NeuralFor(host.Blackwell);
             Console.WriteLine($"  runtime        : AUSENTE da biblioteca; "
                               + (entry is null ? "e o indice RHI nao lista nenhum" : $"o indice RHI oferece {entry.Version} (baixado e verificado ao aplicar)"));
         }
@@ -545,11 +579,14 @@ public static class Cli
     /// precisa de tradutor e qual — e todas acontecem antes de qualquer arquivo ser copiado.
     /// Mostra-las aqui e barato; descobri-las depois de 158 MB e uma reinstalacao, nao.
     /// </summary>
-    private static void ImprimirPlano(GameInfo g, string target, string? exe, bool forcarDgVoodoo)
+    private static void ImprimirPlano(GameInfo g, string target, string? exe, bool forcarDgVoodoo,
+                                      string? antiCheat)
     {
         Console.WriteLine($"[plano]   {g.Name}");
         Console.WriteLine($"  pasta          : {target}");
         Console.WriteLine($"  executavel     : {exe ?? "(nao encontrado)"}");
+        if (antiCheat is not null)
+            Console.WriteLine($"  anti-cheat     : {antiCheat} — a instalacao recusa este jogo (ban de conta e irreversivel)");
 
         var pe = exe is null ? null : PeUtils.Inspect(exe, readImports: false);
         var bits = pe is null ? "?" : pe.Is64Bit ? "64 bits" : "32 bits";
@@ -574,6 +611,15 @@ public static class Cli
             Console.WriteLine($"  tradutor DX9   : {rota}");
             Console.WriteLine($"  ReShade entra  : {(rota.StartsWith("DXVK") ? "camada Vulkan" : "proxy dxgi.dll")}");
             Console.WriteLine($"  metades 32 bits: {(rota.StartsWith("DXVK") ? "com transporte Vulkan" : "oficiais (D3D11)")}");
+        }
+        else if (precisaTradutor)
+        {
+            // Espelha o instalador: o DXVK so entra em jogo de 32 bits, entao um D3D9 de 64
+            // bits vai de dgVoodoo (build x64) e o proxy tem de ser dxgi.dll. O plano caia no
+            // "a decidir" e escondia justamente a decisao — e o passo manual — que o --check
+            // existe para mostrar.
+            Console.WriteLine("  tradutor DX9   : dgVoodoo2 (D3D11, x64) — o DXVK so cobre jogo de 32 bits");
+            Console.WriteLine("  ReShade entra  : proxy dxgi.dll");
         }
         else if (DxvkService.AppliesD3d10(exe))
         {
@@ -627,6 +673,7 @@ public static class Cli
         }
 
         int ok = 0, pulados = 0, falhos = 0;
+        var configMudou = false;
         foreach (var g in alvos)
         {
             var (_, state) = StateOf(ctx, g);
@@ -634,9 +681,44 @@ public static class Cli
             var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
             var exe = state?.ExePath ?? ExeLocator.FindCandidates(g, null).FirstOrDefault();
 
+            // A escolha de tradutor e POR JOGO e mora na config, onde a interface a grava. O
+            // instalador desfaz o tradutor anterior ao trocar, entao instalar com o padrao num
+            // jogo que o usuario passou para dgVoodoo (porque o DXVK o derrubava) devolvia o
+            // crash — e a interface seguia mostrando dgVoodoo. --dgvoodoo vale como a mesma
+            // escolha feita pela interface: fica gravada, para a proxima acao nao desfaze-la.
+            var chave = $"{g.Store}_{g.AppId ?? g.InstallDir}";
+            var escolha = ctx.Config.D3d9Translator.TryGetValue(chave, out var t) ? t : null;
+            if (dgvoodoo && DgVoodooService.Applies(exe))
+            {
+                escolha = "dgvoodoo";
+                if (!soPlano && ctx.Config.D3d9Translator.GetValueOrDefault(chave) != "dgvoodoo")
+                {
+                    ctx.Config.D3d9Translator[chave] = "dgvoodoo";
+                    configMudou = true;
+                }
+            }
+            var usarDgVoodoo = escolha == "dgvoodoo";
+
+            // O mesmo guarda do `install`: injetar DLL num jogo com EAC/BattlEye pode banir a
+            // conta, o unico dano irreversivel que este programa causa. Em --all o jogo e
+            // pulado com o motivo; num jogo so, o comando recusa como o `install` recusa.
+            var ac = AntiCheatScanner.Detect(g.InstallDir, target);
+            if (ac is not null && !soPlano)
+            {
+                if (alvos.Count > 1)
+                {
+                    pulados++;
+                    Console.WriteLine($"[pulado]  {g.Name} — {L.T("Cli_Install_AntiCheat_Abort", ac)}");
+                    continue;
+                }
+                Console.Error.WriteLine(L.T("Cli_Install_AntiCheat_Abort", ac));
+                Console.Error.WriteLine(L.T("Cli_Install_AntiCheat_UseGui"));
+                return 3;
+            }
+
             if (soPlano)
             {
-                ImprimirPlano(g, target, exe, dgvoodoo);
+                ImprimirPlano(g, target, exe, usarDgVoodoo, ac);
                 ok++;
                 continue;
             }
@@ -645,7 +727,7 @@ public static class Cli
                 index, reshade, ctx.Rhi,
                 // no modo --all so o resultado interessa; passo a passo poluiria dezenas de jogos
                 alvos.Count == 1 ? new Progress<string>(s => Console.WriteLine("  " + s)) : null,
-                default, preferirDxvk: true, forcarDgVoodoo: dgvoodoo);
+                default, preferirDxvk: !usarDgVoodoo, forcarDgVoodoo: usarDgVoodoo);
 
             if (r.Ok)
             {
@@ -666,6 +748,7 @@ public static class Cli
             }
         }
 
+        if (configMudou) ctx.Config.Save();
         if (alvos.Count > 1) Console.WriteLine($"\n{ok} instalado(s), {pulados} pulado(s), {falhos} com falha");
         return falhos > 0 ? 2 : 0;
     }
@@ -768,10 +851,27 @@ public static class Cli
             Console.Error.WriteLine(L.T("Cli_Usage", $"add {L.T("Cli_Arg_Folder")}"));
             return 2;
         }
-        var dir = Path.GetFullPath(path.Trim().Trim('"')).TrimEnd('\\', '/');
+        // TrimEndingDirectorySeparator preserva a raiz: `D:\` continua `D:\`, e nao vira o
+        // caminho relativo-a-unidade `D:` que o TrimEnd produzia e a config guardava.
+        var dir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path.Trim().Trim('"')));
         if (!Directory.Exists(dir)) { Console.Error.WriteLine(L.T("Cli_Add_FolderMissing", dir)); return 1; }
 
         var config = LauncherConfig.Load();
+
+        // Recusar aqui, e nao so ignorar depois: o carregador descarta depositos (Downloads,
+        // raiz de unidade) em silencio, entao o comando dizia "registrado" e "reconhecido como
+        // <algum exe da pasta>" para um jogo que nunca apareceria no `list`. A mesma recusa da
+        // interface, e a entrada inutil sai da config se ja estava la.
+        if (FolderGameResolver.EhDeposito(dir))
+        {
+            var nome = Path.GetFileName(dir);
+            Console.Error.WriteLine(L.T("Main_AddGame_Deposito", string.IsNullOrEmpty(nome) ? dir : nome));
+            if (config.ManualGameDirs.RemoveAll(d => d.Equals(dir, StringComparison.OrdinalIgnoreCase)
+                    || Path.TrimEndingDirectorySeparator(d).Equals(dir, StringComparison.OrdinalIgnoreCase)) > 0)
+                config.Save();
+            return 1;
+        }
+
         bool already = config.ManualGameDirs.Contains(dir, StringComparer.OrdinalIgnoreCase);
         if (!already)
         {
@@ -916,11 +1016,45 @@ public static class Cli
         var (exe, _) = StateOf(ctx, game);
         if (exe is null) { Console.Error.WriteLine(L.T("Cli_Error_ExeNotFound", L.T("Cli_Arg_Game"))); return 1; }
         var dir = Path.GetDirectoryName(exe)!;
+
+        // Bitness tem de bater: um ReShade de 64 bits nunca carrega um .addon32, e o par errado
+        // instala em silencio e nao faz nada. A interface recusa antes de escrever; aqui tambem.
+        var pe = PeUtils.Inspect(exe, readImports: false);
+        if (pe is not null && mod.AddonBits != 0 && (pe.Is64Bit ? 64 : 32) != mod.AddonBits)
+        {
+            Console.Error.WriteLine(L.T("Install_BitnessMismatch", mod.AddonBits, pe.Is64Bit ? 64 : 32));
+            return 1;
+        }
+
         var progress = new Progress<string>(Console.WriteLine);
+        // O que ja estava na pasta antes do deploy nao e nosso para apagar: o rollback so pode
+        // tirar o proxy que ESTE comando acabou de por.
+        var dllsAntes = new HashSet<string>(
+            Directory.EnumerateFiles(dir, "*.dll").Select(f => Path.GetFileName(f)),
+            StringComparer.OrdinalIgnoreCase);
         var deploy = await new ReShadeService().DeployAsync(dir, exe, ctx.Rhi.GraphicsApi(game.Name),
             ctx.Rhi.DllNameOverride(game.Name), progress);
         if (!deploy.Success) { Console.Error.WriteLine(deploy.Message); return 1; }
-        await AddonService.DownloadAddonAsync(mod, dir, progress);
+        try
+        {
+            await AddonService.DownloadAddonAsync(mod, dir, progress);
+        }
+        catch
+        {
+            // O addon falhou DEPOIS de o ReShade entrar: sem rollback o jogo fica com um dxgi.dll
+            // injetado que o usuario nao pediu, e a proxima rodada ve "ReShade presente" sem
+            // ninguem saber que ficou pela metade. Mesmo comportamento da interface.
+            if (deploy.DllName is { } dll && !dllsAntes.Contains(dll))
+            {
+                try
+                {
+                    AddonService.RollbackReShade(dir, dll);
+                    Console.Error.WriteLine(L.T("Install_Rollback_Done"));
+                }
+                catch (Exception rex) { Log.Warn($"rollback: {rex.Message}"); }
+            }
+            throw;
+        }
         Console.WriteLine(L.T("Cli_Install_Done", mod.Slug, dir));
         return 0;
     }
