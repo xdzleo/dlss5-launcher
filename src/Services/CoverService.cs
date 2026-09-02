@@ -308,9 +308,11 @@ public static partial class CoverService
         return null;
     }
 
-    /// <summary>Um algarismo romano como palavra inteira ("III", "IV", "XII"): so a presenca dele
-    /// no nome mais longo diz se o "i" que sobra e "III" ou o inicio de "Imperial".</summary>
-    [GeneratedRegex(@"(?<![a-z0-9])(?=[ivx])(x{0,3}(ix|iv|v?i{0,3}))(?![a-z0-9])", RegexOptions.IgnoreCase)]
+    /// <summary>Um algarismo romano como palavra inteira ("III", "IV", "XII") NO COMECO do resto
+    /// cru: so a fronteira de palavra diz se o "i" que sobra e "III" ou o inicio de "Intergrade".
+    /// Ancorado no inicio de proposito — testar o nome inteiro recusava "Final Fantasy VII Remake
+    /// Intergrade" por causa do "VII" que os dois nomes compartilham.</summary>
+    [GeneratedRegex(@"^(?=[ivx])x{0,3}(ix|iv|v?i{0,3})(?![a-z0-9])", RegexOptions.IgnoreCase)]
     private static partial Regex AlgarismoRomanoRegex();
 
     /// <summary>
@@ -326,10 +328,38 @@ public static partial class CoverService
         else return false;
         if (longo.Length == curto.Length) return true;
 
-        var resto = longo[(longo.IndexOf(curto, StringComparison.Ordinal) + curto.Length)..];
+        var inicioResto = longo.IndexOf(curto, StringComparison.Ordinal) + curto.Length;
+        var resto = longo[inicioResto..];
         if (resto.Length == 0) return true;
         if (char.IsDigit(resto[0])) return false;
-        if ("ivx".Contains(resto[0]) && AlgarismoRomanoRegex().IsMatch(longoCru)) return false;
-        return true;
+        if (!"ivx".Contains(resto[0])) return true;
+
+        // O algarismo romano tem de ser julgado no RESTO cru, e nao no nome inteiro: "Diablo IV"
+        // e "Diablo IV: Vessel of Hatred" partilham o "IV", e o que decide e o "Vessel" que sobra.
+        // Sem o mapeamento nao ha como julgar; recusar e o lado seguro, porque uma capa errada
+        // e pior do que nenhuma.
+        var restoCru = RestoCru(longoCru, inicioResto);
+        if (restoCru is null) return false;
+        return !AlgarismoRomanoRegex().IsMatch(restoCru);
+    }
+
+    /// <summary>
+    /// O pedaco do nome cru a partir do <paramref name="indiceNormalizado"/>-esimo caractere que
+    /// sobrevive a normalizacao (minusculas, so [a-z0-9]). Refaz o mesmo filtro de
+    /// <see cref="EscolherMelhor"/> caractere a caractere, por isso o indice bate; nulo se o nome
+    /// cru for mais curto do que o normalizado diz (nao deveria acontecer).
+    /// </summary>
+    private static string? RestoCru(string cru, int indiceNormalizado)
+    {
+        var minusculo = cru.ToLowerInvariant();
+        var vistos = 0;
+        for (var i = 0; i < minusculo.Length; i++)
+        {
+            var c = minusculo[i];
+            if (!(c is >= 'a' and <= 'z' or >= '0' and <= '9')) continue;
+            if (vistos == indiceNormalizado) return cru[i..];
+            vistos++;
+        }
+        return null;
     }
 }

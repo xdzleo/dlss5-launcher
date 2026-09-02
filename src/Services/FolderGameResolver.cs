@@ -78,9 +78,16 @@ public static partial class FolderGameResolver
         try
         {
             var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dir));
-            // Raiz de unidade: "D:" depois do trim, ou o proprio caminho raiz.
-            if (Path.GetPathRoot(full)?.TrimEnd(Path.DirectorySeparatorChar)
-                    .Equals(full, StringComparison.OrdinalIgnoreCase) == true) return true;
+            // Raiz de unidade. TrimEndingDirectorySeparator PRESERVA a barra de uma raiz ("D:\"
+            // continua "D:\"), entao a raiz tem de ser comparada nas duas formas: com a barra
+            // (o que GetPathRoot devolve) e sem ela ("D:", raiz UNC). Comparar so a forma
+            // aparada com a forma cheia nunca batia, e "D:\" passava por jogo.
+            var raiz = Path.GetPathRoot(full);
+            if (!string.IsNullOrEmpty(raiz)
+                && (string.Equals(raiz, full, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(raiz.TrimEnd(Path.DirectorySeparatorChar), full,
+                                     StringComparison.OrdinalIgnoreCase)))
+                return true;
             return PastasDoUsuario.Contains(Path.GetFileName(full));
         }
         catch { return false; }
