@@ -412,7 +412,13 @@ public static class Dlss5Installer
             var bits64 = exePath is null
                          || PeUtils.Inspect(exePath, readImports: false)?.Is64Bit != false;
             if (VulkanLayerService.IsRegistered(targetDir, bits64))
+            {
                 Step(L.T("Dlss5_Step_VulkanLayer"));
+                // Ja registrada nesta bitness — mas a outra pode ter ficado sem entrada quando o
+                // ReShade.json unico foi aposentado. O DeployAsync cuida disso; aqui, que o pula,
+                // a garantia tem de ser chamada de proposito.
+                VulkanLayerService.GarantirBitnessIrma(!bits64);
+            }
             else if (await VulkanLayerService.DeployAsync(reshade, targetDir, bits64, progress))
                 Step(L.T("Dlss5_Step_VulkanLayer"));
             else

@@ -228,9 +228,40 @@ public static class VulkanLayerService
         }
         catch (Exception ex) { Log.Warn($"vulkan layer: {ex.Message}"); return false; }
 
+        // A outra bitness tambem, se a DLL dela ja esta aqui. Ver GarantirBitnessIrma.
+        GarantirBitnessIrma(!jogo64Bits);
+
         Log.Info($"vulkan layer registrada ({(jogo64Bits ? "x64" : "x86")}): {json}");
         progress?.Report(L.T("Vulkan_LayerRegistered"));
         return true;
+    }
+
+    /// <summary>
+    /// Registra a camada da OUTRA bitness quando a DLL dela ja esta na pasta compartilhada e o
+    /// manifesto dela nao esta de pe no registro.
+    ///
+    /// A pasta compartilhada so tem ReShade64.dll se algum jogo de 64 bits foi instalado um dia
+    /// — e ate a 1.70 esse jogo ficava registrado pelo ReShade.json unico, que servia a UMA
+    /// bitness e estava nas duas chaves. Aposentar o unico sem repor o irmao deixava esse jogo
+    /// sem camada nenhuma: foi o que aconteceu nesta maquina, com DOOM Eternal e Baldur's Gate 3
+    /// sem ReShade depois de uma instalacao de 32 bits, ate que algum jogo de 64 fosse instalado
+    /// de novo. A DLL presente e a evidencia de que alguem quis essa camada; ela volta a ficar
+    /// registrada sem esperar por esse jogo.
+    /// </summary>
+    public static void GarantirBitnessIrma(bool bits64)
+    {
+        var dll = Path.Combine(SharedLayerDir, DllName(bits64));
+        if (!File.Exists(dll) || !DllServe(dll, bits64)) return;
+        var json = ManifestPath(bits64);
+        try
+        {
+            if (!ManifestoIntegro(json, bits64)) EscreverManifesto(json, dll);
+            using var k = Registry.LocalMachine.CreateSubKey(bits64 ? Key64 : Key32);
+            if (k is null || k.GetValue(json) is not null) return;
+            k.SetValue(json, 0, RegistryValueKind.DWord);
+            Log.Info($"vulkan layer: camada irma ({(bits64 ? "x64" : "x86")}) registrada a partir da DLL ja presente");
+        }
+        catch (Exception ex) { Log.Warn($"vulkan layer irma ({(bits64 ? "x64" : "x86")}): {ex.Message}"); }
     }
 
     private static void EscreverManifesto(string json, string dll)
