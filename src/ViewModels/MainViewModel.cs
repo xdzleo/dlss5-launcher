@@ -2182,10 +2182,11 @@ public class MainViewModel : ObservableObject
                     profileMsg = " " + L.T("Install_ProfileFailed");
                 }
             }
-            // A passada inteira, e nao so as settings (#40): a instalacao acabou de por o
-            // ReShade (e talvez o addon com NR) na pasta de onde a cadeia de DLSS 5 foi lida, e
-            // um elo "ReShade" vermelho ou o NeedsRepair ficavam como estavam antes.
-            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+            // A passada inteira da pasta, e nao so as settings (#40): a instalacao acabou de por
+            // o ReShade (e talvez o addon com NR) na pasta de onde a cadeia de DLSS 5 foi lida, e
+            // um elo "ReShade" vermelho ficava como estava antes. E a mesma cauda que a troca de
+            // exe refaz: o NeedsRepair e o veredito do log vivem nela, nao na cadeia.
+            if (item == _detailItem) await RefreshFolderAsync(_detailToken);
             DetailStatus = L.T("Install_Success", deploy.Message, profileMsg);
             RefreshViewKeepSelection();
         }
@@ -2239,8 +2240,9 @@ public class MainViewModel : ObservableObject
             // Reler a cadeia de DLSS 5 (#40): "remover tudo" acabou de apagar o addon e, sem
             // outro addon na pasta, o proxy do ReShade — as pecas de que Dlss5Ready foi
             // calculado. Sem isto o interruptor continuava LIGADO com os elos verdes, e o
-            // proximo clique nele desinstalava em vez de reinstalar.
-            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+            // proximo clique nele desinstalava em vez de reinstalar. A cauda inteira da pasta,
+            // para o veredito do ReShade.log de um addon que nao existe mais sair junto.
+            if (item == _detailItem) await RefreshFolderAsync(_detailToken);
             DetailStatus = L.T("Main_Remove_Done");
             RefreshViewKeepSelection();
         }
