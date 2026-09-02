@@ -30,7 +30,7 @@ public class AddonService
     private static readonly string[] CompanionAddonPrefixes =
         ["renodx-neural", "renodx-dlss5", "renodx-dlssfix", "renodx-ue-extended", "renodx-fpslimiter"];
 
-    private static bool IsCompanionAddon(string fileName) =>
+    internal static bool IsCompanionAddon(string fileName) =>
         CompanionAddonPrefixes.Any(p => fileName.StartsWith(p, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
@@ -146,8 +146,13 @@ public class AddonService
             // mtime and size ("6a91a630-1e2600"), so re-publishing the site changes every ETag
             // without changing a single byte. That is not hypothetical: it is what made every
             // installed mod claim an update, survive the update, and claim it again.
+            //
+            // O registro fala da build que NOS gravamos. Se o arquivo no disco nao tem mais o
+            // tamanho registrado, alguem trocou o arquivo por fora e o ETag guardado nao descreve
+            // esses bytes — cai na comparacao por tamanho, que ao menos olha para o arquivo real.
             var record = InstalledModRegistry.Get(state.AddonPath);
             if (record?.ETag is { Length: > 0 } localEtag && remoteEtag is { Length: > 0 }
+                && (record.Size <= 0 || record.Size == local.Length)
                 && !IsMtimeEtag(localEtag, local.Length) && !IsMtimeEtag(remoteEtag, remoteLen))
                 return !string.Equals(localEtag, remoteEtag, StringComparison.Ordinal);
 
@@ -197,10 +202,18 @@ public class AddonService
 
             // The same bytes we already have? Then this install is a local copy.
             //
-            // Turning the mod off removes it, so turning it back on comes through here — and a
-            // switch that costs a multi-megabyte download every time it is flipped is a switch
-            // people stop flipping. A HEAD is cheap, and the size is what says whether the build
-            // changed; anything else falls through to the full download.
+            // Reinstalling and updating both come through here, and a switch that costs a
+            // multi-megabyte download every time it is flipped is a switch people stop flipping.
+            // A HEAD is cheap; anything that does not prove "same build" falls through to the
+            // full download.
+            //
+            // O tamanho sozinho nao prova isso. E o ETag que pega "build nova do mesmo tamanho"
+            // no IsUpdateAvailableAsync (o alinhamento de secoes do PE torna isso comum), e o
+            // cache reaproveitado so por tamanho entregava a build VELHA ao jogo enquanto o
+            // registro recebia o ETag NOVO — a checagem seguinte comparava novo com novo e a
+            // atualizacao sumia para sempre. Por isso o ETag da build baixada fica num sidecar
+            // ao lado do cache, e o cache so vale quando o servidor devolve o mesmo ETag; o
+            // tamanho decide sozinho apenas quando nenhum dos dois lados tem ETag.
             var reusable = false;
             if (File.Exists(cached))
             {
@@ -209,10 +222,13 @@ public class AddonService
                     using var head = new HttpRequestMessage(HttpMethod.Head, entry.DownloadUrl);
                     using var probe = await http.SendAsync(head);
                     var remote = probe.IsSuccessStatusCode ? probe.Content.Headers.ContentLength : null;
-                    if (remote is > 0 && remote == new FileInfo(cached).Length)
+                    var remoteEtag = probe.Headers.ETag?.Tag;
+                    var cachedEtag = ReadCachedEtag(cached);
+                    if (remote is > 0 && remote == new FileInfo(cached).Length
+                        && SameBuild(cachedEtag, remoteEtag))
                     {
                         progress?.Report(L.T("Install_Mod_Cached", fileName));
-                        etag = probe.Headers.ETag?.Tag;
+                        etag = remoteEtag ?? cachedEtag;
                         reusable = true;
                     }
                 }
@@ -229,9 +245,16 @@ public class AddonService
                 if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
                     throw new InvalidOperationException(L.T("Error_Mod_DownloadCorrupt", fileName));
                 await File.WriteAllBytesAsync(cached, bytes);
+                WriteCachedEtag(cached, etag);
             }
         }
         size = new FileInfo(cached).Length;
+
+        // O usuario desligou este mod de proposito? Decidido ANTES da varredura, pelo estado
+        // da pasta: o mod desligado pode estar sob um nome antigo (as builds sao renomeadas o
+        // tempo todo), e a varredura abaixo apagaria esse arquivo junto com a evidencia.
+        var before = GetState(targetDir, null);
+        var keepDisabled = before.AddonPath != null && !before.AddonEnabled;
 
         // One GAME MOD per deploy dir: two mods for the same game fight over the same shaders.
         // That is the conflict this clears — and only that.
@@ -257,12 +280,31 @@ public class AddonService
 
             Log.Info($"removendo addon conflitante {other}");
             File.Delete(other);
+            // o registro e por caminho: sem isto um arquivo posto a mao no mesmo lugar herdava
+            // o ETag de uma build que nao esta mais la
+            InstalledModRegistry.Remove(other);
         }
 
-        var target = Path.Combine(targetDir, fileName);
-        // if a disabled copy exists, replace it (install implies enable)
-        var disabled = target + DisabledSuffix;
-        if (File.Exists(disabled)) File.Delete(disabled);
+        var enabledPath = Path.Combine(targetDir, fileName);
+        var disabled = enabledPath + DisabledSuffix;
+        // Atualizar ou reinstalar troca os BYTES, nao a decisao do usuario: se o mod estava
+        // desligado, a build nova vai para o nome desligado e o interruptor fica onde ele
+        // deixou. Antes, "Atualizar tudo" apagava o .disabled e gravava o nome ligado — o mod
+        // que crashava para ele voltava a carregar no lancamento seguinte, sem aviso nenhum.
+        var target = keepDisabled ? disabled : enabledPath;
+        if (keepDisabled)
+        {
+            if (File.Exists(enabledPath)) File.Delete(enabledPath);
+            InstalledModRegistry.Remove(enabledPath);
+            Log.Info($"{fileName} estava desligado pelo usuario: build nova gravada como {DisabledSuffix}");
+        }
+        else if (File.Exists(disabled))
+        {
+            // copia ligada E desligada ao mesmo tempo: a ligada e a que o ReShade carrega, a
+            // outra e sobra de algum rename interrompido
+            File.Delete(disabled);
+            InstalledModRegistry.Remove(disabled);
+        }
         File.Copy(cached, target, overwrite: true);
         InstalledModRegistry.Set(target, new InstalledModRecord
         {
@@ -273,8 +315,47 @@ public class AddonService
             Size = size,
             DownloadedUtc = DateTime.UtcNow,
         });
-        progress?.Report(L.T("Install_Mod_Done", fileName));
+        progress?.Report(L.T(keepDisabled ? "Install_Mod_DoneDisabled" : "Install_Mod_Done", fileName));
         return target;
+    }
+
+    /// <summary>ETag da build que esta no cache de downloads, num sidecar ao lado do arquivo.
+    /// Null quando o servidor nao mandou ETag naquele download (ou o cache e de antes disso).</summary>
+    private static string? ReadCachedEtag(string cached)
+    {
+        try
+        {
+            var side = cached + ".etag";
+            if (!File.Exists(side)) return null;
+            var v = File.ReadAllText(side).Trim();
+            return v.Length > 0 ? v : null;
+        }
+        catch { return null; }
+    }
+
+    private static void WriteCachedEtag(string cached, string? etag)
+    {
+        var side = cached + ".etag";
+        try
+        {
+            if (string.IsNullOrEmpty(etag)) { if (File.Exists(side)) File.Delete(side); }
+            else File.WriteAllText(side, etag);
+        }
+        catch (Exception ex) { Log.Warn($"cache etag {Path.GetFileName(cached)}: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// O cache descreve a mesma build que o servidor esta servindo? Com ETag dos dois lados, so
+    /// se forem iguais. Com ETag de um lado so, nao ha como saber — e "nao sei" vira download,
+    /// porque baixar de novo custa segundos e instalar a build errada custa a atualizacao. Sem
+    /// ETag em lado nenhum, o tamanho (ja conferido por quem chama) e tudo que existe.
+    /// </summary>
+    private static bool SameBuild(string? cachedEtag, string? remoteEtag)
+    {
+        bool temCache = !string.IsNullOrEmpty(cachedEtag), temRemoto = !string.IsNullOrEmpty(remoteEtag);
+        if (!temCache && !temRemoto) return true;
+        if (temCache != temRemoto) return false;
+        return string.Equals(cachedEtag, remoteEtag, StringComparison.Ordinal);
     }
 
     /// <summary>Enable/disable by renaming the extension. Returns the new path.</summary>
@@ -289,6 +370,7 @@ public class AddonService
             var target = path[..^DisabledSuffix.Length];
             if (File.Exists(target)) File.Delete(target);
             File.Move(path, target);
+            MoveRecord(path, target);
             return target;
         }
         if (!enable && !path.EndsWith(DisabledSuffix, StringComparison.OrdinalIgnoreCase))
@@ -296,9 +378,23 @@ public class AddonService
             var target = path + DisabledSuffix;
             if (File.Exists(target)) File.Delete(target);
             File.Move(path, target);
+            MoveRecord(path, target);
             return target;
         }
         return path;
+    }
+
+    /// <summary>
+    /// O registro de build e indexado pelo caminho completo, e desligar o mod muda o caminho.
+    /// Sem levar o registro junto, o mod desligado perdia o ETag e a checagem de atualizacao
+    /// caia na comparacao por tamanho — que nao enxerga build nova do mesmo tamanho.
+    /// </summary>
+    private static void MoveRecord(string from, string to)
+    {
+        var record = InstalledModRegistry.Get(from);
+        if (record is null) return;
+        InstalledModRegistry.Set(to, record);
+        InstalledModRegistry.Remove(from);
     }
 
     /// <summary>Undo a ReShade deploy after a failed install: removes the proxy DLL we just
@@ -321,8 +417,14 @@ public class AddonService
     {
         if (IsGameRunning(state.TargetDir))
             throw new InvalidOperationException(L.T("Error_GameRunning"));
-        if (state.AddonPath != null && File.Exists(state.AddonPath))
-            File.Delete(state.AddonPath);
+        if (state.AddonPath != null)
+        {
+            if (File.Exists(state.AddonPath)) File.Delete(state.AddonPath);
+            // o registro e por caminho: deixa-lo aqui faz um arquivo copiado a mao no mesmo
+            // lugar herdar o ETag de uma build que ja nao esta la, e a checagem de atualizacao
+            // confia nesse ETag em vez de olhar os bytes
+            InstalledModRegistry.Remove(state.AddonPath);
+        }
         if (alsoReShade && state.ReShadeDllName != null)
         {
             var dllPath = Path.Combine(state.TargetDir, state.ReShadeDllName);

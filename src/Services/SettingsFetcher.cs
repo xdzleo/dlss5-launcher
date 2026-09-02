@@ -60,9 +60,21 @@ public static partial class SettingsFetcher
                     }
                     catch { /* try the next branch */ }
                 }
-                if (source.Length == 0) return null;
-                Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
-                await File.WriteAllTextAsync(cachePath, source);
+                if (source.Length > 0)
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+                    await File.WriteAllTextAsync(cachePath, source);
+                }
+                else if (File.Exists(cachePath))
+                {
+                    // Offline, ou o GitHub cortou o IP: o cache vencido continua sendo o fonte
+                    // do mod, e os sliders de uma semana atras valem mais que "configuracoes
+                    // indisponiveis" — que era o que o usuario via depois de 7 dias sem rede,
+                    // com o fonte parseado ali no disco. O historico ja fazia essa queda.
+                    Log.Warn($"settings de {entry.Slug}: sem rede, usando o cache vencido");
+                    source = await File.ReadAllTextAsync(cachePath);
+                }
+                else return null;
             }
 
             var parsed = Parse(source);
@@ -72,6 +84,16 @@ public static partial class SettingsFetcher
         catch (Exception ex)
         {
             Log.Warn($"fetch settings {entry.Slug}: {ex.Message}");
+            // a mesma queda para o cache vencido quando a falha veio antes do laco de fetch
+            try
+            {
+                if (File.Exists(cachePath))
+                {
+                    Log.Warn($"settings de {entry.Slug}: usando o cache vencido apos falha");
+                    return Parse(await File.ReadAllTextAsync(cachePath));
+                }
+            }
+            catch { }
             return null;
         }
     }

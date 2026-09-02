@@ -51,6 +51,11 @@ public static partial class ReShadeLogService
     [GeneratedRegex(@"Loading add-on from '([^']*renodx[^']*)'", RegexOptions.IgnoreCase)]
     private static partial Regex LoadingRegex();
 
+    // every add-on load, renodx or not, so a "Registered" line can be tied to the FILE that
+    // registered it; the built-in batch counts as a (non-renodx) source of its own
+    [GeneratedRegex(@"Loading (?:built-in add-ons|add-on from '([^']*)')", RegexOptions.IgnoreCase)]
+    private static partial Regex AnyLoadingRegex();
+
     [GeneratedRegex(@"Searching for add-ons", RegexOptions.IgnoreCase)]
     private static partial Regex SearchingRegex();
 
@@ -76,14 +81,38 @@ public static partial class ReShadeLogService
             if (FailedRegex().Match(text) is { Success: true } fail)
                 return new LoadReport(LoadResult.Failed, null, null, fail.Value.Trim(), lastRun);
 
-            // a renodx addon actually registering itself is the definitive success signal
+            // A renodx addon actually registering itself is the definitive success signal.
+            //
+            // Um "Registered add-on" so prova algo sobre o RenoDX se foi o RenoDX que registrou.
+            // O ReShade escreve "Loading add-on from '<arquivo>'" e, de dentro do DllMain desse
+            // arquivo, o "Registered add-on" — a linha de Loading imediatamente anterior diz de
+            // que arquivo veio o registro. A versao antiga aceitava o primeiro registro de
+            // QUALQUER addon assim que houvesse alguma linha de Loading do renodx no log, e o
+            // REST (que vem antes na ordem alfabetica) passava por "mod carregado", com o nome
+            // dele no painel — inclusive quando o renodx entrou e nunca se registrou.
+            var loads = AnyLoadingRegex().Matches(text);
+            LoadReport? companion = null;
             foreach (Match m in RegisteredRegex().Matches(text))
             {
                 var name = m.Groups[1].Value;
-                if (name.Contains("renodx", StringComparison.OrdinalIgnoreCase)
-                    || LoadingRegex().IsMatch(text))
-                    return new LoadReport(LoadResult.Loaded, name, m.Groups[2].Value, null, lastRun);
+                var source = loads.LastOrDefault(l => l.Index < m.Index)?.Groups[1].Value ?? "";
+                if (!name.Contains("renodx", StringComparison.OrdinalIgnoreCase)
+                    && !source.Contains("renodx", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                var report = new LoadReport(LoadResult.Loaded, name, m.Groups[2].Value, null, lastRun);
+                // o veredito e sobre o mod DO JOGO; um companion (neural, dlss5) so responde
+                // por ele quando nao ha mod do jogo no log
+                if (AddonService.IsCompanionAddon(Path.GetFileName(source))) companion ??= report;
+                else return report;
             }
+
+            // o DLL do mod entrou (Loading) mas nunca se registrou: o ReShade nao chama isso
+            // de falha, mas para quem joga e — o mod nao esta rodando
+            var silent = LoadingRegex().Matches(text)
+                .FirstOrDefault(l => !AddonService.IsCompanionAddon(Path.GetFileName(l.Groups[1].Value)));
+            if (silent != null)
+                return new LoadReport(LoadResult.Failed, null, null, silent.Value.Trim(), lastRun);
+            if (companion != null) return companion;
 
             // ReShade rodou (log tem conteúdo) mas NUNCA procurou add-ons: é a build normal
             // (sem suporte a add-on), na qual o .addon64 fica inerte para sempre
