@@ -1357,6 +1357,11 @@
     "en": "DXVK installed (Vulkan route): for DX9 games dgVoodoo2 cannot carry.",
     "pt-BR": "DXVK instalado (rota Vulkan): para jogo DX9 que o dgVoodoo2 não consegue carregar."
   },
+  "Dlss5_Step_VulkanLayerFailedBits": {
+    "en": "Could not register the {0}-bit Vulkan layer in HKLM — the game will not see ReShade.",
+    "note": "{0} = 64 ou 32, a bitness do executavel do jogo.",
+    "pt-BR": "Não consegui registrar a camada Vulkan de {0} bits em HKLM — o jogo não vai enxergar o ReShade."
+  },
   "Dlss5_Step_VulkanLayer32": {
     "en": "32-bit ReShade Vulkan layer registered.",
     "pt-BR": "Camada Vulkan do ReShade de 32 bits registrada."
