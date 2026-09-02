@@ -143,8 +143,17 @@ public static class ExeLocator
             string? hint = null;
             if (game.ExeHint != null)
             {
-                var direct = Path.Combine(game.InstallDir, game.ExeHint);
-                hint = File.Exists(direct) ? direct
+                // O manifesto da Epic escreve o caminho relativo com barra normal
+                // ("OakGame/Binaries/Win64/Foo.exe") e Path.Combine nao troca separador: o
+                // File.Exists aceitava a grafia mista, mas ela nao batia com a enumeracao (que
+                // usa barra invertida), entao o mesmo exe entrava duas vezes no combo e so a
+                // grafia mista levava o bonus da loja. Normaliza e reaproveita a grafia da
+                // enumeracao quando ela ja tem o arquivo.
+                string direct;
+                try { direct = Path.GetFullPath(Path.Combine(game.InstallDir, game.ExeHint)); }
+                catch { direct = Path.Combine(game.InstallDir, game.ExeHint).Replace('/', '\\'); }
+                hint = File.Exists(direct)
+                    ? all.FirstOrDefault(f => SamePath(f, direct)) ?? direct
                     : all.FirstOrDefault(f => Path.GetFileName(f).Equals(
                         Path.GetFileName(game.ExeHint), StringComparison.OrdinalIgnoreCase));
                 if (hint != null && !all.Contains(hint, StringComparer.OrdinalIgnoreCase))
@@ -385,6 +394,14 @@ public static class ExeLocator
     {
         if (pasta is null) return;
         try { _ = SafeEnumerate(pasta).ToList(); } catch { }
+    }
+
+    /// <summary>Mesmo arquivo apesar da grafia (barra normal x invertida, ".\", maiusculas).</summary>
+    private static bool SamePath(string a, string b)
+    {
+        if (a.Equals(b, StringComparison.OrdinalIgnoreCase)) return true;
+        try { return Path.GetFullPath(a).Equals(Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase); }
+        catch { return false; }
     }
 
     private static IEnumerable<string> SafeEnumerate(string root)

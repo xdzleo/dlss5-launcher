@@ -154,6 +154,16 @@ public partial class CatalogService
                 {
                     // index title unknown to the wiki (or shares a slug under another name):
                     // add it as its own entry so the game stays matchable
+                    //
+                    // Quando o slug ja tem uma linha na wiki sob outro titulo, e o MESMO addon, e o
+                    // status dela (em andamento / quebrado) vale para essa entrada tambem. Sem
+                    // herdar, a entrada nova nascia "funcionando" — e como so ela carrega o appid
+                    // da Steam, era ela que o FindMatch devolvia, e o aviso da wiki nunca chegava
+                    // ao usuario. O Note cru vai junto pelo mesmo motivo: e nele que o
+                    // AdviceService le a explicacao do problema.
+                    var sibling = wikiSiblings?.FirstOrDefault();
+                    bool deprecated = deprecatedSlugs.Contains(slug);
+                    bool working = !deprecated && (sibling?.Working ?? true);
                     var entry = new CatalogEntry
                     {
                         GameName = title,
@@ -162,21 +172,24 @@ public partial class CatalogService
                         DownloadUrl = url,
                         AddonBits = bits,
                         SteamAppId = steamAppId,
-                        Working = !deprecatedSlugs.Contains(slug),
+                        Working = working,
                         // NOT localized on purpose: Note is never rendered — it is the raw text
                         // AdviceService runs its (English) regexes over. Translating it would make
                         // the advice chips differ by UI language. What the user READS is Notes below.
-                        Note = deprecatedSlugs.Contains(slug)
+                        Note = deprecated
                             ? "Marcado como DESCONTINUADO na wiki do RenoDX — pode não funcionar mais."
-                            : null,
-                        Maintainer = wikiSiblings?.FirstOrDefault()?.Maintainer,
-                        NexusUrl = wikiSiblings?.FirstOrDefault()?.NexusUrl,
+                            : sibling?.Note,
+                        Maintainer = sibling?.Maintainer,
+                        NexusUrl = sibling?.NexusUrl,
                     };
                     // these come from the machine index, not from a wiki row, so they would
                     // otherwise reach the user with an empty guidance panel
-                    if (deprecatedSlugs.Contains(slug))
+                    if (deprecated)
                         entry.Notes.Add(new ModNote(NoteSource.Wiki, NoteKind.Warning,
                             L.T("Main_Note_Deprecated_Title"), L.T("Main_Note_Deprecated_Body")));
+                    else if (sibling != null && !working)
+                        entry.Notes.Add(new ModNote(NoteSource.WikiLegend, NoteKind.Warning,
+                            L.T("Main_Note_WikiStatus_Title"), L.T("Main_Note_WikiStatus_InProgress")));
                     else
                         entry.Notes.Add(new ModNote(NoteSource.WikiLegend, NoteKind.Info,
                             L.T("Main_Note_WikiStatus_Title"), L.T("Main_Note_WikiStatus_Indexed")));

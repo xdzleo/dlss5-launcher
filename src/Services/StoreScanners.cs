@@ -358,11 +358,18 @@ public static partial class StoreScanners
             string raw;
             try { raw = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(temp)); }
             finally { File.Delete(temp); }
-            var skip = new[] { "battle.net", "agent", "\\bna\\", "programdata" };
+            // O que se quer excluir sao as pastas do PROPRIO cliente (Battle.net, Agent, bna,
+            // ProgramData), nao qualquer caminho que contenha essas palavras: uma biblioteca em
+            // "D:\Battle.net Games\Diablo IV" ou um usuario chamado "Agent" sumiam da grade
+            // porque a comparacao era por substring do caminho inteiro. Por isso a comparacao e
+            // por SEGMENTO: a ultima pasta ser exatamente um dos nomes do cliente (ou uma versao
+            // dele, "Battle.net.14520"), ou o caminho estar dentro da pasta de instalacao do
+            // cliente. ProgramData continua excluido por segmento, porque nenhum jogo mora la.
+            var clientRoots = BattleNetClientRoots(db);
             foreach (var m in WindowsPathRegex().Matches(raw).Select(m => m.Value).Distinct())
             {
                 var dir = m.Replace('/', '\\').TrimEnd('\\');
-                if (skip.Any(s => dir.Contains(s, StringComparison.OrdinalIgnoreCase))) continue;
+                if (IsBattleNetClientDir(dir, clientRoots)) continue;
                 if (!Directory.Exists(dir)) continue;
                 var name = Path.GetFileName(dir);
                 if (name.Length < 3) continue;
@@ -376,6 +383,57 @@ public static partial class StoreScanners
         }
         catch (Exception ex) { Log.Warn($"Battle.net scan: {ex.Message}"); }
         return games;
+    }
+
+    private static readonly string[] BattleNetClientFolderNames = { "battle.net", "agent", "bna" };
+
+    /// <summary>Pastas conhecidas do cliente Battle.net: a raiz do product.db em ProgramData e a
+    /// instalacao do cliente (registro de desinstalacao, com os caminhos padrao como reserva).</summary>
+    private static List<string> BattleNetClientRoots(string productDb)
+    {
+        var roots = new List<string>();
+        void Add(string? p)
+        {
+            if (string.IsNullOrWhiteSpace(p)) return;
+            var full = p.Replace('/', '\\').TrimEnd('\\');
+            if (full.Length > 0 && !roots.Contains(full, StringComparer.OrdinalIgnoreCase)) roots.Add(full);
+        }
+        // %ProgramData%\Battle.net\Agent\product.db -> %ProgramData%\Battle.net
+        Add(Path.GetDirectoryName(Path.GetDirectoryName(productDb)));
+        foreach (var view in new[] { RegistryView.Registry32, RegistryView.Registry64 })
+        {
+            try
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view);
+                using var key = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net");
+                Add(key?.GetValue("InstallLocation") as string);
+            }
+            catch { }
+        }
+        foreach (var env in new[] { "%ProgramFiles(x86)%", "%ProgramFiles%" })
+        {
+            var expanded = Environment.ExpandEnvironmentVariables(env);
+            if (!expanded.StartsWith('%')) Add(Path.Combine(expanded, "Battle.net"));
+        }
+        return roots;
+    }
+
+    private static bool IsBattleNetClientDir(string dir, List<string> clientRoots)
+    {
+        foreach (var root in clientRoots)
+            if (dir.Equals(root, StringComparison.OrdinalIgnoreCase)
+                || dir.StartsWith(root + "\\", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+        var segments = dir.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Any(s => s.Equals("programdata", StringComparison.OrdinalIgnoreCase))) return true;
+
+        var last = segments.Length > 0 ? segments[^1] : "";
+        foreach (var name in BattleNetClientFolderNames)
+            if (last.Equals(name, StringComparison.OrdinalIgnoreCase)
+                || last.StartsWith(name + ".", StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
     }
 
     // ---------- Rockstar Games ----------
