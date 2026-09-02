@@ -182,8 +182,20 @@ public class AddonService
         }
     }
 
+    /// <summary>
+    /// Baixa (ou reaproveita do cache) a build do mod e grava na pasta do jogo. Devolve o caminho
+    /// gravado: o nome ligado, ou o nome com <see cref="DisabledSuffix"/> quando o mod estava
+    /// desligado E <paramref name="preserveDisabled"/> e verdadeiro.
+    ///
+    /// O contrato documentado de "Instalar" e "instalado e ativado": quem clica em instalar num
+    /// mod que desligou esta pedindo para ele voltar a carregar. Atualizar e reinstalar sao
+    /// outra coisa — trocam os bytes, nao a decisao do usuario — e por isso esses caminhos
+    /// passam <paramref name="preserveDisabled"/> = true. Antes o "manter desligado" valia para
+    /// todo chamador, e um Instalar explicito deixava o .disabled no lugar enquanto a tela
+    /// anunciava "instalado e ativado".
+    /// </summary>
     public static async Task<string> DownloadAddonAsync(CatalogEntry entry, string targetDir,
-        IProgress<string>? progress = null)
+        IProgress<string>? progress = null, bool preserveDisabled = false)
     {
         if (entry.DownloadUrl is null)
             throw new InvalidOperationException(L.T("Error_Mod_NoDirectDownload"));
@@ -253,8 +265,13 @@ public class AddonService
         // O usuario desligou este mod de proposito? Decidido ANTES da varredura, pelo estado
         // da pasta: o mod desligado pode estar sob um nome antigo (as builds sao renomeadas o
         // tempo todo), e a varredura abaixo apagaria esse arquivo junto com a evidencia.
+        // So conta quando o chamador pediu para preservar (atualizar/reinstalar); um Instalar
+        // explicito sempre grava o nome ligado, que e o que a tela promete.
         var before = GetState(targetDir, null);
-        var keepDisabled = before.AddonPath != null && !before.AddonEnabled;
+        var wasDisabled = before.AddonPath != null && !before.AddonEnabled;
+        var keepDisabled = preserveDisabled && wasDisabled;
+        if (wasDisabled && !keepDisabled)
+            Log.Info($"{fileName} estava desligado pelo usuario: instalacao explicita religa o mod");
 
         // One GAME MOD per deploy dir: two mods for the same game fight over the same shaders.
         // That is the conflict this clears — and only that.
@@ -291,6 +308,7 @@ public class AddonService
         // desligado, a build nova vai para o nome desligado e o interruptor fica onde ele
         // deixou. Antes, "Atualizar tudo" apagava o .disabled e gravava o nome ligado — o mod
         // que crashava para ele voltava a carregar no lancamento seguinte, sem aviso nenhum.
+        // (Instalar explicito nao entra aqui: keepDisabled ja e falso sem preserveDisabled.)
         var target = keepDisabled ? disabled : enabledPath;
         if (keepDisabled)
         {
@@ -397,9 +415,33 @@ public class AddonService
         InstalledModRegistry.Remove(from);
     }
 
+    /// <summary>Sufixo do backup que o deploy do ReShade deixa ao lado do proxy quando
+    /// sobrescreve um ReShade que ja estava na pasta (o mesmo sufixo dos outros servicos).</summary>
+    private const string ReShadeBackupSuffix = ".renodx-bak";
+
+    /// <summary>
+    /// Tira o proxy do ReShade da pasta do jogo devolvendo o que havia antes. Se existe um
+    /// <c>&lt;proxy&gt;.renodx-bak</c> ao lado, o proxy que esta la e o nosso escrito POR CIMA do
+    /// ReShade que o usuario ja tinha (para os shaders dele): apagar deixaria o jogo sem o
+    /// ReShade dele, e a tela ainda diria "removido". Por isso o backup volta ao nome
+    /// original — e so se nao ha backup o arquivo e apagado.
+    /// </summary>
+    private static void RemoveOrRestoreProxy(string dllPath)
+    {
+        var backup = dllPath + ReShadeBackupSuffix;
+        if (File.Exists(backup))
+        {
+            File.Move(backup, dllPath, overwrite: true);
+            Log.Info($"{dllPath}: ReShade anterior do usuario restaurado de {Path.GetFileName(backup)}");
+            return;
+        }
+        File.Delete(dllPath);
+    }
+
     /// <summary>Undo a ReShade deploy after a failed install: removes the proxy DLL we just
     /// copied (only if it really is ReShade and no addon is left behind), so a half-finished
-    /// install never leaves an unrequested DLL injected into the user's game.</summary>
+    /// install never leaves an unrequested DLL injected into the user's game. When the deploy
+    /// overwrote a pre-existing ReShade, its <c>.renodx-bak</c> is restored instead.</summary>
     public static void RollbackReShade(string targetDir, string dllName)
     {
         var dllPath = Path.Combine(targetDir, dllName);
@@ -408,8 +450,8 @@ public class AddonService
         var pe = PeUtils.Inspect(dllPath, readImports: false);
         if (pe?.ProductName?.Contains("ReShade", StringComparison.OrdinalIgnoreCase) == true)
         {
-            File.Delete(dllPath);
-            Log.Info($"rollback: {dllPath} removido após falha de instalação");
+            RemoveOrRestoreProxy(dllPath);
+            Log.Info($"rollback: {dllPath} desfeito após falha de instalação");
         }
     }
 
@@ -432,8 +474,10 @@ public class AddonService
             if (other == 0 && File.Exists(dllPath))
             {
                 var pe = PeUtils.Inspect(dllPath, readImports: false);
+                // o ReShade que o usuario ja tinha antes de nos volta do .renodx-bak; so o que
+                // foi posto por este launcher, sem nada por baixo, e apagado
                 if (pe?.ProductName?.Contains("ReShade", StringComparison.OrdinalIgnoreCase) == true)
-                    File.Delete(dllPath);
+                    RemoveOrRestoreProxy(dllPath);
             }
         }
     }

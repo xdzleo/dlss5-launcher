@@ -1233,6 +1233,16 @@
     "note": "Compartilhada: substitui 6 variantes (instalar / instalar-atualizar / ativar-desativar / remover mod / aplicar correcao / remover correcao) nos tres arquivos. O usuario ja sabe o que clicou, entao a cauda por acao nao carregava informacao.",
     "pt-BR": "O jogo está aberto. Feche-o antes de continuar."
   },
+  "Error_Config_SaveRefused": {
+    "en": "Settings were not saved: config.json could not be read (another program is holding it). Close the DLSS 5 CLI or any backup/antivirus tool and try again.",
+    "note": "LauncherConfig.LastSaveError quando TrySave recusa: o config.json nao pode ser lido na abertura NEM na releitura feita na hora de gravar. Gravar assim sobrescreveria o arquivo intacto do usuario com os padroes.",
+    "pt-BR": "As configurações não foram salvas: o config.json não pôde ser lido (outro programa segura o arquivo). Feche a CLI do DLSS 5 ou a ferramenta de backup/antivírus e tente de novo."
+  },
+  "Error_Config_SaveFailed": {
+    "en": "Settings could not be saved: {0}",
+    "note": "LauncherConfig.LastSaveError quando a gravacao atomica falha por I/O. {0} = mensagem da excecao.",
+    "pt-BR": "Não foi possível salvar as configurações: {0}"
+  },
   "Install_Mod_DoneDisabled": {
     "en": "{0} updated, but it stays disabled — you had turned it off.",
     "note": "{0} = nome do arquivo do addon. AddonService.DownloadAddonAsync quando o mod estava com o sufixo .disabled: a build nova vai para o mesmo nome desligado, e o interruptor fica como o usuario deixou.",
