@@ -131,7 +131,45 @@ public static class Dlss5Installer
         // o contrario) e as metades de 32 bits trocam de build. Deixar o anterior para tras
         // significa duas DLLs disputando o mesmo nome e uma camada Vulkan registrada apontando
         // para um jogo que voltou a ser D3D11 — nos dois casos, nada carrega.
-        if ((precisaDgVoodoo && ehJogo32Bits(exePath)) || precisaDxvkD3d10)
+        var trocaTradutor = (precisaDgVoodoo && ehJogo32Bits(exePath)) || precisaDxvkD3d10;
+
+        // O download ANTES de mexer na pasta, como manda a regra 2 la em cima — e aqui ela tinha
+        // sido esquecida, com custo: o dgVoodoo saia e o proxy dxgi.dll do ReShade era posto de
+        // lado, e so entao o DXVK era baixado. Offline, ou com o GitHub devolvendo 403, o
+        // download falhava, o dgVoodoo voltava e o proxy nao — `det` ainda dizia "dxgi.dll
+        // presente", o instalador acreditava, e a cadeia terminava verde num jogo em que nada
+        // carregava, sem sequer um ReShade.log. Com o download primeiro, uma falha aqui nao muda
+        // um byte da pasta, e `det` continua descrevendo o disco.
+        if (usarDxvk)
+        {
+            try
+            {
+                if (precisaDxvkD3d10)
+                {
+                    // Outro download, de outra versao: a 1.10.3, a ultima com d3d10.dll e
+                    // d3d10_1.dll proprios. Os cinco arquivos, no bitness do jogo; o d3d9.dll
+                    // fica de fora de proposito. Ver DxvkService.D3d10Files, que conta por que a
+                    // release atual nao serve aqui.
+                    await DxvkService.FetchD3d10Async(progress, ct);
+                }
+                else await DxvkService.FetchAsync(progress, ct);
+            }
+            catch (Exception ex)
+            {
+                Step(ex.Message);
+                usarDxvk = false;
+                // Sem o tradutor nao ha rota nenhuma para D3D10. Seguir adiante montaria a mesma
+                // instalacao que fechava o Just Cause 2 ao criar o device — cadeia verde, jogo
+                // morto. Parar aqui, com o motivo, e o unico resultado honesto.
+                if (precisaDxvkD3d10)
+                    return new Result(false, L.T("Dlss5_Blocked_D3d10"), steps, manual);
+            }
+        }
+
+        // O proxy do ReShade foi posto de lado NESTA passada? E a unica mudanca que a rota DXVK
+        // faz na pasta antes de existir; se a implantacao falhar depois, ele volta.
+        var proxyGuardado = false;
+        if (trocaTradutor)
         {
             if (usarDxvk)
             {
@@ -168,6 +206,7 @@ public static class Dlss5Installer
                         var guardado = proxy + ".pre-dxvk";
                         if (File.Exists(guardado)) File.Delete(proxy);
                         else File.Move(proxy, guardado);
+                        proxyGuardado = true;
                         Step(L.T("Dlss5_Step_ProxyRemovedForVulkan"));
                     }
                     catch (Exception ex) { Log.Warn($"dxvk: nao consegui tirar o proxy dxgi.dll: {ex.Message}"); }
@@ -187,17 +226,11 @@ public static class Dlss5Installer
             {
                 if (precisaDxvkD3d10)
                 {
-                    // Outro download, de outra versao: a 1.10.3, a ultima com d3d10.dll e
-                    // d3d10_1.dll proprios. Os cinco arquivos, no bitness do jogo; o d3d9.dll
-                    // fica de fora de proposito. Ver DxvkService.D3d10Files, que conta por que a
-                    // release atual nao serve aqui.
-                    await DxvkService.FetchD3d10Async(progress, ct);
                     DxvkService.DeployD3d10(targetDir, jogo64Bits: !ehJogo32Bits(exePath), progress);
                     Step(L.T("Dlss5_Step_DxvkD3d10", DxvkService.D3d10Version));
                 }
                 else
                 {
-                    await DxvkService.FetchAsync(progress, ct);
                     DxvkService.Deploy(targetDir, progress);
                     Step(L.T("Dlss5_Step_Dxvk"));
                 }
@@ -207,9 +240,11 @@ public static class Dlss5Installer
             {
                 Step(ex.Message);
                 usarDxvk = false;
-                // Sem o tradutor nao ha rota nenhuma para D3D10. Seguir adiante montaria a mesma
-                // instalacao que fechava o Just Cause 2 ao criar o device — cadeia verde, jogo
-                // morto. Parar aqui, com o motivo, e o unico resultado honesto.
+                // A pasta ja foi mexida: o proxy volta ao lugar, e `det` e relido do disco —
+                // senao o passo do ReShade decide sobre um dxgi.dll que nao esta mais la.
+                if (proxyGuardado) DevolverProxyPreDxvk(targetDir);
+                det = NeuralUpliftService.Detect(installDir, targetDir, addonPath);
+                // Sem o tradutor nao ha rota nenhuma para D3D10 (ver o catch do download).
                 if (precisaDxvkD3d10)
                     return new Result(false, L.T("Dlss5_Blocked_D3d10"), steps, manual);
             }
@@ -382,7 +417,9 @@ public static class Dlss5Installer
                 Step(L.T("Dlss5_Step_VulkanLayer"));
             else
             {
-                Step(L.T("Dlss5_Step_VulkanLayerFailed", "HKLM"));
+                // A bitness vai no texto: e o exe que decide qual no do registro falhou, e dizer
+                // "32 bits" a quem instala um jogo de 64 manda procurar no lugar errado.
+                Step(L.T("Dlss5_Step_VulkanLayerFailedBits", bits64 ? 64 : 32));
                 manual.Add(L.T("Dlss5_Manual_VulkanAdmin"));
             }
         }
@@ -445,7 +482,14 @@ public static class Dlss5Installer
                 FeederService.Configure(targetDir, iniPath, progress);
                 // O Feeder resolve o addon de NR por nome literal; sem esta copia ele entrega
                 // frames com o pass sem quem o dirija, e diz isso so no proprio log.
-                NeuralUpliftService.GarantirNomeDoFeeder(targetDir, iniPath, progress);
+                //
+                // So quando o pass roda NO JOGO. Num jogo de 32 bits ele roda no host64\, que
+                // recebe o nome certo por DeployForHost64 — e na primeira instalacao o host64\
+                // ainda nao existe, entao o guard de dentro nao segurava: o addon de 64 bits era
+                // renomeado na raiz do jogo de 32, o DeployBits32Async so tira o nome generico, e
+                // o ReShade de 32 bits tentava carregar um PE de 64 no DllMain a cada abertura
+                // (error code 193).
+                if (!precisaHost64) NeuralUpliftService.GarantirNomeDoFeeder(targetDir, iniPath, progress);
                 FeederService.AjustarAlocacao(targetDir, progress);
                 Step(L.T("Dlss5_Step_Feeder"));
 
@@ -467,17 +511,31 @@ public static class Dlss5Installer
                 if (precisaHost64)
                 {
                     await FeederService.DeployBits32Async(targetDir, reshade, progress, ct);
-                    // Na rota DXVK o jogo apresenta por Vulkan, e o add-on oficial de 32 bits
-                    // recusa tudo que nao seja D3D11 — a linha e literal no fonte dele. As
-                    // metades com transporte Vulkan sobrescrevem as oficiais que acabaram de
-                    // ser copiadas; o host64 montado acima (ReShade, addon de NR, runtimes)
-                    // continua valendo, porque so o executavel do host muda.
-                    if (usarDxvk)
+                    // Instalacoes anteriores deixaram na raiz o addon de 64 bits ja renomeado
+                    // (ver o GarantirNomeDoFeeder acima). O DeployBits32Async so conhece o nome
+                    // generico; o renomeado, com a marca de que foi o launcher que o pos, sai
+                    // aqui — e a linha de carga antecipada junto, senao o error 193 vira 126.
+                    TirarAddon64RenomeadoDaRaiz(targetDir, iniPath);
+                    // Sempre que o jogo apresenta por Vulkan — nativo ou traduzido pelo DXVK —
+                    // o add-on oficial de 32 bits recusa tudo que nao seja D3D11; a linha e
+                    // literal no fonte dele. Amarrar isto ao DXVK deixava o Vulkan nativo de 32
+                    // bits com as metades oficiais: camada registrada, host64 no lugar, e o
+                    // addon32 se desligando no primeiro device. As metades com transporte Vulkan
+                    // sobrescrevem as oficiais que acabaram de ser copiadas; o host64 montado
+                    // acima (ReShade, addon de NR, runtimes) continua valendo, porque so o
+                    // executavel do host muda.
+                    if (precisaCamadaVulkan)
                     {
                         FeederService.DeployBits32Vulkan(targetDir, progress);
-                        var okLayer = await VulkanLayerService.DeployAsync(
-                            reshade, targetDir, jogo64Bits: false, progress);
-                        Step(okLayer ? L.T("Dlss5_Step_VulkanLayer32") : L.T("Dlss5_Step_VulkanLayerFailed"));
+                        // A camada de 32 bits ja foi registrada no passo 4, com a bitness do
+                        // exe; aqui so se confere, e se repoe se aquele passo falhou. A mesma
+                        // chave com bitness do passo 4: a antiga existe duas vezes no
+                        // strings.json, com textos diferentes, e qual delas vence depende do
+                        // gerador do .resx.
+                        var okLayer = VulkanLayerService.IsRegistered(targetDir, jogo64Bits: false)
+                                      || await VulkanLayerService.DeployAsync(
+                                             reshade, targetDir, jogo64Bits: false, progress);
+                        Step(okLayer ? L.T("Dlss5_Step_VulkanLayer32") : L.T("Dlss5_Step_VulkanLayerFailedBits", 32));
                     }
                     Step(L.T("Dlss5_Step_Host64"));
                     // A janela do auxiliar aparece junto com o jogo na primeira vez. Sem aviso,
@@ -511,6 +569,66 @@ public static class Dlss5Installer
 
         var applied = NeuralUpliftService.IsApplied(targetDir, iniPath, addonPath);
         return new Result(applied, applied ? null : L.T("Dlss5_Blocked_Unknown"), steps, manual);
+    }
+
+    /// <summary>
+    /// Devolve o dxgi.dll do ReShade que a rota DXVK pos de lado, quando a rota nao se
+    /// concretizou. Sem isto a pasta ficava sem proxy e sem camada — o ReShade nao entrava por
+    /// lugar nenhum, com a cadeia inteira dizendo que sim.
+    /// </summary>
+    private static void DevolverProxyPreDxvk(string targetDir)
+    {
+        var proxy = Path.Combine(targetDir, "dxgi.dll");
+        var guardado = proxy + ".pre-dxvk";
+        try
+        {
+            if (File.Exists(proxy) || !File.Exists(guardado)) return;
+            File.Move(guardado, proxy);
+            Log.Info($"dxvk: proxy dxgi.dll devolvido em {targetDir}");
+        }
+        catch (Exception ex) { Log.Warn($"dxvk: nao consegui devolver o proxy dxgi.dll: {ex.Message}"); }
+    }
+
+    /// <summary>O nome pelo qual o Feeder procura o addon de NR, e que o host64 recebe por
+    /// DeployForHost64. Na raiz de um jogo de 32 bits ele nunca deveria existir.</summary>
+    private const string AddonNomeDoFeeder = "renodx-dlss5.addon64";
+
+    /// <summary>
+    /// Tira da raiz de um jogo de 32 bits o addon de 64 bits que versoes anteriores renomearam
+    /// ali, e a linha de carga antecipada que apontava para ele.
+    ///
+    /// So o que foi o launcher que renomeou: a marca .renodx-ours decide, igual em todo o resto.
+    /// Um renodx-dlss5.addon64 posto a mao pelo usuario nao e nosso para apagar — e nesse caso a
+    /// linha do ini tambem fica. A linha so sai quando o arquivo nao esta mais la, porque ai ela
+    /// e um LoadFromDllMain para um modulo inexistente, que o ReShade responde com error 126.
+    /// </summary>
+    private static void TirarAddon64RenomeadoDaRaiz(string targetDir, string iniPath)
+    {
+        var addon = Path.Combine(targetDir, AddonNomeDoFeeder);
+        var marca = addon + ".renodx-ours";
+        try
+        {
+            if (File.Exists(addon) && File.Exists(marca))
+            {
+                File.Delete(addon);
+                File.Delete(marca);
+                Log.Info($"neural: addon de 64 bits renomeado tirado da raiz de 32 bits em {targetDir}");
+            }
+            if (File.Exists(addon) || !File.Exists(iniPath)) return;
+
+            var ini = new IniFile(iniPath);
+            var lista = ini.Get("ADDON", "LoadFromDllMain", ignoreCase: true);
+            if (lista is null) return;
+            var entradas = lista.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var restantes = entradas
+                .Where(e => !e.Equals(AddonNomeDoFeeder, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (restantes.Count == entradas.Length) return;
+            if (restantes.Count == 0) ini.RemoveKey("ADDON", "LoadFromDllMain");
+            else ini.Set("ADDON", "LoadFromDllMain", string.Join(',', restantes));
+            ini.Save();
+            Log.Info($"neural: LoadFromDllMain={AddonNomeDoFeeder} tirado de {iniPath}");
+        }
+        catch (Exception ex) { Log.Warn($"neural: addon renomeado na raiz de {targetDir}: {ex.Message}"); }
     }
 
     /// <summary>

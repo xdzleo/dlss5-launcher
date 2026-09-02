@@ -70,7 +70,7 @@ public static class VulkanLayerService
             foreach (var nome in k.GetValueNames())
             {
                 // so as nossas: terminam em \vklayer\ReShade.json e NAO sao a compartilhada
-                if (!nome.EndsWith(Path.Combine(SubDir, "ReShade.json"), StringComparison.OrdinalIgnoreCase)) continue;
+                if (!nome.EndsWith(Path.Combine(SubDir, LegacyManifestName), StringComparison.OrdinalIgnoreCase)) continue;
                 if (nome.StartsWith(SharedLayerDir, StringComparison.OrdinalIgnoreCase)) continue;
                 k.DeleteValue(nome, throwOnMissingValue: false);
                 Log.Info($"vulkan layer: entrada por jogo removida ({nome})");
@@ -109,23 +109,80 @@ public static class VulkanLayerService
         return ContemTexto(exePath, "vulkan-1.dll");
     }
 
-    /// <summary>A camada ja esta registrada para este jogo?</summary>
+    /// <summary>
+    /// A camada esta registrada para este jogo — e tem o que carregar?
+    ///
+    /// O valor no registro sozinho nao responde. Ele sobrevive a quem apague a pasta de dados do
+    /// launcher, e sobrevivia ao manifesto ser reescrito para a outra bitness: nos dois casos o
+    /// instalador dizia "camada registrada", pulava o DeployAsync, e o loader nao tinha o que
+    /// carregar. Por isso os tres juntos — o valor no no certo, o manifesto no disco, e a DLL que
+    /// ele aponta existindo e sendo da bitness pedida. Faltando qualquer um, nao esta registrada,
+    /// e o DeployAsync reescreve tudo.
+    /// </summary>
     public static bool IsRegistered(string targetDir, bool jogo64Bits)
     {
         try
         {
-            var json = ManifestPath(targetDir);
+            var json = ManifestPath(targetDir, jogo64Bits);
             using var k = Registry.LocalMachine.OpenSubKey(jogo64Bits ? Key64 : Key32);
-            return k?.GetValue(json) is not null;
+            if (k?.GetValue(json) is null) return false;
+            return ManifestoIntegro(json, jogo64Bits);
         }
         catch { return false; }
     }
 
+    /// <summary>
+    /// Um manifesto POR BITNESS, e nao um so para os dois.
+    ///
+    /// O manifesto carrega o caminho da DLL, e a DLL tem bitness: ReShade64.dll para o no de 64
+    /// bits do registro, ReShade32.dll para o WOW6432Node. Com um unico ReShade.json servindo aos
+    /// dois nos, instalar num jogo de 32 bits reescrevia o arquivo apontando para a DLL de 32 — e
+    /// todo processo Vulkan de 64 bits da maquina passava a ter uma camada implicita cuja DLL
+    /// nao carrega. O DOOM Eternal perdia o ReShade sem que nada na pasta dele tivesse mudado, e
+    /// reinstalar nao consertava, porque o valor no registro continuava la.
+    /// </summary>
+    private const string LegacyManifestName = "ReShade.json";
+    private static string ManifestName(bool jogo64Bits) => jogo64Bits ? "ReShade64.json" : "ReShade32.json";
+    private static string DllName(bool jogo64Bits) => jogo64Bits ? "ReShade64.dll" : "ReShade32.dll";
+
     /// <summary>A camada e uma so, na biblioteca — nao mais uma por pasta de jogo.
     /// O parametro fica por compatibilidade com quem ja chamava assim.</summary>
     private static string LayerDir(string targetDir) => SharedLayerDir;
-    private static string ManifestPath(string targetDir) =>
-        Path.Combine(LayerDir(targetDir), "ReShade.json");
+    private static string ManifestPath(string targetDir, bool jogo64Bits) => ManifestPath(jogo64Bits);
+    private static string ManifestPath(bool jogo64Bits) =>
+        Path.Combine(SharedLayerDir, ManifestName(jogo64Bits));
+    private static string LegacyManifestPath => Path.Combine(SharedLayerDir, LegacyManifestName);
+
+    /// <summary>O manifesto existe e aponta para uma DLL que existe e tem a bitness pedida?</summary>
+    private static bool ManifestoIntegro(string json, bool jogo64Bits)
+    {
+        var dll = LibraryPathDoManifesto(json);
+        return dll is not null && DllServe(dll, jogo64Bits);
+    }
+
+    /// <summary>Pela bitness do PE, e nao pelo nome do arquivo: e o que o loader vai tentar
+    /// carregar, e um nome certo sobre um binario errado e o mesmo silencio.</summary>
+    private static bool DllServe(string dll, bool jogo64Bits) =>
+        File.Exists(dll) && PeUtils.Inspect(dll, readImports: false)?.Is64Bit == jogo64Bits;
+
+    /// <summary>O library_path do manifesto, ou null se o arquivo nao existe ou nao se le.</summary>
+    private static string? LibraryPathDoManifesto(string json)
+    {
+        try
+        {
+            if (!File.Exists(json)) return null;
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(json));
+            if (!doc.RootElement.TryGetProperty("layer", out var layer)
+                || !layer.TryGetProperty("library_path", out var lib)) return null;
+            var caminho = lib.GetString();
+            return string.IsNullOrWhiteSpace(caminho) ? null : caminho;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"vulkan layer: manifesto ilegivel ({json}): {ex.Message}");
+            return null;
+        }
+    }
 
     /// <summary>
     /// Poe a DLL e o manifesto na pasta do jogo e registra a camada.
@@ -140,13 +197,44 @@ public static class VulkanLayerService
         var dir = LayerDir(targetDir);
         Directory.CreateDirectory(dir);
 
-        var dllName = jogo64Bits ? "ReShade64.dll" : "ReShade32.dll";
+        var dllName = DllName(jogo64Bits);
         var dep = await reshade.DeployRawAsync(dir, dllName, jogo64Bits, progress);
         if (!dep.Success) return false;
 
         var dll = Path.Combine(dir, dllName);
-        var json = ManifestPath(targetDir);
+        // So o manifesto DESTA bitness. O da outra pertence a outro no do registro e a outra
+        // DLL, e reescreve-lo era exatamente o que tirava o ReShade dos jogos de 64 bits.
+        var json = ManifestPath(targetDir, jogo64Bits);
+        EscreverManifesto(json, dll);
 
+        try
+        {
+            // Antes de registrar a compartilhada, tira as entradas por jogo que versoes
+            // anteriores deixaram. Sem isto sobram varias com o MESMO nome de camada, e o loader
+            // escolhe uma delas por ordem — foi assim que o Bully carregou o ReShade que estava
+            // na pasta do Resident Evil Revelations 2.
+            LimparRegistrosPorJogo(jogo64Bits);
+            // E o ReShade.json unico, que servia a uma bitness so e estava registrado nas duas.
+            AposentarManifestoUnico();
+
+            using var k = Registry.LocalMachine.CreateSubKey(jogo64Bits ? Key64 : Key32);
+            if (k is null) return false;
+            k.SetValue(json, 0, RegistryValueKind.DWord);   // 0 = habilitada
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Log.Warn("vulkan layer: sem permissao para escrever em HKLM (precisa de administrador)");
+            return false;
+        }
+        catch (Exception ex) { Log.Warn($"vulkan layer: {ex.Message}"); return false; }
+
+        Log.Info($"vulkan layer registrada ({(jogo64Bits ? "x64" : "x86")}): {json}");
+        progress?.Report(L.T("Vulkan_LayerRegistered"));
+        return true;
+    }
+
+    private static void EscreverManifesto(string json, string dll)
+    {
         // Caminho absoluto, com as barras escapadas para JSON. Ver o item 1 do cabecalho: um
         // caminho relativo aqui nao degrada, derruba todo aplicativo Vulkan da maquina.
         var libEscapado = dll.Replace("\\", "\\\\");
@@ -169,29 +257,47 @@ public static class VulkanLayerService
           }
         }
         """);
+    }
 
-        try
+    /// <summary>
+    /// Aposenta o ReShade.json unico que versoes anteriores registravam nos dois nos.
+    ///
+    /// Ele so podia servir a uma bitness — a da DLL que apontava — e nesta maquina apontava para
+    /// o ReShade32.dll nos DOIS. O no em que ele ainda servia continua servido, sob o nome por
+    /// bitness, para a migracao nao tirar a camada de um jogo que estava funcionando por causa
+    /// da instalacao de outro; o no em que nao servia so perde a entrada. O arquivo sai por
+    /// ultimo, e so depois de as duas entradas sairem: valor apontando para manifesto que nao
+    /// existe e o que o cabecalho deste arquivo manda evitar.
+    /// </summary>
+    private static void AposentarManifestoUnico()
+    {
+        var antigo = LegacyManifestPath;
+        var dll = LibraryPathDoManifesto(antigo);
+        var sobrouEntrada = false;
+        foreach (var (sub, bits64) in new[] { (Key64, true), (Key32, false) })
         {
-            // Antes de registrar a compartilhada, tira as entradas por jogo que versoes
-            // anteriores deixaram. Sem isto sobram varias com o MESMO nome de camada, e o loader
-            // escolhe uma delas por ordem — foi assim que o Bully carregou o ReShade que estava
-            // na pasta do Resident Evil Revelations 2.
-            LimparRegistrosPorJogo(jogo64Bits);
-
-            using var k = Registry.LocalMachine.CreateSubKey(jogo64Bits ? Key64 : Key32);
-            if (k is null) return false;
-            k.SetValue(json, 0, RegistryValueKind.DWord);   // 0 = habilitada
+            try
+            {
+                using var k = Registry.LocalMachine.OpenSubKey(sub, writable: true);
+                if (k?.GetValue(antigo) is null) continue;
+                if (dll is not null && DllServe(dll, bits64))
+                {
+                    var novo = ManifestPath(bits64);
+                    if (!ManifestoIntegro(novo, bits64)) EscreverManifesto(novo, dll);
+                    k.SetValue(novo, 0, RegistryValueKind.DWord);
+                }
+                k.DeleteValue(antigo, throwOnMissingValue: false);
+                Log.Info($"vulkan layer: ReShade.json unico aposentado ({(bits64 ? "x64" : "x86")})");
+            }
+            catch (Exception ex)
+            {
+                sobrouEntrada = true;
+                Log.Warn($"vulkan layer: nao consegui aposentar o manifesto unico em {sub}: {ex.Message}");
+            }
         }
-        catch (UnauthorizedAccessException)
-        {
-            Log.Warn("vulkan layer: sem permissao para escrever em HKLM (precisa de administrador)");
-            return false;
-        }
-        catch (Exception ex) { Log.Warn($"vulkan layer: {ex.Message}"); return false; }
-
-        Log.Info($"vulkan layer registrada ({(jogo64Bits ? "x64" : "x86")}): {json}");
-        progress?.Report(L.T("Vulkan_LayerRegistered"));
-        return true;
+        if (sobrouEntrada) return;
+        try { if (File.Exists(antigo)) File.Delete(antigo); }
+        catch (Exception ex) { Log.Warn($"vulkan layer: nao consegui apagar {antigo}: {ex.Message}"); }
     }
 
     /// <summary>Tira o registro e os arquivos. Deixar a entrada apontando para um arquivo que
