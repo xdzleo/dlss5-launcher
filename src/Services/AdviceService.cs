@@ -154,17 +154,29 @@ public static partial class AdviceService
         RegexOptions.IgnoreCase)]
     private static partial Regex HdrDisableRegex();
 
-    // "HDR On in-game", "enable in-game HDR", "in-game HDR must be on", "enable that too"
+    // "HDR On in-game", "enable in-game HDR", "enable the game's HDR", "in-game HDR must be on",
+    // "enable that too".
+    //
+    // O terceiro ramo EXIGE um marcador do jogo. "Enable HDR" sozinho e, quase sempre, o HDR do
+    // Windows ("Enable HDR in Windows display settings before launching") — e virava o cartao
+    // verde "ligue o HDR do jogo" em nota que mandava deixar o jogo em SDR, por cima da tabela
+    // curada, que so fala quando nenhum regex casou.
     [GeneratedRegex(@"\bhdr\b[^.]*\bon\b[^.]*\b(in[\s-]?game)\b"
         + @"|\b(in[\s-]?game)\b[^.]*\bhdr\b[^.]*\b(on|enabl\w*|must be on|required)\b"
-        + @"|enabl\w*[^.]*\b(in[\s-]?game\s+)?hdr\b"
+        + @"|enabl\w*[^.]*\b(in[\s-]?game|game'?s(\s+own|\s+native)?|native)\s+hdr\b"
+        + @"|enabl\w*[^.]*\bhdr\b[^.]*\b(in[\s-]?game|in the game)\b"
         + @"|in[\s-]?game hdr option, enable"
         + @"|enable that too",
         RegexOptions.IgnoreCase)]
     private static partial Regex HdrEnableRegex();
 
-    // strip the Windows-side "disable AutoHDR / RTX HDR" advice so it never reads as in-game HDR
-    [GeneratedRegex(@"(auto[\s-]?hdr|rtx\s*hdr)", RegexOptions.IgnoreCase)]
+    // strip the Windows-side HDR talk — "disable AutoHDR / RTX HDR", "enable HDR in Windows",
+    // "Windows HDR Calibration" — so none of it reads as the game's own HDR option
+    [GeneratedRegex(@"auto[\s-]?hdr|rtx\s*hdr"
+        + @"|\bwindows(\s*1[01])?'?s?\s+hdr\b"
+        + @"|\bhdr\b\s+(in|on|at|via|from|under)\s+(the\s+|your\s+)?windows\b"
+        + @"|\b(os|system)[\s-](level|wide)\s+hdr\b",
+        RegexOptions.IgnoreCase)]
     private static partial Regex WindowsHdrRegex();
 
     [GeneratedRegex(@"\b(dx\s*\d{1,2}|directx\s*\d{1,2}|vulkan|d3d1[012])\b", RegexOptions.IgnoreCase)]

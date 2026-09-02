@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace RenoDXLauncher.Services;
 
@@ -33,14 +34,42 @@ public class LauncherConfig
     /// significa "seguir o Windows", que e o padrao e o que quase todo mundo quer.</summary>
     public string? Language { get; set; }
 
+    /// <summary>
+    /// O config.json existe mas nao pode ser LIDO nesta sessao (handle preso por outro processo,
+    /// sem permissao). Essa instancia entao so carrega os padroes, e gravar padroes por cima de
+    /// um arquivo intacto e exatamente a perda que o Save atomico existe para impedir — por isso
+    /// Save recusa enquanto for verdade. Corrupcao de conteudo (JSON invalido) e outro caso: ai
+    /// o backup .corrupt fica e os padroes podem ser gravados.
+    /// </summary>
+    [JsonIgnore]
+    public bool NotLoaded { get; private set; }
+
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 
     public static LauncherConfig Load()
     {
+        if (!File.Exists(AppPaths.ConfigPath)) return new LauncherConfig();
+
+        string json;
         try
         {
-            if (File.Exists(AppPaths.ConfigPath))
-                return JsonSerializer.Deserialize<LauncherConfig>(File.ReadAllText(AppPaths.ConfigPath)) ?? new();
+            json = File.ReadAllText(AppPaths.ConfigPath);
+        }
+        catch (FileNotFoundException) { return new LauncherConfig(); }
+        catch (DirectoryNotFoundException) { return new LauncherConfig(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Falha de LEITURA, nao de conteudo: o arquivo continua bom no disco (a CLI no meio
+            // do File.Replace, antivirus ou backup segurando o handle). Devolver padroes como se
+            // fossem a configuracao seria mentira, e o Save seguinte gravava a mentira por cima
+            // do config real — sem .corrupt, porque a copia falhava pelo mesmo motivo.
+            Log.Warn($"config load FALHOU (I/O, arquivo mantido intacto): {ex.Message}");
+            return new LauncherConfig { NotLoaded = true };
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<LauncherConfig>(json) ?? new();
         }
         catch (Exception ex)
         {
@@ -57,8 +86,16 @@ public class LauncherConfig
     /// <summary>Atomic save: write to a temp file then swap, so a crash/full disk mid-write
     /// can never leave a truncated config.json (which Load would silently reset to defaults,
     /// losing the user's nits profile and pinned exes).</summary>
-    public void Save()
+    public void Save() => TrySave();
+
+    /// <summary>O mesmo que Save, dizendo se o arquivo foi de fato gravado.</summary>
+    public bool TrySave()
     {
+        if (NotLoaded)
+        {
+            Log.Warn("config save RECUSADO: o config.json nao pode ser lido nesta sessao, e gravar agora sobrescreveria o arquivo do usuario com os padroes");
+            return false;
+        }
         try
         {
             lock (SaveGate)
@@ -70,7 +107,8 @@ public class LauncherConfig
                 if (File.Exists(AppPaths.ConfigPath)) File.Replace(temp, AppPaths.ConfigPath, null);
                 else File.Move(temp, AppPaths.ConfigPath);
             }
+            return true;
         }
-        catch (Exception ex) { Log.Warn($"config save: {ex.Message}"); }
+        catch (Exception ex) { Log.Warn($"config save: {ex.Message}"); return false; }
     }
 }

@@ -1198,6 +1198,11 @@
     "note": "Compartilhada: substitui 6 variantes (instalar / instalar-atualizar / ativar-desativar / remover mod / aplicar correcao / remover correcao) nos tres arquivos. O usuario ja sabe o que clicou, entao a cauda por acao nao carregava informacao.",
     "pt-BR": "O jogo está aberto. Feche-o antes de continuar."
   },
+  "Install_Mod_DoneDisabled": {
+    "en": "{0} updated, but it stays disabled — you had turned it off.",
+    "note": "{0} = nome do arquivo do addon. AddonService.DownloadAddonAsync quando o mod estava com o sufixo .disabled: a build nova vai para o mesmo nome desligado, e o interruptor fica como o usuario deixou.",
+    "pt-BR": "{0} atualizado, mas continua desativado — você o havia desligado."
+  },
   "Error_GameRunning_Reset": {
     "en": "The game is open. Close it to restore the default values.",
     "note": "SettingsService.Reset.",
