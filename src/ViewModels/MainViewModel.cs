@@ -378,7 +378,15 @@ public class MainViewModel : ObservableObject
                 // Envolvido: solto, uma falha de I/O aqui (permissao, unidade desconectada) caia
                 // numa Task que ninguem observa e sumia — sem log, sem DetailStatus, sem dialogo.
                 // A mesma falha pela selecao normal E reportada, via LoadDetailSafeAsync.
-                _ = SafeRefreshNeuralAsync(_detailToken);
+                //
+                // Token NOVO, e nao o atual (#41): a combo ja esta viva enquanto o LoadDetailAsync
+                // ainda espera a rede dentro do CheckNeuralAsync, entao a troca de exe disparava
+                // uma segunda passada com o MESMO token e nenhuma das duas era descartada. As duas
+                // limpavam e preenchiam Settings intercaladas (cada slider aparecia duas vezes) e
+                // a cadeia de DLSS 5 ficava com a pasta que terminasse por ultimo — podia ser a
+                // pasta que o usuario acabou de deixar. Com o token novo a passada antiga cai nas
+                // verificacoes que ja existem, e so a pasta nova chega na tela.
+                _ = SafeRefreshNeuralAsync(++_detailToken);
                 RaiseCommands();
             }
         }
@@ -844,10 +852,16 @@ public class MainViewModel : ObservableObject
 
     public string ModStateText => L.T(ModReady ? "Dlss5_State_On" : "Dlss5_State_Off");
 
+    /// <summary>Progresso que so escreve na linha de status enquanto o card ainda for o mesmo.
+    /// O trabalho de fundo (varredura de pastas, download) nao para quando o usuario troca de
+    /// jogo, e cada relato dele chegava por cima do status do jogo novo.</summary>
+    private Progress<string> StatusSe(int token) =>
+        new(s => { if (token == _detailToken) DetailStatus = s; });
+
     /// <summary>Relanca a leitura do estado de DLSS 5 sem deixar a falha virar Task nao observada.</summary>
     private async Task SafeRefreshNeuralAsync(int token)
     {
-        try { await RefreshNeuralAndSettingsAsync(token); }
+        try { await RefreshFolderAsync(token); }
         catch (Exception ex)
         {
             Log.Warn($"neural refresh: {ex.Message}");
@@ -981,7 +995,13 @@ public class MainViewModel : ObservableObject
             StatusText = L.T("Main_Status_GamesFound", Games.Count, withMod);
 
             var ct = cts.Token;
-            _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), ct));
+            // Copia dos exes fixados, tirada AQUI, na thread da interface (#62): a varredura le
+            // o mapa por minutos numa thread do pool, e escolher um exe na combo escreve nele
+            // pela interface no meio disso. Dictionary nao aguenta leitor e escritor ao mesmo
+            // tempo — a insercao pode redimensionar e a leitura estoura ou devolve lixo — e o
+            // catch por jogo engolia isso: aquele jogo ficava sem capa e com a bolinha vermelha.
+            var pinned = new Dictionary<string, string>(Config.PinnedExes, Config.PinnedExes.Comparer);
+            _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), pinned, ct));
             _ = Task.Run(() => CheckSwappedRuntimesAsync(Games.Select(g => g.Game.InstallDir).ToList()!));
 
             // Aquece a varredura de .exe de TODOS os jogos enquanto o usuario le a lista.
@@ -1012,7 +1032,9 @@ public class MainViewModel : ObservableObject
 
     /// <summary>Covers + existing-install detection + pinned-exe restore. All disk/network I/O
     /// happens HERE (pool thread); only property assignments hop to the dispatcher.</summary>
-    private async Task BackgroundEnrichAsync(List<GameItemVm> items, CancellationToken ct)
+    private async Task BackgroundEnrichAsync(List<GameItemVm> items,
+                                             IReadOnlyDictionary<string, string> pinnedExes,
+                                             CancellationToken ct)
     {
         var dispatcher = Application.Current.Dispatcher;
         foreach (var item in items)
@@ -1022,7 +1044,7 @@ public class MainViewModel : ObservableObject
             {
                 string? exe = null;
                 ModState? state = null;
-                if (Config.PinnedExes.TryGetValue(item.Key, out var pinned) && File.Exists(pinned))
+                if (pinnedExes.TryGetValue(item.Key, out var pinned) && File.Exists(pinned))
                 {
                     exe = pinned;
                     state = AddonService.GetState(Path.GetDirectoryName(pinned)!, pinned);
@@ -1166,14 +1188,31 @@ public class MainViewModel : ObservableObject
         //
         // As duas agora rodam soltas e preenchem a tela quando chegarem. O token cuida do resto:
         // se o usuario trocar de jogo antes, o resultado que chegar depois e descartado.
+        //
+        // O avatar sai ANTES da parte que depende da pasta: trocar de exe na combo renova o
+        // token (ver SelectedExe), e o avatar e do mantenedor do mod, nao da pasta — nao pode
+        // ser descartado por causa disso. Envolvida: solta, uma falha de rede (DNS, proxy,
+        // offline) viraria excecao nao observada, e o unico sintoma seria o app morrer sem
+        // dizer nada.
+        _ = SemQuebrar(() => LoadAvatarAsync(item), "avatar do mantenedor");
+        await RefreshFolderAsync(token);
+    }
+
+    /// <summary>
+    /// Tudo o que no card depende da PASTA do exe escolhido: deteccao de NR, runtimes de DLSS,
+    /// settings, correcao de FG e o veredito do ReShade.log. E o pedaco que a troca de exe na
+    /// combo precisa refazer inteiro — antes ela refazia so a deteccao, e o veredito e a
+    /// correcao de FG continuavam falando da pasta anterior.
+    /// </summary>
+    private async Task RefreshFolderAsync(int token)
+    {
         await RefreshNeuralAndSettingsAsync(token);
         await CheckDlssFixAsync(token);
+        if (token != _detailToken) return;
         RaiseCommands();
 
-        // Envolvidas: soltas, uma falha de rede (DNS, proxy, offline) viraria excecao nao
-        // observada, e o unico sintoma seria o app morrer sem dizer nada. Nenhuma das duas
-        // tem try/catch proprio, e as duas fazem HTTP.
-        _ = SemQuebrar(() => LoadAvatarAsync(token), "avatar do mantenedor");
+        // Envolvida: solta, uma falha de rede viraria excecao nao observada; nao tem try/catch
+        // proprio e faz HTTP.
         _ = SemQuebrar(() => CheckLoadVerdictAsync(token), "verificacao de atualizacao do mod");
     }
 
@@ -1184,19 +1223,22 @@ public class MainViewModel : ObservableObject
         catch (Exception ex) { Log.Warn($"{oQue}: {ex.Message}"); }
     }
 
-    private async Task LoadAvatarAsync(int token)
+    private async Task LoadAvatarAsync(GameItemVm item)
     {
         MaintainerAvatar = null;
-        var mod = _detailItem?.Mod;
+        var mod = item.Mod;
         if (mod is null) return;
         var path = await AvatarService.GetAvatarAsync(mod);
-        if (token == _detailToken) MaintainerAvatar = path;
+        // Compara o JOGO, e nao o token: o token muda tambem quando so o exe troca, e o avatar
+        // e o mesmo para qualquer pasta do mesmo jogo.
+        if (item == _detailItem) MaintainerAvatar = path;
     }
 
     /// <summary>A correção de DLSS FG só é oferecida quando o mod converte SDR->HDR e o jogo
     /// traz o runtime do DLSS FG — aplicar às cegas mentiria para o DLSS na direção oposta.</summary>
     private async Task CheckDlssFixAsync(int token)
     {
+        if (token != _detailToken) return;
         ShowDlssFix = false;
         _dlssDetection = null;
         var item = _detailItem;
@@ -1269,6 +1311,9 @@ public class MainViewModel : ObservableObject
     /// </summary>
     private async Task CheckNeuralAsync(int token)
     {
+        // Uma passada ja substituida nao pode nem zerar a tela: ela chegaria aqui logo depois
+        // de a passada nova ter comecado e apagaria o cartao que a nova acabou de montar.
+        if (token != _detailToken) return;
         ShowNeural = false;
         NeuralBlocker = null;
         NeuralNeedsRuntime = false;
@@ -1294,8 +1339,11 @@ public class MainViewModel : ObservableObject
         var allDirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
         await Task.Run(() => NeuralUpliftService.AutoDiscoverAddon(allDirs!));
         if (token != _detailToken) return;
-        try { await NeuralUpliftService.FetchAddonAsync(new Progress<string>(s => DetailStatus = s)); }
-        catch (Exception ex) { DetailStatus = ex.Message; }
+        // O progresso e a mensagem de erro passam pelo token (#61): a busca continua rodando
+        // depois que o usuario abre outro jogo, e cada relato dela chegava na linha de status
+        // do jogo NOVO, por cima do que o jogo novo tinha escrito.
+        try { await NeuralUpliftService.FetchAddonAsync(StatusSe(token)); }
+        catch (Exception ex) { if (token == _detailToken) DetailStatus = ex.Message; }
         if (token != _detailToken) return;
         var detection = await Task.Run(() => NeuralUpliftService.Detect(installDir, targetDir, addonPath));
         if (token != _detailToken) return;
@@ -1346,7 +1394,7 @@ public class MainViewModel : ObservableObject
         {
             var dirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
             var found = await Task.Run(() => NeuralUpliftService.AutoDiscoverRuntime(
-                dirs!, new Progress<string>(s => DetailStatus = s)));
+                dirs!, StatusSe(token)));
             if (token != _detailToken) return;
 
             // Nenhuma cópia nesta máquina. O runtime não vem em driver nem em SDK público, então
@@ -1359,10 +1407,14 @@ public class MainViewModel : ObservableObject
                 try
                 {
                     var version = await NeuralUpliftService.FetchRuntimeAsync(
-                        _dlssIndex, new Progress<string>(s => DetailStatus = s));
-                    if (version is not null) { found = version; DetailStatus = L.T("Neural_Fetched", version); }
+                        _dlssIndex, StatusSe(token));
+                    if (version is not null && token == _detailToken)
+                    {
+                        found = version;
+                        DetailStatus = L.T("Neural_Fetched", version);
+                    }
                 }
-                catch (Exception ex) { DetailStatus = ex.Message; }
+                catch (Exception ex) { if (token == _detailToken) DetailStatus = ex.Message; }
                 if (token != _detailToken) return;
             }
             else DetailStatus = L.T("Neural_AutoFound", found);
@@ -1411,6 +1463,7 @@ public class MainViewModel : ObservableObject
     /// de mais novo. Independente do neural — vale para qualquer jogo com DLSS.</summary>
     private async Task RefreshDlssAsync(int token)
     {
+        if (token != _detailToken) return;
         ShowDlss = false;
         DlssSummary = null;
         DlssHealth = null;
@@ -1910,6 +1963,7 @@ public class MainViewModel : ObservableObject
     /// available from outside the game.</summary>
     private async Task CheckLoadVerdictAsync(int token)
     {
+        if (token != _detailToken) return;
         LoadVerdict = "";
         HasLoadVerdict = false;
         LoadVerdictOk = false;
@@ -1954,6 +2008,9 @@ public class MainViewModel : ObservableObject
     {
         try
         {
+            // Antes do Clear, e nao so antes do Add: uma passada velha que limpasse a lista
+            // depois de a nova ter preenchido deixaria o painel vazio ate o proximo clique.
+            if (token != _detailToken) return;
             Settings.Clear();
             SetNoSettings("");
             var item = _detailItem;
@@ -2026,22 +2083,30 @@ public class MainViewModel : ObservableObject
             DetailStatus = L.T("Install_NoExe");
             return;
         }
+        // Exe e pasta congelados AQUI, antes de qualquer await (#42). A combo de exe continua
+        // viva durante a instalacao, e o setter de SelectedExe troca ChosenExe/TargetDir na
+        // hora; reler item.TargetDir depois de cada await fazia o ReShade cair na pasta A e o
+        // addon (e o rollback) na pasta B. As outras acoes ja congelam `dir` — esta era a unica
+        // que nao.
+        var exe = item.ChosenExe;
+        var dir = item.TargetDir;
+        var mod = item.Mod;
         ActionBusy = true;
         var progress = new Progress<string>(s => DetailStatus = s);
         try
         {
             // bitness must match: a 64-bit ReShade never loads .addon32 — installing a
             // mismatched pair silently does nothing, so block and ask for the right exe
-            var pe = await Task.Run(() => PeUtils.Inspect(item.ChosenExe, readImports: false));
-            if (pe != null && item.Mod.AddonBits != 0 && (pe.Is64Bit ? 64 : 32) != item.Mod.AddonBits)
+            var pe = await Task.Run(() => PeUtils.Inspect(exe, readImports: false));
+            if (pe != null && mod.AddonBits != 0 && (pe.Is64Bit ? 64 : 32) != mod.AddonBits)
             {
-                DetailStatus = L.T("Install_BitnessMismatch", item.Mod.AddonBits, pe.Is64Bit ? 64 : 32);
+                DetailStatus = L.T("Install_BitnessMismatch", mod.AddonBits, pe.Is64Bit ? 64 : 32);
                 return;
             }
 
             // anti-cheat: o único dano IRREVERSÍVEL que o app pode causar (ban de conta).
             // Detecta pelos arquivos no disco — não depende da nota da wiki citar o assunto.
-            var ac = await Task.Run(() => AntiCheatScanner.Detect(item.Game.InstallDir, item.TargetDir));
+            var ac = await Task.Run(() => AntiCheatScanner.Detect(item.Game.InstallDir, dir));
             if (ac != null)
             {
                 var confirmed = DialogWindow.Confirm(
@@ -2058,7 +2123,17 @@ public class MainViewModel : ObservableObject
 
             var api = _rhi.GraphicsApi(item.Name);
             var dllOverride = _rhi.DllNameOverride(item.Name);
-            var deploy = await Task.Run(() => _reshade.DeployAsync(item.TargetDir, item.ChosenExe, api, dllOverride, progress));
+            // O arquivo que o deploy vai escrever ja existia ANTES dele? (#12)
+            //
+            // DeployAsync devolve DllName tambem quando nao cria nada: o ReShade encadeado atras
+            // de outro proxy (OptiScaler) devolve o nome do que ja estava la, e um proxy ReShade
+            // ja existente e sobrescrito no lugar. Tratar "tem DllName" como "fomos nos" fazia
+            // o rollback de um download falho apagar o ReShade que o usuario ja tinha para os
+            // shaders dele — e a tela ainda dizia "rollback feito". So se desfaz o arquivo que
+            // ESTA instalacao criou: o nome previsto, e que nao existia antes.
+            var dllPrevisto = await Task.Run(() => ReShadeService.PickDllName(exe, api, dllOverride));
+            var existiaAntes = File.Exists(Path.Combine(dir, dllPrevisto));
+            var deploy = await Task.Run(() => _reshade.DeployAsync(dir, exe, api, dllOverride, progress));
             if (!deploy.Success)
             {
                 DetailStatus = deploy.Message;
@@ -2066,32 +2141,36 @@ public class MainViewModel : ObservableObject
             }
             try
             {
-                await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod, item.TargetDir!, progress));
+                await Task.Run(() => AddonService.DownloadAddonAsync(mod, dir, progress));
             }
             catch
             {
                 // o addon falhou DEPOIS do ReShade entrar: sem rollback o jogo fica com um
                 // dxgi.dll injetado que o usuário não pediu e não sabe remover
-                if (deploy.DllName != null)
+                if (deploy.DllName != null && !existiaAntes
+                    && deploy.DllName.Equals(dllPrevisto, StringComparison.OrdinalIgnoreCase))
                 {
                     try
                     {
-                        AddonService.RollbackReShade(item.TargetDir!, deploy.DllName);
+                        AddonService.RollbackReShade(dir, deploy.DllName);
                         DetailStatus = L.T("Install_Rollback_Done");
                     }
                     catch (Exception rex) { Log.Warn($"rollback: {rex.Message}"); }
                 }
                 throw;
             }
+            // O estado da pasta em que a instalacao DE FATO aconteceu: se o exe da combo mudou
+            // no meio, item.State passa a falar da outra pasta, e o perfil iria para o ini errado.
+            var state = await Task.Run(() => AddonService.GetState(dir, exe));
             item.RefreshState();
 
             var profileMsg = "";
-            if (Config.ApplyProfileOnInstall && item.Mod.Slug != null
-                && _manifest?.GetSettings(item.Mod.Slug) is { } defs)
+            if (Config.ApplyProfileOnInstall && mod.Slug != null
+                && _manifest?.GetSettings(mod.Slug) is { } defs)
             {
                 try
                 {
-                    var applied = await Task.Run(() => SettingsService.ApplyDisplayProfile(item.State!.IniPath, defs, Config));
+                    var applied = await Task.Run(() => SettingsService.ApplyDisplayProfile(state.IniPath, defs, Config));
                     // o espaco fica no codigo, e nao no recurso: separador de frase nao e texto
                     profileMsg = " " + (applied > 0
                         ? L.T("Install_ProfileApplied", Config.PeakNits)
@@ -2103,7 +2182,10 @@ public class MainViewModel : ObservableObject
                     profileMsg = " " + L.T("Install_ProfileFailed");
                 }
             }
-            if (item == _detailItem) await LoadSettingsSafeAsync(_detailToken);
+            // A passada inteira, e nao so as settings (#40): a instalacao acabou de por o
+            // ReShade (e talvez o addon com NR) na pasta de onde a cadeia de DLSS 5 foi lida, e
+            // um elo "ReShade" vermelho ou o NeedsRepair ficavam como estavam antes.
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
             DetailStatus = L.T("Install_Success", deploy.Message, profileMsg);
             RefreshViewKeepSelection();
         }
@@ -2148,11 +2230,17 @@ public class MainViewModel : ObservableObject
             L.T("Main_Remove_Body", item.Name),
             L.T("Main_Remove_All"), L.T("Main_Remove_ModOnly"));
         if (answer == MessageBoxResult.Cancel) return;
+        var state = item.State;
         try
         {
-            await Task.Run(() => AddonService.Remove(item.State, alsoReShade: answer == MessageBoxResult.Yes));
+            await Task.Run(() => AddonService.Remove(state, alsoReShade: answer == MessageBoxResult.Yes));
             item.RefreshState();
             Settings.Clear();
+            // Reler a cadeia de DLSS 5 (#40): "remover tudo" acabou de apagar o addon e, sem
+            // outro addon na pasta, o proxy do ReShade — as pecas de que Dlss5Ready foi
+            // calculado. Sem isto o interruptor continuava LIGADO com os elos verdes, e o
+            // proximo clique nele desinstalava em vez de reinstalar.
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
             DetailStatus = L.T("Main_Remove_Done");
             RefreshViewKeepSelection();
         }

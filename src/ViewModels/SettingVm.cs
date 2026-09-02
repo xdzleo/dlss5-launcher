@@ -11,12 +11,18 @@ public class SettingVm : ObservableObject
     private readonly double? _originalValue;
     private double _value;
     private readonly double _min, _max, _step;
+    /// <summary>O valor que a linha mostra quando a chave nao esta no ini. E contra ELE que
+    /// IsDirty compara nesse caso: o manifesto tem dezenas de ajustes sem default e com min
+    /// diferente de zero, e comparar contra `Default ?? 0` fazia essas linhas nascerem sujas
+    /// — o Salvar gravava no preset chaves que o usuario nunca tocou, com o valor do min.</summary>
+    private readonly double _fallback;
 
     public SettingVm(SettingsService.SettingValue sv)
     {
         Def = sv.Def;
         _originalValue = sv.Current;
-        _value = sv.Current ?? sv.Def.Default ?? sv.Def.Min ?? 0;
+        _fallback = sv.Def.Default ?? sv.Def.Min ?? 0;
+        _value = sv.Current ?? _fallback;
 
         // A faixa TEM que conter o default, o valor do ini e o valor atual. Um slider cujo
         // teto exclui o próprio default faz o WPF coagir o valor (1000 nits -> 100) e o app
@@ -82,7 +88,7 @@ public class SettingVm : ObservableObject
 
     /// <summary>Value differs from what the ini currently holds (unsaved edit or unset key).</summary>
     public bool IsDirty => _originalValue is null
-        ? Math.Abs(_value - (Def.Default ?? 0)) > 0.0001
+        ? Math.Abs(_value - _fallback) > 0.0001
         : Math.Abs(_value - _originalValue.Value) > 0.0001;
 
     public bool WasSetInIni => _originalValue != null;
