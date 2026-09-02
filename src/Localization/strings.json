@@ -531,6 +531,26 @@
     "en": "Downloading dgVoodoo2 (translates DirectX 9 to DirectX 11)…",
     "pt-BR": "Baixando o dgVoodoo2 (traduz DirectX 9 para DirectX 11)…"
   },
+  "OptiScaler_7zBadHash": {
+    "en": "The downloaded 7-Zip extractor does not match the pinned build ({0}); it will not be run.",
+    "pt-BR": "O extrator do 7-Zip baixado não corresponde ao build fixado ({0}); ele não será executado."
+  },
+  "OptiScaler_ArchiveBadHash": {
+    "en": "The OptiScaler archive does not match the checksum published in its release.",
+    "pt-BR": "O arquivo do OptiScaler não corresponde à soma de verificação publicada na release."
+  },
+  "OptiScaler_ArchiveCorrupt": {
+    "en": "The OptiScaler download is not a valid .7z archive.",
+    "pt-BR": "O download do OptiScaler não é um arquivo .7z válido."
+  },
+  "OptiScaler_ExtractFailed": {
+    "en": "The 7-Zip extractor exited with code {0}.",
+    "pt-BR": "O extrator do 7-Zip terminou com o código {0}."
+  },
+  "OptiNr_Corrupt": {
+    "en": "The OptiScaler_DLSSNR download is not a valid zip archive.",
+    "pt-BR": "O download do OptiScaler_DLSSNR não é um arquivo zip válido."
+  },
   "DgVoodoo_Incomplete": {
     "en": "The dgVoodoo2 package arrived without the files needed to wrap DirectX 9.",
     "pt-BR": "O pacote do dgVoodoo2 veio sem os arquivos necessários para envolver o DirectX 9."

@@ -95,6 +95,13 @@ public static class ConflictScanner
             var dono = Identificar(caminho);
             if (dono is null) continue;                         // nao reconhecido: nao acusar sem base
             if (DaNossaCadeia.Contains(dono)) continue;         // e nosso; ver acima
+            // O OptiScaler pode ser NOSSO: o launcher o instala como version.dll quando o jogo
+            // tem FSR/XeSS proprio e nao tem DLSS, e deixa a marca ao lado do ini. Acusar a
+            // propria instalacao seria o mesmo erro que DaNossaCadeia corrige acima — e era o
+            // que acontecia: o cartao do jogo mostrava "OptiScaler ocupa version.dll" como
+            // conflito no instante seguinte ao da instalacao.
+            if (dono == "OptiScaler" && slot.Equals("version.dll", StringComparison.OrdinalIgnoreCase)
+                && OptiScalerService.IsOurs(dir)) continue;
 
             // Info, e nao bloqueio. Ocupar a vaga NAO impede o ReShade de carregar: esses
             // injetores encadeiam, e o proprio launcher conta com isso — quando o OptiScaler ja
@@ -134,11 +141,9 @@ public static class ConflictScanner
             foreach (var f in Directory.EnumerateFiles(dir, padrao, SearchOption.TopDirectoryOnly))
             {
                 if (EhNosso(f)) continue;
-                // O OptiScaler pode ser NOSSO: o launcher o instala quando o jogo tem FSR/XeSS
-                // proprio e nao tem DLSS. Acusar a nossa propria instalacao seria o mesmo erro
-                // que DaNossaCadeia corrige acima.
-                if (nome == "OptiScaler" && OptiScalerService.IsDeployed(dir)
-                    && File.Exists(Path.Combine(dir, "OptiScaler.ini.renodx-ours"))) continue;
+                // Um OptiScaler.asi nunca e nosso — o launcher instala o OptiScaler como
+                // version.dll, e a isencao para ele fica em VarrerProxies. Um .asi ao lado da
+                // nossa instalacao e um SEGUNDO OptiScaler, e esse merece ser acusado.
 
                 achados.Add(new Conflito(f, nome, L.T(chave, nome), grau,
                                          // Um .ini sozinho nao carrega nada: afastar so o ini
@@ -336,8 +341,11 @@ public static class ConflictScanner
             try
             {
                 var destino = c.Caminho + SufixoAfastado;
-                // Ja afastado antes e reinstalado depois: o segundo rename bateria no primeiro.
-                if (File.Exists(destino)) File.Delete(destino);
+                // Ja afastado antes e reinstalado depois: o segundo rename bateria no primeiro. O
+                // primeiro NAO e apagado — pode ser outro arquivo (outro mod no mesmo slot), e
+                // apagar quebraria a promessa desta classe de que tudo aqui se desfaz. O novo
+                // ganha um numero; o mais antigo fica com o nome simples.
+                for (var i = 2; File.Exists(destino); i++) destino = c.Caminho + SufixoAfastado + "." + i;
                 File.Move(c.Caminho, destino);
                 progress?.Report(L.T("Conflito_Afastado", c.Arquivo, c.Ferramenta));
                 n++;

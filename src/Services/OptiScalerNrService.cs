@@ -68,9 +68,34 @@ public static class OptiScalerNrService
         var url = await GitHubReleaseService.LatestAssetAsync(http, Repo, new Regex(@"\.zip$"), ct);
         if (url is null || !HostOk(url)) throw new InvalidOperationException(L.T("OptiNr_NoAsset"));
 
-        await using (var s = await http.GetStreamAsync(url, ct))
-        await using (var f = File.Create(LibraryZip))
-            await s.CopyToAsync(f, ct);
+        // Baixa para um `.part` e so vira biblioteca depois de abrir como zip. Antes o download
+        // ia direto para o nome final: um cancelamento no meio deixava 40% do arquivo com o nome
+        // do arquivo bom, InLibrary respondia "sim" para sempre e todo Deploy seguinte morria no
+        // OpenRead — sem outro caminho de volta a nao ser apagar o arquivo a mao em %AppData%.
+        var parcial = LibraryZip + ".part";
+        try
+        {
+            await using (var s = await http.GetStreamAsync(url, ct))
+            await using (var f = File.Create(parcial))
+                await s.CopyToAsync(f, ct);
+
+            try
+            {
+                using var zip = ZipFile.OpenRead(parcial);
+                if (zip.Entries.Count == 0) throw new InvalidDataException("zip sem entradas");
+            }
+            catch (InvalidDataException ex)
+            {
+                Log.Warn($"optiscaler-nr: download nao abre como zip ({ex.Message})");
+                throw new InvalidOperationException(L.T("OptiNr_Corrupt"));
+            }
+            File.Move(parcial, LibraryZip, overwrite: true);
+        }
+        catch
+        {
+            try { File.Delete(parcial); } catch { }
+            throw;
+        }
 
         Log.Info($"optiscaler-nr: baixado ({new FileInfo(LibraryZip).Length:N0} bytes) de {url}");
     }
@@ -86,20 +111,27 @@ public static class OptiScalerNrService
     {
         if (!InLibrary) throw new InvalidOperationException(L.T("OptiNr_NotInLibrary"));
 
+        // A raiz termina em separador de proposito. Sem ele, "C:\Games\Foo Bar" comeca com
+        // "C:\Games\Foo", e uma entrada "../Foo Bar/dxgi.dll" passava na comparacao e era
+        // escrita — com o rename .pre-optinr e o registro no manifesto — na pasta do vizinho.
+        var raiz = Path.TrimEndingDirectorySeparator(Path.GetFullPath(targetDir)) + Path.DirectorySeparatorChar;
+
         var escritos = new List<string>();
         using (var zip = ZipFile.OpenRead(LibraryZip))
         {
             foreach (var e in zip.Entries)
             {
                 if (string.IsNullOrEmpty(e.Name)) continue;   // diretorio
-                var destino = Path.Combine(targetDir, e.FullName.Replace('/', Path.DirectorySeparatorChar));
-                var pastaDestino = Path.GetDirectoryName(destino);
 
-                // Nada pode escapar da pasta do jogo por um caminho relativo dentro do zip.
-                var raiz = Path.GetFullPath(targetDir);
-                if (!Path.GetFullPath(destino).StartsWith(raiz, StringComparison.OrdinalIgnoreCase))
+                // Nada pode escapar da pasta do jogo por um caminho relativo dentro do zip. Os
+                // dois lados passam por GetFullPath, para que ".." e caminhos absolutos na
+                // entrada sejam resolvidos antes de comparar, e nao depois de escrever.
+                var destino = Path.GetFullPath(
+                    Path.Combine(raiz, e.FullName.Replace('/', Path.DirectorySeparatorChar)));
+                if (!destino.StartsWith(raiz, StringComparison.OrdinalIgnoreCase))
                 { Log.Warn($"optiscaler-nr: entrada fora da pasta ignorada ({e.FullName})"); continue; }
 
+                var pastaDestino = Path.GetDirectoryName(destino);
                 if (pastaDestino is not null) Directory.CreateDirectory(pastaDestino);
                 // O dxgi.dll que ja estiver la (ReShade, por exemplo) e guardado, nao apagado.
                 if (File.Exists(destino) && !File.Exists(destino + ".pre-optinr"))
