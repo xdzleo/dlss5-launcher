@@ -1072,6 +1072,21 @@ public class MainViewModel : ObservableObject
                 // tela, e foi por isso que o defeito passou tanto tempo parecendo cosmetico.
                 await dispatcher.InvokeAsync(() =>
                 {
+                    // Reconsulta o mapa VIVO, aqui na thread da interface, e nao a copia que a
+                    // varredura recebeu. A copia e de quando a varredura comecou; se o usuario
+                    // fixou um exe na combo durante os minutos que ela leva, a copia nao sabe, a
+                    // deteccao escolhe o maior exe e ApplyDetected trocaria ChosenExe por baixo
+                    // da combo, que continuaria mostrando a escolha da pessoa. Com um pin vivo
+                    // diferente do detectado, o exe e o estado (que e da pasta do exe detectado)
+                    // sao descartados; o setter de ChosenExe ja os calculou para o exe fixado.
+                    // ApplyDetected segue sendo chamado para que as luzes sejam avaliadas.
+                    if (exe is not null
+                        && Config.PinnedExes.TryGetValue(item.Key, out var pinVivo)
+                        && !string.Equals(pinVivo, exe, StringComparison.OrdinalIgnoreCase))
+                    {
+                        exe = null;
+                        state = null;
+                    }
                     item.ApplyDetected(exe, state);
                     if (item == Selected) RaiseCommands();
                 });
@@ -1826,7 +1841,6 @@ public class MainViewModel : ObservableObject
         {
             var dir = item.TargetDir;
             var ini = iniPath;
-            var generic = _neuralDetection.UsesGeneric;
             if (NeuralApplied)
             {
                 await Task.Run(() => NeuralUpliftService.Remove(dir, ini));
@@ -1835,20 +1849,26 @@ public class MainViewModel : ObservableObject
             }
             else
             {
-                // O addon generico e um addon de ReShade: sem esse host nao ha nada que o carregue.
-                // Instala na hora em vez de bloquear e mandar o usuario resolver por fora — era o
-                // passo manual que fazia "ligar o neural" falhar em jogo sem mod nenhum.
-                if (_neuralDetection.NeedsReShade && item.ChosenExe is not null)
-                {
-                    var deploy = await _reshade.DeployAsync(dir, item.ChosenExe, null, null,
-                        new Progress<string>(s => DetailStatus = s));
-                    if (!deploy.Success) { DetailStatus = deploy.Message; return; }
-                }
-
-                await Task.Run(() => NeuralUpliftService.Apply(dir, ini, generic,
-                    new Progress<string>(s => DetailStatus = s)));
-                NeuralApplied = true;
-                DetailStatus = L.T("Main_Neural_Applied");
+                // Religar passa pelo instalador inteiro, igual ao interruptor de DLSS 5, e nao
+                // pelo Apply cru. O Remove do lado "desligado" derruba a cadeia toda -- tradutor,
+                // host64 do Feeder, addon32 -- e o Apply so copia runtime e addon na raiz do jogo:
+                // num jogo DXVK de 32 bits, desligar e ligar deixava um addon de 64 bits carregado
+                // cedo numa raiz de 32 bits, sem tradutor e sem host. O instalador ja poe o
+                // ReShade quando falta (o passo manual de DeployAsync que havia aqui virou
+                // redundante), refaz a cadeia e respeita a escolha de tradutor do usuario.
+                var escolha = Config.D3d9Translator.TryGetValue(item.Key, out var t) ? t : null;
+                var r = await Dlss5Installer.InstallAsync(
+                    item.Game, dir, ini, item.ChosenExe, item.State?.AddonPath,
+                    _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s),
+                    default,
+                    preferirDxvk: escolha != "dgvoodoo",
+                    forcarDgVoodoo: escolha == "dgvoodoo");
+                // Sem `return` na falha: a releitura logo abaixo e que mostra ate onde a cadeia
+                // chegou, e NeuralApplied e recalculado la a partir do disco.
+                NeuralApplied = r.Ok;
+                DetailStatus = r.Ok
+                    ? L.T("Main_Neural_Applied")
+                    : r.Blocker ?? string.Join("; ", r.Steps);
             }
             // os sliders de NR entram/saem da lista junto com o estado
             if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
