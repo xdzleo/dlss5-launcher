@@ -406,7 +406,11 @@ public static partial class StoreScanners
             {
                 using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view);
                 using var key = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net");
-                Add(key?.GetValue("InstallLocation") as string);
+                // O InstallLocation nao pode ser aceito as cegas: quem instalou o cliente em
+                // "D:\Games" (a mesma pasta que abriga a biblioteca) perderia todos os jogos
+                // dali, porque tudo abaixo de uma raiz do cliente e descartado.
+                var local = key?.GetValue("InstallLocation") as string;
+                if (EhPastaDoClienteBattleNet(local)) Add(local);
             }
             catch { }
         }
@@ -416,6 +420,23 @@ public static partial class StoreScanners
             if (!expanded.StartsWith('%')) Add(Path.Combine(expanded, "Battle.net"));
         }
         return roots;
+    }
+
+    /// <summary>A pasta e mesmo a do cliente Battle.net (e nao um pai generico)? Sim quando o
+    /// ultimo segmento e um dos nomes do cliente ou quando o executavel do cliente esta nela.</summary>
+    private static bool EhPastaDoClienteBattleNet(string? dir)
+    {
+        if (string.IsNullOrWhiteSpace(dir)) return false;
+        var full = dir.Replace('/', '\\').TrimEnd('\\');
+        var last = Path.GetFileName(full);
+        if (BattleNetClientFolderNames.Any(n => last.Equals(n, StringComparison.OrdinalIgnoreCase)))
+            return true;
+        try
+        {
+            return File.Exists(Path.Combine(full, "Battle.net.exe"))
+                || File.Exists(Path.Combine(full, "Battle.net Launcher.exe"));
+        }
+        catch { return false; }
     }
 
     private static bool IsBattleNetClientDir(string dir, List<string> clientRoots)
