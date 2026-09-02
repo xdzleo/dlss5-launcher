@@ -586,13 +586,37 @@ public static class FeederService
         return n;
     }
 
+    /// <summary>
+    /// Baixa para um .part e so renomeia quando o corpo chegou inteiro.
+    ///
+    /// Escrever direto no destino deixava, numa conexao que caia no meio, um arquivo com o nome
+    /// certo e metade do conteudo — e todo fetch seguinte e guardado por File.Exists, entao ele
+    /// nunca mais era baixado: um addon32 truncado passava pelo teste dos dois bytes "MZ" e ia
+    /// para o jogo ("Failed to load add-on"), um .fxh pela metade ia para os shaders e o
+    /// provedor nao compilava, com vetores zerados e sem erro em lugar nenhum. O destino so
+    /// passa a existir quando o tamanho bate com o Content-Length que o servidor anunciou.
+    /// </summary>
     private static async Task BaixarAsync(HttpClient http, string url, string destino, CancellationToken ct)
     {
-        using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
-        resp.EnsureSuccessStatusCode();
-        await using var origem = await resp.Content.ReadAsStreamAsync(ct);
-        await using var arquivo = File.Create(destino);
-        await origem.CopyToAsync(arquivo, ct);
+        var parcial = destino + ".part";
+        try
+        {
+            using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            resp.EnsureSuccessStatusCode();
+            var anunciado = resp.Content.Headers.ContentLength;
+            await using (var origem = await resp.Content.ReadAsStreamAsync(ct))
+            await using (var arquivo = File.Create(parcial))
+                await origem.CopyToAsync(arquivo, ct);
+
+            var recebido = new FileInfo(parcial).Length;
+            if (recebido == 0 || (anunciado is { } esperado && recebido != esperado))
+            {
+                Log.Warn($"feeder download {url}: recebidos {recebido} bytes, anunciados {anunciado?.ToString() ?? "?"}");
+                throw new InvalidOperationException(L.T("Feeder_BadDownload"));
+            }
+            File.Move(parcial, destino, overwrite: true);
+        }
+        finally { TryDelete(parcial); }
     }
 
     private static bool EhPe(string path)
@@ -780,13 +804,20 @@ public static class FeederService
     /// O jogo e de motor pre-reversed-Z?
     ///
     /// A pergunta que importa e "este motor usa profundidade invertida?", e ela nao tem resposta
-    /// direta de fora. A aproximacao boa e o dgVoodoo estar em uso: ele so entra em jogo D3D9, e
-    /// D3D9 e anterior a reversed-Z virar praxe. Cobre o caso que motiva isto sem arriscar mexer
-    /// na profundidade de um jogo moderno, onde o padrao 1 esta certo.
+    /// direta de fora. A aproximacao boa e um tradutor de D3D9 estar em uso: tanto o dgVoodoo
+    /// quanto o d3d9.dll do DXVK so entram em jogo D3D9, e D3D9 e anterior a reversed-Z virar
+    /// praxe. Cobre o caso que motiva isto sem arriscar mexer na profundidade de um jogo moderno,
+    /// onde o padrao 1 esta certo.
+    ///
+    /// O DXVK conta desde que virou a rota padrao de D3D9 (1.57): ele traduz o MESMO buffer de
+    /// profundidade nao invertido que o dgVoodoo traduzia, so que para Vulkan. Perguntar apenas
+    /// pelo dgVoodoo.conf deixava toda instalacao pelo DXVK com o padrao do ReShade — depth
+    /// invertido para o DLSS e a imagem lavada do Saints Row 2 de volta, sem erro em lugar nenhum.
     /// </summary>
     private static bool EhMotorAntigo(string targetDir) =>
-        File.Exists(Path.Combine(targetDir, "D3D9.dll"))
-        && File.Exists(Path.Combine(targetDir, "dgVoodoo.conf"));
+        (File.Exists(Path.Combine(targetDir, "D3D9.dll"))
+         && File.Exists(Path.Combine(targetDir, "dgVoodoo.conf")))
+        || DxvkService.IsDeployed(targetDir);
 
     public static void Configure(string targetDir, string iniPath, IProgress<string>? progress = null)
     {
@@ -941,6 +972,7 @@ public static class FeederService
         var fx = Path.Combine(targetDir, "reshade-shaders", "Shaders", FxFile);
         if (File.Exists(fx)) File.Delete(fx);
         RestaurarPreset(targetDir);
+        RemoveBits32(targetDir);
 
         // O nvngx_dlss.dll so sai se fomos nos que o trouxemos. Se ja estava aqui, ele e do jogo
         // ou do usuario, e apagar por saber o nome do arquivo nao e nosso direito.
@@ -954,5 +986,36 @@ public static class FeederService
             }
             catch (Exception ex) { Log.Warn($"feeder remove SR: {ex.Message}"); }
         }
+    }
+
+    /// <summary>
+    /// Tira as pecas do caminho de 32 bits: o addon32 da pasta do jogo e a pasta host64\ inteira.
+    ///
+    /// Ate aqui nada as tirava. O Remove so conhecia o addon de 64 bits, e num jogo de 32 a
+    /// desinstalacao deixava exatamente o que roda: o addon32 no jogo, e no host64\ o
+    /// executavel do host, o ReShade dele, o addon neural, 271 MB de runtimes e um ReShade.ini
+    /// com o interruptor ligado. IsApplied le esse ini quando a pasta existe, entao "desligar"
+    /// voltava ligado na tela e o host subia junto com o jogo como se nada tivesse acontecido.
+    ///
+    /// A pasta sai por inteiro porque TUDO nela e nosso — foi DeployBits32Async quem a criou e
+    /// so o launcher escreve ali (host, ReShade, addon, runtimes, ini, logs do host). Nao ha o
+    /// que preservar, e apagar peca por peca deixaria para tras o que uma versao futura
+    /// acrescentar. As metades embutidas com transporte Vulkan sao os mesmos dois arquivos, e
+    /// vao junto.
+    /// </summary>
+    public static void RemoveBits32(string targetDir)
+    {
+        var addon32 = Path.Combine(targetDir, Addon32File);
+        try { if (File.Exists(addon32)) File.Delete(addon32); }
+        catch (Exception ex) { Log.Warn($"feeder remove {Addon32File}: {ex.Message}"); }
+
+        var host = Path.Combine(targetDir, Host64Dir);
+        if (!Directory.Exists(host)) return;
+        try
+        {
+            Directory.Delete(host, recursive: true);
+            Log.Info($"feeder: caminho de 32 bits removido de {targetDir}");
+        }
+        catch (Exception ex) { Log.Warn($"feeder remove {Host64Dir}: {ex.Message}"); }
     }
 }

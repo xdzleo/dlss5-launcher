@@ -276,7 +276,12 @@ public static class DxvkService
     {
         var dll = Path.Combine(targetDir, D3d9File);
         if (IsDeployed(targetDir)) { try { File.Delete(dll); } catch { } }
-        foreach (var n in new[] { "D3D9.dll", "d3d9.dll", "dgVoodoo.conf", "dgVoodooCpl.exe" })
+        // O dxgi.dll entra na lista porque o instalador o tira do caminho ao ir para o DXVK: o
+        // proxy do ReShade da rota D3D11 seria carregado pelo DXGI que o DXVK usa por dentro, e
+        // o ReShade entraria duas vezes no processo. Ele vai para dxgi.dll.pre-dxvk — e so aqui
+        // tem de onde voltar, senao a desinstalacao deixava o proxy guardado e a pasta sem o
+        // ReShade que o usuario tinha antes.
+        foreach (var n in new[] { "D3D9.dll", "d3d9.dll", "dgVoodoo.conf", "dgVoodooCpl.exe", "dxgi.dll" })
         {
             var bak = Path.Combine(targetDir, n + ".pre-dxvk");
             if (File.Exists(bak)) { try { File.Move(bak, Path.Combine(targetDir, n), overwrite: true); } catch { } }
@@ -314,9 +319,15 @@ public static class DxvkService
         {
             var p = Path.Combine(targetDir, n);
             if (!File.Exists(p) || EhDxvk(p)) continue;
+            // O PRIMEIRO backup e o que fica, como no Deploy() do d3d9: ele e a unica copia do
+            // que havia antes do launcher, e e ele que RemoveD3d10 devolve. Apagar o backup para
+            // guardar o recem-chegado (um proxy do ReShade que o usuario pos entre uma
+            // instalacao e outra, um wrapper de outro mod) trocava o original pelo intruso — e
+            // o original nao tem outra copia. O intruso tambem nao e nosso para apagar: vai
+            // para um nome ao lado, de onde da para resgata-lo a mao.
             var bak = p + ".pre-dxvk";
-            if (File.Exists(bak)) File.Delete(bak);
-            File.Move(p, bak);
+            if (!File.Exists(bak)) File.Move(p, bak);
+            else File.Move(p, bak + ".2", overwrite: true);
             guardou = true;
         }
         if (guardou) progress?.Report(L.T("Dxvk_ReplacedD3d10"));

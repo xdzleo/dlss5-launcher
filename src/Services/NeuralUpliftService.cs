@@ -120,6 +120,16 @@ public static class NeuralUpliftService
             //
             // O nome proprio do launcher existe para ele saber o que pode remover depois; essa
             // informacao passa a viver no marcador ao lado, e nao no nome do arquivo.
+            //
+            // Se o nome ja esta ocupado por um build de outro tamanho, ele e do usuario — posto
+            // a mao, de uma versao que a biblioteca nao tem — e vai para o .renodx-bak antes de
+            // ser coberto, como em toda outra substituicao deste arquivo. Esses builds circulam
+            // so por Discord: sobrescrever sem copia era perder o unico exemplar.
+            if (File.Exists(esperado))
+            {
+                var backup = esperado + BackupSuffix;
+                if (!File.Exists(backup)) File.Copy(esperado, backup);
+            }
             File.Move(nosso, esperado, overwrite: true);
             File.WriteAllText(esperado + OursSuffix, "renomeado para o nome que o Feeder procura");
 
@@ -138,6 +148,55 @@ public static class NeuralUpliftService
     /// <summary>The generic NR addon deployed in this game folder, whichever build it is.</summary>
     public static string? DeployedGenericAddon(string targetDir) =>
         GenericAddonNames.Select(n => Path.Combine(targetDir, n)).FirstOrDefault(File.Exists);
+
+    /// <summary>
+    /// Os addons genericos desta pasta que sao NOSSOS para tirar: o do nosso proprio nome,
+    /// sempre, e qualquer outro da lista que carregue o marcador <see cref="OursSuffix"/>.
+    ///
+    /// O marcador existe porque <see cref="GarantirNomeDoFeeder"/> renomeia o nosso para o nome
+    /// que o Feeder procura, e a partir dali o nome do arquivo deixa de dizer de quem ele e. Quem
+    /// remove tem de ler o marcador — nao lia, e o addon renomeado ficava na pasta e no
+    /// LoadFromDllMain de um jogo em que o usuario acabara de desligar o recurso. Um build da
+    /// comunidade posto a mao, sem marcador, continua fora da lista.
+    /// </summary>
+    private static IEnumerable<string> NossosAddonsGenericos(string targetDir)
+    {
+        foreach (var nome in GenericAddonNames)
+        {
+            if (nome.Equals(GenericAddonFile, StringComparison.OrdinalIgnoreCase)
+                || File.Exists(Path.Combine(targetDir, nome + OursSuffix)))
+                yield return nome;
+        }
+    }
+
+    /// <summary>
+    /// Se a pasta tem o nosso addon E outro generico ao lado, o nosso sai.
+    ///
+    /// Dois addons genericos na mesma pasta sao o mesmo addon carregado duas vezes — uma pelo
+    /// LoadFromDllMain, outra pela varredura de *.addon64 — e dois registros no mesmo processo
+    /// dao 0xc0000005 na abertura (ver <see cref="GarantirNomeDoFeeder"/>). O par nascia de um
+    /// Apply repetido: o primeiro deixava renodx-dlss5.addon64 pelo rename do Feeder, o segundo
+    /// copiava renodx-neural.addon64 de novo ao lado. O que sai e o do nosso nome, porque e o
+    /// unico que se sabe nosso sem consultar marcador; o outro e o que dirige o NR e e trazido
+    /// ao build da biblioteca logo em seguida.
+    /// </summary>
+    private static void RemoverAddonGenericoDuplicado(string targetDir, IniFile ini)
+    {
+        var nosso = Path.Combine(targetDir, GenericAddonFile);
+        if (!File.Exists(nosso)) return;
+        var outro = GenericAddonNames
+            .Where(n => !n.Equals(GenericAddonFile, StringComparison.OrdinalIgnoreCase))
+            .Select(n => Path.Combine(targetDir, n))
+            .FirstOrDefault(File.Exists);
+        if (outro is null) return;
+        try
+        {
+            File.Delete(nosso);
+            RemoveFromEarlyLoad(ini, GenericAddonFile);
+            Log.Info($"neural: {GenericAddonFile} removido de {targetDir}; {Path.GetFileName(outro)} ja dirige o NR ali");
+        }
+        catch (Exception ex) { Log.Warn($"neural addon duplicado {targetDir}: {ex.Message}"); }
+    }
 
     /// <summary>
     /// Is DLSS 5 applied anywhere inside this install?
@@ -434,12 +493,25 @@ public static class NeuralUpliftService
     {
         if (!File.Exists(iniPath)) return false;
         var ini = new IniFile(iniPath);
-        var atual = ini.Get(GenericSection, GenericEnableKey, ignoreCase: true);
-        if (atual is null || atual.Trim() is "1" or "1.0" or "1.000000") return false;
+        // As duas chaves, e nao so a antiga. O build atual do addon le e reescreve APENAS
+        // [RENODX-DLSS] DirectNeuralRenderingEnabled — e o F6 zera essa. Como SetNeuralSwitch
+        // grava as duas em 1, a chave antiga continuava em 1 para sempre, e olhar so para ela
+        // dizia "nada a corrigir" enquanto IsApplied lia a nova em 0: interruptor vermelho,
+        // reafirmacao que nunca reafirmava.
+        var atual = ini.Get(CurrentSection, CurrentEnableKey, ignoreCase: true);
+        var antiga = ini.Get(GenericSection, GenericEnableKey, ignoreCase: true);
+        if (!Zerada(atual) && !Zerada(antiga)) return false;
         SetNeuralSwitch(ini, true);
         ini.Save();
-        Log.Info($"neural: NeuralUplift estava '{atual}' em {iniPath}; devolvido para 1");
+        Log.Info($"neural: interruptor estava '{(Zerada(atual) ? atual : antiga)}' em {iniPath}; devolvido para 1");
         return true;
+
+        // Ausente nao e zerado: um ini sem a chave nao e nosso para escrever. Presente e nao-1,
+        // pelo mesmo criterio numerico do IsApplied ("0", "0.000000" ou lixo), e.
+        static bool Zerada(string? valor) =>
+            valor is not null
+            && !(double.TryParse(valor.Trim(), System.Globalization.NumberStyles.Float,
+                                 System.Globalization.CultureInfo.InvariantCulture, out var v) && v != 0);
     }
 
     /// <summary>
@@ -1018,6 +1090,14 @@ public static class NeuralUpliftService
     public static bool IsBlackwell(string? gpuName)
     {
         if (gpuName is null) return false;
+        var palavras = gpuName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        // A linha workstation diz a arquitetura no nome, e o numero nao segue a regra da
+        // GeForce: "RTX PRO 5000 Blackwell" e Blackwell, "RTX 5000 Ada Generation" e Ada, e o
+        // "Quadro RTX 5000" e Turing. Ler so os quatro digitos apos "RTX " mandava o runtime
+        // sm_120 da NVIDIA para as duas ultimas — instalacao limpa, pass que nunca roda.
+        if (palavras.Contains("Blackwell", StringComparer.OrdinalIgnoreCase)) return true;
+        if (palavras.Contains("Ada", StringComparer.OrdinalIgnoreCase)
+            || palavras.Contains("Quadro", StringComparer.OrdinalIgnoreCase)) return false;
         // "NVIDIA GeForce RTX 5090" / "... RTX 5070 Ti Laptop GPU"
         var i = gpuName.IndexOf("RTX ", StringComparison.OrdinalIgnoreCase);
         if (i < 0) return false;
@@ -1274,8 +1354,18 @@ public static class NeuralUpliftService
         var ini = new IniFile(iniPath);
         if (useGenericAddon)
         {
-            progress?.Report(L.T("Neural_DeployingAddon"));
-            File.Copy(LibraryAddon, Path.Combine(targetDir, GenericAddonFile), overwrite: true);
+            // So copia o nosso quando NAO ha addon generico na pasta. Se ja ha um — o nosso
+            // renomeado pelo GarantirNomeDoFeeder, ou o da comunidade posto a mao — e ele que
+            // dirige o NR, e o RefreshDeployedAddon abaixo o traz ao build da biblioteca. Copiar
+            // o nosso ao lado punha dois addons genericos na pasta e os dois no LoadFromDllMain,
+            // que e a carga dupla que derrubava o Final Fantasy XV com 0xc0000005 a cada
+            // reinstalacao. Um par que ja exista de uma versao anterior e desfeito antes.
+            RemoverAddonGenericoDuplicado(targetDir, ini);
+            if (DeployedGenericAddon(targetDir) is null)
+            {
+                progress?.Report(L.T("Neural_DeployingAddon"));
+                File.Copy(LibraryAddon, Path.Combine(targetDir, GenericAddonFile), overwrite: true);
+            }
             SetNeuralSwitch(ini, true);
         }
         // Whichever addon drives it, it has to be up before the game's DLSS SDK is.
@@ -1283,6 +1373,14 @@ public static class NeuralUpliftService
         {
             RefreshDeployedAddon(deployedAddon, progress);
             AddToEarlyLoad(ini, Path.GetFileName(deployedAddon));
+            // E so ele entra na lista: um nome generico que ficou ali de um rename anterior,
+            // apontando para arquivo que nao existe mais, e o "error code 126" no DllMain que
+            // derruba o jogo antes de o ReShade carregar qualquer coisa.
+            foreach (var nome in GenericAddonNames)
+            {
+                if (nome.Equals(Path.GetFileName(deployedAddon), StringComparison.OrdinalIgnoreCase)) continue;
+                if (!File.Exists(Path.Combine(targetDir, nome))) RemoveFromEarlyLoad(ini, nome);
+            }
 
             // A chave vale sempre que o addon esta na pasta, e nao so quando NOS o implantamos
             // nesta passada. Sem isto, instalar num jogo cujo mod proprio dirige o NR deixava
@@ -1308,16 +1406,42 @@ public static class NeuralUpliftService
         if (AddonService.IsGameRunning(targetDir))
             throw new InvalidOperationException(L.T("Error_GameRunning"));
 
+        // O caminho de 32 bits primeiro, espelhando o IsApplied: quando existe host64\, e la que
+        // o pass roda e e o ReShade.ini de la que diz se esta ligado. O Remove nao tinha este
+        // ramo — mexia so na pasta do jogo — e num jogo de 32 bits desligar nao desligava nada:
+        // o host continuava com addon, runtime e interruptor em 1, e o IsApplied seguinte lia
+        // exatamente isso e devolvia o botao para "ligado".
+        //
+        // O interruptor do host e zerado ANTES de a pasta ser apagada (em FeederService.Remove):
+        // se a pasta resistir — arquivo travado, host ainda fechando — o ini ja diz desligado, o
+        // IsApplied ja responde nao, e um host que suba nao roda o pass.
+        var host = Path.Combine(targetDir, FeederService.Host64Dir);
+        var iniHost = Path.Combine(host, "ReShade.ini");
+        if (Directory.Exists(host) && File.Exists(iniHost))
+        {
+            try
+            {
+                var h = new IniFile(iniHost);
+                SetNeuralSwitch(h, false);
+                h.Save();
+            }
+            catch (Exception ex) { Log.Warn($"neural remove host64 ini: {ex.Message}"); }
+        }
+
+        // Os addons genericos que sao nossos: o do nosso nome e o renomeado com marcador. Um
+        // build da comunidade posto a mao nao entra — ver NossosAddonsGenericos.
+        var nossosAddons = NossosAddonsGenericos(targetDir).ToList();
+
         if (File.Exists(iniPath))
         {
             var ini = new IniFile(iniPath);
             ini.Set(SettingsService.PresetSection, EnableKey, "0.000000");
             SetNeuralSwitch(ini, false);
             ini.Set(LegacySection, LegacyEnableKey, "0");
-            // Only our own name comes back out of the early-load list. A community build the
+            // Only our own names come back out of the early-load list. A community build the
             // user deployed themselves keeps its entry, or turning our copy off would stop
             // theirs from loading.
-            RemoveFromEarlyLoad(ini, GenericAddonFile);
+            foreach (var nome in nossosAddons) RemoveFromEarlyLoad(ini, nome);
             ini.Save();
         }
 
@@ -1343,7 +1467,41 @@ public static class NeuralUpliftService
         try { FeederService.Remove(targetDir); }
         catch (Exception ex) { Log.Warn($"feeder remove: {ex.Message}"); }
 
-        var files = new List<string> { GenericAddonFile };
+        // O OptiScaler sai pela mesma regra do runtime: so quando fomos nos que o pusemos, o que
+        // o marcador ao lado do OptiScaler.ini diz. Ele alimenta o mesmo pass que acabou de ser
+        // desligado, e um OptiScaler que o usuario instalou antes de nos e dele — fica.
+        try
+        {
+            var marcaOpti = Path.Combine(targetDir, "OptiScaler.ini" + OursSuffix);
+            if (OptiScalerService.IsDeployed(targetDir) && File.Exists(marcaOpti))
+            {
+                OptiScalerService.Remove(targetDir);
+                try { if (File.Exists(marcaOpti)) File.Delete(marcaOpti); }
+                catch (Exception ex) { Log.Warn($"optiscaler mark clear: {ex.Message}"); }
+            }
+        }
+        catch (Exception ex) { Log.Warn($"optiscaler remove: {ex.Message}"); }
+
+        // Os tradutores que o instalador pos para chegar ate aqui vao junto, e o que eles
+        // guardaram volta: os .pre-dxvk (inclusive o dxgi.dll do ReShade que o instalador tirou
+        // do caminho) e os .renodx-bak. Sem isto, desinstalar o DLSS 5 num Just Cause 2 deixava
+        // os cinco DLLs do DXVK 1.10.3 renderizando o jogo por Vulkan para uma camada sem nada
+        // a fazer, e o RemoveD3d10 que promete devolver tudo nunca era chamado por ninguem.
+        //
+        // A ordem importa: o DXVK de D3D9 pode ter guardado um dgVoodoo em .pre-dxvk, e esse
+        // dgVoodoo restaurado tambem e nosso — so depois de ele voltar e que a pergunta
+        // "ha dgVoodoo aqui?" responde certo. A camada Vulkan compartilhada fica (serve a
+        // todos os jogos); o que sai sao os restos por jogo.
+        try
+        {
+            if (DxvkService.IsDeployedD3d10(targetDir)) DxvkService.RemoveD3d10(targetDir);
+            if (DxvkService.IsDeployed(targetDir)) DxvkService.Remove(targetDir);
+            if (DgVoodooService.IsDeployed(targetDir)) DgVoodooService.Remove(targetDir);
+            VulkanLayerService.Remove(targetDir);
+        }
+        catch (Exception ex) { Log.Warn($"neural remove tradutor {targetDir}: {ex.Message}"); }
+
+        var files = new List<string>(nossosAddons);
         if (RuntimeIsOurs(targetDir)) files.Add(RuntimeFile);
         // O RR segue a mesma regra, e por muito tempo nao seguia nenhuma: era copiado sempre e
         // nunca retirado, entao ficava para tras em pastas que nunca tiveram runtime local.
@@ -1365,6 +1523,14 @@ public static class NeuralUpliftService
                 Log.Warn($"neural remove {deployed}: {ex.Message}");
                 stuck.Add(name);
             }
+        }
+        // O marcador do addon renomeado sai com ele: sobrando, a proxima remocao apagaria um
+        // build que o usuario tenha posto sob esse nome depois de nos.
+        foreach (var nome in nossosAddons)
+        {
+            var marca = Path.Combine(targetDir, nome + OursSuffix);
+            try { if (File.Exists(marca)) File.Delete(marca); }
+            catch (Exception ex) { Log.Warn($"neural addon mark clear {marca}: {ex.Message}"); }
         }
         ClearRuntimeMark(targetDir);
         if (stuck.Count > 0)
@@ -1515,6 +1681,13 @@ public static class NeuralUpliftService
             var dll = Directory.EnumerateFiles(dir, RuntimeFile, SearchOption.AllDirectories).FirstOrDefault();
             if (dll is null) { Log.Warn($"neural runtime: {RuntimeFile} not in the archive"); return null; }
 
+            // Por que a assinatura nao fechou, quando foi um build da comunidade que entrou. Vai
+            // para o runtime.custom, como no ImportRuntime: e esse arquivo que a tela le para
+            // dizer se o runtime e o que a NVIDIA assinou. Sem ele, o .SF baixado daqui
+            // aparecia com o visto verde de "assinado pela NVIDIA" — o launcher mentindo sobre
+            // o que instalou.
+            string? motivoComunidade = null;
+
             // A assinatura continua sendo a porta principal — e nao pode ser a UNICA.
             //
             // Os builds `.SF` sao binarios PATCHEADOS: e disso que vem o suporte a RTX 40 e o
@@ -1538,12 +1711,19 @@ public static class NeuralUpliftService
                 }
                 Log.Info($"neural runtime: {entry.Version} aceito como build da comunidade "
                          + "(sem assinatura NVIDIA; origem e SHA-256 conferidos)");
+                motivoComunidade = why;
             }
             if (new FileInfo(dll).Length < 32L * 1024 * 1024)
                 throw new InvalidOperationException(L.T("Neural_Import_TooSmall"));
 
             Directory.CreateDirectory(LibraryDir);
             File.Copy(dll, LibraryRuntime, overwrite: true);
+            try
+            {
+                if (motivoComunidade is not null) File.WriteAllText(RuntimeCustomMark, motivoComunidade);
+                else if (File.Exists(RuntimeCustomMark)) File.Delete(RuntimeCustomMark);
+            }
+            catch (Exception ex) { Log.Warn($"neural runtime mark: {ex.Message}"); }
             Log.Info($"neural runtime fetched from the RHI index ({entry.Version})");
             return entry.Version;
         }
@@ -1734,9 +1914,22 @@ public static class NeuralUpliftService
             catch (Exception ex) { Log.Warn($"neural remove 64-bit runtime {alvo}: {ex.Message}"); }
         }
 
-        var addon = Path.Combine(targetDir, GenericAddonFile);
-        try { if (File.Exists(addon)) File.Delete(addon); }
-        catch (Exception ex) { Log.Warn($"neural remove addon {addon}: {ex.Message}"); }
+        // Os nossos, pelo nome ou pelo marcador: na primeira instalacao de um jogo de 32 bits o
+        // GarantirNomeDoFeeder roda antes de host64\ existir e renomeia o addon na raiz do jogo.
+        // Tirar so o nome proprio deixava esse renomeado la — um binario de 64 bits que o ReShade
+        // de 32 tenta carregar e recusa com "error code 193".
+        var nossosAddons = NossosAddonsGenericos(targetDir).ToList();
+        foreach (var nome in nossosAddons)
+        {
+            var addon = Path.Combine(targetDir, nome);
+            var marca = addon + OursSuffix;
+            try
+            {
+                if (File.Exists(addon)) File.Delete(addon);
+                if (File.Exists(marca)) File.Delete(marca);
+            }
+            catch (Exception ex) { Log.Warn($"neural remove addon {addon}: {ex.Message}"); }
+        }
 
         // E a entrada da carga antecipada TEM de sair junto.
         //
@@ -1749,7 +1942,7 @@ public static class NeuralUpliftService
             var ini = iniPath ?? Path.Combine(targetDir, "ReShade.ini");
             if (!File.Exists(ini)) return;
             var f = new IniFile(ini);
-            RemoveFromEarlyLoad(f, GenericAddonFile);
+            foreach (var nome in nossosAddons) RemoveFromEarlyLoad(f, nome);
             f.Save();
         }
         catch (Exception ex) { Log.Warn($"neural remove early-load {targetDir}: {ex.Message}"); }
