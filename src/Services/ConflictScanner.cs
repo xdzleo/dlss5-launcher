@@ -99,9 +99,11 @@ public static class ConflictScanner
             // tem FSR/XeSS proprio e nao tem DLSS, e deixa a marca ao lado do ini. Acusar a
             // propria instalacao seria o mesmo erro que DaNossaCadeia corrige acima — e era o
             // que acontecia: o cartao do jogo mostrava "OptiScaler ocupa version.dll" como
-            // conflito no instante seguinte ao da instalacao.
+            // conflito no instante seguinte ao da instalacao. As instalacoes do build anterior,
+            // que nao escrevia marca, entram pela mesma porta: o proxy identico ao da biblioteca
+            // e tao nosso quanto o marcado.
             if (dono == "OptiScaler" && slot.Equals("version.dll", StringComparison.OrdinalIgnoreCase)
-                && OptiScalerService.IsOurs(dir)) continue;
+                && OptiScalerService.IsOursOrLegacy(dir)) continue;
 
             // Info, e nao bloqueio. Ocupar a vaga NAO impede o ReShade de carregar: esses
             // injetores encadeiam, e o proprio launcher conta com isso — quando o OptiScaler ja

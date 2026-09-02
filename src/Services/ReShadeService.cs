@@ -337,6 +337,21 @@ public partial class ReShadeService
             if (product?.Contains("ReShade", StringComparison.OrdinalIgnoreCase) != true)
                 return new DeployResult(false,
                     L.T("Error_ReShade_ProxyConflict", dllName, product ?? L.T("Common_Unidentified")));
+
+            // Um ReShade que ja estava aqui pode ser do USUARIO — instalado a mao, na versao que
+            // ele escolheu — e sobrescreve-lo era perde-lo: a desinstalacao apaga o proxy e nao
+            // havia o que devolver. A copia guardada e o que a remocao restaura (AddonService).
+            //
+            // Ela so nao e feita quando o que esta la e, byte a byte, um ReShade que este proprio
+            // launcher ja preparou — o desta versao ou o de uma anterior, que fica na biblioteca.
+            // Uma copia do nosso proprio arquivo nao e o estado de antes de nos, e devolve-la na
+            // desinstalacao seria reinstalar o ReShade no ato de tira-lo.
+            var backup = target + ".renodx-bak";
+            if (!File.Exists(backup) && !EhReShadeDaBiblioteca(target))
+            {
+                File.Copy(target, backup);
+                Log.Info($"reshade: {dllName} de outra origem guardado como {Path.GetFileName(backup)}");
+            }
         }
 
         progress?.Report(L.T("Install_ReShade_Deploying", dllName));
@@ -351,6 +366,49 @@ public partial class ReShadeService
         ini.Save();
 
         return new DeployResult(true, L.T("Install_ReShade_Done", version, dllName), dllName);
+    }
+
+    /// <summary>
+    /// Este arquivo e, byte a byte, um ReShade que este launcher ja preparou em alguma versao?
+    ///
+    /// A biblioteca guarda uma pasta por versao, e nenhuma e apagada ao subir de versao — entao
+    /// "identico a qualquer uma delas" e a assinatura de um ReShade que fomos nos que pusemos, sem
+    /// depender de marca que o build anterior nao escrevia.
+    /// </summary>
+    private static bool EhReShadeDaBiblioteca(string caminho)
+    {
+        try
+        {
+            var root = Path.Combine(AppPaths.DataDir, "reshade");
+            if (!Directory.Exists(root)) return false;
+            foreach (var stage in Directory.EnumerateDirectories(root))
+                foreach (var dll in new[] { "ReShade64.dll", "ReShade32.dll" })
+                    if (Iguais(caminho, Path.Combine(stage, dll))) return true;
+        }
+        catch (Exception ex) { Log.Warn($"reshade library compare {caminho}: {ex.Message}"); }
+        return false;
+    }
+
+    /// <summary>Os dois arquivos existem e sao iguais byte a byte?</summary>
+    private static bool Iguais(string a, string b)
+    {
+        try
+        {
+            if (!File.Exists(a) || !File.Exists(b)) return false;
+            if (new FileInfo(a).Length != new FileInfo(b).Length) return false;
+            using var fa = File.OpenRead(a);
+            using var fb = File.OpenRead(b);
+            var ba = new byte[1 << 16];
+            var bb = new byte[1 << 16];
+            int na;
+            while ((na = fa.Read(ba, 0, ba.Length)) > 0)
+            {
+                var nb = fb.ReadAtLeast(bb.AsSpan(0, na), na, throwOnEndOfStream: false);
+                if (nb != na || !ba.AsSpan(0, na).SequenceEqual(bb.AsSpan(0, nb))) return false;
+            }
+            return true;
+        }
+        catch { return false; }
     }
 
     /// <summary>Detect a ReShade proxy DLL already present in a dir.</summary>

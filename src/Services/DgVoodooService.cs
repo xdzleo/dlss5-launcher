@@ -359,18 +359,24 @@ public static class DgVoodooService
     ///
     /// A marca `.renodx-ours` responde para tudo que foi instalado depois de ela existir. Para o
     /// que veio antes, a assinatura de uma instalacao nossa e o binario identico ao da biblioteca
-    /// E o conf identico ao que este launcher escreve a partir do conf de referencia. Um dgVoodoo
-    /// do proprio usuario, mesmo da mesma versao, vem com o conf dele — e um conf diferente basta
-    /// para o tratarmos como de outra pessoa, que e o lado seguro do erro.
+    /// — e SO ele. A primeira versao exigia tambem o conf identico ao que este launcher escreve,
+    /// e isso deixava dgVoodoo para tras: o proprio launcher manda o usuario abrir o
+    /// dgVoodooCpl.exe, que reescreve o conf inteiro, e a partir dai a desinstalacao lia a
+    /// instalacao como alheia e a deixava na pasta. O conf nao e prova de nada sobre o binario.
+    ///
+    /// O binario e desta versao exata, que o autor tirou do ar e que chega aqui pelo mirror de
+    /// preservacao; um usuario com a mesma copia perde, no pior caso, um arquivo que a biblioteca
+    /// reproduz byte a byte — e o conf dele, esse sim, tem copia guardada e volta.
     /// </summary>
     private static bool EhNossoD3d9(string targetDir)
     {
         var d3d9 = Path.Combine(targetDir, D3d9File);
-        if (File.Exists(d3d9 + OursSuffix)) return true;
-        var conf = Path.Combine(targetDir, ConfFile);
-        return (Iguais(d3d9, LibraryX64) || Iguais(d3d9, LibraryX86))
-               && File.Exists(conf) && ConfEhORenderizado(conf);
+        return File.Exists(d3d9 + OursSuffix) || EhBinarioDaBiblioteca(d3d9);
     }
+
+    /// <summary>E o wrapper que este launcher distribui, em qualquer dos dois bitness?</summary>
+    private static bool EhBinarioDaBiblioteca(string d3d9) =>
+        Iguais(d3d9, LibraryX64) || Iguais(d3d9, LibraryX86);
 
     private static bool EhNossoConf(string conf) =>
         File.Exists(conf + OursSuffix) || ConfEhORenderizado(conf);
@@ -434,27 +440,41 @@ public static class DgVoodooService
     {
         try
         {
-            // Decidido antes de mexer no conf: a assinatura das instalacoes de antes da marca
-            // depende dele, e ele e devolvido logo abaixo.
+            // Decidido antes de mexer em qualquer arquivo: a assinatura das instalacoes de antes
+            // da marca e o proprio wrapper, que sai logo abaixo — e o painel segue a mesma
+            // decisao, para os dois nao divergirem numa pasta em que so um tem marca.
             var d3d9EraNosso = EhNossoD3d9(targetDir);
             var conf = Path.Combine(targetDir, ConfFile);
             var cpl = Path.Combine(targetDir, CplFile);
 
-            Devolver(Path.Combine(targetDir, D3d9File), d3d9EraNosso);
+            Devolver(Path.Combine(targetDir, D3d9File), d3d9EraNosso, EhBinarioDaBiblioteca);
             // O conf e o painel sem o wrapper nao servem a nada e so confundem quem for olhar a
             // pasta depois — mas so os NOSSOS. Os que tem copia guardada eram do usuario.
-            Devolver(conf, d3d9EraNosso || EhNossoConf(conf));
-            Devolver(cpl, d3d9EraNosso || EhNossoCpl(cpl));
+            Devolver(conf, d3d9EraNosso || EhNossoConf(conf), ConfEhORenderizado);
+            Devolver(cpl, d3d9EraNosso || EhNossoCpl(cpl), c => Iguais(c, LibraryCpl));
         }
         catch (Exception ex) { Log.Warn($"dgvoodoo remove {targetDir}: {ex.Message}"); }
     }
 
-    private static void Devolver(string caminho, bool ehNosso)
+    /// <param name="conteudoEhNosso">Reconhece, pelo conteudo, o que este launcher escreve — e o
+    /// que desmascara uma copia guardada que na verdade e nossa.</param>
+    private static void Devolver(string caminho, bool ehNosso, Func<string, bool> conteudoEhNosso)
     {
         var backup = caminho + BackupSuffix;
         var marca = caminho + OursSuffix;
+        // Uma copia guardada que e o NOSSO proprio arquivo nao e o estado de antes de nos: o
+        // build anterior, ao reinstalar por cima de uma instalacao que ele nao reconhecia como
+        // sua (conf editado ou ausente), guardava o wrapper que ele mesmo tinha posto como se
+        // fosse do usuario. Devolve-la seria reinstalar o dgVoodoo no ato de desinstalar. Ela e
+        // descartada, e o arquivo que ela "protegia" sai pela mesma prova, logo abaixo.
+        if (File.Exists(backup) && conteudoEhNosso(backup))
+        {
+            Log.Info($"dgvoodoo remove: {Path.GetFileName(backup)} e o nosso proprio arquivo; descartado");
+            File.Delete(backup);
+        }
         if (File.Exists(backup)) { File.Copy(backup, caminho, overwrite: true); File.Delete(backup); }
-        else if (File.Exists(caminho) && (ehNosso || File.Exists(marca))) File.Delete(caminho);
+        else if (File.Exists(caminho) && (ehNosso || File.Exists(marca) || conteudoEhNosso(caminho)))
+            File.Delete(caminho);
         else if (File.Exists(caminho))
             Log.Warn($"dgvoodoo remove: {Path.GetFileName(caminho)} nao e nosso e nao tem copia; fica");
         if (File.Exists(marca)) File.Delete(marca);

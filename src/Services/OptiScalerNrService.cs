@@ -114,7 +114,13 @@ public static class OptiScalerNrService
         // A raiz termina em separador de proposito. Sem ele, "C:\Games\Foo Bar" comeca com
         // "C:\Games\Foo", e uma entrada "../Foo Bar/dxgi.dll" passava na comparacao e era
         // escrita — com o rename .pre-optinr e o registro no manifesto — na pasta do vizinho.
-        var raiz = Path.TrimEndingDirectorySeparator(Path.GetFullPath(targetDir)) + Path.DirectorySeparatorChar;
+        //
+        // O separador so e acrescentado se ainda nao houver um: TrimEndingDirectorySeparator
+        // nao tira o de uma raiz de unidade ("D:\" continua "D:\"), e o antigo "tira e poe" dava
+        // "D:\\" — um prefixo que nenhum caminho resolvido comeca, e todo arquivo do pacote era
+        // recusado como "fora da pasta" num jogo instalado na raiz de um disco.
+        var raiz = Path.GetFullPath(targetDir);
+        if (!Path.EndsInDirectorySeparator(raiz)) raiz += Path.DirectorySeparatorChar;
 
         var escritos = new List<string>();
         using (var zip = ZipFile.OpenRead(LibraryZip))
