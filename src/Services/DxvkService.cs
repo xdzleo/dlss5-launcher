@@ -28,6 +28,19 @@ public static class DxvkService
     public const string D3d9File = "d3d9.dll";
 
     /// <summary>
+    /// A marca que diz "foi este launcher que pos", igual a dos outros servicos. Sem ela, a
+    /// desinstalacao do DLSS 5 tirava QUALQUER d3d9.dll grande da pasta — inclusive um DXVK que
+    /// o proprio usuario instalou num jogo cuja rota nunca precisou de tradutor — e sem copia,
+    /// porque o Deploy nunca tinha passado por ali para guardar nada.
+    /// </summary>
+    private const string OursSuffix = ".renodx-ours";
+    private const string BackupSuffix = ".pre-dxvk";
+
+    /// <summary>O arquivo do conjunto D3D10 que carrega a marca. Um so basta: os cinco entram e
+    /// saem juntos, e o d3d10core.dll e o unico dos cinco que nenhum outro mod costuma ocupar.</summary>
+    private const string D3d10MarkFile = "d3d10core.dll";
+
+    /// <summary>
     /// Direct3D 10: a terceira API que o DXVK traduz, e a UNICA rota que existe para ela.
     ///
     /// O Feeder nao fala D3D10 — o README dele diz "D3D10 is not supported", em uma linha. O
@@ -160,6 +173,41 @@ public static class DxvkService
         catch { return false; }
     }
 
+    /// <summary>
+    /// O d3d9.dll do DXVK nesta pasta foi este launcher que pos?
+    ///
+    /// Tres provas, qualquer uma basta. A marca `.renodx-ours` responde para tudo que o
+    /// <see cref="Deploy"/> instalou depois de ela existir. Para instalacoes de antes da marca,
+    /// o binario identico ao da biblioteca e a assinatura: a biblioteca so guarda o que o
+    /// launcher baixou, e e dela que o Deploy copia. E um `.pre-dxvk` ao lado — do d3d9 ou do
+    /// dgVoodoo que ele tirou do caminho — so o Deploy escreve, entao a sua existencia prova
+    /// que o launcher passou por cima de algo aqui. Sem nenhuma das tres, o DXVK e de outra
+    /// pessoa e nao e nosso para apagar.
+    /// </summary>
+    public static bool IsOurs(string targetDir)
+    {
+        var dll = Path.Combine(targetDir, D3d9File);
+        if (File.Exists(dll + OursSuffix)) return true;
+        if (Iguais(dll, LibraryD3d9_32)) return true;
+        return new[] { D3d9File, "dgVoodoo.conf", "dgVoodooCpl.exe" }
+            .Any(n => File.Exists(Path.Combine(targetDir, n + BackupSuffix)));
+    }
+
+    /// <summary>
+    /// O conjunto de D3D10 nesta pasta foi este launcher que pos? Mesmas tres provas do
+    /// <see cref="IsOurs"/>: a marca no d3d10core.dll, o d3d10.dll identico ao de uma das
+    /// duas copias da biblioteca (x32 ou x64 — a pasta nao diz qual bitness o
+    /// <see cref="DeployD3d10"/> escolheu), ou um `.pre-dxvk` em qualquer um dos cinco nomes.
+    /// </summary>
+    public static bool IsOursD3d10(string targetDir)
+    {
+        if (File.Exists(Path.Combine(targetDir, D3d10MarkFile + OursSuffix))) return true;
+        var d3d10 = Path.Combine(targetDir, D3d10Files[0]);
+        if (Iguais(d3d10, LibraryD3d10(false, D3d10Files[0]))
+            || Iguais(d3d10, LibraryD3d10(true, D3d10Files[0]))) return true;
+        return D3d10Files.Any(n => File.Exists(Path.Combine(targetDir, n + BackupSuffix)));
+    }
+
     /// <summary>Baixa o DXVK para a biblioteca. Sem efeito se ja estiver la.</summary>
     public static async Task FetchAsync(IProgress<string>? progress = null, CancellationToken ct = default)
     {
@@ -267,6 +315,8 @@ public static class DxvkService
         }
 
         File.Copy(LibraryD3d9_32, Path.Combine(targetDir, D3d9File), overwrite: true);
+        // A marca e o que autoriza o Remove a apagar este arquivo depois — ver IsOurs.
+        Marcar(Path.Combine(targetDir, D3d9File));
         progress?.Report(L.T("Dxvk_Deployed"));
         Log.Info($"dxvk: d3d9.dll implantado em {targetDir}");
     }
@@ -283,9 +333,12 @@ public static class DxvkService
         // ReShade que o usuario tinha antes.
         foreach (var n in new[] { "D3D9.dll", "d3d9.dll", "dgVoodoo.conf", "dgVoodooCpl.exe", "dxgi.dll" })
         {
-            var bak = Path.Combine(targetDir, n + ".pre-dxvk");
+            var bak = Path.Combine(targetDir, n + BackupSuffix);
             if (File.Exists(bak)) { try { File.Move(bak, Path.Combine(targetDir, n), overwrite: true); } catch { } }
         }
+        // A marca sai com o arquivo: sobrando, um DXVK que o usuario ponha depois sob o mesmo
+        // nome seria tratado como nosso na proxima desinstalacao.
+        Desmarcar(Path.Combine(targetDir, D3d9File));
     }
 
     // ---------------------------------------------------------------- Direct3D 10
@@ -309,6 +362,13 @@ public static class DxvkService
     /// jogo redistribui. Nenhum deles e nosso para apagar; todos voltam em <see cref="RemoveD3d10"/>.
     /// O que ja e DXVK fica — e so sobrescrito pelo build da biblioteca (e assim que um resto da
     /// 3.1 vira a 1.10.3, sem backup, porque os dois sao nossos).
+    ///
+    /// Backups: o PRIMEIRO ocupante de cada nome vai para `.pre-dxvk`, e e esse que
+    /// <see cref="RemoveD3d10"/> devolve. Qualquer ocupante que apareca DEPOIS (entre uma
+    /// instalacao e outra) vai para `.pre-dxvk.2`, `.pre-dxvk.3`, ... — o primeiro numero
+    /// livre, nunca por cima de um que ja exista. Esses numerados NAO sao devolvidos
+    /// automaticamente: nao ha como saber qual o usuario queria de volta, entao ficam na pasta
+    /// para resgate a mao, e o RemoveD3d10 avisa no log que estao la.
     /// </summary>
     public static void DeployD3d10(string targetDir, bool jogo64Bits, IProgress<string>? progress = null)
     {
@@ -324,10 +384,12 @@ public static class DxvkService
             // guardar o recem-chegado (um proxy do ReShade que o usuario pos entre uma
             // instalacao e outra, um wrapper de outro mod) trocava o original pelo intruso — e
             // o original nao tem outra copia. O intruso tambem nao e nosso para apagar: vai
-            // para um nome ao lado, de onde da para resgata-lo a mao.
-            var bak = p + ".pre-dxvk";
+            // para um nome numerado ao lado, de onde da para resgata-lo a mao. E numerado sem
+            // reaproveitar numero: um segundo intruso sobrescrevendo o `.2` do primeiro era a
+            // mesma perda sem copia, so uma casa adiante.
+            var bak = p + BackupSuffix;
             if (!File.Exists(bak)) File.Move(p, bak);
-            else File.Move(p, bak + ".2", overwrite: true);
+            else File.Move(p, ProximoBackupLivre(bak));
             guardou = true;
         }
         if (guardou) progress?.Report(L.T("Dxvk_ReplacedD3d10"));
@@ -335,24 +397,100 @@ public static class DxvkService
         foreach (var n in D3d10Files)
             File.Copy(LibraryD3d10(jogo64Bits, n), Path.Combine(targetDir, n), overwrite: true);
 
+        // A marca e o que autoriza o RemoveD3d10 a ser chamado depois — ver IsOursD3d10.
+        Marcar(Path.Combine(targetDir, D3d10MarkFile));
         progress?.Report(L.T("Dxvk_DeployedD3d10"));
         Log.Info($"dxvk: conjunto D3D10 ({(jogo64Bits ? "x64" : "x32")}) implantado em {targetDir}");
     }
 
-    /// <summary>Tira o conjunto de D3D10 (so o que for DXVK) e devolve o que estava nos nomes.</summary>
+    /// <summary>`nome.pre-dxvk.N`, com N inteiro — o que <see cref="ProximoBackupLivre"/> gera.</summary>
+    private static bool EhBackupNumerado(string nomeArquivo, string prefixo)
+    {
+        if (!nomeArquivo.StartsWith(prefixo + ".", StringComparison.OrdinalIgnoreCase)) return false;
+        return int.TryParse(nomeArquivo.AsSpan(prefixo.Length + 1), out var n) && n >= 2;
+    }
+
+    /// <summary>O primeiro de `.pre-dxvk.2`, `.pre-dxvk.3`, ... que ainda nao existe.</summary>
+    private static string ProximoBackupLivre(string bak)
+    {
+        for (var i = 2; ; i++)
+        {
+            var candidato = $"{bak}.{i}";
+            if (!File.Exists(candidato)) return candidato;
+        }
+    }
+
+    /// <summary>
+    /// Tira o conjunto de D3D10 (so o que for DXVK) e devolve o que estava nos nomes.
+    ///
+    /// So o `.pre-dxvk` original volta. Os numerados (`.pre-dxvk.2`, `.3`, ...) que o
+    /// <see cref="DeployD3d10"/> tenha guardado ficam onde estao: sao ocupantes que chegaram
+    /// entre uma instalacao e outra, e escolher um deles para por no lugar seria adivinhar. O
+    /// log diz quais sobraram, para o usuario resgatar a mao.
+    /// </summary>
     public static void RemoveD3d10(string targetDir)
     {
+        var numerados = new List<string>();
         foreach (var n in D3d10Files)
         {
             var p = Path.Combine(targetDir, n);
             try { if (File.Exists(p) && EhDxvk(p)) File.Delete(p); }
             catch (Exception ex) { Log.Warn($"dxvk d3d10 remove {n}: {ex.Message}"); }
 
-            var bak = p + ".pre-dxvk";
+            var bak = p + BackupSuffix;
+            // Pelo nome e nao pelo padrao do sistema de arquivos: o "x.*" do Windows tambem
+            // casa o proprio "x", e aqui so interessam os numerados (".2", ".3", ...).
+            try
+            {
+                numerados.AddRange(Directory.EnumerateFiles(targetDir, n + BackupSuffix + "*")
+                                            .Select(f => Path.GetFileName(f))
+                                            .Where(f => EhBackupNumerado(f, n + BackupSuffix)));
+            }
+            catch { }
             if (!File.Exists(bak)) continue;
             try { File.Move(bak, p, overwrite: true); }
             catch (Exception ex) { Log.Warn($"dxvk d3d10 restaurar {n}: {ex.Message}"); }
         }
+        Desmarcar(Path.Combine(targetDir, D3d10MarkFile));
+        if (numerados.Count > 0)
+            Log.Info($"dxvk d3d10 remove: backups numerados ficaram em {targetDir} para resgate a mao "
+                     + $"(so o .pre-dxvk original e devolvido): {string.Join(", ", numerados)}");
+    }
+
+    private static void Marcar(string caminho)
+    {
+        try { File.WriteAllText(caminho + OursSuffix, DateTime.UtcNow.ToString("o")); }
+        catch (Exception ex) { Log.Warn($"dxvk mark {Path.GetFileName(caminho)}: {ex.Message}"); }
+    }
+
+    private static void Desmarcar(string caminho)
+    {
+        var marca = caminho + OursSuffix;
+        try { if (File.Exists(marca)) File.Delete(marca); }
+        catch (Exception ex) { Log.Warn($"dxvk mark clear {Path.GetFileName(caminho)}: {ex.Message}"); }
+    }
+
+    /// <summary>Os dois arquivos existem e sao iguais byte a byte? Em blocos, porque o d3d9.dll
+    /// do DXVK passa de 5 MB e nao vale carregar os dois inteiros so para comparar.</summary>
+    private static bool Iguais(string a, string b)
+    {
+        try
+        {
+            if (!File.Exists(a) || !File.Exists(b)) return false;
+            if (new FileInfo(a).Length != new FileInfo(b).Length) return false;
+            using var fa = File.OpenRead(a);
+            using var fb = File.OpenRead(b);
+            var ba = new byte[1 << 16];
+            var bb = new byte[1 << 16];
+            int na;
+            while ((na = fa.Read(ba, 0, ba.Length)) > 0)
+            {
+                var nb = fb.ReadAtLeast(bb.AsSpan(0, na), na, throwOnEndOfStream: false);
+                if (nb != na || !ba.AsSpan(0, na).SequenceEqual(bb.AsSpan(0, nb))) return false;
+            }
+            return true;
+        }
+        catch { return false; }
     }
 
     /// <summary>Este arquivo e um build do DXVK? Pelo ProductName do recurso de versao, que o

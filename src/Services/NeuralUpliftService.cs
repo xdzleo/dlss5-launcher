@@ -1492,10 +1492,24 @@ public static class NeuralUpliftService
         // dgVoodoo restaurado tambem e nosso — so depois de ele voltar e que a pergunta
         // "ha dgVoodoo aqui?" responde certo. A camada Vulkan compartilhada fica (serve a
         // todos os jogos); o que sai sao os restos por jogo.
+        //
+        // E so o DXVK que FOMOS NOS que pusemos: o IsDeployed responde "ha um DXVK aqui", nao
+        // "foi o launcher". Um DXVK que o usuario instalou por conta propria, num jogo cuja rota
+        // DLSS 5 nunca usou tradutor, era apagado por esta linha sem copia nenhuma — o Deploy
+        // nunca passou por ali para guardar. A marca, o binario da biblioteca ou um .pre-dxvk
+        // ao lado (ver DxvkService.IsOurs) e o que separa os dois.
         try
         {
-            if (DxvkService.IsDeployedD3d10(targetDir)) DxvkService.RemoveD3d10(targetDir);
-            if (DxvkService.IsDeployed(targetDir)) DxvkService.Remove(targetDir);
+            if (DxvkService.IsDeployedD3d10(targetDir))
+            {
+                if (DxvkService.IsOursD3d10(targetDir)) DxvkService.RemoveD3d10(targetDir);
+                else Log.Info($"neural remove: conjunto D3D10 do DXVK em {targetDir} nao e nosso; fica");
+            }
+            if (DxvkService.IsDeployed(targetDir))
+            {
+                if (DxvkService.IsOurs(targetDir)) DxvkService.Remove(targetDir);
+                else Log.Info($"neural remove: d3d9.dll do DXVK em {targetDir} nao e nosso; fica");
+            }
             if (DgVoodooService.IsDeployed(targetDir)) DgVoodooService.Remove(targetDir);
             VulkanLayerService.Remove(targetDir);
         }
@@ -1525,9 +1539,12 @@ public static class NeuralUpliftService
             }
         }
         // O marcador do addon renomeado sai com ele: sobrando, a proxima remocao apagaria um
-        // build que o usuario tenha posto sob esse nome depois de nos.
+        // build que o usuario tenha posto sob esse nome depois de nos. So COM ele, porem: o
+        // addon que ficou preso (jogo aberto, antivirus) continua sendo nosso, e sem a marca a
+        // proxima remocao o veria como um build da comunidade e o deixaria para tras de vez.
         foreach (var nome in nossosAddons)
         {
+            if (stuck.Contains(nome)) continue;
             var marca = Path.Combine(targetDir, nome + OursSuffix);
             try { if (File.Exists(marca)) File.Delete(marca); }
             catch (Exception ex) { Log.Warn($"neural addon mark clear {marca}: {ex.Message}"); }
