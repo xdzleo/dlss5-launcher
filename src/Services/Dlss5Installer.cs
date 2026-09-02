@@ -212,9 +212,11 @@ public static class Dlss5Installer
                     catch (Exception ex) { Log.Warn($"dxvk: nao consegui tirar o proxy dxgi.dll: {ex.Message}"); }
                 }
             }
-            else if (DxvkService.IsDeployed(targetDir))
+            else if (DxvkService.IsDeployed(targetDir) && DxvkService.IsOurs(targetDir))
             {
                 // voltando ao dgVoodoo: tira o DXVK E a camada Vulkan, que nao serve a D3D11.
+                // So o DXVK que NOS pusemos (marcador, copia da biblioteca ou .pre-dxvk): um
+                // d3d9.dll do DXVK que o usuario trouxe nao e nosso para apagar.
                 DxvkService.Remove(targetDir);
                 VulkanLayerService.Remove(targetDir);
                 Step(L.T("Dlss5_Step_SwitchedToDgVoodoo"));

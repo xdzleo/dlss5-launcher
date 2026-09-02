@@ -1472,8 +1472,10 @@ public static class NeuralUpliftService
         // desligado, e um OptiScaler que o usuario instalou antes de nos e dele — fica.
         try
         {
+            // IsOursOrLegacy, e nao so o marcador: instalacoes feitas antes de o marcador existir
+            // tem o version.dll identico ao da biblioteca, e so o marcador as deixaria para tras.
             var marcaOpti = Path.Combine(targetDir, "OptiScaler.ini" + OursSuffix);
-            if (OptiScalerService.IsDeployed(targetDir) && File.Exists(marcaOpti))
+            if (OptiScalerService.IsDeployed(targetDir) && OptiScalerService.IsOursOrLegacy(targetDir))
             {
                 OptiScalerService.Remove(targetDir);
                 try { if (File.Exists(marcaOpti)) File.Delete(marcaOpti); }

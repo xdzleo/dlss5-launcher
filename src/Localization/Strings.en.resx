@@ -694,6 +694,10 @@
     <value>Could not update {0}: {1}</value>
     <comment>{0} = nome do arquivo, {1} = mensagem do erro.</comment>
   </data>
+  <data name="Dlss_Fg_AllRefused" xml:space="preserve">
+    <value>No usable Streamline set in {0}: the only file found there, {1}, was refused ({2}).</value>
+    <comment>{0} = pasta de origem, {1} = arquivo recusado, {2} = motivo da recusa.</comment>
+  </data>
   <data name="Dlss_Fg_Done" xml:space="preserve">
     <value>{0} file(s) of the Streamline set updated.</value>
     <comment>{0} = quantidade.</comment>
@@ -727,6 +731,10 @@
   </data>
   <data name="Dlss_Library_Empty" xml:space="preserve">
     <value>No DLSS runtime in the library yet. Scan for runtimes first — every game with DLSS carries one.</value>
+  </data>
+  <data name="Dlss_MissingRoot" xml:space="preserve">
+    <value>The signature names NVIDIA, but this machine's root certificate store is missing the root that issued it ({0}); Windows could not verify the chain ({1}). Connect to the internet so Windows can fetch the root, or install it, then try again. Skipped.</value>
+    <comment>{0} = issuer do certificado do signatário, {1} = diagnóstico do WinVerifyTrust.</comment>
   </data>
   <data name="Dlss_NotNvidia" xml:space="preserve">
     <value>Not signed by NVIDIA (signer: {0}). Skipped.</value>
@@ -1000,6 +1008,14 @@
   <data name="Error_CheckUpdates" xml:space="preserve">
     <value>Update check failed: {0}. Check your connection and try again.</value>
     <comment>{0} = ex.Message.</comment>
+  </data>
+  <data name="Error_Config_SaveFailed" xml:space="preserve">
+    <value>Settings could not be saved: {0}</value>
+    <comment>LauncherConfig.LastSaveError quando a gravacao atomica falha por I/O. {0} = mensagem da excecao.</comment>
+  </data>
+  <data name="Error_Config_SaveRefused" xml:space="preserve">
+    <value>Settings were not saved: config.json could not be read (another program is holding it). Close the DLSS 5 CLI or any backup/antivirus tool and try again.</value>
+    <comment>LauncherConfig.LastSaveError quando TrySave recusa: o config.json nao pode ser lido na abertura NEM na releitura feita na hora de gravar. Gravar assim sobrescreveria o arquivo intacto do usuario com os padroes.</comment>
   </data>
   <data name="Error_DetailLoad" xml:space="preserve">
     <value>Failed to load this game's details: {0}. Select the game again.</value>

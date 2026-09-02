@@ -2440,7 +2440,9 @@ public class MainViewModel : ObservableObject
                 try
                 {
                     StatusText = L.T("Main_Updates_Updating", item.Name);
-                    await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod!, item.TargetDir!));
+                    // Atualizar nao e instalar: um mod que o usuario desligou continua desligado
+                    // depois do build novo. So o Install explicito religa.
+                    await Task.Run(() => AddonService.DownloadAddonAsync(item.Mod!, item.TargetDir!, preserveDisabled: true));
                     item.RefreshState();
                     item.HasUpdate = false;
                     ok++;

@@ -1,5 +1,155 @@
 # Changelog
 
+## v1.71.0
+
+Uma caçada a bugs no código inteiro: 62 defeitos confirmados por revisão adversarial (cada achado
+passou por um cético independente antes de virar tarefa), todos corrigidos, e o SmokeTest passando
+inteiro pela primeira vez em vários releases.
+
+### Desinstalar desinstala
+
+O `Remove` só conhecia a pasta do jogo. Num jogo de 32 bits, desligar o DLSS 5 deixava exatamente o
+que roda: o `dlss5-feed.addon32` no jogo e o `host64\` inteiro — host, ReShade, addon neural, 271 MB
+de runtimes e um `ReShade.ini` com o interruptor em 1. O `IsApplied` lê esse ini, então o botão
+voltava para "ligado" e o host subia junto com o jogo como se nada tivesse acontecido. O Just Cause
+2 desta máquina ficou assim depois de um desligar, e foi o que fez o bug aparecer.
+
+Agora o `Remove` espelha o `IsApplied`: zera o interruptor do `host64\ReShade.ini` primeiro (se a
+pasta resistir, o ini já diz desligado), apaga `host64\` inteiro (tudo ali é nosso) e o addon32,
+tira o `renodx-dlss5.addon64` renomeado que tem o marcador `.renodx-ours` e sua entrada no
+`LoadFromDllMain` — um build da comunidade sem marcador continua onde está — e devolve o que os
+tradutores guardaram: os cinco DLLs do DXVK 1.10.3 saem e o `dxgi.dll.pre-dxvk` (o ReShade que o
+instalador tirou do caminho) volta; o DXVK de D3D9 e o dgVoodoo saem com seus `.renodx-bak`; o
+OptiScaler sai só quando fomos nós que o pusemos. Antes, `RemoveD3d10` e `OptiScalerService.Remove`
+não eram chamados por ninguém.
+
+### Instalar não deixa a pasta pela metade
+
+- O DXVK é baixado ANTES de o dgVoodoo sair e de o proxy do ReShade ser guardado. Uma falha de
+  download (offline) deixava a pasta sem ReShade e o resultado saía `[ok]`, porque a detecção lida
+  antes ainda dizia "proxy presente".
+- `Apply` não copia um segundo addon genérico quando `renodx-dlss5.addon64` já está na pasta.
+  Reinstalar deixava `renodx-neural.addon64` ao lado e os dois no `LoadFromDllMain` — carga dupla
+  e o 0xc0000005 que o próprio arquivo documentava.
+- No caminho de 32 bits o addon de 64 não fica mais na raiz do jogo: era ele o "error code 193"
+  que o ReShade logava em toda rota de 32 bits.
+- Jogo Vulkan nativo de 32 bits recebe as metades com transporte Vulkan, e não o addon32 oficial
+  que só fala D3D11.
+- Um `renodx-dlss5.addon64` diferente do nosso é guardado como `.renodx-bak` antes de ser
+  substituído; um `.pre-dxvk` existente nunca é sobrescrito (o intruso vai para `.pre-dxvk.2`).
+- Downloads vão para um `.part` e só ganham o nome final quando o tamanho bate com o
+  `Content-Length`: conexão que caía no meio deixava arquivo truncado que todo fetch seguinte
+  aceitava como pronto (Feeder, OptiScaler, índice de runtimes).
+- Na rota DXVK de D3D9 o ReShade recebe `RESHADE_DEPTH_INPUT_IS_REVERSED=0` e
+  `DepthCopyBeforeClears`, como já recebia na rota dgVoodoo — motor pré-reversed-Z é o mesmo nos
+  dois tradutores.
+
+### A camada Vulkan tem um manifesto por bitness
+
+O manifesto compartilhado era um só, mas o `library_path` tem bitness: instalar um jogo de 32 bits
+reescrevia o JSON apontando para `ReShade32.dll`, e as duas chaves do registro (64 e WOW6432Node)
+apontavam para o mesmo arquivo. Depois do Just Cause 2, DOOM Eternal e Baldur's Gate 3 ficaram sem
+camada. Agora são `ReShade64.json` e `ReShade32.json`, cada um na sua chave; `IsRegistered` confere
+o valor do registro, o arquivo e a DLL apontada (uma entrada pendurada conta como não registrada e
+é refeita); o manifesto único é aposentado na primeira instalação, e a bitness irmã volta ao
+registro quando a DLL dela já está na pasta compartilhada.
+
+### Verificação de origem mais dura
+
+- `IsGenuine` exige cadeia de certificado confiável, não só "subject contém NVIDIA Corporation".
+- Um `nvngx_dlssnr.dll` vizinho só entra no conjunto Streamline da biblioteca se passar na
+  verificação — antes um arquivo não verificado fazia `Repair` lançar para sempre.
+- `Kind` e `Version` vindos do índice são sanitizados antes de virar segmento de caminho.
+- `7zr.exe` fixado por versão, tamanho e SHA-256; o `.7z` do OptiScaler conferido pelo digest que
+  o GitHub publica. A guarda de zip-slip compara caminhos completos, não prefixo de string.
+- Um build `.SF` instalado pelo `FetchRuntimeAsync` grava `runtime.custom`, então a tela não o
+  chama mais de "assinado pela NVIDIA".
+- Arquivo baixado corrompido (índice, manifesto, zip) é apagado para a próxima tentativa baixar
+  de novo, e o cache só é gravado depois de o corpo ser parseado.
+
+### Linha de comando
+
+`dlss5 <jogo>` respeita o tradutor escolhido na interface (antes jogava instalações dgVoodoo de
+volta para o DXVK) e recusa jogo com anti-cheat como `install` já fazia (`--all` pula com
+`[pulado]`). `fix` deixou de dizer "ReShade já presente" com o ReShade ausente e de sair com 0 em
+bloqueio ou falha. `install` desfaz o proxy do ReShade que ele mesmo pôs quando o download do
+addon falha — e só esse. `add` recusa pasta-depósito (Downloads, raiz de disco). Os textos do
+`neural` e do `--check` acompanham RTX 20/30/40 e o dgVoodoo em D3D9 de 64 bits.
+
+### Tela
+
+O rollback de um download falho não apaga mais um proxy do ReShade que já existia antes. Instalar
+e remover refazem a cadeia da pasta (o `Dlss5Ready` ficava com a leitura velha). Trocar de
+executável enquanto o detalhe carrega, progresso de um jogo anterior escrevendo no status do
+atual, e a leitura do `PinnedExes` fora da thread de UI: as quatro corridas fechadas com o token
+de detalhe. Ajuste sem valor no ini deixa de nascer "sujo".
+
+### Arquivos de terceiros nunca somem sem backup
+
+`dgVoodoo.conf` e `dgVoodooCpl.exe` do usuário vão para `.renodx-bak` antes de serem escritos e
+voltam no remove; o launcher marca o que é dele com `.renodx-ours` e não guarda o próprio
+`D3D9.dll` como se fosse o original. O `OptiScaler.ini` que já existia volta no remove. `Afastar`
+não apaga mais um arquivo já afastado (numera). O scanner de conflitos deixou de acusar o
+OptiScaler que o próprio launcher instalou.
+
+### Detecção e persistência
+
+- Battle.net: só as pastas do cliente são ignoradas (`D:\Battle.net Games\Diablo IV` voltou).
+- Capa: cache de "não achei" vencido volta a consultar; "Portal" não recebe a capa de "Portal 2".
+- ExeHint da Epic com barra normal não duplica candidato. Entrada do índice sob slug compartilhado
+  herda o status da wiki.
+- Mod desativado pelo usuário continua desativado ao atualizar. Cache de settings vencido serve
+  quando está sem rede. Falha de I/O ao ler o `config.json` não é mais tratada como corrupção (o
+  próximo `Save` não grava padrões por cima). Cache de download compara ETag, não só tamanho.
+  `verify` só reconhece addon `renodx-*` como o mod carregado. Remover um mod apaga o registro dele.
+  "Enable HDR in Windows" não vira "ligue o HDR no jogo".
+- `IsBlackwell` não lê "RTX 5000 Ada Generation" como Blackwell. `ReassertEnabled` lê os dois
+  esquemas do ini.
+
+### Segunda rodada: o que a verificação dos consertos ainda achou
+
+Cada conserto passou por um cético independente lendo o diff contra o cenário original. Cinco
+saíram parciais e doze regressões apareceram; todas fechadas:
+
+- **Só o que é nosso sai.** O DXVK que o launcher instala ganha marcador (`d3d9.dll.renodx-ours`,
+  `d3d10core.dll.renodx-ours`); um DXVK que o usuário trouxe por conta própria fica, na
+  desinstalação e na troca de tradutor. Instalações do dgVoodoo e do OptiScaler feitas antes de
+  existir marcador são reconhecidas pelo binário idêntico ao da biblioteca, e um `.renodx-bak`
+  que é o nosso próprio binário não é "restaurado" (era assim que um wrapper sem conf sobrava).
+  O marcador de um addon travado por antivírus não some antes do arquivo.
+- **Backups nunca se sobrescrevem:** um segundo intruso num nome do D3D10 vai para `.pre-dxvk.3`,
+  e o ReShade que já existia na pasta vai para `.renodx-bak` antes de o nosso entrar — e volta
+  no remove.
+- **O interruptor neural liga pelo instalador inteiro**, não pelo `Apply` solto: desligar tira
+  tradutor, host64 e addon32, e religar precisa refazer tudo isso.
+- **Camada Vulkan:** máquina que subiu de versão com o `ReShade.json` único de pé continua
+  "registrada" numa reinstalação sem elevação (a migração fica para a próxima execução elevada),
+  e a bitness irmã volta ao registro assim que a DLL dela está na pasta compartilhada.
+- **Mensagens que dizem a verdade:** raiz de certificado ausente no Windows é dito como tal, e
+  não como "não assinado"; uma pasta de origem cujo único runtime foi recusado não vira "pasta
+  não encontrada"; `--dgvoodoo` num jogo D3D10 volta a avisar que foi ignorado.
+- **CLI:** `dlss5 --all` grava só as escolhas de tradutor desta execução sobre um config
+  recarregado, em vez de despejar um snapshot de minutos atrás por cima do que a interface
+  salvou; raiz de disco é recusada como pasta-depósito.
+- **Tela:** uma fixação de exe feita enquanto a varredura de fundo ainda roda não é sobrescrita
+  pela detecção; instalar explicitamente um mod que estava desligado o religa (só a atualização
+  em lote preserva o desligado).
+- **Detecção:** "Final Fantasy VII Remake" volta a casar com "Intergrade" (a régua de algarismo
+  romano olha o resto do nome, não o nome inteiro); o `InstallLocation` do Battle.net só vale
+  como pasta do cliente quando é mesmo a pasta do cliente.
+- **Config:** um `config.json` travado por 200 ms na abertura não desliga mais a persistência
+  da sessão inteira — o `TrySave` tenta reler antes de gravar, e uma recusa fica registrada.
+- O import de runtime pela tela deixa de passar 158 MB por `%TEMP%`; a guarda de zip-slip não
+  rejeita mais tudo quando o jogo está na raiz de um disco.
+
+### Testes
+
+O SmokeTest ganhou "desinstalar desinstala" (layout de 32 bits completo, DXVK D3D10 sobre um
+`dxgi.dll` ocupante, addon com marcador e um build da comunidade sem) e "Apply não duplica". O
+teste do ETag falhava havia vários releases sem defeito no código: o servidor gera ETag de
+mtime+tamanho, que o código ignora de propósito, e o teste passava `Size=1`; agora simula um build
+antigo do jeito que o código reconhece. Todos os testes passam.
+
 ## v1.70.0
 
 Direct3D 10 deixou de ser recusado. O Just Cause 2 — o jogo que motivou a recusa — roda DLSS 5.
