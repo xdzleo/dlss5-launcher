@@ -118,15 +118,33 @@ public static class VulkanLayerService
     /// carregar. Por isso os tres juntos — o valor no no certo, o manifesto no disco, e a DLL que
     /// ele aponta existindo e sendo da bitness pedida. Faltando qualquer um, nao esta registrada,
     /// e o DeployAsync reescreve tudo.
+    ///
+    /// O ReShade.json unico das versoes anteriores conta como registrado, com as mesmas tres
+    /// condicoes. Uma maquina que subiu de versao com ele de pe tem a camada funcionando; olhar
+    /// so pelo nome por bitness a declarava ausente, e uma reinstalacao SEM elevacao ia ao
+    /// DeployAsync, que precisa escrever em HKLM para migrar — estourava em
+    /// UnauthorizedAccessException e a pessoa ouvia que uma camada que estava funcionando falhou.
+    /// A migracao fica para a proxima execucao elevada, que passa pelo DeployAsync de qualquer
+    /// jeito.
     /// </summary>
     public static bool IsRegistered(string targetDir, bool jogo64Bits)
     {
         try
         {
-            var json = ManifestPath(targetDir, jogo64Bits);
             using var k = Registry.LocalMachine.OpenSubKey(jogo64Bits ? Key64 : Key32);
-            if (k?.GetValue(json) is null) return false;
-            return ManifestoIntegro(json, jogo64Bits);
+            if (k is null) return false;
+
+            var json = ManifestPath(targetDir, jogo64Bits);
+            if (k.GetValue(json) is not null) return ManifestoIntegro(json, jogo64Bits);
+
+            // Sem o nome por bitness: vale o unico, se a DLL dele e desta bitness. O unico servia
+            // a UMA bitness e estava nos dois nos, entao no outro no ele falha o ManifestoIntegro
+            // e cai no DeployAsync, como deve.
+            var antigo = LegacyManifestPath;
+            if (k.GetValue(antigo) is null) return false;
+            if (!ManifestoIntegro(antigo, jogo64Bits)) return false;
+            Log.Info($"vulkan layer: ReShade.json unico ainda serve ({(jogo64Bits ? "x64" : "x86")}); migra na proxima execucao elevada");
+            return true;
         }
         catch { return false; }
     }
