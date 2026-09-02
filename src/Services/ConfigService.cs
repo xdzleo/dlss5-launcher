@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RenoDXLauncher.Localization;
 
 namespace RenoDXLauncher.Services;
 
@@ -43,6 +44,15 @@ public class LauncherConfig
     /// </summary>
     [JsonIgnore]
     public bool NotLoaded { get; private set; }
+
+    /// <summary>
+    /// Por que a ultima gravacao nao aconteceu, ja traduzido para a tela; null quando a ultima
+    /// tentativa gravou. A recusa por NotLoaded e a falha de I/O eram so uma linha no log, e o
+    /// usuario mexia em nits e exes a sessao inteira sem saber que nada ficava. Quem chama
+    /// (interface, CLI) mostra isto depois de um TrySave falso.
+    /// </summary>
+    [JsonIgnore]
+    public string? LastSaveError { get; private set; }
 
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 
@@ -93,8 +103,22 @@ public class LauncherConfig
     {
         if (NotLoaded)
         {
-            Log.Warn("config save RECUSADO: o config.json nao pode ser lido nesta sessao, e gravar agora sobrescreveria o arquivo do usuario com os padroes");
-            return false;
+            // A falha de leitura na abertura quase sempre e passageira (a CLI no meio de um
+            // File.Replace, o antivirus segurando o handle por 200 ms). Recusar para sempre
+            // por causa disso desligava a persistencia da sessao inteira. Entao tenta ler de
+            // novo AGORA: se o arquivo le, o perigo que a recusa evitava (gravar padroes por
+            // cima de um config intacto) ja nao existe — e os valores desta instancia vencem,
+            // porque foi o usuario que os mudou nesta sessao. So recusa se a releitura tambem
+            // falhar, e ai diz por que.
+            var retry = Load();
+            if (retry.NotLoaded)
+            {
+                LastSaveError = L.T("Error_Config_SaveRefused");
+                Log.Warn("config save RECUSADO: o config.json continua ilegivel, e gravar agora sobrescreveria o arquivo do usuario com os padroes");
+                return false;
+            }
+            NotLoaded = false;
+            Log.Info("config: o config.json voltou a ser legivel, gravacao liberada");
         }
         try
         {
@@ -107,8 +131,14 @@ public class LauncherConfig
                 if (File.Exists(AppPaths.ConfigPath)) File.Replace(temp, AppPaths.ConfigPath, null);
                 else File.Move(temp, AppPaths.ConfigPath);
             }
+            LastSaveError = null;
             return true;
         }
-        catch (Exception ex) { Log.Warn($"config save: {ex.Message}"); return false; }
+        catch (Exception ex)
+        {
+            LastSaveError = L.T("Error_Config_SaveFailed", ex.Message);
+            Log.Warn($"config save: {ex.Message}");
+            return false;
+        }
     }
 }
