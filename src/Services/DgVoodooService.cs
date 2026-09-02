@@ -92,6 +92,11 @@ public static class DgVoodooService
     private const string D3d9File = "D3D9.dll";
     private const string CplFile = "dgVoodooCpl.exe";
 
+    /// <summary>Marca o que este launcher escreveu; `.renodx-bak` guarda o que era de outra pessoa.
+    /// Os dois juntos sao o que permite a remocao devolver a pasta ao que era.</summary>
+    private const string OursSuffix = ".renodx-ours";
+    private const string BackupSuffix = ".renodx-bak";
+
     public static string LibraryDir { get; } = Path.Combine(AppPaths.DataDir, "dgvoodoo");
     private static string LibraryConf { get; } = Path.Combine(LibraryDir, ConfFile);
     private static string LibraryX64 { get; } = Path.Combine(LibraryDir, "x64", D3d9File);
@@ -273,10 +278,12 @@ public static class DgVoodooService
         var origem = jogo64Bits ? LibraryX64 : LibraryX86;
         var destino = Path.Combine(targetDir, D3d9File);
         // O jogo pode ter um d3d9.dll proprio (outro wrapper, um mod antigo). Guardar antes de
-        // sobrescrever e o que permite desfazer.
-        var backup = destino + ".renodx-bak";
-        if (File.Exists(destino) && !File.Exists(backup)) File.Copy(destino, backup);
+        // sobrescrever e o que permite desfazer — desde que o que esta la nao seja o NOSSO, de
+        // uma instalacao anterior. Uma reinstalacao guardava o proprio wrapper como "original",
+        // e a remocao o devolvia sem o conf: um dgVoodoo rodando nos padroes que derrubam o jogo.
+        Guardar(destino, ehNosso: EhNossoD3d9(targetDir));
         File.Copy(origem, destino, overwrite: true);
+        Marcar(destino);
 
         EscreverConf(targetDir);
 
@@ -287,7 +294,12 @@ public static class DgVoodooService
         try
         {
             if (File.Exists(LibraryCpl))
-                File.Copy(LibraryCpl, Path.Combine(targetDir, CplFile), overwrite: true);
+            {
+                var cpl = Path.Combine(targetDir, CplFile);
+                Guardar(cpl, ehNosso: EhNossoCpl(cpl));
+                File.Copy(LibraryCpl, cpl, overwrite: true);
+                Marcar(cpl);
+            }
         }
         catch (Exception ex) { Log.Warn($"dgvoodoo cpl: {ex.Message}"); }
 
@@ -295,30 +307,45 @@ public static class DgVoodooService
         Log.Info($"dgvoodoo: D3D9.dll ({(jogo64Bits ? "x64" : "x86")}) implantado em {targetDir}");
     }
 
-    /// <summary>Copia o conf de referencia e corrige as tres chaves, preservando o resto do
-    /// arquivo — ele tem 22 KB de comentarios que explicam cada opcao.</summary>
+    /// <summary>
+    /// Copia o conf de referencia e corrige as tres chaves, preservando o resto do arquivo — ele
+    /// tem 22 KB de comentarios que explicam cada opcao.
+    ///
+    /// Um conf que JA estava na pasta e do usuario (um dgVoodoo instalado a mao, afinado): as
+    /// tres chaves sao corrigidas nele mesmo, porque o resto e escolha dele e continua valendo,
+    /// mas a versao intocada vai para `.renodx-bak` antes. E ela que a remocao devolve — antes a
+    /// remocao apagava o conf como se fosse nosso, e era a unica copia que existia.
+    /// </summary>
     private static void EscreverConf(string targetDir)
     {
         var destino = Path.Combine(targetDir, ConfFile);
-        if (!File.Exists(destino)) File.Copy(LibraryConf, destino);
+        if (File.Exists(destino)) Guardar(destino, ehNosso: EhNossoConf(destino));
+        else File.Copy(LibraryConf, destino);
 
-        var linhas = File.ReadAllLines(destino);
+        File.WriteAllLines(destino, Ajustar(File.ReadAllLines(destino)));
+        Marcar(destino);
+    }
+
+    /// <summary>As tres chaves que o pass neural exige, sobre as linhas de um conf qualquer.</summary>
+    private static string[] Ajustar(string[] linhas)
+    {
+        var saida = (string[])linhas.Clone();
         var secao = "";
-        for (int i = 0; i < linhas.Length; i++)
+        for (int i = 0; i < saida.Length; i++)
         {
-            var t = linhas[i].TrimStart();
+            var t = saida[i].TrimStart();
             if (t.StartsWith('[')) { secao = t.Trim(); continue; }
             if (t.StartsWith(';')) continue; // comentario, nao e chave
 
-            linhas[i] = (secao, Chave(t)) switch
+            saida[i] = (secao, Chave(t)) switch
             {
                 ("[General]", "OutputAPI") => "OutputAPI = d3d11_fl11_0",
                 ("[DirectX]", "DisableAndPassThru") => "DisableAndPassThru = false",
                 ("[DirectX]", "VRAM") => "VRAM = 1024",
-                _ => linhas[i],
+                _ => saida[i],
             };
         }
-        File.WriteAllLines(destino, linhas);
+        return saida;
     }
 
     private static string Chave(string linha)
@@ -327,25 +354,110 @@ public static class DgVoodooService
         return i < 0 ? "" : linha[..i].Trim();
     }
 
-    /// <summary>Tira o wrapper e devolve o d3d9.dll que estava ali antes, se havia um.</summary>
+    /// <summary>
+    /// Este d3d9.dll foi este launcher que pos?
+    ///
+    /// A marca `.renodx-ours` responde para tudo que foi instalado depois de ela existir. Para o
+    /// que veio antes, a assinatura de uma instalacao nossa e o binario identico ao da biblioteca
+    /// E o conf identico ao que este launcher escreve a partir do conf de referencia. Um dgVoodoo
+    /// do proprio usuario, mesmo da mesma versao, vem com o conf dele — e um conf diferente basta
+    /// para o tratarmos como de outra pessoa, que e o lado seguro do erro.
+    /// </summary>
+    private static bool EhNossoD3d9(string targetDir)
+    {
+        var d3d9 = Path.Combine(targetDir, D3d9File);
+        if (File.Exists(d3d9 + OursSuffix)) return true;
+        var conf = Path.Combine(targetDir, ConfFile);
+        return (Iguais(d3d9, LibraryX64) || Iguais(d3d9, LibraryX86))
+               && File.Exists(conf) && ConfEhORenderizado(conf);
+    }
+
+    private static bool EhNossoConf(string conf) =>
+        File.Exists(conf + OursSuffix) || ConfEhORenderizado(conf);
+
+    private static bool EhNossoCpl(string cpl) =>
+        File.Exists(cpl + OursSuffix) || Iguais(cpl, LibraryCpl);
+
+    /// <summary>O conf e, linha a linha, o que EscreverConf produz a partir do de referencia?</summary>
+    private static bool ConfEhORenderizado(string conf)
+    {
+        try
+        {
+            if (!File.Exists(conf) || !File.Exists(LibraryConf)) return false;
+            return File.ReadAllLines(conf).SequenceEqual(Ajustar(File.ReadAllLines(LibraryConf)));
+        }
+        catch { return false; }
+    }
+
+    /// <summary>Guarda como `.renodx-bak` o que ja estava na pasta, se for de outra pessoa e ainda
+    /// nao houver copia. A primeira copia e a que vale: e o estado de antes de nos.</summary>
+    private static void Guardar(string caminho, bool ehNosso)
+    {
+        var backup = caminho + BackupSuffix;
+        if (File.Exists(caminho) && !File.Exists(backup) && !ehNosso) File.Copy(caminho, backup);
+    }
+
+    private static void Marcar(string caminho)
+    {
+        try { File.WriteAllText(caminho + OursSuffix, DateTime.UtcNow.ToString("o")); }
+        catch (Exception ex) { Log.Warn($"dgvoodoo mark {Path.GetFileName(caminho)}: {ex.Message}"); }
+    }
+
+    /// <summary>Os dois arquivos existem e sao iguais byte a byte?</summary>
+    private static bool Iguais(string a, string b)
+    {
+        try
+        {
+            if (!File.Exists(a) || !File.Exists(b)) return false;
+            if (new FileInfo(a).Length != new FileInfo(b).Length) return false;
+            using var fa = File.OpenRead(a);
+            using var fb = File.OpenRead(b);
+            var ba = new byte[1 << 16];
+            var bb = new byte[1 << 16];
+            int na;
+            while ((na = fa.Read(ba, 0, ba.Length)) > 0)
+            {
+                var nb = fb.ReadAtLeast(bb.AsSpan(0, na), na, throwOnEndOfStream: false);
+                if (nb != na || !ba.AsSpan(0, na).SequenceEqual(bb.AsSpan(0, nb))) return false;
+            }
+            return true;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Tira o wrapper e devolve a pasta ao que era: o d3d9.dll, o conf e o painel que estavam ali
+    /// antes voltam do `.renodx-bak`; o que era nosso sai; o que nao e nem uma coisa nem outra
+    /// fica, porque apagar sem copia nao se desfaz.
+    /// </summary>
     public static void Remove(string targetDir)
     {
         try
         {
-            var alvo = Path.Combine(targetDir, D3d9File);
-            var backup = alvo + ".renodx-bak";
-            if (File.Exists(backup)) { File.Copy(backup, alvo, overwrite: true); File.Delete(backup); }
-            else if (File.Exists(alvo)) File.Delete(alvo);
+            // Decidido antes de mexer no conf: a assinatura das instalacoes de antes da marca
+            // depende dele, e ele e devolvido logo abaixo.
+            var d3d9EraNosso = EhNossoD3d9(targetDir);
+            var conf = Path.Combine(targetDir, ConfFile);
+            var cpl = Path.Combine(targetDir, CplFile);
 
-            // O conf e o painel sao nossos; sem o wrapper nao servem a nada e so confundem quem
-            // for olhar a pasta depois.
-            foreach (var f in new[] { ConfFile, CplFile })
-            {
-                var p = Path.Combine(targetDir, f);
-                if (File.Exists(p)) File.Delete(p);
-            }
+            Devolver(Path.Combine(targetDir, D3d9File), d3d9EraNosso);
+            // O conf e o painel sem o wrapper nao servem a nada e so confundem quem for olhar a
+            // pasta depois — mas so os NOSSOS. Os que tem copia guardada eram do usuario.
+            Devolver(conf, d3d9EraNosso || EhNossoConf(conf));
+            Devolver(cpl, d3d9EraNosso || EhNossoCpl(cpl));
         }
         catch (Exception ex) { Log.Warn($"dgvoodoo remove {targetDir}: {ex.Message}"); }
+    }
+
+    private static void Devolver(string caminho, bool ehNosso)
+    {
+        var backup = caminho + BackupSuffix;
+        var marca = caminho + OursSuffix;
+        if (File.Exists(backup)) { File.Copy(backup, caminho, overwrite: true); File.Delete(backup); }
+        else if (File.Exists(caminho) && (ehNosso || File.Exists(marca))) File.Delete(caminho);
+        else if (File.Exists(caminho))
+            Log.Warn($"dgvoodoo remove: {Path.GetFileName(caminho)} nao e nosso e nao tem copia; fica");
+        if (File.Exists(marca)) File.Delete(marca);
     }
 
     /// <summary>
