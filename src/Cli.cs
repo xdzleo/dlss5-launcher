@@ -631,9 +631,11 @@ public static class Cli
                 Console.WriteLine("  metades 32 bits: com transporte Vulkan");
         }
         else if (VulkanLayerService.Applies(exe))
-            Console.WriteLine("  ReShade entra  : camada Vulkan (jogo Vulkan nativo)");
+            Console.WriteLine("  ReShade entra  : camada Vulkan (jogo Vulkan nativo)"
+                              + (forcarDgVoodoo ? "; --dgvoodoo ignorado" : ""));
         else
-            Console.WriteLine($"  ReShade entra  : proxy ({det.ReShadeDllName ?? "a decidir"})");
+            Console.WriteLine($"  ReShade entra  : proxy ({det.ReShadeDllName ?? "a decidir"})"
+                              + (forcarDgVoodoo ? "; --dgvoodoo ignorado (o jogo nao e D3D9)" : ""));
 
         if (pe?.Is64Bit == false)
             Console.WriteLine("  processo extra : host64 (o DLSS e x64; um jogo de 32 bits nao o carrega)");
@@ -673,7 +675,10 @@ public static class Cli
         }
 
         int ok = 0, pulados = 0, falhos = 0;
-        var configMudou = false;
+        // So as entradas que ESTA execucao mudou, nao o snapshot inteiro da config: em --all o
+        // loop leva minutos e a interface pode ter gravado outra coisa nesse meio tempo (nits,
+        // exe fixado). Gravar ctx.Config no fim devolvia a config de quando o comando comecou.
+        var tradutoresMudados = new List<(string Chave, string Valor)>();
         foreach (var g in alvos)
         {
             var (_, state) = StateOf(ctx, g);
@@ -694,10 +699,14 @@ public static class Cli
                 if (!soPlano && ctx.Config.D3d9Translator.GetValueOrDefault(chave) != "dgvoodoo")
                 {
                     ctx.Config.D3d9Translator[chave] = "dgvoodoo";
-                    configMudou = true;
+                    tradutoresMudados.Add((chave, "dgvoodoo"));
                 }
             }
             var usarDgVoodoo = escolha == "dgvoodoo";
+            // A escolha gravada so existe para jogo D3D9; num D3D10 (Just Cause 2) ou D3D11 o
+            // --dgvoodoo nao vira config, mas tem de CHEGAR ao instalador e ao plano, senao o
+            // pedido some em silencio — o instalador e quem diz que o dgVoodoo nao traduz D3D10.
+            var forcarDgVoodoo = usarDgVoodoo || dgvoodoo;
 
             // O mesmo guarda do `install`: injetar DLL num jogo com EAC/BattlEye pode banir a
             // conta, o unico dano irreversivel que este programa causa. Em --all o jogo e
@@ -718,7 +727,7 @@ public static class Cli
 
             if (soPlano)
             {
-                ImprimirPlano(g, target, exe, usarDgVoodoo, ac);
+                ImprimirPlano(g, target, exe, forcarDgVoodoo, ac);
                 ok++;
                 continue;
             }
@@ -727,7 +736,7 @@ public static class Cli
                 index, reshade, ctx.Rhi,
                 // no modo --all so o resultado interessa; passo a passo poluiria dezenas de jogos
                 alvos.Count == 1 ? new Progress<string>(s => Console.WriteLine("  " + s)) : null,
-                default, preferirDxvk: !usarDgVoodoo, forcarDgVoodoo: usarDgVoodoo);
+                default, preferirDxvk: !usarDgVoodoo, forcarDgVoodoo: forcarDgVoodoo);
 
             if (r.Ok)
             {
@@ -748,7 +757,15 @@ public static class Cli
             }
         }
 
-        if (configMudou) ctx.Config.Save();
+        if (tradutoresMudados.Count > 0)
+        {
+            // Recarrega do disco e aplica so as entradas deste comando, por cima do que estiver
+            // la AGORA. Se a leitura falhar (NotLoaded) o Save recusa sozinho, e e o certo:
+            // melhor perder a escolha de tradutor do que gravar padroes por cima da config.
+            var fresco = LauncherConfig.Load();
+            foreach (var (chave, valor) in tradutoresMudados) fresco.D3d9Translator[chave] = valor;
+            fresco.Save();
+        }
         if (alvos.Count > 1) Console.WriteLine($"\n{ok} instalado(s), {pulados} pulado(s), {falhos} com falha");
         return falhos > 0 ? 2 : 0;
     }
@@ -862,7 +879,13 @@ public static class Cli
         // raiz de unidade) em silencio, entao o comando dizia "registrado" e "reconhecido como
         // <algum exe da pasta>" para um jogo que nunca apareceria no `list`. A mesma recusa da
         // interface, e a entrada inutil sai da config se ja estava la.
-        if (FolderGameResolver.EhDeposito(dir))
+        //
+        // A raiz de unidade e recusada aqui tambem, sem depender do EhDeposito: `D:\` e o
+        // caso em que Path.GetFileName devolve vazio e o carregador nunca aceitaria a pasta.
+        var raiz = Path.GetPathRoot(dir);
+        var ehRaiz = raiz is not null
+                     && Path.TrimEndingDirectorySeparator(raiz).Equals(dir, StringComparison.OrdinalIgnoreCase);
+        if (ehRaiz || FolderGameResolver.EhDeposito(dir))
         {
             var nome = Path.GetFileName(dir);
             Console.Error.WriteLine(L.T("Main_AddGame_Deposito", string.IsNullOrEmpty(nome) ? dir : nome));
