@@ -108,7 +108,8 @@ public static class DlssRuntimeService
         catch (Exception ex) { Log.Warn($"dlss version {path}: {ex.Message}"); return null; }
     }
 
-    /// <summary>True when the file really is an NVIDIA-signed runtime with an intact digest.</summary>
+    /// <summary>True when the file really is an NVIDIA-signed runtime with an intact digest and a
+    /// certificate chain that reaches a trusted root.</summary>
     public static bool IsGenuine(string path, out string detail)
     {
         var r = Authenticode.Verify(path);
@@ -117,6 +118,15 @@ public static class DlssRuntimeService
         if (r.Subject is null || !r.Subject.Contains(NvidiaSubject, StringComparison.OrdinalIgnoreCase))
         {
             detail = L.T("Dlss_NotNvidia", r.Subject ?? "?");
+            return false;
+        }
+        // O subject diz quem assinou; a cadeia e quem prova. Sem exigir a cadeia, "assinado pela
+        // NVIDIA" era uma comparacao de texto: qualquer certificado auto-assinado com "NVIDIA
+        // Corporation" no nome volta do WinVerifyTrust como CERT_E_UNTRUSTEDROOT com o digesto
+        // integro, e passava por aqui. Uma CA de verdade nao emite esse nome para outra empresa.
+        if (!r.ChainTrusted)
+        {
+            detail = L.T("Dlss_UntrustedChain", r.Detail);
             return false;
         }
         return true;
@@ -345,9 +355,29 @@ public static class DlssRuntimeService
 
         // Verificacao ANTES de escrever qualquer coisa: ou tudo esta assinado pela NVIDIA, ou nao
         // se mexe em nada. Meia troca e pior que nenhuma.
+        //
+        // O runtime neural e a excecao, e so ele: no conjunto ele e passageiro, nao membro. Quem
+        // o implanta de verdade e o NeuralUpliftService, a partir da biblioteca dele e com a regra
+        // dele (assinatura OU hash fixado do build da comunidade). Em RTX 20/30/40 esse build e um
+        // binario patcheado, sem assinatura, e o instalador o deixa ao lado do conjunto Streamline
+        // do jogo — de onde AutoDiscoverStreamlineSet o levava para a biblioteca. Abortar por
+        // causa dele fazia TODO Corrigir de TODO jogo falhar, para sempre, sem nada a consertar
+        // no conjunto em si. Pular e registrar e o certo: o conjunto continua coerente sem ele.
+        var recusados = new List<string>();
         foreach (var src in source)
-            if (!IsGenuine(src, out var why))
-                throw new InvalidOperationException(L.T("Dlss_NotNvidia", why));
+        {
+            if (IsGenuine(src, out var why)) continue;
+            if (Path.GetFileName(src).Equals(NeuralUpliftService.RuntimeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Warn($"dlss fg: {src} ignorado, nao acompanha o conjunto: {why}");
+                recusados.Add(src);
+                continue;
+            }
+            throw new InvalidOperationException(L.T("Dlss_NotNvidia", why));
+        }
+        source.RemoveAll(recusados.Contains);
+        if (source.Count == 0)
+            throw new InvalidOperationException(L.T("Dlss_Fg_NoSource", sourceDir));
 
         // TODA pasta que tem um interposer, mais a do executavel.
         //
@@ -477,11 +507,25 @@ public static class DlssRuntimeService
                     foreach (var f in files.Append(fg))
                         File.Copy(f, Path.Combine(LibrarySetDir, Path.GetFileName(f)), overwrite: true);
                     // o runtime neural e as licencas viajam com o conjunto quando existem
-                    foreach (var extra in Directory.EnumerateFiles(dir)
-                                 .Where(f => Path.GetFileName(f).Equals(NeuralUpliftService.RuntimeFile,
-                                                 StringComparison.OrdinalIgnoreCase)
-                                             || f.EndsWith(".license.txt", StringComparison.OrdinalIgnoreCase)))
-                        File.Copy(extra, Path.Combine(LibrarySetDir, Path.GetFileName(extra)), overwrite: true);
+                    foreach (var extra in Directory.EnumerateFiles(dir))
+                    {
+                        var nome = Path.GetFileName(extra);
+                        var neural = nome.Equals(NeuralUpliftService.RuntimeFile, StringComparison.OrdinalIgnoreCase);
+                        if (!neural && !nome.EndsWith(".license.txt", StringComparison.OrdinalIgnoreCase)) continue;
+                        // A mesma barra dos outros membros. O runtime neural que o instalador deixa
+                        // ao lado do conjunto e, fora de Blackwell, o build da comunidade — sem
+                        // assinatura, aceito la por hash fixado numa origem conhecida, que aqui
+                        // nao existe: uma pasta de jogo nao tem origem. Copia-lo para a biblioteca
+                        // envenenava o conjunto: ApplyFrameGeneration recusava a origem inteira e
+                        // todo Corrigir passava a falhar. Ele nao faz falta aqui — o
+                        // NeuralUpliftService o implanta da biblioteca propria.
+                        if (neural && !IsGenuine(extra, out var why))
+                        {
+                            Log.Info($"dlss set: {nome} de {dir} nao copiado: {why}");
+                            continue;
+                        }
+                        File.Copy(extra, Path.Combine(LibrarySetDir, nome), overwrite: true);
+                    }
                     Log.Info($"dlss set: conjunto {versions[0]} guardado de {dir}");
                     return versions[0];
                 }
@@ -599,8 +643,15 @@ public static class DlssRuntimeService
         throw new InvalidOperationException(L.T("Dlss_Repair_NoReference"));
     }
 
-    /// <summary>Put the studio's builds back. The backups stay on disk: they cost a few MB and
-    /// they are the only copy of what the game shipped with.</summary>
+    /// <summary>Put the studio's builds back and retire the backup once the original is in place.
+    ///
+    /// The backup used to stay on disk after a restore, on the reasoning that it was the only
+    /// copy of what the game shipped with. After a restore it is not: the original IS back. What
+    /// keeping it did was leave <see cref="IsApplied"/> true forever — it is defined as "a runtime
+    /// backup exists" — so the per-game button stayed in "restore" mode, the game kept showing in
+    /// the swapped-games banner, and the newer runtime could never be applied again from the UI.
+    /// <see cref="RestoreAll"/> already retired identical backups; this path now does the same,
+    /// and only after confirming the copy landed.</summary>
     public static int Restore(string installDir, string targetDir)
     {
         if (AddonService.IsGameRunning(targetDir))
@@ -614,7 +665,7 @@ public static class DlssRuntimeService
             // outro extremo tambem e errado: o instalador de DLSS 5 deixa backup do ADDON, e o
             // "*" varria isso junto. Reverter o runtime do jogo passava a reverter o addon para
             // um build antigo de brinde, sem ninguem ter pedido.
-            foreach (var bak in RuntimeBackups(installDir))
+            foreach (var bak in RuntimeBackups(installDir).ToList())
             {
                 var original = bak[..^BackupSuffix.Length];
                 try
@@ -622,12 +673,34 @@ public static class DlssRuntimeService
                     File.Copy(bak, original, overwrite: true);
                     restored++;
                     Log.Info($"dlss restore: {original}");
+                    RetireBackup(bak, original);
                 }
                 catch (Exception ex) { Log.Warn($"dlss restore {bak}: {ex.Message}"); }
             }
         }
         catch (Exception ex) { Log.Warn($"dlss restore scan {installDir}: {ex.Message}"); }
         return restored;
+    }
+
+    /// <summary>
+    /// Apaga o backup DEPOIS de conferir que o original devolvido e identico a ele. Nunca antes:
+    /// o backup e a unica copia do que o estudio distribuiu, e uma copia que falhou pela metade
+    /// nao pode custar essa copia. Um backup que nao confere fica, e o log diz por que.
+    /// </summary>
+    private static void RetireBackup(string bak, string original)
+    {
+        try
+        {
+            if (File.Exists(original)
+                && new FileInfo(original).Length == new FileInfo(bak).Length
+                && ReadVersion(original) == ReadVersion(bak))
+            {
+                File.Delete(bak);
+                return;
+            }
+            Log.Warn($"dlss restore: backup mantido, original nao confere: {bak}");
+        }
+        catch (Exception ex) { Log.Warn($"dlss restore backup {bak}: {ex.Message}"); }
     }
 
     /// <param name="Restored">Arquivos devolvidos ao original.</param>

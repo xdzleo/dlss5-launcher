@@ -75,8 +75,11 @@ public static class Authenticode
     /// adulterado depois da assinatura, ou sem assinatura nenhuma.
     /// </param>
     /// <param name="ChainTrusted">
-    /// A cadeia sobe ate uma raiz confiavel do Windows. Falso e ESPERADO para certificado
-    /// auto-assinado - nao e sinal de adulteracao.
+    /// A cadeia sobe ate uma raiz confiavel do Windows (WinVerifyTrust devolveu S_OK). Falso e
+    /// ESPERADO para certificado auto-assinado - nao e sinal de adulteracao, mas tambem nao e
+    /// prova de identidade: e o que separa "diz que e a NVIDIA" de "uma CA confirma que e".
+    /// <see cref="DlssRuntimeService.IsGenuine"/> exige os dois. Revogacao nao e consultada
+    /// (WTD_REVOKE_NONE), entao o veredito nao depende de rede.
     /// </param>
     public readonly record struct Result(bool DigestIntact, bool ChainTrusted, string? Sha256Thumbprint, string? Subject, string Detail);
 

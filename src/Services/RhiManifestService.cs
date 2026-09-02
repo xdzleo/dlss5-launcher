@@ -31,53 +31,125 @@ public class RhiManifestService
 
     public async Task LoadAsync()
     {
-        string? json = null;
         var cachePath = Path.Combine(AppPaths.DataDir, "rhi_manifest.json");
+
+        // Cada corpo e parseado ANTES de valer alguma coisa: o baixado so vira cache se parseou,
+        // e um cache que deixou de parsear e apagado. Antes o download era gravado sem olhar, e
+        // um manifesto que quebrava o Parse (ou uma pagina de proxy com 200) ficava tres dias
+        // servindo um servico pela metade — e o snapshot embutido, que existe para isso, nunca
+        // era consultado, porque so entrava quando NAO havia corpo nenhum.
+        if (File.Exists(cachePath) && DateTime.UtcNow - File.GetLastWriteTimeUtc(cachePath) < CacheTtl)
+        {
+            if (await TryParseFileAsync(cachePath, "cache")) return;
+            TryDelete(cachePath);
+        }
+
+        string? json = null;
         try
         {
-            if (File.Exists(cachePath) && DateTime.UtcNow - File.GetLastWriteTimeUtc(cachePath) < CacheTtl)
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
+            json = await http.GetStringAsync(Url);
+        }
+        catch (Exception ex) { Log.Warn($"RHI manifest fetch: {ex.Message}"); }
+
+        if (json is not null && TryParse(json, "download"))
+        {
+            try
             {
-                json = await File.ReadAllTextAsync(cachePath);
-            }
-            else
-            {
-                using var http = new HttpClient();
-                http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-                json = await http.GetStringAsync(Url);
                 Directory.CreateDirectory(AppPaths.DataDir);
                 await File.WriteAllTextAsync(cachePath, json);
             }
+            catch (Exception ex) { Log.Warn($"RHI manifest cache: {ex.Message}"); }
+            return;
+        }
+
+        // Sem rede ou com corpo imprestavel: cache vencido, e por ultimo o snapshot embutido.
+        if (File.Exists(cachePath))
+        {
+            if (await TryParseFileAsync(cachePath, "cache vencido")) return;
+            TryDelete(cachePath);
+        }
+        Log.Warn("RHI manifest: usando o snapshot embutido");
+        try { TryParse(CatalogService.ReadEmbedded("rhi_manifest.fallback.json"), "embutido"); }
+        catch (Exception ex) { Log.Warn($"RHI manifest embedded: {ex.Message}"); }
+    }
+
+    private async Task<bool> TryParseFileAsync(string path, string origem)
+    {
+        try { return TryParse(await File.ReadAllTextAsync(path), origem); }
+        catch (Exception ex) { Log.Warn($"RHI manifest read ({origem}): {ex.Message}"); return false; }
+    }
+
+    /// <summary>Parse do zero. Um corpo que falha no meio nao deixa metade: as tabelas voltam
+    /// vazias para o proximo candidato preencher.</summary>
+    private bool TryParse(string json, string origem)
+    {
+        Clear();
+        try
+        {
+            Parse(json);
+            return true;
         }
         catch (Exception ex)
         {
-            Log.Warn($"RHI manifest fetch: {ex.Message}");
-            if (File.Exists(cachePath)) json = await File.ReadAllTextAsync(cachePath);
+            Log.Warn($"RHI manifest parse ({origem}): {ex.Message}");
+            Clear();
+            return false;
         }
-        try
-        {
-            json ??= CatalogService.ReadEmbedded("rhi_manifest.fallback.json");
-            Parse(json);
-        }
-        catch (Exception ex) { Log.Warn($"RHI manifest parse: {ex.Message}"); }
+    }
+
+    private void Clear()
+    {
+        _installPath.Clear();
+        _api.Clear();
+        _dllName.Clear();
+        _notes.Clear();
+        _rich.Clear();
+        _reshadeVersion.Clear();
+        _nativeHdr.Clear();
+        _dlssSkip.Clear();
+    }
+
+    private static void TryDelete(string path)
+    {
+        try { File.Delete(path); }
+        catch (Exception ex) { Log.Warn($"RHI manifest delete {path}: {ex.Message}"); }
+    }
+
+    /// <summary>String ou null — nunca lanca. GetString lanca em qualquer outro ValueKind, e um
+    /// unico valor fora do formato esperado derrubava o manifesto inteiro.</summary>
+    private static string? Str(JsonElement e) =>
+        e.ValueKind == JsonValueKind.String ? e.GetString() : null;
+
+    /// <summary>Propriedade de um elemento que PODE nao ser objeto. TryGetProperty lanca num
+    /// valor que nao e objeto; aqui vira "nao tem".</summary>
+    private static bool TryProp(JsonElement e, string name, out JsonElement value)
+    {
+        if (e.ValueKind == JsonValueKind.Object) return e.TryGetProperty(name, out value);
+        value = default;
+        return false;
     }
 
     private void Parse(string json)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
+        if (root.ValueKind != JsonValueKind.Object)
+            throw new JsonException("raiz do manifesto nao e um objeto");
         FillMap(root, "installPathOverrides", _installPath);
         FillMap(root, "graphicsApiOverrides", _api);
         if (root.TryGetProperty("dllNameOverrides", out var dll) && dll.ValueKind == JsonValueKind.Object)
             foreach (var p in dll.EnumerateObject())
-                if (p.Value.TryGetProperty("reshade", out var r) && r.GetString() is { Length: > 0 } v)
+                if (TryProp(p.Value, "reshade", out var r) && Str(r) is { Length: > 0 } v)
                     _dllName[MatchService.Normalize(p.Name)] = v;
         if (root.TryGetProperty("gameNotes", out var notes) && notes.ValueKind == JsonValueKind.Object)
             foreach (var p in notes.EnumerateObject())
-                if (p.Value.TryGetProperty("notes", out var n) && n.GetString() is { Length: > 0 } v)
+                if (TryProp(p.Value, "notes", out var n) && Str(n) is { Length: > 0 } v)
                     _notes[MatchService.Normalize(p.Name)] = v;
         if (root.TryGetProperty("nativeHdrGames", out var native) && native.ValueKind == JsonValueKind.Array)
             foreach (var g in native.EnumerateArray())
-                if (g.GetString() is { Length: > 0 } v)
+                if (Str(g) is { Length: > 0 } v)
                     _nativeHdr.Add(MatchService.Normalize(v));
 
         // Games the index says to keep away from DLSS entirely. Detecting a bundled runtime is not
@@ -86,7 +158,7 @@ public class RhiManifestService
         // someone maintains against real reports is worth more than any heuristic here.
         if (root.TryGetProperty("dlssSkipGames", out var skip) && skip.ValueKind == JsonValueKind.Array)
             foreach (var g in skip.EnumerateArray())
-                if (g.GetString() is { Length: > 0 } v)
+                if (Str(g) is { Length: > 0 } v)
                     _dlssSkip.Add(MatchService.Normalize(v));
 
         // The manifest carries 64 top-level keys and this service used to read five. Everything
@@ -100,9 +172,9 @@ public class RhiManifestService
 
         // installWarnings is keyed by game and then by mod family (renodx / reshade / luma)
         if (root.TryGetProperty("installWarnings", out var warn) && warn.ValueKind == JsonValueKind.Object)
-            foreach (var p in warn.EnumerateObject())
+            foreach (var p in warn.EnumerateObject().Where(p => p.Value.ValueKind == JsonValueKind.Object))
                 foreach (var sub in p.Value.EnumerateObject())
-                    if (sub.Value.GetString() is { Length: > 0 } text)
+                    if (Str(sub.Value) is { Length: > 0 } text)
                         Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Warning,
                             // sub.Name is the mod family key (renodx / reshade / luma), kept raw
                             L.T("Install_Warning_Title", sub.Name),
@@ -112,7 +184,7 @@ public class RhiManifestService
         // A game pinned to an older ReShade: installing the current build silently breaks the mod.
         if (root.TryGetProperty("legacyReShadeVersions", out var legacy) && legacy.ValueKind == JsonValueKind.Object)
             foreach (var p in legacy.EnumerateObject())
-                if (p.Value.GetString() is { Length: > 0 } ver)
+                if (Str(p.Value) is { Length: > 0 } ver)
                 {
                     _reshadeVersion[MatchService.Normalize(p.Name)] = ver;
                     Add(p.Name, new ModNote(NoteSource.Rhi, NoteKind.Warning,
@@ -125,8 +197,8 @@ public class RhiManifestService
         if (root.TryGetProperty("forceExternalOnly", out var ext) && ext.ValueKind == JsonValueKind.Object)
             foreach (var p in ext.EnumerateObject())
             {
-                var url = p.Value.TryGetProperty("url", out var u) ? u.GetString() : null;
-                var label = p.Value.TryGetProperty("label", out var l) ? l.GetString() : null;
+                var url = TryProp(p.Value, "url", out var u) ? Str(u) : null;
+                var label = TryProp(p.Value, "label", out var l) ? Str(l) : null;
                 if (url is { Length: > 0 })
                     // Worded as an offer, not as a fact about distribution: several of these games
                     // DO have a working snapshot in the wiki, and the old wording contradicted the
@@ -143,7 +215,7 @@ public class RhiManifestService
 
         // Values the index says to force in ReShade.ini for this game.
         if (root.TryGetProperty("renodxIniOverrides", out var ini) && ini.ValueKind == JsonValueKind.Object)
-            foreach (var p in ini.EnumerateObject())
+            foreach (var p in ini.EnumerateObject().Where(p => p.Value.ValueKind == JsonValueKind.Object))
             {
                 var lines = p.Value.EnumerateObject()
                     .Select(kv => $"{kv.Name}={kv.Value.ToString()}")
@@ -175,13 +247,13 @@ public class RhiManifestService
         foreach (var p in el.EnumerateObject())
         {
             if (p.Value.ValueKind != JsonValueKind.Object) continue;
-            if (!p.Value.TryGetProperty("notes", out var n) || n.GetString() is not { Length: > 0 } text)
+            if (!p.Value.TryGetProperty("notes", out var n) || Str(n) is not { Length: > 0 } text)
                 continue;
             List<NoteLink>? links = null;
-            if (p.Value.TryGetProperty("notesUrl", out var u) && u.GetString() is { Length: > 0 } url)
+            if (p.Value.TryGetProperty("notesUrl", out var u) && Str(u) is { Length: > 0 } url)
             {
                 var label = p.Value.TryGetProperty("notesUrlLabel", out var lb)
-                    && lb.GetString() is { Length: > 0 } lv ? lv : L.T("Common_Open");
+                    && Str(lb) is { Length: > 0 } lv ? lv : L.T("Common_Open");
                 links = new List<NoteLink> { new(label, url) };
             }
             Add(p.Name, new ModNote(NoteSource.Rhi,
@@ -196,7 +268,7 @@ public class RhiManifestService
     {
         if (!root.TryGetProperty(prop, out var el) || el.ValueKind != JsonValueKind.Array) return;
         foreach (var g in el.EnumerateArray())
-            if (g.GetString() is { Length: > 0 } name)
+            if (Str(g) is { Length: > 0 } name)
                 Add(name, new ModNote(NoteSource.Rhi, NoteKind.Info,
                     L.T("Install_Architecture_Title"),
                     L.T("Install_Architecture_Text", bits)));
