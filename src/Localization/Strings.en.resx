@@ -774,6 +774,10 @@
   <data name="Dlss_Sweep_Title" xml:space="preserve">
     <value>These games are running a DLSS runtime this launcher replaced:</value>
   </data>
+  <data name="Dlss_UntrustedChain" xml:space="preserve">
+    <value>The signature names NVIDIA but its certificate chain does not reach a trusted root ({0}). Skipped.</value>
+    <comment>{0} = diagnóstico do WinVerifyTrust (ex.: raiz não confiável, certificado auto-assinado).</comment>
+  </data>
   <data name="Dlss_Updating" xml:space="preserve">
     <value>{0}: {1} -&gt; {2}</value>
     <comment>{0} = feature (Super Resolution etc), {1} = versao atual, {2} = versao nova.</comment>
@@ -963,7 +967,11 @@
     <value>32-bit ReShade Vulkan layer registered.</value>
   </data>
   <data name="Dlss5_Step_VulkanLayerFailed" xml:space="preserve">
-    <value>Could not register the 32-bit Vulkan layer — the game will not see ReShade.</value>
+    <value>Could not register the Vulkan layer: {0}</value>
+  </data>
+  <data name="Dlss5_Step_VulkanLayerFailedBits" xml:space="preserve">
+    <value>Could not register the {0}-bit Vulkan layer in HKLM — the game will not see ReShade.</value>
+    <comment>{0} = 64 ou 32, a bitness do executavel do jogo.</comment>
   </data>
   <data name="Dxvk_Deployed" xml:space="preserve">
     <value>DXVK installed: the game renders through Vulkan, where the motion-vector shaders compile.</value>
@@ -1291,6 +1299,10 @@ Only continue if you are going to play OFFLINE.</value>
   <data name="Install_Mod_Done" xml:space="preserve">
     <value>{0} installed.</value>
     <comment>{0} = nome do arquivo do addon.</comment>
+  </data>
+  <data name="Install_Mod_DoneDisabled" xml:space="preserve">
+    <value>{0} updated, but it stays disabled — you had turned it off.</value>
+    <comment>{0} = nome do arquivo do addon. AddonService.DownloadAddonAsync quando o mod estava com o sufixo .disabled: a build nova vai para o mesmo nome desligado, e o interruptor fica como o usuario deixou.</comment>
   </data>
   <data name="Install_Mod_Downloading" xml:space="preserve">
     <value>Downloading {0}...</value>
@@ -1924,6 +1936,9 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>Looking for the neural runtime in {0}...</value>
     <comment>{0} = nome da pasta sendo varrida.</comment>
   </data>
+  <data name="OptiNr_Corrupt" xml:space="preserve">
+    <value>The OptiScaler_DLSSNR download is not a valid zip archive.</value>
+  </data>
   <data name="OptiNr_Deployed" xml:space="preserve">
     <value>OptiScaler_DLSSNR installed. In game, Insert opens its overlay — neural rendering starts off there.</value>
   </data>
@@ -1936,11 +1951,23 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="OptiNr_NotInLibrary" xml:space="preserve">
     <value>OptiScaler_DLSSNR is not in the library yet.</value>
   </data>
+  <data name="OptiScaler_7zBadHash" xml:space="preserve">
+    <value>The downloaded 7-Zip extractor does not match the pinned build ({0}); it will not be run.</value>
+  </data>
+  <data name="OptiScaler_ArchiveBadHash" xml:space="preserve">
+    <value>The OptiScaler archive does not match the checksum published in its release.</value>
+  </data>
+  <data name="OptiScaler_ArchiveCorrupt" xml:space="preserve">
+    <value>The OptiScaler download is not a valid .7z archive.</value>
+  </data>
   <data name="OptiScaler_BadHost" xml:space="preserve">
     <value>Refused to download from an unexpected host: {0}</value>
   </data>
   <data name="OptiScaler_Deployed" xml:space="preserve">
     <value>OptiScaler in place — the game's FSR/XeSS now feeds DLSS.</value>
+  </data>
+  <data name="OptiScaler_ExtractFailed" xml:space="preserve">
+    <value>The 7-Zip extractor exited with code {0}.</value>
   </data>
   <data name="OptiScaler_Fetching" xml:space="preserve">
     <value>Downloading OptiScaler from its author's repository…</value>

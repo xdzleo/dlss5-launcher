@@ -6,3 +6,4 @@ dist/
 publish/
 *.user
 __pycache__/
+.claude/worktrees/

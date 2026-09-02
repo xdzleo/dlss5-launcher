@@ -206,6 +206,79 @@ try
 }
 catch (Exception ex) { Check(false, $"DXVK D3D10 na pasta falsa: {ex.Message}"); }
 
+// 3d. Desinstalar desinstala — o caminho de 32 bits inteiro. Ate a 1.71 o Remove so conhecia a
+// pasta do jogo: o addon32, o host64\ com o interruptor em 1 e os tradutores ficavam, e o
+// IsApplied (que le o host64\ReShade.ini) devolvia o botao para "ligado". Foi assim que o
+// Just Cause 2 desta maquina ficou depois de um desligar.
+try
+{
+    var jcIni = Path.Combine(jcRoot, "ReShade.ini");
+    File.WriteAllText(jcIni, "[RENODX-DLSS]\nDirectNeuralRenderingEnabled=1\n\n[ADDON]\nLoadFromDllMain=renodx-dlss5.addon64\n");
+    File.WriteAllText(Path.Combine(jcRoot, "dlss5-feed.addon32"), "MZaddon32");
+    File.WriteAllText(Path.Combine(jcRoot, "renodx-dlss5.addon64"), "MZaddon64-renomeado");
+    File.WriteAllText(Path.Combine(jcRoot, "renodx-dlss5.addon64.renodx-ours"), "2026-09-02");
+    var host64 = Path.Combine(jcRoot, "host64");
+    Directory.CreateDirectory(host64);
+    File.WriteAllText(Path.Combine(host64, "ReShade.ini"), "[RENODX-DLSS]\nDirectNeuralRenderingEnabled=1\n\n[ADDON]\nLoadFromDllMain=renodx-dlss5.addon64\n");
+    File.WriteAllText(Path.Combine(host64, "renodx-dlss5.addon64"), "MZaddon64");
+    File.WriteAllText(Path.Combine(host64, "nvngx_dlssnr.dll"), "MZruntime");
+    File.WriteAllText(Path.Combine(host64, "dlss5-feed-host64.exe"), "MZhost");
+    File.WriteAllText(Path.Combine(host64, "dxgi.dll"), "MZreshade64");
+    // o tradutor D3D10 por cima de um dxgi.dll que ja estava la (guardado como .pre-dxvk)
+    File.WriteAllText(Path.Combine(jcRoot, "dxgi.dll"), "ocupante");
+    DxvkService.DeployD3d10(jcRoot, jogo64Bits: false);
+
+    Check(NeuralUpliftService.IsApplied(jcRoot, jcIni, null), "layout 32 bits montado: IsApplied le o host64 e diz LIGADO");
+
+    NeuralUpliftService.Remove(jcRoot, jcIni);
+
+    Check(!NeuralUpliftService.IsApplied(jcRoot, jcIni, null), "depois do Remove, IsApplied diz DESLIGADO (host64 nao responde mais por ele)");
+    Check(!Directory.Exists(host64), "Remove apaga host64\\ inteiro (host, ReShade, addon, runtime, ini)");
+    Check(!File.Exists(Path.Combine(jcRoot, "dlss5-feed.addon32")), "Remove tira o dlss5-feed.addon32 da pasta do jogo");
+    Check(!File.Exists(Path.Combine(jcRoot, "renodx-dlss5.addon64")) && !File.Exists(Path.Combine(jcRoot, "renodx-dlss5.addon64.renodx-ours")),
+        "Remove tira o addon renomeado que tem o marcador .renodx-ours, e o marcador");
+    var earlyDepois = new IniFile(jcIni).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "";
+    Check(!earlyDepois.Contains("renodx-dlss5.addon64", StringComparison.OrdinalIgnoreCase),
+        $"LoadFromDllMain nao aponta mais para o addon removido (\"{earlyDepois}\")");
+    Check(!DxvkService.IsDeployedD3d10(jcRoot), "Remove tira o conjunto D3D10 do DXVK");
+    Check(File.Exists(Path.Combine(jcRoot, "dxgi.dll")) && File.ReadAllText(Path.Combine(jcRoot, "dxgi.dll")) == "ocupante",
+        "Remove devolve o dxgi.dll que o instalador tinha guardado (.pre-dxvk)");
+
+    // um build da comunidade posto a mao, SEM marcador, sobrevive ao Remove: nao e nosso para apagar
+    File.WriteAllText(Path.Combine(jcRoot, "renodx-dlss5.addon64"), "MZbuild-da-comunidade");
+    File.WriteAllText(jcIni, "[RENODX-DLSS]\nDirectNeuralRenderingEnabled=1\n\n[ADDON]\nLoadFromDllMain=renodx-dlss5.addon64\n");
+    NeuralUpliftService.Remove(jcRoot, jcIni);
+    Check(File.Exists(Path.Combine(jcRoot, "renodx-dlss5.addon64")), "addon da comunidade sem marcador fica no lugar (so o interruptor vai a 0)");
+    Check((new IniFile(jcIni).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "").Contains("renodx-dlss5.addon64"),
+        "e a entrada de carga antecipada dele tambem fica");
+    File.Delete(Path.Combine(jcRoot, "renodx-dlss5.addon64"));
+}
+catch (Exception ex) { Check(false, $"desinstalar 32 bits na pasta falsa: {ex.Message}"); }
+
+// 3e. Apply nunca deixa dois addons genericos: com renodx-dlss5.addon64 ja na pasta, o
+// renodx-neural.addon64 nao entra ao lado (dois genericos = carga dupla = 0xc0000005).
+if (File.Exists(NeuralUpliftService.LibraryAddon))
+{
+    try
+    {
+        var dupRoot = Path.Combine(fakeRoot, "Duplicado");
+        Directory.CreateDirectory(dupRoot);
+        var dupIni = Path.Combine(dupRoot, "ReShade.ini");
+        File.WriteAllText(dupIni, "[ADDON]\nLoadFromDllMain=renodx-dlss5.addon64\n");
+        File.Copy(NeuralUpliftService.LibraryAddon, Path.Combine(dupRoot, "renodx-dlss5.addon64"));
+        NeuralUpliftService.Apply(dupRoot, dupIni, useGenericAddon: true, null);
+        NeuralUpliftService.Apply(dupRoot, dupIni, useGenericAddon: true, null);
+        var genericos = Directory.GetFiles(dupRoot, "renodx-*.addon64");
+        Check(genericos.Length == 1 && genericos[0].EndsWith("renodx-dlss5.addon64"),
+            $"Apply duas vezes com renodx-dlss5.addon64 presente deixa UM addon generico ({string.Join(", ", genericos.Select(Path.GetFileName))})");
+        var earlyDup = new IniFile(dupIni).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "";
+        Check(!earlyDup.Contains("renodx-neural.addon64", StringComparison.OrdinalIgnoreCase),
+            $"LoadFromDllMain nao lista o renodx-neural.addon64 que nao existe (\"{earlyDup}\")");
+    }
+    catch (Exception ex) { Check(false, $"Apply duplicado: {ex.Message}"); }
+}
+else Console.WriteLine("SKIP  Apply duplicado: addon generico nao esta na biblioteca desta maquina");
+
 // 4. manifest
 var manifest = new ManifestService();
 var defs = manifest.GetSettings("cp2077");
@@ -647,14 +720,24 @@ if (match != null)
     var upToDate = await AddonService.IsUpdateAvailableAsync(match, freshState);
     Check(upToDate == false, $"acabou de instalar → sem atualização pendente (retorno={upToDate})");
 
-    // simula um build antigo instalado: ETag diferente do servidor
+    // simula um build antigo instalado. O servidor destes addons (nginx) gera ETag de
+    // mtime+tamanho, que o codigo IGNORA de proposito — re-publicar o site trocaria todo ETag sem
+    // mudar um byte, e foi assim que todo mod instalado passou a "ter atualizacao" para sempre.
+    // A unica evidencia de conteudo que sobra e o tamanho: um build antigo tem outro tamanho. O
+    // registro precisa bater com o arquivo (Size diferente do disco e lido como "trocado por
+    // fora"); este teste passava Size=1 e por isso falhava havia varios releases, sem defeito
+    // no codigo.
+    var bytesOriginais = File.ReadAllBytes(freshState.AddonPath!);
+    File.WriteAllBytes(freshState.AddonPath!, bytesOriginais.Concat(new byte[] { 0 }).ToArray());
     InstalledModRegistry.Set(freshState.AddonPath!, new InstalledModRecord
     {
         Slug = match.Slug, FileName = Path.GetFileName(freshState.AddonPath!), Url = match.DownloadUrl,
-        ETag = "\"build-antigo-fake\"", Size = 1, DownloadedUtc = DateTime.UtcNow.AddDays(-30),
+        ETag = "\"build-antigo-fake\"", Size = bytesOriginais.Length + 1,
+        DownloadedUtc = DateTime.UtcNow.AddDays(-30),
     });
     var stale = await AddonService.IsUpdateAvailableAsync(match, freshState);
-    Check(stale == true, $"ETag diferente do servidor → atualização detectada (retorno={stale})");
+    Check(stale == true, $"build instalado com outro tamanho → atualização detectada (retorno={stale})");
+    File.WriteAllBytes(freshState.AddonPath!, bytesOriginais);
 
     // mod sem download direto (Nexus) não pode ser reportado como desatualizado
     var nexusOnly = new CatalogEntry { GameName = "X", Kind = ModKind.Dedicated, NexusUrl = "https://nexusmods.com/x" };

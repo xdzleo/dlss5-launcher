@@ -1386,10 +1386,6 @@
     "en": "32-bit ReShade Vulkan layer registered.",
     "pt-BR": "Camada Vulkan do ReShade de 32 bits registrada."
   },
-  "Dlss5_Step_VulkanLayerFailed": {
-    "en": "Could not register the 32-bit Vulkan layer — the game will not see ReShade.",
-    "pt-BR": "Não consegui registrar a camada Vulkan de 32 bits — o jogo não vai enxergar o ReShade."
-  },
   "Feeder_VulkanTransport": {
     "en": "32-bit halves with Vulkan transport installed (for the DXVK route).",
     "pt-BR": "Metades de 32 bits com transporte Vulkan instaladas (para a rota DXVK)."
