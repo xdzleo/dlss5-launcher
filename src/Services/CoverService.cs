@@ -237,11 +237,16 @@ public static partial class CoverService
             if (File.Exists(cacheNome))
             {
                 var txt = (await File.ReadAllTextAsync(cacheNome)).Trim();
-                // Vazio = "procurei e nao existe". Guardado por uma semana, como o .miss do CDN.
+                // Vazio = "procurei e nao existe". Guardado por uma semana, como o .miss do CDN;
+                // depois disso a busca segue adiante e regrava o arquivo, senao um jogo que
+                // entrou na Steam depois da primeira tentativa ficaria sem capa para sempre.
                 if (txt.Length == 0)
-                    return DateTime.UtcNow - File.GetLastWriteTimeUtc(cacheNome) < TimeSpan.FromDays(7)
-                           ? null : null;
-                return int.TryParse(txt, out var v) ? v : null;
+                {
+                    if (DateTime.UtcNow - File.GetLastWriteTimeUtc(cacheNome) < TimeSpan.FromDays(7))
+                        return null;
+                }
+                else
+                    return int.TryParse(txt, out var v) ? v : null;
             }
 
             var url = "https://steamcommunity.com/actions/SearchApps/" + Uri.EscapeDataString(limpo);
@@ -266,10 +271,12 @@ public static partial class CoverService
     /// O melhor candidato da lista, ou nenhum.
     ///
     /// A comparacao e feita sobre o nome NORMALIZADO (so letras e digitos, minusculas) porque o
-    /// que separa "Marvel's Spider-Man 2" de "Marvels Spider Man 2" e so pontuacao. Exige que um
-    /// contenha o outro: isso aceita a diferenca de subtitulo e edicao, e recusa um jogo vizinho
-    /// da mesma franquia, que e o erro caro — uma capa errada e pior do que nenhuma, porque parece
-    /// certa.
+    /// que separa "Marvel's Spider-Man 2" de "Marvels Spider Man 2" e so pontuacao. Primeiro a
+    /// lista inteira e varrida por igualdade exata; so depois vale um conter o outro, e mesmo
+    /// assim o pedaco que sobra nao pode comecar por numero nem por algarismo romano. Sem essa
+    /// regra "darksoulsiii" continha "darksoulsii" e "portal2" continha "portal", e a lista da
+    /// Steam nao e exata-primeiro: um vizinho da franquia vencia, e a capa errada ficava gravada
+    /// no cache — uma capa errada e pior do que nenhuma, porque parece certa.
     /// </summary>
     private static int? EscolherMelhor(string json, string procurado)
     {
@@ -280,18 +287,49 @@ public static partial class CoverService
         using var doc = System.Text.Json.JsonDocument.Parse(json);
         if (doc.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array) return null;
 
+        var candidatos = new List<(int Id, string Nome, string Norm)>();
         foreach (var item in doc.RootElement.EnumerateArray())
         {
             if (!item.TryGetProperty("appid", out var a) || !item.TryGetProperty("name", out var n))
                 continue;
-            var cand = Norm(n.GetString() ?? "");
+            var nome = n.GetString() ?? "";
+            var cand = Norm(nome);
             if (cand.Length < 3) continue;
-            if (!cand.Contains(alvo) && !alvo.Contains(cand)) continue;
-
             var raw = a.ValueKind == System.Text.Json.JsonValueKind.Number
                 ? a.GetInt32().ToString() : a.GetString();
-            if (int.TryParse(raw, out var id)) return id;
+            if (int.TryParse(raw, out var id)) candidatos.Add((id, nome, cand));
         }
+
+        foreach (var c in candidatos)
+            if (c.Norm == alvo) return c.Id;
+
+        foreach (var c in candidatos)
+            if (EhMesmoJogo(alvo, procurado, c.Norm, c.Nome)) return c.Id;
         return null;
+    }
+
+    /// <summary>Um algarismo romano como palavra inteira ("III", "IV", "XII"): so a presenca dele
+    /// no nome mais longo diz se o "i" que sobra e "III" ou o inicio de "Imperial".</summary>
+    [GeneratedRegex(@"(?<![a-z0-9])(?=[ivx])(x{0,3}(ix|iv|v?i{0,3}))(?![a-z0-9])", RegexOptions.IgnoreCase)]
+    private static partial Regex AlgarismoRomanoRegex();
+
+    /// <summary>
+    /// Um nome contem o outro e o resto e subtitulo ou edicao — nao uma sequencia. Vale nas duas
+    /// direcoes: a loja pode acrescentar ": Definitive Edition" ao que o usuario procurou, e a
+    /// pasta do usuario pode trazer "Deluxe" que a loja nao tem.
+    /// </summary>
+    private static bool EhMesmoJogo(string alvo, string alvoCru, string cand, string candCru)
+    {
+        string longo, curto, longoCru;
+        if (cand.Contains(alvo)) { longo = cand; curto = alvo; longoCru = candCru; }
+        else if (alvo.Contains(cand)) { longo = alvo; curto = cand; longoCru = alvoCru; }
+        else return false;
+        if (longo.Length == curto.Length) return true;
+
+        var resto = longo[(longo.IndexOf(curto, StringComparison.Ordinal) + curto.Length)..];
+        if (resto.Length == 0) return true;
+        if (char.IsDigit(resto[0])) return false;
+        if ("ivx".Contains(resto[0]) && AlgarismoRomanoRegex().IsMatch(longoCru)) return false;
+        return true;
     }
 }
