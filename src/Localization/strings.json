@@ -1120,6 +1120,11 @@
     "note": "{0} = subject do certificado encontrado.",
     "pt-BR": "Não é assinado pela NVIDIA (assinante: {0}). Ignorado."
   },
+  "Dlss_UntrustedChain": {
+    "en": "The signature names NVIDIA but its certificate chain does not reach a trusted root ({0}). Skipped.",
+    "note": "{0} = diagnóstico do WinVerifyTrust (ex.: raiz não confiável, certificado auto-assinado).",
+    "pt-BR": "A assinatura diz NVIDIA, mas a cadeia do certificado não chega a uma raiz confiável ({0}). Ignorado."
+  },
   "Dlss_NotSwapped": {
     "en": "not swapped - moves with Streamline",
     "pt-BR": "não é trocado — anda junto com o Streamline"

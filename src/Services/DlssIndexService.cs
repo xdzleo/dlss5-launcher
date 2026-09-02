@@ -42,41 +42,81 @@ public class DlssIndexService
 
     public async Task LoadAsync()
     {
-        string? json = null;
         var cachePath = Path.Combine(AppPaths.DataDir, "dlss_manifest.json");
+
+        // Um cache so vale se parseia. O corpo era gravado ANTES de ser lido, e um proxy ou
+        // portal cativo que devolve uma pagina HTML com 200 virava tres dias de "indice sem
+        // entrada" numa maquina com rede normal. Cache que nao parseia e apagado, e a rede e
+        // tentada agora, nao no fim do TTL.
+        if (File.Exists(cachePath) && DateTime.UtcNow - File.GetLastWriteTimeUtc(cachePath) < CacheTtl)
+        {
+            if (await TryLoadCacheAsync(cachePath)) return;
+            TryDelete(cachePath);
+        }
+
+        string? json = null;
         try
         {
-            if (File.Exists(cachePath) && DateTime.UtcNow - File.GetLastWriteTimeUtc(cachePath) < CacheTtl)
-            {
-                json = await File.ReadAllTextAsync(cachePath);
-            }
-            else
-            {
-                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-                http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-                json = await http.GetStringAsync(Url);
-                Directory.CreateDirectory(AppPaths.DataDir);
-                await File.WriteAllTextAsync(cachePath, json);
-            }
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
+            json = await http.GetStringAsync(Url);
         }
-        catch (Exception ex)
-        {
-            Log.Warn($"dlss index fetch: {ex.Message}");
-            if (File.Exists(cachePath)) json = await File.ReadAllTextAsync(cachePath);
-        }
-        if (json is null) return;
+        catch (Exception ex) { Log.Warn($"dlss index fetch: {ex.Message}"); }
 
+        if (json is not null)
+        {
+            if (Parse(json) > 0)
+            {
+                // So o que parseou em pelo menos uma entrada vira cache.
+                try
+                {
+                    Directory.CreateDirectory(AppPaths.DataDir);
+                    await File.WriteAllTextAsync(cachePath, json);
+                }
+                catch (Exception ex) { Log.Warn($"dlss index cache: {ex.Message}"); }
+                return;
+            }
+            Log.Warn("dlss index: corpo baixado sem entrada valida; nao guardado em cache");
+        }
+
+        // Sem rede (ou com corpo imprestavel): o cache vencido ainda e melhor do que nada.
+        if (File.Exists(cachePath) && !await TryLoadCacheAsync(cachePath))
+            TryDelete(cachePath);
+    }
+
+    private async Task<bool> TryLoadCacheAsync(string cachePath)
+    {
+        try { return Parse(await File.ReadAllTextAsync(cachePath)) > 0; }
+        catch (Exception ex) { Log.Warn($"dlss index cache read: {ex.Message}"); return false; }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try { File.Delete(path); }
+        catch (Exception ex) { Log.Warn($"dlss index delete {path}: {ex.Message}"); }
+    }
+
+    /// <summary>Le o indice para <see cref="_byKind"/>, do zero. Devolve quantas entradas ficaram;
+    /// zero significa "esse corpo nao serve", venha de onde vier.</summary>
+    private int Parse(string json)
+    {
+        _byKind.Clear();
+        var total = 0;
         try
         {
             using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object) return 0;
             foreach (var prop in doc.RootElement.EnumerateObject())
             {
                 if (prop.Value.ValueKind != JsonValueKind.Array) continue;
                 var list = new List<Entry>();
                 foreach (var e in prop.Value.EnumerateArray())
                 {
-                    if (!e.TryGetProperty("version", out var v) || v.GetString() is not { Length: > 0 } ver) continue;
-                    if (!e.TryGetProperty("url", out var u) || u.GetString() is not { Length: > 0 } url) continue;
+                    if (e.ValueKind != JsonValueKind.Object) continue;
+                    if (!e.TryGetProperty("version", out var v) || v.ValueKind != JsonValueKind.String
+                        || v.GetString() is not { Length: > 0 } ver) continue;
+                    if (!e.TryGetProperty("url", out var u) || u.ValueKind != JsonValueKind.String
+                        || u.GetString() is not { Length: > 0 } url) continue;
                     // Only the project's own mirror. An index entry is data, not an instruction:
                     // a rewritten manifest must not be able to point the launcher at any host it
                     // likes, and there is no legitimate reason for one of these to live elsewhere.
@@ -85,12 +125,40 @@ public class DlssIndexService
                         Log.Warn($"dlss index: ignoring off-mirror url for {prop.Name} {ver}");
                         continue;
                     }
+                    // Kind e Version viram nome de pasta em FetchAsync. A mesma regra da URL
+                    // vale para eles: um manifesto reescrito nao pode escolher ONDE o zip e
+                    // descompactado, e "..\..\Startup" numa versao fazia exatamente isso.
+                    if (!IsSafeSegment(prop.Name) || !IsSafeSegment(ver))
+                    {
+                        Log.Warn($"dlss index: ignoring entry with unsafe name: {prop.Name} / {ver}");
+                        continue;
+                    }
                     list.Add(new Entry(prop.Name, ver, url));
                 }
-                if (list.Count > 0) _byKind[prop.Name] = list;
+                if (list.Count > 0) { _byKind[prop.Name] = list; total += list.Count; }
             }
         }
-        catch (Exception ex) { Log.Warn($"dlss index parse: {ex.Message}"); }
+        catch (Exception ex) { Log.Warn($"dlss index parse: {ex.Message}"); _byKind.Clear(); return 0; }
+        return total;
+    }
+
+    /// <summary>
+    /// Serve como UM segmento de nome de arquivo, sem sair da pasta? Nada de separador, `..`,
+    /// dois-pontos (fluxo alternativo NTFS), caractere de controle ou os que o Windows recusa.
+    /// Explicito em vez de confiar so em GetInvalidFileNameChars, que varia com a plataforma.
+    /// </summary>
+    internal static bool IsSafeSegment(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s) || s.Length > 128) return false;
+        if (s.Contains("..") || s.StartsWith('.') || s.EndsWith('.') || s.Trim() != s) return false;
+        var invalid = Path.GetInvalidFileNameChars();
+        foreach (var c in s)
+        {
+            if (c < 0x20 || c == 0x7F) return false;
+            if (c is '/' or '\\' or ':' or '*' or '?' or '"' or '<' or '>' or '|') return false;
+            if (Array.IndexOf(invalid, c) >= 0) return false;
+        }
+        return true;
     }
 
     /// <summary>The newest build the index lists of one kind. The index is ordered newest-first,
@@ -157,9 +225,18 @@ public class DlssIndexService
     public static async Task<string> FetchAsync(Entry entry, IProgress<string>? progress = null,
                                                 CancellationToken ct = default)
     {
+        // LoadAsync ja recusa nome inseguro, mas Entry e publico e pode chegar de outro lugar
+        // (a sonda de testes constroi um). A pasta de destino tem de ficar DENTRO de downloads,
+        // e isso se prova pelo caminho resolvido, nao pela boa vontade de quem montou a entrada.
         Directory.CreateDirectory(AppPaths.DownloadsDir);
+        var root = Path.GetFullPath(AppPaths.DownloadsDir + Path.DirectorySeparatorChar);
         var stem = $"{entry.Kind}-{entry.Version}";
-        var unpacked = Path.Combine(AppPaths.DownloadsDir, stem);
+        var unpacked = Path.GetFullPath(Path.Combine(AppPaths.DownloadsDir, stem));
+        if (!IsSafeSegment(entry.Kind) || !IsSafeSegment(entry.Version)
+            || !unpacked.StartsWith(root, StringComparison.OrdinalIgnoreCase)
+            || unpacked[root.Length..].Contains(Path.DirectorySeparatorChar))
+            throw new ArgumentException($"dlss index: entrada com nome inseguro: {entry.Kind} / {entry.Version}");
+
         // Recursivo, porque o consumidor procura recursivamente: um arquivo que descompacta numa
         // subpasta deixava esta checagem falsa para sempre, e cada tentativa repetia o download
         // de 158 MB que ela existe justamente para evitar.
@@ -179,16 +256,49 @@ public class DlssIndexService
             await using (var net = await http.GetStreamAsync(entry.Url, ct))
             await using (var file = File.Create(temp))
                 await net.CopyToAsync(file, ct);
+            // Conferir que e um zip ANTES de promover o .part. O .part so protegia de conexao
+            // caida; um corpo completo e errado (pagina HTML com 200, de proxy ou portal
+            // cativo) passava a ser "o arquivo", e como o download e pulado quando ele existe,
+            // toda tentativa seguinte falhava na extracao sem nunca voltar a rede.
+            if (!LooksLikeZip(temp, out var why))
+            {
+                TryDelete(temp);
+                throw new InvalidDataException($"dlss index: download de {stem} nao e um zip: {why}");
+            }
             File.Move(temp, archive, overwrite: true);
         }
 
         progress?.Report(L.T("Dlss_Index_Extracting", entry.Kind));
         Directory.CreateDirectory(unpacked);
-        ExtractSafely(archive, unpacked);
+        try { ExtractSafely(archive, unpacked); }
+        catch
+        {
+            // Arquivo que nao extrai nao fica: ficaria sendo reutilizado a cada tentativa. A
+            // pasta de destino tambem sai — ela era vazia ao chegar aqui (ou a checagem acima
+            // tinha devolvido), e meia extracao a faria passar por completa na proxima vez.
+            TryDelete(archive);
+            try { Directory.Delete(unpacked, recursive: true); }
+            catch (Exception ex) { Log.Warn($"dlss index cleanup {unpacked}: {ex.Message}"); }
+            throw;
+        }
         // The archive is not kept: it is the same bytes as the unpacked copy, and these are the
         // largest files the launcher ever touches.
         try { File.Delete(archive); } catch (Exception ex) { Log.Warn($"dlss index cleanup: {ex.Message}"); }
         return unpacked;
+    }
+
+    /// <summary>Abre o diretorio central do zip, sem extrair nada. E o que falha num corpo HTML
+    /// ou num download truncado — e falha aqui, barato, e nao depois de gravar o arquivo.</summary>
+    private static bool LooksLikeZip(string path, out string why)
+    {
+        why = "";
+        try
+        {
+            using var zip = ZipFile.OpenRead(path);
+            if (zip.Entries.Count == 0) { why = "zip vazio"; return false; }
+            return true;
+        }
+        catch (Exception ex) { why = ex.Message; return false; }
     }
 
     /// <summary>

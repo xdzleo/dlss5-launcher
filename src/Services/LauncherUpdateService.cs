@@ -108,7 +108,11 @@ public static class LauncherUpdateService
     {
         if (!HostOk(rel.SetupUrl)) throw new InvalidOperationException(L.T("Update_BadHost"));
 
-        var dir = Path.Combine(Path.GetTempPath(), "RenoDXLauncherUpdate");
+        // Na pasta de cache do app, e nao em %TEMP%: e a regra do projeto (ver AppPaths.CacheDir),
+        // e este e o pior lugar para quebra-la — um executavel de nome variavel que sai de %TEMP%
+        // pedindo elevacao e exatamente o par que a heuristica de antivirus pontua. Todo outro
+        // binario que o launcher baixa (ReShade, banco da Battle.net) ja vive aqui.
+        var dir = Path.Combine(AppPaths.CacheDir, "update");
         Directory.CreateDirectory(dir);
         var destino = Path.Combine(dir, $"RenoDXLauncher-{rel.Version}-setup.exe");
 
