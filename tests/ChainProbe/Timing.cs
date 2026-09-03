@@ -34,6 +34,8 @@ public static class Timing
         Medir("VulkanLayerService.IsRegistered", () => _ = VulkanLayerService.IsRegistered(dir, false));
         Medir("DlssRuntimeService.DetectInGame", () => { try { _ = DlssRuntimeService.DetectInGame(dir).ToList(); } catch { } });
         Medir("AntiCheatScanner.Detect", () => { try { _ = AntiCheatScanner.Detect(dir, dir); } catch { } });
+        var host = NeuralUpliftService.ProbeHost();
+        Medir("MfgService.Detect", () => { try { _ = MfgService.Detect(dir, dir, host); } catch { } });
         if (exe is not null)
             Medir("PeUtils.Inspect (com imports)", () => _ = PeUtils.Inspect(exe));
         total.Stop();

@@ -611,20 +611,7 @@ public class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Relê a pasta e atualiza o cartao de conflitos.</summary>
-    private void BuildConflitos(string targetDir, string? exePath)
-    {
-        Conflitos.Clear();
-        var achados = ConflictScanner.Scan(targetDir, exePath);
-        foreach (var c in achados) Conflitos.Add(c);
 
-        var bloqueios = achados.Count(c => c.Grau == ConflictScanner.Nivel.Bloqueio);
-        TemConflitos = achados.Count > 0;
-        TemBloqueio = bloqueios > 0;
-        ConflitosResumo = achados.Count == 0
-            ? L.T("Conflito_Nenhum")
-            : L.T("Conflito_Resumo", achados.Count, bloqueios);
-    }
 
     // A API grafica de cada executavel continua sendo detectada -- ela decide a rota -- mas nao e
     // mais uma pergunta para o usuario.
@@ -692,10 +679,26 @@ public class MainViewModel : ObservableObject
     }
 
     /// <summary>Recolhe o estado de cada elo para os indicadores do cartao.</summary>
-    private void BuildDlss5Chain(string targetDir, string iniPath, NeuralUpliftService.Detection det,
-                                 string? exePath)
+    /// <summary>
+    /// O que a leitura da pasta descobriu, antes de virar tela.
+    ///
+    /// Existe para separar LER de MOSTRAR. Ler e disco: uma duzia de File.Exists, dois ini, a
+    /// inspecao do PE do executavel, o registro do Windows e uma varredura de conflitos. Mostrar
+    /// e mexer em ObservableCollection, que so a thread da interface pode fazer. Enquanto as duas
+    /// coisas moravam no mesmo metodo, o disco inteiro acontecia na thread da interface -- e o
+    /// clique no jogo travava a janela pelo tempo da leitura.
+    /// </summary>
+    private record LeituraDaCadeia(List<ChainLink> Elos, bool FeederAtivo, bool PonteAtiva,
+                                   bool AvisoSemDlss,
+                                   IReadOnlyList<ConflictScanner.Conflito> Conflitos);
+
+    /// <summary>Le a pasta e devolve os fatos. Nada aqui toca na interface — pode (e deve) rodar
+    /// fora da thread dela.</summary>
+    private static LeituraDaCadeia LerCadeia(string targetDir, string iniPath,
+                                             NeuralUpliftService.Detection det, string? exePath,
+                                             bool neuralAplicado)
     {
-        Dlss5Chain.Clear();
+        var elos = new List<ChainLink>();
         var addon = NeuralUpliftService.DeployedGenericAddon(targetDir);
         var early = false;
         if (File.Exists(iniPath) && addon is not null)
@@ -736,18 +739,18 @@ public class MainViewModel : ObservableObject
         // instalacao ia toda para Binaries\Win32, completa, e a interface mostrava desligado.
         var bits64Jogo = exePath is null || PeUtils.Inspect(exePath, readImports: false)?.Is64Bit != false;
         var camadaVk = VulkanLayerService.IsRegistered(targetDir, bits64Jogo);
-        Dlss5Chain.Add(new ChainLink("ReShade", det.ReShadeDllName is not null || camadaVk));
-        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Addon"), det.AddonSupportsNr || addonNoHost64));
-        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Neural"), det.RuntimeDeployed || runtimeNoHost64));
+        elos.Add(new ChainLink("ReShade", det.ReShadeDllName is not null || camadaVk));
+        elos.Add(new ChainLink(L.T("Dlss5_Link_Addon"), det.AddonSupportsNr || addonNoHost64));
+        elos.Add(new ChainLink(L.T("Dlss5_Link_Neural"), det.RuntimeDeployed || runtimeNoHost64));
         // O Ray Reconstruction so e exigido onde o jogo resolve runtimes na propria pasta. Onde
         // quem resolve e o driver, nao implantamos nada (um runtime parcial na pasta do
         // executavel quebra a resolucao do NGX) — e cobrar o arquivo aqui deixaria a cadeia
         // incompleta para sempre, num jogo que esta certo.
         var rrEsperado = NeuralUpliftService.TemRuntimeLocal(targetDir);
-        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Rr"),
+        elos.Add(new ChainLink(L.T("Dlss5_Link_Rr"),
             !rrEsperado || File.Exists(Path.Combine(targetDir, NeuralUpliftService.RayReconstructionFile))));
-        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_EarlyLoad"), early || addon is null));
-        Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Switch"), NeuralApplied));
+        elos.Add(new ChainLink(L.T("Dlss5_Link_EarlyLoad"), early || addon is null));
+        elos.Add(new ChainLink(L.T("Dlss5_Link_Switch"), neuralAplicado));
 
         // A ponte e o Feeder entram na cadeia quando sao NECESSARIOS, com o estado que de fato
         // tem — e nao, como antes, apenas quando ja estao na pasta.
@@ -757,8 +760,8 @@ public class MainViewModel : ObservableObject
         // nenhum elo aparecia, todos os outros ficavam verdes, o interruptor dizia "ligado" e
         // nada rodava dentro do jogo. Foi assim que a ponte do Baldur's Gate ficou renomeada para
         // .teste sem que o launcher notasse.
-        FeederActive = FeederService.IsDeployed(targetDir);
-        BridgeActive = NeuralUpliftService.BridgeDeployed(targetDir);
+        var feederAtivo = FeederService.IsDeployed(targetDir);
+        var ponteAtiva = NeuralUpliftService.BridgeDeployed(targetDir);
 
         var alcancaD3d12 = Dlss5Installer.ReachesD3D12(exePath);
         // Ver a nota longa em CheckNeuralAsync: a anulacao por Feeder presente saiu porque o
@@ -774,21 +777,21 @@ public class MainViewModel : ObservableObject
         // Feeder sao exclusivos, e a resposta pode mudar entre uma instalacao e a seguinte
         // (deteccao corrigida, jogo atualizado). Um caminho instalado e completo nao e um elo
         // faltando: trocar de caminho e reinstalar, e e assim que deve ser pedido.
-        var pedePonte = rota.Ponte && !FeederActive;
-        var pedeFeeder = rota.Feeder && !BridgeActive;
+        var pedePonte = rota.Ponte && !feederAtivo;
+        var pedeFeeder = rota.Feeder && !ponteAtiva;
 
         // O aviso "sem DLSS nativo" segue a AUSENCIA de DLSS, nao a presenca do Feeder.
         //
-        // Ele estava preso a FeederActive, e o texto fala de outra coisa: que os motion vectors
+        // Ele estava preso a feederAtivo, e o texto fala de outra coisa: que os motion vectors
         // sao estimados por shader porque o jogo nao os fornece. Num jogo que TEM DLSS e ficou
         // com o Feeder instalado -- Baldur's Gate 3, por exemplo -- o aviso aparecia dizendo que
         // o jogo nao tem DLSS, contradizendo a propria tela logo acima.
-        MostraAvisoSemDlss = FeederActive && !temDlssNativo;
+        var avisoSemDlss = feederAtivo && !temDlssNativo;
 
-        if (pedePonte || BridgeActive)
-            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Bridge"), BridgeActive));
-        if (pedeFeeder || FeederActive)
-            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Feeder"), FeederActive));
+        if (pedePonte || ponteAtiva)
+            elos.Add(new ChainLink(L.T("Dlss5_Link_Bridge"), ponteAtiva));
+        if (pedeFeeder || feederAtivo)
+            elos.Add(new ChainLink(L.T("Dlss5_Link_Feeder"), feederAtivo));
 
         // O tradutor de D3D9, quando o jogo precisa de um.
         //
@@ -803,21 +806,46 @@ public class MainViewModel : ObservableObject
             && PeUtils.Inspect(exePath, readImports: false)?.Is64Bit == false)
         {
             var temTradutor = DxvkService.IsDeployed(targetDir) || DgVoodooService.IsDeployed(targetDir);
-            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_Tradutor"), temTradutor));
+            elos.Add(new ChainLink(L.T("Dlss5_Link_Tradutor"), temTradutor));
         }
         // Direct3D 10: so o DXVK traduz (a 1.10.3, com d3d10.dll proprio — ver
         // DxvkService.D3d10Files). Sem ele a cadeia inteira pode estar verde e o jogo fecha ao
         // criar o device — foi assim no Just Cause 2, quando a resposta do launcher a essa API
         // ainda era uma recusa.
         else if (DxvkService.AppliesD3d10(exePath))
-            Dlss5Chain.Add(new ChainLink(L.T("Dlss5_Link_TradutorD3d10"), DxvkService.IsDeployedD3d10(targetDir)));
+            elos.Add(new ChainLink(L.T("Dlss5_Link_TradutorD3d10"), DxvkService.IsDeployedD3d10(targetDir)));
+
+        // A leitura que explica o que a cadeia sozinha nao explica: o que MAIS esta na pasta.
+        return new LeituraDaCadeia(elos, feederAtivo, ponteAtiva, avisoSemDlss,
+                                   ConflictScanner.Scan(targetDir, exePath));
+    }
+
+    /// <summary>
+    /// Poe na tela o que <see cref="LerCadeia"/> descobriu. So aqui, e de uma vez.
+    ///
+    /// De uma vez importa: os cartoes acendiam um a um, na ordem em que cada leitura terminava, e
+    /// trocar de jogo virava uma cascata. Com os fatos ja em maos, a tela muda num quadro so.
+    /// </summary>
+    private void AplicarCadeia(LeituraDaCadeia r)
+    {
+        Dlss5Chain.Clear();
+        foreach (var elo in r.Elos) Dlss5Chain.Add(elo);
+        FeederActive = r.FeederAtivo;
+        BridgeActive = r.PonteAtiva;
+        MostraAvisoSemDlss = r.AvisoSemDlss;
+
+        Conflitos.Clear();
+        foreach (var c in r.Conflitos) Conflitos.Add(c);
+        var bloqueios = r.Conflitos.Count(c => c.Grau == ConflictScanner.Nivel.Bloqueio);
+        TemConflitos = r.Conflitos.Count > 0;
+        TemBloqueio = bloqueios > 0;
+        ConflitosResumo = r.Conflitos.Count == 0
+            ? L.T("Conflito_Nenhum")
+            : L.T("Conflito_Resumo", r.Conflitos.Count, bloqueios);
 
         // Depois de TODOS os elos, nao antes: o calculo ficava acima dos dois ultimos, entao nem
         // um elo vermelho ali derrubava o "pronto".
-        Dlss5Ready = Dlss5Chain.All(l => l.Ok);
-
-        // A leitura que explica o que a cadeia sozinha nao explica: o que MAIS esta na pasta.
-        BuildConflitos(targetDir, exePath);
+        Dlss5Ready = r.Elos.All(l => l.Ok);
     }
 
     /// <summary>O runtime falta na biblioteca — o único bloqueio que o usuário resolve aqui
@@ -1037,6 +1065,11 @@ public class MainViewModel : ObservableObject
     }
 
     private NeuralUpliftService.Detection? _neuralDetection;
+
+    /// <summary>As duas buscas que percorrem a biblioteca INTEIRA ja rodaram nesta sessao. Ver
+    /// <see cref="CheckNeuralAsync"/>: sem isto elas rodavam a cada jogo selecionado.</summary>
+    private bool _buscaAddonFeita;
+    private bool _buscaRuntimeFeita;
 
     // ---------- runtimes de DLSS ----------
 
@@ -1271,8 +1304,9 @@ public class MainViewModel : ObservableObject
             // tempo — a insercao pode redimensionar e a leitura estoura ou devolve lixo — e o
             // catch por jogo engolia isso: aquele jogo ficava sem capa e com a bolinha vermelha.
             var pinned = new Dictionary<string, string>(Config.PinnedExes, Config.PinnedExes.Comparer);
-            _ = Task.Run(() => BackgroundEnrichAsync(Games.ToList(), pinned, ct));
-            _ = Task.Run(() => CheckSwappedRuntimesAsync(Games.Select(g => g.Game.InstallDir).ToList()!));
+            var itensParaEnriquecer = Games.ToList();
+            // A busca do add-on fica na fila abaixo, e nao no primeiro clique (ver CheckNeuralAsync).
+            _buscaAddonFeita = true;
 
             // Aquece a varredura de .exe de TODOS os jogos enquanto o usuario le a lista.
             //
@@ -1280,16 +1314,44 @@ public class MainViewModel : ObservableObject
             // e a maior parte da espera para o card aparecer. Feita aqui, acontece quando ninguem
             // esta esperando, e o clique encontra o resultado pronto (medido: 27 ms -> 0 ms).
             //
-            // Sequencial de proposito: sao dezenas de pastas, e disparar tudo de uma vez disputaria
-            // o disco justamente com o BackgroundEnrich, que a tela esta esperando.
+            // UMA fila, e nao tres varreduras simultaneas.
+            //
+            // Eram tres tarefas soltas ao mesmo tempo -- enriquecer, preaquecer, procurar runtime
+            // trocado -- e as tres percorrem a biblioteca inteira mexendo em disco. O comentario
+            // abaixo ja dizia que preaquecer nao devia disputar o disco com o enriquecimento, mas
+            // o "sequencial" valia so dentro da propria tarefa: as tres corriam juntas de qualquer
+            // jeito, e quem esperava era a unica que a tela mostra.
+            //
+            // Em fila, o enriquecimento tem o disco para si enquanto a pessoa olha a grade, e o
+            // resto acontece depois, quando ninguem esta esperando.
             var pastas = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).ToList();
-            _ = Task.Run(() =>
+            _ = Task.Run(async () =>
             {
+                // 1. o que a tela mostra: bolinhas, selos e capas.
+                await BackgroundEnrichAsync(itensParaEnriquecer, pinned, ct);
+                if (ct.IsCancellationRequested) return;
+
+                // 2. aquece a varredura de .exe de TODOS os jogos. Ela desce cinco niveis e custa
+                //    ~27 ms por jogo grande; feita ao clicar, e a maior parte da espera do card.
+                //    Feita aqui, o clique encontra o resultado pronto (medido: 27 ms -> 0 ms).
                 foreach (var d in pastas)
                 {
                     if (ct.IsCancellationRequested) return;
-                    ExeLocator.Preaquecer(d);
+                    await CederAoClique(ct);
+                    if (ct.IsCancellationRequested) return;
+                    ExeLocator.Preaquecer(d!);
                 }
+                if (ct.IsCancellationRequested) return;
+
+                // 3. procura uma copia do add-on neural mais nova, largada pelo usuario numa pasta
+                //    de jogo. Percorre a biblioteca inteira, e quem pagava por ela era o PRIMEIRO
+                //    clique em um jogo -- meio segundo, uma vez por sessao, no pior momento
+                //    possivel. Aqui ninguem esta esperando.
+                NeuralUpliftService.AutoDiscoverAddon(pastas!);
+                if (ct.IsCancellationRequested) return;
+
+                // 4. o aviso de runtime trocado, que ninguem esta esperando para agir.
+                await CheckSwappedRuntimesAsync(pastas!);
             }, ct);
         }
         catch (Exception ex)
@@ -1309,6 +1371,9 @@ public class MainViewModel : ObservableObject
         var dispatcher = Application.Current.Dispatcher;
         foreach (var item in items)
         {
+            if (ct.IsCancellationRequested) return;
+            // Um clique em andamento tem a frente da fila do disco (ver CederAoClique).
+            await CederAoClique(ct);
             if (ct.IsCancellationRequested) return;
             try
             {
@@ -1361,24 +1426,80 @@ public class MainViewModel : ObservableObject
                     if (item == Selected) RaiseCommands();
                 });
 
+            }
+            catch (Exception ex) { Log.Warn($"enrich {item.Name}: {ex.Message}"); }
+        }
+        if (ct.IsCancellationRequested) return;
+        // As bolinhas ja estao certas: a grade pode se acertar sem esperar capa nenhuma.
+        await dispatcher.InvokeAsync(RefreshViewKeepSelection);
+
+        // As capas em SEGUNDA passada, e em paralelo.
+        //
+        // Elas sao REDE, e a deteccao que acende as bolinhas e disco local. As duas dividiam o
+        // mesmo laco, uma por vez: o estado de cada jogo so era lido depois de o servidor
+        // responder a capa do jogo anterior. Com dezenas de jogos, e por isso que as bolinhas
+        // demoravam a se acertar mesmo com o disco livre.
+        //
+        // Separadas, o estado aparece primeiro e as capas entram depois, seis de cada vez. O
+        // limite e o mesmo da checagem de atualizacoes: satura o link sem irritar o servidor.
+        using var portao = new SemaphoreSlim(6);
+        await Task.WhenAll(items.Select(async item =>
+        {
+            try { await portao.WaitAsync(ct); }
+            catch (OperationCanceledException) { return; }
+            try
+            {
                 var cover = await CoverService.GetCoverAsync(item.Game, item.Mod?.SteamAppId);
                 if (cover != null && !ct.IsCancellationRequested)
                     await dispatcher.InvokeAsync(() => item.CoverPath = cover);
             }
-            catch (Exception ex) { Log.Warn($"enrich {item.Name}: {ex.Message}"); }
+            catch (Exception ex) { Log.Warn($"capa {item.Name}: {ex.Message}"); }
+            finally { portao.Release(); }
+        }));
+    }
+
+    /// <summary>
+    /// Quantas leituras de detalhe estao em andamento. Zero = o disco e do trabalho de fundo.
+    ///
+    /// A varredura da abertura percorre a biblioteca inteira e leva segundos. Nesta maquina, de
+    /// SSD, ceder nao mudou numero nenhum -- o disco da conta dos dois. Fica pelo caso que nao da
+    /// para medir aqui: biblioteca grande em disco mecanico, onde uma varredura de fundo em curso
+    /// e a diferenca entre um clique instantaneo e um clique de segundos. Quem espera na frente
+    /// da tela ganha a fila; custa um Task.Delay de 20 ms por item.
+    /// </summary>
+    private int _detalhesEmVoo;
+
+    /// <summary>Segura o trabalho de fundo enquanto houver clique sendo atendido.</summary>
+    private async Task CederAoClique(CancellationToken ct)
+    {
+        while (Volatile.Read(ref _detalhesEmVoo) > 0 && !ct.IsCancellationRequested)
+        {
+            try { await Task.Delay(20, ct).ConfigureAwait(false); }
+            catch (OperationCanceledException) { return; }
         }
-        if (!ct.IsCancellationRequested)
-            await dispatcher.InvokeAsync(RefreshViewKeepSelection);
     }
 
     private async Task LoadDetailSafeAsync()
     {
         var token = ++_detailToken;
+        Interlocked.Increment(ref _detalhesEmVoo);
+        // O tempo do clique fica no log. Custa um Stopwatch e responde sozinho a unica pergunta
+        // que "o launcher esta lento" faz: lento onde, e quanto. Sem isto, uma regressao de
+        // latencia so aparece como relato.
+        var relogio = System.Diagnostics.Stopwatch.StartNew();
         try { await LoadDetailAsync(token); }
         catch (Exception ex)
         {
             Log.Warn($"detail: {ex}");
             if (token == _detailToken) DetailStatus = L.T("Error_DetailLoad", ex.Message);
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _detalhesEmVoo);
+            // So a passada que chegou ao fim sendo a atual: as substituidas saem pelo meio, e o
+            // tempo delas nao e o que a pessoa esperou.
+            if (token == _detailToken)
+                Log.Info($"detalhe: {relogio.ElapsedMilliseconds} ms ({Selected?.Name ?? "-"})");
         }
     }
 
@@ -1391,6 +1512,7 @@ public class MainViewModel : ObservableObject
         Prerequisites.Clear();
         EngineNotes.Clear();
         DetailStatus = "";
+        LimparCartoes();
         var item = Selected;
         _detailItem = item;
         if (item is null) return;
@@ -1434,11 +1556,21 @@ public class MainViewModel : ObservableObject
         if (exe != null && item.ChosenExe is null) item.ChosenExe = exe;
 
         // A escolha do tradutor so faz sentido em jogo DX9 de 32 bits — e onde os dois existem.
-        MostraTradutorD3d9 = exe is not null
-                             && DgVoodooService.Applies(exe)
-                             && PeUtils.Inspect(exe, readImports: false)?.Is64Bit == false;
-        // D3D10 e exclusivo do DXVK: aviso em vez de escolha (ver DxvkService.D3d10Files).
-        MostraTradutorD3d10 = !MostraTradutorD3d9 && DxvkService.AppliesD3d10(exe);
+        // Fora da thread da interface: `AppliesD3d10` le a TABELA DE IMPORTACAO do executavel do
+        // jogo para saber se ele fala Direct3D 10, e num executavel grande isso custa centenas de
+        // milissegundos (medido: 233 ms no A Plague Tale). Era a maior parcela isolada do tempo
+        // de abrir um jogo, e a janela ficava parada esperando por ela.
+        var (d3d9, d3d10) = await Task.Run(() =>
+        {
+            var ehD3d9 = exe is not null
+                         && DgVoodooService.Applies(exe)
+                         && PeUtils.Inspect(exe, readImports: false)?.Is64Bit == false;
+            // D3D10 e exclusivo do DXVK: aviso em vez de escolha (ver DxvkService.D3d10Files).
+            return (ehD3d9, !ehD3d9 && DxvkService.AppliesD3d10(exe));
+        });
+        if (token != _detailToken) return;
+        MostraTradutorD3d9 = d3d9;
+        MostraTradutorD3d10 = d3d10;
         if (MostraTradutorD3d9)
         {
             // O QUE ESTA NA PASTA manda, e nao o que a regra escolheria.
@@ -1484,6 +1616,53 @@ public class MainViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Apaga o que os cartoes mostram do jogo ANTERIOR, agora, na thread da interface.
+    ///
+    /// Cada cartao se limpava dentro da propria leitura, e toda leitura acontece depois de um
+    /// await. Entre clicar num jogo e a leitura dele terminar, o modal ficava aberto exibindo a
+    /// cadeia, os conflitos, o veredito e os interruptores do jogo ANTERIOR -- com o nome e a capa
+    /// do novo ja na tela, porque esses dois vem de binding direto. Trocando de jogo rapido, o que
+    /// se ve e um painel que mistura dois jogos e demora a se acertar.
+    ///
+    /// Zerar aqui custa nada e faz o modal nascer honesto: sem informacao e melhor do que
+    /// informacao de outro jogo.
+    /// </summary>
+    private void LimparCartoes()
+    {
+        ShowNeural = false;
+        ShowDlss = false;
+        ShowDlssFix = false;
+        ShowMfg = false;
+        NeuralBlocker = null;
+        NeuralNeedsRuntime = false;
+        NeuralApplied = false;
+        Dlss5Ready = false;
+        Dlss5Chain.Clear();
+        Conflitos.Clear();
+        TemConflitos = false;
+        TemBloqueio = false;
+        ConflitosResumo = "";
+        BridgeActive = false;
+        FeederActive = false;
+        MostraAvisoSemDlss = false;
+        MostraTradutorD3d9 = false;
+        MostraTradutorD3d10 = false;
+        DlssSummary = null;
+        DlssHealth = null;
+        DlssApplied = false;
+        MfgBlocker = null;
+        MfgLastRun = "";
+        MfgUnlockText = "";
+        MfgReady = false;
+        LoadVerdict = "";
+        HasLoadVerdict = false;
+        LoadVerdictOk = false;
+        NeedsRepair = false;
+        MaintainerAvatar = null;
+        SetNoSettings("");
+    }
+
+    /// <summary>
     /// Tudo o que no card depende da PASTA do exe escolhido: deteccao de NR, runtimes de DLSS,
     /// settings, correcao de FG e o veredito do ReShade.log. E o pedaco que a troca de exe na
     /// combo precisa refazer inteiro — antes ela refazia so a deteccao, e o veredito e a
@@ -1492,7 +1671,6 @@ public class MainViewModel : ObservableObject
     private async Task RefreshFolderAsync(int token)
     {
         await RefreshNeuralAndSettingsAsync(token);
-        await CheckDlssFixAsync(token);
         if (token != _detailToken) return;
         RaiseCommands();
 
@@ -1568,12 +1746,34 @@ public class MainViewModel : ObservableObject
     /// se os sliders de Neural Uplift entram na lista (eles não vêm do manifesto gerado), então
     /// rodar as settings sozinhas usa a detecção do jogo — ou da pasta — anterior.
     /// </summary>
-    private async Task RefreshNeuralAndSettingsAsync(int token)
+    /// <param name="pastaFoiEscrita">A operacao que chamou ESCREVEU na pasta do jogo. Selecionar
+    /// um jogo nao escreve; instalar, remover e trocar de tradutor sim.</param>
+    private async Task RefreshNeuralAndSettingsAsync(int token, bool pastaFoiEscrita = false)
     {
-        await CheckNeuralAsync(token);
-        await RefreshDlssAsync(token);
-        await CheckMfgAsync(token);
-        await LoadSettingsSafeAsync(token);
+        // As quatro leituras da pasta EM PARALELO.
+        //
+        // Eram uma depois da outra, e cada uma acende o proprio cartao ao terminar: os cartoes
+        // apareciam em cascata e a espera total era a SOMA das quatro. Elas sao independentes --
+        // olham arquivos diferentes e nao leem o resultado uma da outra -- entao a espera passa a
+        // ser a MAIOR delas, e os cartoes chegam praticamente juntos.
+        //
+        // Rodar juntas e seguro mesmo mexendo todas na interface: sao metodos async comecados na
+        // thread da interface, e o SynchronizationContext do WPF traz cada continuacao de volta
+        // para ela. O que de fato corre em paralelo e o Task.Run de dentro de cada uma, que e
+        // disco -- que era exatamente o que estava sendo serializado a toa.
+        await Task.WhenAll(CheckNeuralAsync(token), RefreshDlssAsync(token),
+                           CheckMfgAsync(token), CheckDlssFixAsync(token));
+
+        // Os ajustes do mod SAEM do caminho critico.
+        //
+        // Essa lista nao aparece no modal -- os controles do mod vivem no overlay do jogo, com o
+        // Home -- e serve a dois comandos e a janela de Ajustes. E ela pode ir a REDE, quando o
+        // manifesto embutido nao conhece o mod: o clique ficava esperando um servidor responder
+        // para acender um cartao que nao depende disso.
+        //
+        // Solta, mas ainda depois do neural: e a deteccao dele que decide se os sliders de Neural
+        // Uplift entram na lista, e a continuacao so comeca quando o WhenAll acima termina.
+        _ = SemQuebrar(() => LoadSettingsSafeAsync(token), "ajustes do mod");
 
         // As bolinhas do card vivem no GameItemVm, nao nesta view model, e nada as tocava
         // depois de instalar: o interruptor daqui ficava verde e a bolinha do card, vermelha.
@@ -1583,7 +1783,12 @@ public class MainViewModel : ObservableObject
 
         // A varredura de .exe da pasta e cacheada; instalar acabou de escrever la dentro
         // (host64\, vklayer\, proxies), entao a lista guardada pode estar velha.
-        ExeLocator.Invalidar(_detailItem?.Game.InstallDir);
+        //
+        // SO quando escreveu. Isto rodava em toda selecao de jogo e jogava fora justamente o
+        // cache que o preaquecimento monta na abertura: voltar a um jogo ja visto pagava a
+        // varredura inteira de novo (~27 ms num jogo grande, e ela desce cinco niveis). Era o
+        // preco de alternar entre dois jogos, cobrado toda vez.
+        if (pastaFoiEscrita) ExeLocator.Invalidar(_detailItem?.Game.InstallDir);
     }
 
     /// <summary>
@@ -1622,9 +1827,26 @@ public class MainViewModel : ObservableObject
         var addonPath = item.State?.AddonPath;
         // O addon é o build da comunidade. Uma cópia já presente na máquina vem primeiro — quem
         // seguiu as instruções do Discord já a tem, e pode ser mais nova que a que sabemos buscar.
-        var allDirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
-        await Task.Run(() => NeuralUpliftService.AutoDiscoverAddon(allDirs!));
-        if (token != _detailToken) return;
+        // UMA VEZ POR SESSAO, e nao a cada clique.
+        //
+        // Esta busca existe para achar uma copia do add-on mais nova do que a nossa, largada numa
+        // pasta de jogo pelo proprio usuario. Ela tem um desvio de saida logo na primeira linha --
+        // "ja ha add-on na biblioteca e nao fomos nos que pusemos" -- e esse desvio parou de valer
+        // quando o add-on passou a vir embutido: agora o carimbo e SEMPRE nosso, entao ela nunca
+        // desistia e varria as pastas de todos os jogos da lista antes de o cartao aparecer. Em
+        // toda selecao de jogo.
+        //
+        // Uma vez por sessao e o que a busca quer dizer: pastas de jogo nao ganham add-on novo
+        // enquanto o launcher esta aberto, e quem largar um arquivo la no meio da sessao tem o
+        // botao de importar em Ajustes.
+        if (!_buscaAddonFeita)
+        {
+            _buscaAddonFeita = true;
+            var allDirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
+            await Task.Run(() => NeuralUpliftService.AutoDiscoverAddon(allDirs!));
+            if (token != _detailToken) return;
+        }
+        // Normalmente a fila da abertura ja fez isso e o bloco acima nem roda: ver LoadAsync.
         // O progresso e a mensagem de erro passam pelo token (#61): a busca continua rodando
         // depois que o usuario abre outro jogo, e cada relato dela chegava na linha de status
         // do jogo NOVO, por cima do que o jogo novo tinha escrito.
@@ -1681,10 +1903,16 @@ public class MainViewModel : ObservableObject
         // nvngx_dlssnr.dll" e o botao que resolveria isso vinha desabilitado, enquanto o CLI e o
         // interruptor de DLSS 5 baixavam o arquivo normalmente. Era o "so funciona em RTX 50"
         // que o usuario via.
+        // Idem: uma vez por sessao. Sem o runtime na biblioteca, este bloco varre as pastas de
+        // TODOS os jogos e, falhando, ainda tenta a rede -- e repetia os dois em cada clique,
+        // justamente na maquina onde o recurso ainda nao funciona. Achando, RuntimeInLibrary
+        // passa a ser verdadeiro e o bloco sai de cena sozinho.
         if (detection.Host.GpuOk
             && detection.Host.DriverBranch >= NeuralUpliftService.MinDriverBranch
-            && !detection.Host.RuntimeInLibrary)
+            && !detection.Host.RuntimeInLibrary
+            && !_buscaRuntimeFeita)
         {
+            _buscaRuntimeFeita = true;
             var dirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList()!;
             var found = await Task.Run(() => NeuralUpliftService.AutoDiscoverRuntime(
                 dirs!, StatusSe(token)));
@@ -1728,8 +1956,15 @@ public class MainViewModel : ObservableObject
             && !detection.Host.RuntimeInLibrary;
         // sem mod RenoDX nao ha State; o ReShade.ini fica ao lado do addon na pasta do jogo
         var neuralIni = item.State?.IniPath ?? System.IO.Path.Combine(targetDir, "ReShade.ini");
-        NeuralApplied = NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath);
-        BuildDlss5Chain(targetDir, neuralIni, detection, item.ChosenExe);
+        var exeDaVez = item.ChosenExe;
+        NeuralApplied = await Task.Run(() =>
+            NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath));
+        if (token != _detailToken) return;
+        // A leitura da pasta fora da thread da interface; so a aplicacao dentro dela.
+        var leitura = await Task.Run(() =>
+            LerCadeia(targetDir, neuralIni, detection, exeDaVez, NeuralApplied));
+        if (token != _detailToken) return;
+        AplicarCadeia(leitura);
 
         // O interruptor volta sozinho, sempre que o launcher olha para o jogo — nao apenas ao
         // clicar em Play. A tecla F6 do addon desliga o neural e o estado fica GRAVADO no ini,
@@ -1739,14 +1974,22 @@ public class MainViewModel : ObservableObject
         // Reafirmar so quando a unica peca fora do lugar e o interruptor: se falta arquivo, quem
         // resolve e a instalacao, e ligar a chave ali so criaria um verde falso. E nunca com o
         // jogo aberto — o addon reescreve o ini ao sair e levaria a nossa correcao junto.
+        // A condicao inteira fora da thread da interface: `IsGameRunning` percorre os processos do
+        // sistema e `ReassertEnabled` reescreve um ini. Nenhum dos dois tem o que fazer parando a
+        // janela — e este bloco so acontece no caso raro em que a unica peca fora do lugar e a
+        // chave, entao a leitura barata (`Dlss5Ready`) fica na frente e corta o caminho.
         if (!Dlss5Ready
             && !NeuralApplied
             && Dlss5Chain.All(l => l.Ok || l.Label == L.T("Dlss5_Link_Switch"))
-            && !AddonService.IsGameRunning(targetDir)
-            && NeuralUpliftService.ReassertEnabled(neuralIni))
+            && await Task.Run(() => !AddonService.IsGameRunning(targetDir)
+                                    && NeuralUpliftService.ReassertEnabled(neuralIni)))
         {
-            NeuralApplied = NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath);
-            BuildDlss5Chain(targetDir, neuralIni, detection, item.ChosenExe);
+            if (token != _detailToken) return;
+            NeuralApplied = await Task.Run(() =>
+                NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath));
+            if (token != _detailToken) return;
+            AplicarCadeia(await Task.Run(() =>
+                LerCadeia(targetDir, neuralIni, detection, exeDaVez, NeuralApplied)));
             DetailStatus = L.T("Main_Neural_Reasserted");
         }
 
@@ -1955,7 +2198,7 @@ public class MainViewModel : ObservableObject
             }
 
             DetailStatus = string.Join("; ", notas.Where(n => !string.IsNullOrWhiteSpace(n)));
-            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken, pastaFoiEscrita: true);
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
         finally { ActionBusy = false; RaiseCommands(); }
@@ -2065,7 +2308,7 @@ public class MainViewModel : ObservableObject
                 forcarDgVoodoo: escolha == "dgvoodoo");
             DetailStatus = r.Ok ? L.T("Main_D3d9Translator_Reinstalled")
                                 : r.Blocker ?? string.Join("; ", r.Steps);
-            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken, pastaFoiEscrita: true);
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
         finally { ActionBusy = false; RaiseCommands(); }
@@ -2103,7 +2346,7 @@ public class MainViewModel : ObservableObject
                     ? string.Join("  •  ", r.Manual)
                     : r.Blocker ?? string.Join("; ", r.Steps);
             }
-            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken, pastaFoiEscrita: true);
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
         finally { ActionBusy = false; RaiseCommands(); }
@@ -2150,7 +2393,7 @@ public class MainViewModel : ObservableObject
                     : r.Blocker ?? string.Join("; ", r.Steps);
             }
             // os sliders de NR entram/saem da lista junto com o estado
-            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken);
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken, pastaFoiEscrita: true);
         }
         catch (Exception ex) { DetailStatus = ex.Message; }
         finally { ActionBusy = false; RaiseCommands(); }
@@ -2173,6 +2416,9 @@ public class MainViewModel : ObservableObject
         {
             var path = dlg.FileName;
             DetailStatus = L.T("Main_Neural_Importing");
+            // Trazer um runtime a mao e o pedido explicito para reavaliar: a busca automatica volta
+            // a valer nesta sessao (ver _buscaRuntimeFeita).
+            _buscaRuntimeFeita = false;
             await Task.Run(() => NeuralUpliftService.ImportRuntime(path));
             DetailStatus = L.T("Main_Neural_Imported");
             await CheckNeuralAsync(_detailToken);

@@ -385,25 +385,8 @@ public static class VulkanLayerService
     /// <summary>O binario menciona este nome de modulo em algum lugar? Responde por carga tardia
     /// (LoadLibrary), que nao aparece na tabela de importacao. Usado tambem pelo
     /// <see cref="ConflictScanner"/> para saber se um proxy ao lado do exe chega a ser aberto.</summary>
-    internal static bool ContemTexto(string path, string alvo)
-    {
-        try
-        {
-            using var fs = File.OpenRead(path);
-            var buf = new byte[1 << 20];
-            var carry = alvo.Length - 1;
-            var anterior = new byte[carry];
-            var temAnterior = false;
-            int n;
-            while ((n = fs.Read(buf, 0, buf.Length)) > 0)
-            {
-                var janela = temAnterior ? anterior.Concat(buf.Take(n)).ToArray() : buf.Take(n).ToArray();
-                if (System.Text.Encoding.ASCII.GetString(janela)
-                        .Contains(alvo, StringComparison.OrdinalIgnoreCase)) return true;
-                if (n >= carry) { Array.Copy(buf, n - carry, anterior, 0, carry); temAnterior = true; }
-            }
-        }
-        catch (Exception ex) { Log.Warn($"vulkan probe {path}: {ex.Message}"); }
-        return false;
-    }
+    internal static bool ContemTexto(string path, string alvo) =>
+        // Uma implementacao so, rapida e com cache, em PeUtils: eram quatro copias identicas
+        // varrendo o executavel inteiro, e um clique chamava varias delas.
+           PeUtils.ContemTexto(path, alvo);
 }

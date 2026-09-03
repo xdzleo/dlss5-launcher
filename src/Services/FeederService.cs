@@ -244,33 +244,18 @@ public static class FeederService
 
         // Carregado por LoadLibrary nao aparece na tabela: o Just Cause 2 chama d3d10_1.dll assim.
         // So decide quando D3D10 esta no binario e nenhuma API mais nova esta.
-        var mencionaD10 = ContemTexto(exePath, "d3d10.dll") || ContemTexto(exePath, "d3d10_1.dll");
-        if (!mencionaD10) return false;
-        return !ContemTexto(exePath, "d3d11.dll") && !ContemTexto(exePath, "d3d12.dll");
+        // Os quatro numa passada so: eram ate quatro varreduras do arquivo inteiro, e a resposta
+        // de cada uma vinha do mesmo binario.
+        var textos = PeUtils.ProcurarTextos(exePath,
+            "d3d10.dll", "d3d10_1.dll", "d3d11.dll", "d3d12.dll");
+        if (!textos.Contains("d3d10.dll") && !textos.Contains("d3d10_1.dll")) return false;
+        return !textos.Contains("d3d11.dll") && !textos.Contains("d3d12.dll");
     }
 
-    private static bool ContemTexto(string path, string alvo)
-    {
-        try
-        {
-            var bytes = System.Text.Encoding.ASCII.GetBytes(alvo);
-            using var fs = File.OpenRead(path);
-            var buf = new byte[1 << 20];
-            var carry = bytes.Length - 1;
-            var anterior = new byte[carry];
-            var temAnterior = false;
-            int n;
-            while ((n = fs.Read(buf, 0, buf.Length)) > 0)
-            {
-                var janela = temAnterior ? anterior.Concat(buf.Take(n)).ToArray() : buf.Take(n).ToArray();
-                if (System.Text.Encoding.ASCII.GetString(janela)
-                        .Contains(alvo, StringComparison.OrdinalIgnoreCase)) return true;
-                if (n >= carry) { Array.Copy(buf, n - carry, anterior, 0, carry); temAnterior = true; }
-            }
-        }
-        catch (Exception ex) { Log.Warn($"feeder api probe {path}: {ex.Message}"); }
-        return false;
-    }
+    private static bool ContemTexto(string path, string alvo) =>
+        // Uma implementacao so, rapida e com cache, em PeUtils: eram quatro copias identicas
+        // varrendo o executavel inteiro, e um clique chamava varias delas.
+           PeUtils.ContemTexto(path, alvo);
 
     /// <summary>Este jogo precisa do caminho partido (addon de 32 bits + host de 64)?</summary>
     public static bool NeedsHost64(string? exePath) =>

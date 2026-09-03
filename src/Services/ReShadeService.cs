@@ -230,28 +230,10 @@ public partial class ReShadeService
         return false;
     }
 
-    private static bool ContemTexto(string path, string alvo)
-    {
-        try
-        {
-            var bytes = System.Text.Encoding.ASCII.GetBytes(alvo);
-            using var fs = File.OpenRead(path);
-            var buf = new byte[1 << 20];
-            var carry = bytes.Length - 1;
-            var anterior = new byte[carry];
-            var temAnterior = false;
-            int n;
-            while ((n = fs.Read(buf, 0, buf.Length)) > 0)
-            {
-                var janela = temAnterior ? anterior.Concat(buf.Take(n)).ToArray() : buf.Take(n).ToArray();
-                if (System.Text.Encoding.ASCII.GetString(janela)
-                        .Contains(alvo, StringComparison.OrdinalIgnoreCase)) return true;
-                if (n >= carry) { Array.Copy(buf, n - carry, anterior, 0, carry); temAnterior = true; }
-            }
-        }
-        catch (Exception ex) { Log.Warn($"reshade api probe {path}: {ex.Message}"); }
-        return false;
-    }
+    private static bool ContemTexto(string path, string alvo) =>
+        // Uma implementacao so, rapida e com cache, em PeUtils: eram quatro copias identicas
+        // varrendo o executavel inteiro, e um clique chamava varias delas.
+           PeUtils.ContemTexto(path, alvo);
 
     public record DeployResult(bool Success, string Message, string? DllName = null);
 

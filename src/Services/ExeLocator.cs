@@ -9,7 +9,114 @@ public static class PeUtils
 {
     public record PeInfo(bool Is64Bit, IReadOnlyList<string> Imports, string? ProductName);
 
+    /// <summary>
+    /// A ultima leitura de cada executavel, guardada.
+    ///
+    /// Ler a tabela de importacao de um executavel de jogo custa caro -- medido nesta maquina,
+    /// 233 ms no A Plague Tale: Requiem -- e um unico clique num jogo faz essa leitura VARIAS
+    /// vezes com o mesmo arquivo: a escolha de tradutor de D3D9 pergunta, a de D3D10 pergunta de
+    /// novo, e o roteador do instalador pergunta uma terceira vez ao montar a cadeia. Era a maior
+    /// parcela isolada do tempo de abrir um jogo, e nenhuma das respostas podia ter mudado.
+    ///
+    /// A chave inclui tamanho e data de escrita: o launcher instala arquivos nas pastas dos jogos,
+    /// e uma resposta guardada sobre um arquivo que foi trocado seria pior do que nao guardar.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<
+        (string Path, long Length, long Escrito, bool ComImports), PeInfo?> Cache = new();
+
     public static PeInfo? Inspect(string path, bool readImports = true)
+    {
+        try
+        {
+            // A identidade do arquivo primeiro. Falhando isto, o arquivo sumiu ou nao pode ser
+            // lido, e a leitura abaixo falharia do mesmo jeito.
+            var fi = new FileInfo(path);
+            if (!fi.Exists) return null;
+            var chave = (path, fi.Length, fi.LastWriteTimeUtc.Ticks, readImports);
+            if (Cache.TryGetValue(chave, out var guardado)) return guardado;
+            var lido = InspectSemCache(path, readImports);
+            // Limite grosseiro: a lista de jogos nao passa de algumas centenas de executaveis, e
+            // um teto evita que uma varredura patologica cresca sem fim.
+            if (Cache.Count < 2048) Cache[chave] = lido;
+            return lido;
+        }
+        catch (Exception ex) { Log.Warn($"pe inspect {path}: {ex.Message}"); return null; }
+    }
+
+    /// <summary>
+    /// Quais destes textos aparecem dentro do arquivo. Uma passada so, e a resposta fica guardada.
+    ///
+    /// Existia em QUATRO copias — Feeder, dgVoodoo, ReShade e camada Vulkan — cada uma varrendo o
+    /// executavel inteiro atras de um texto, e um unico clique num jogo chamava varias delas. A
+    /// decisao de Direct3D 10 sozinha varria o arquivo ate quatro vezes (d3d10, d3d10_1, d3d11,
+    /// d3d12). Medido nesta maquina: 233 ms no A Plague Tale: Requiem, por clique.
+    ///
+    /// Duas coisas eram caras alem da leitura. A copia antiga montava um array novo e uma STRING
+    /// nova por megabyte lido — tres vezes o tamanho do arquivo em lixo para o coletor — e depois
+    /// procurava dentro dessa string. Aqui a busca e sobre os bytes, com IndexOf de Span, que o
+    /// runtime vetoriza; nada e alocado por bloco.
+    ///
+    /// A chave inclui tamanho e data de escrita: o launcher escreve nas pastas dos jogos, e uma
+    /// resposta guardada sobre um arquivo trocado seria pior do que nao guardar nada.
+    /// </summary>
+    public static IReadOnlySet<string> ProcurarTextos(string path, params string[] alvos)
+    {
+        var vazio = (IReadOnlySet<string>)new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            var fi = new FileInfo(path);
+            if (!fi.Exists) return vazio;
+            var chave = (path, fi.Length, fi.LastWriteTimeUtc.Ticks, string.Join('\u0001', alvos));
+            if (CacheTextos.TryGetValue(chave, out var guardado)) return guardado;
+            var achados = Varrer(path, alvos);
+            if (CacheTextos.Count < 2048) CacheTextos[chave] = achados;
+            return achados;
+        }
+        catch (Exception ex) { Log.Warn($"texto em {path}: {ex.Message}"); return vazio; }
+    }
+
+    /// <summary>Este texto aparece dentro do arquivo?</summary>
+    public static bool ContemTexto(string path, string alvo) =>
+        ProcurarTextos(path, alvo).Contains(alvo);
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<
+        (string Path, long Length, long Escrito, string Alvos), IReadOnlySet<string>> CacheTextos = new();
+
+    private static IReadOnlySet<string> Varrer(string path, string[] alvos)
+    {
+        var achados = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Comparacao em minusculas dos dois lados: os nomes de DLL aparecem com caixa variada
+        // dentro do binario, e era isso que o Contains(OrdinalIgnoreCase) da versao antiga fazia.
+        var agulhas = alvos
+            .Select(a => (Alvo: a, Bytes: System.Text.Encoding.ASCII.GetBytes(a.ToLowerInvariant())))
+            .Where(a => a.Bytes.Length > 0)
+            .ToArray();
+        if (agulhas.Length == 0) return achados;
+
+        // A sobreposicao entre blocos: uma agulha pode cair na fronteira de dois blocos.
+        var sobra = agulhas.Max(a => a.Bytes.Length) - 1;
+        using var fs = File.OpenRead(path);
+        var buf = new byte[(1 << 20) + sobra];
+        var mantido = 0;
+        int lidos;
+        while ((lidos = fs.Read(buf, mantido, buf.Length - mantido)) > 0)
+        {
+            var total = mantido + lidos;
+            for (var i = mantido; i < total; i++)
+                if (buf[i] >= (byte)'A' && buf[i] <= (byte)'Z') buf[i] += 32;
+
+            var janela = new ReadOnlySpan<byte>(buf, 0, total);
+            foreach (var (alvo, bytes) in agulhas)
+                if (!achados.Contains(alvo) && janela.IndexOf(bytes) >= 0) achados.Add(alvo);
+            if (achados.Count == agulhas.Length) break;
+
+            mantido = Math.Min(sobra, total);
+            Array.Copy(buf, total - mantido, buf, 0, mantido);
+        }
+        return achados;
+    }
+
+    private static PeInfo? InspectSemCache(string path, bool readImports)
     {
         try
         {
