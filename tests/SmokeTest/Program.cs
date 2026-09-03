@@ -365,6 +365,18 @@ try
         "MFG: runtime de Frame Generation antigo (3.1.1) e recusado");
     Check(!MfgService.ProviderIsSupported(null), "MFG: provedor desconhecido e recusado");
 
+    // Placa que nao alcanca esconde o CARTAO, e nao vira aviso dentro dele: nao ha nada a fazer
+    // com "sua placa e anterior a Ada", e repetir isso em todo jogo da lista e so ruido.
+    var detAmpere = new MfgService.Detection(true, true, new Version(310, 8, 0), true, false,
+                                             new MfgService.Config(), 86, "bloqueio", null);
+    Check(!detAmpere.Offerable, "MFG: placa anterior a Ada nao mostra o cartao");
+    Check((detAmpere with { Sm = 89 }).Offerable, "MFG: RTX 40 mostra o cartao");
+    Check((detAmpere with { Sm = 120 }).Offerable, "MFG: RTX 50 mostra o cartao (teto de 4x para 6x)");
+    Check((detAmpere with { Applied = true }).Offerable,
+        "MFG: ja instalado continua aparecendo mesmo em placa que nao alcanca, para poder desligar");
+    Check(!(detAmpere with { Sm = 89, HasStreamlineFg = false }).Offerable,
+        "MFG: jogo sem Streamline nao mostra o cartao");
+
     // Multiplicador fora da faixa nao chega ao disco: o add-on recusaria o arquivo inteiro.
     Check(new MfgService.Config(9).Sane().Multiplier == MfgService.MaxMultiplier,
         "MFG: multiplicador acima de 6 e limitado a 6");

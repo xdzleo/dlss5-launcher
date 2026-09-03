@@ -135,9 +135,21 @@ public static class MfgService
                             bool ProviderSupported, bool Applied, Config Config, int? Sm,
                             string? Blocker, Status? LastRun)
     {
-        /// <summary>O cartao aparece? So onde ha a rota que o patch entende — ou onde ele ja esta
-        /// instalado, para que desligar continue possivel mesmo se a deteccao mudar de ideia.</summary>
-        public bool Offerable => HasStreamlineFg || Applied;
+        /// <summary>
+        /// A placa consegue Frame Generation? Ada ou mais nova.
+        ///
+        /// Este e o unico requisito que ESCONDE o cartao em vez de virar aviso dentro dele, e a
+        /// diferenca e que nao ha nada a fazer com a resposta. Os outros bloqueios apontam um
+        /// caminho — o runtime do jogo pode ser atualizado, o Streamline pode aparecer num patch
+        /// do jogo. "Sua placa e de 2020" nao aponta nada: e so um cartao ocupando espaco em todo
+        /// jogo da lista para repetir um fato que nao muda.
+        /// </summary>
+        public bool GpuCapable => Sm >= MinSm;
+
+        /// <summary>O cartao aparece? So onde ha a rota que o patch entende E a placa alcanca —
+        /// ou onde ele ja esta instalado, para que desligar continue possivel mesmo depois de
+        /// trocar de placa ou de a deteccao mudar de ideia.</summary>
+        public bool Offerable => (HasStreamlineFg && GpuCapable) || Applied;
 
         /// <summary>Esta placa ja fazia MFG sozinha, e o que o patch entrega e o teto maior.</summary>
         public bool JaTinhaMfg => Sm >= 120;
