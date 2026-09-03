@@ -76,6 +76,35 @@ if (args.Contains("--sm"))
 // --runtime <caminho do nvngx_dlssnr.dll> <versao> <url> diz se este build seria ACEITO.
 // Existe porque um hash fixado no codigo que nao bate e um bug invisivel aqui e fatal la: em
 // RTX 40 o launcher baixava 111 MB do build certo e recusava na ultima linha.
+// --achar-runtime roda a busca automatica do runtime neural e diz de onde ele veio. Existe para
+// provar, sem abrir o launcher, que a busca acha a copia que outra ferramenta de DLSS ja trouxe
+// para o disco — e que ela recusa a copia sem os kernels desta placa.
+if (args.Contains("--achar-runtime"))
+{
+    var biblioteca = NeuralUpliftService.LibraryRuntime;
+    var guardado = biblioteca + ".probe-bak";
+    var tinha = File.Exists(biblioteca);
+    if (tinha) File.Move(biblioteca, guardado, overwrite: true);
+    try
+    {
+        var achado = NeuralUpliftService.AutoDiscoverRuntime([], new Progress<string>(Console.WriteLine));
+        Console.WriteLine(achado is null
+            ? "  nada encontrado no disco"
+            : $"  achado em: {achado}");
+        if (achado is not null)
+        {
+            var archs = CudaFatbin.Arquiteturas(achado);
+            Console.WriteLine($"  arquiteturas: {string.Join(", ", archs.Select(a => $"sm_{a} {CudaFatbin.Rotulo(a)}"))}");
+        }
+    }
+    finally
+    {
+        try { if (File.Exists(biblioteca)) File.Delete(biblioteca); } catch { }
+        if (tinha) { try { File.Move(guardado, biblioteca, overwrite: true); } catch { } }
+    }
+    return 0;
+}
+
 if (args.Contains("--runtime"))
 {
     var livres = args.Where(a => !a.StartsWith("--")).ToArray();

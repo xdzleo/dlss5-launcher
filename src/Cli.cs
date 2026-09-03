@@ -89,6 +89,7 @@ public static class Cli
             "neural" => await NeuralAsync(rest.FirstOrDefault()),
             "dlss5" => await Dlss5Async(rest),
             "mfg" => await MfgAsync(rest),
+            "instalado" or "installed" => await InstaladoAsync(rest.FirstOrDefault()),
             "doctor" => await DoctorAsync(),
             "help" or "h" or "?" => Help(),
             _ => Unknown(cmd),
@@ -185,6 +186,88 @@ public static class Cli
         catch (Exception ex) { Console.Error.WriteLine(ex.Message); return 1; }
     }
 
+    /// <summary>
+    /// O que o launcher pos nesta pasta, e o que ele devolveria ao sair.
+    ///
+    /// O DLSS5-Swapper guarda um `manifest.json` com tudo que tocou, e ter uma lista so e melhor
+    /// do que caçar marcador por marcador. Mas um manifesto e uma SEGUNDA verdade: ele descreve o
+    /// que o instalador achou que fez, e nao o que esta no disco. Renomeie um arquivo a mao,
+    /// atualize o jogo por cima, deixe outra ferramenta passar por ali, e o manifesto continua
+    /// afirmando o que era.
+    ///
+    /// Aqui a lista e MONTADA do disco, dos mesmos marcadores que a desinstalacao consulta. Ela
+    /// nao pode divergir da realidade porque e a realidade — e diz, arquivo por arquivo, o que
+    /// desligar o recurso devolveria.
+    /// </summary>
+    private static async Task<int> InstaladoAsync(string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            Console.Error.WriteLine($"uso: instalado {L.T("Cli_Arg_Game")}");
+            return 1;
+        }
+        var ctx = await LoadAsync();
+        var g = Resolve(ctx, query, out var err);
+        if (g is null) { Console.Error.WriteLine(err); return 1; }
+
+        var (_, state) = StateOf(ctx, g);
+        var target = state?.TargetDir ?? g.InstallDir;
+        Console.WriteLine($"jogo  : {g.Name}");
+        Console.WriteLine($"pasta : {target}");
+        Console.WriteLine();
+
+        var nossos = new List<string>();
+        var backups = new List<(string Arquivo, string Original)>();
+        try
+        {
+            foreach (var f in Directory.EnumerateFiles(target, "*.renodx-ours", SearchOption.TopDirectoryOnly))
+                nossos.Add(Path.GetFileName(f)[..^".renodx-ours".Length]);
+            foreach (var f in Directory.EnumerateFiles(target, "*.renodx-bak", SearchOption.TopDirectoryOnly))
+            {
+                var alvo = Path.GetFileName(f)[..^".renodx-bak".Length];
+                backups.Add((alvo, $"{new FileInfo(f).Length:N0} bytes"));
+            }
+        }
+        catch (Exception ex) { Console.Error.WriteLine(ex.Message); return 1; }
+
+        // Os add-ons e as pecas que nao levam marcador porque o NOME ja e nosso.
+        var pecas = new[]
+        {
+            NeuralUpliftService.GenericAddonFile, "renodx-dlss5.addon64",
+            NeuralUpliftService.BridgeFile, MfgService.AddonFile, MfgService.ConfigFile,
+            "dlss5-feed.addon64", "dlss5-feed.cfg",
+        };
+
+        Console.WriteLine("postos por nos");
+        var achou = false;
+        foreach (var nome in pecas.Distinct().Concat(nossos).Distinct())
+        {
+            var p = Path.Combine(target, nome);
+            if (!File.Exists(p)) continue;
+            achou = true;
+            var v = System.Diagnostics.FileVersionInfo.GetVersionInfo(p).FileVersion;
+            Console.WriteLine($"  {nome,-34} {new FileInfo(p).Length,12:N0} bytes"
+                              + (string.IsNullOrWhiteSpace(v) ? "" : $"  {v}"));
+        }
+        if (!achou) Console.WriteLine("  (nada)");
+
+        Console.WriteLine();
+        Console.WriteLine("originais guardados (voltam ao desligar)");
+        if (backups.Count == 0) Console.WriteLine("  (nenhum arquivo do jogo foi substituido)");
+        foreach (var (arquivo, tamanho) in backups)
+            Console.WriteLine($"  {arquivo,-34} {tamanho}");
+
+        Console.WriteLine();
+        var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
+        if (File.Exists(ini))
+        {
+            var carga = new IniFile(ini).Get("ADDON", "LoadFromDllMain", ignoreCase: true);
+            Console.WriteLine($"carga antecipada : {(string.IsNullOrWhiteSpace(carga) ? "(nenhuma)" : carga)}");
+        }
+        Console.WriteLine($"ReShade          : {state?.ReShadeDllName ?? "(nao encontrado)"}");
+        return 0;
+    }
+
     /// <summary>Width of the syntax column in the help table.</summary>
     private const int HelpSyntaxWidth = 26;
 
@@ -210,6 +293,7 @@ public static class Cli
         HelpRow($"dlss5 {game} | --all", L.T("Cli_Help_Dlss5"));
         HelpRow($"neural {game}", L.T("Cli_Help_Neural"));
         HelpRow($"mfg {game} [--x 2..6] [--off]", L.T("Cli_Help_Mfg"));
+        HelpRow($"instalado {game}", L.T("Cli_Help_Instalado"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Help_Match", game));

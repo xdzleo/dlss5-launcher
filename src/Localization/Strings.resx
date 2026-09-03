@@ -227,6 +227,10 @@
     <value>{0} — modo linha de comando</value>
     <comment>{0} = App_Name (reuso da chave existente).</comment>
   </data>
+  <data name="Cli_Help_Instalado" xml:space="preserve">
+    <value>Lista o que o launcher pôs na pasta de um jogo, e o que devolveria</value>
+    <comment>pt: "Lista o que o launcher pos na pasta de um jogo, e o que devolveria".</comment>
+  </data>
   <data name="Cli_Help_Install" xml:space="preserve">
     <value>Instala ou atualiza o ReShade e o addon</value>
   </data>

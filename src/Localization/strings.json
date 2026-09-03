@@ -222,6 +222,11 @@
     "note": "pt: \"...sem diferenciar maiúsculas. Exemplo:\". {0} = Cli_Arg_Game.",
     "pt-BR": "{0} casa com qualquer parte do nome, sem diferenciar maiusculas. Exemplo:"
   },
+  "Cli_Help_Instalado": {
+    "en": "List what the launcher put in a game's folder, and what it would give back",
+    "note": "pt: \"Lista o que o launcher pos na pasta de um jogo, e o que devolveria\".",
+    "pt-BR": "Lista o que o launcher pôs na pasta de um jogo, e o que devolveria"
+  },
   "Cli_Help_Mfg": {
     "en": "Turn Multi Frame Generation on, off, or just report it",
     "note": "pt: \"Liga, desliga ou so relata o Multi Frame Generation\".",

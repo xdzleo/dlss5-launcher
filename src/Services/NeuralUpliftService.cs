@@ -1608,11 +1608,53 @@ public static class NeuralUpliftService
     /// the user's behalf.
     /// </summary>
     /// <returns>The path it imported from, or null when no copy exists on this machine.</returns>
+    /// <summary>
+    /// Onde outras ferramentas de DLSS guardam o runtime neural que embarcam.
+    ///
+    /// Nao e para "roubar" nada: o arquivo e o mesmo binario da NVIDIA (ou o rebuild publico da
+    /// comunidade) que este launcher tambem busca, e ja esta no disco do usuario. Reaproveita-lo
+    /// evita 165 MB de download e faz a instalacao funcionar sem rede.
+    ///
+    /// A lista e de pastas, nao de arquivos: cada ferramenta organiza o payload do seu jeito, e a
+    /// varredura desce ate achar `nvngx_dlssnr.dll`. O que decide se ele serve nao e a origem —
+    /// e o leitor de fatbin, que confere se ha kernel para esta placa.
+    /// </summary>
+    private static IEnumerable<string> RaizesDeOutrasFerramentas()
+    {
+        string[] bases =
+        [
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+        ];
+        string[] nomes =
+        [
+            "DLSS 5 Swapper", "DLSS5 Swapper", "DLSS5-Swapper", "DLSS Swapper",
+            "1Click DLSS5", "1Click-DLSS5", "RTX40MFG", "OptiScaler",
+        ];
+        foreach (var b in bases)
+        {
+            if (string.IsNullOrEmpty(b)) continue;
+            foreach (var n in nomes)
+            {
+                var p = Path.Combine(b, n);
+                if (Directory.Exists(p)) yield return p;
+            }
+        }
+    }
+
     public static string? AutoDiscoverRuntime(IEnumerable<string> gameDirs, IProgress<string>? progress = null)
     {
         if (File.Exists(LibraryRuntime)) return null;   // already have it
 
         var roots = new List<string>();
+        // As OUTRAS ferramentas de DLSS vem primeiro.
+        //
+        // Varias delas embarcam este runtime no proprio instalador — o DLSS 5 Swapper traz um
+        // rebuild da comunidade com kernels de sm_75 a sm_120, conferido aqui com o leitor de
+        // fatbin. Quem ja tem uma dessas instalada tem 165 MB no disco que servem, e baixar de
+        // novo e desperdicio; sem rede, e a diferenca entre funcionar e nao funcionar.
+        roots.AddRange(RaizesDeOutrasFerramentas());
         // Where a user who went looking for it would have put it
         foreach (var known in new[]
                  {
@@ -1623,6 +1665,11 @@ public static class NeuralUpliftService
             if (Directory.Exists(known)) roots.Add(known);
         }
         roots.AddRange(gameDirs.Where(Directory.Exists));
+
+        // Os kernels desta placa. Um runtime sem eles instala inteiro e nao roda nada — e foi
+        // exatamente esse o "so funciona em RTX 50" que a 1.72 corrigiu na busca pela rede. A
+        // busca no disco tinha o mesmo buraco: pegava a primeira copia de tamanho plausivel.
+        var meuSm = ProbeHost().Sm;
 
         var options = new EnumerationOptions
         {
@@ -1642,6 +1689,17 @@ public static class NeuralUpliftService
                     // same size guard as the manual import: a stub or truncated copy fails inside
                     // the game with no message at all
                     if (new FileInfo(f).Length < 32L * 1024 * 1024) continue;
+                    if (meuSm is { } sm)
+                    {
+                        var arquiteturas = CudaFatbin.Arquiteturas(f);
+                        if (arquiteturas.Count > 0 && !arquiteturas.Contains(sm))
+                        {
+                            Log.Info($"neural runtime em {f} ignorado: traz "
+                                     + $"{string.Join(", ", arquiteturas.Select(a => $"sm_{a}"))}, "
+                                     + $"e esta placa e sm_{sm}");
+                            continue;
+                        }
+                    }
                     ImportRuntime(f);
                     Log.Info($"neural runtime auto-discovered at {f}");
                     return f;
