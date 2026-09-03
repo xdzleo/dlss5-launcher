@@ -27,28 +27,67 @@
         <DataTemplate x:Key="NoteCard">
             <Border Background="{Binding Kind, Converter={StaticResource NoteBg}}"
                     BorderBrush="{Binding Kind, Converter={StaticResource NoteBorder}}"
-                    BorderThickness="1" CornerRadius="9" Padding="12,10" Margin="0,0,0,7">
+                    BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,9">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <!-- Cabecalho: onde agir, o quanto isso urge, e o titulo.
+                         Some inteiro quando nao ha nenhum dos tres — antes ele ocupava espaco em
+                         branco no topo de toda nota sem titulo, que e a maioria delas. -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
+                                Visibility="{Binding TemCabecalho, Converter={StaticResource BoolToVis}}">
                         <!-- WHERE the user has to act: an instruction that does not say whether it
                              happens in the game or in the overlay is half an instruction -->
-                        <Border CornerRadius="4" Padding="6,2" Margin="0,0,7,0" Background="#22000000"
+                        <Border CornerRadius="4" Padding="7,3" Margin="0,0,7,0" Background="#33000000"
+                                VerticalAlignment="Center"
                                 Visibility="{Binding Location, Converter={StaticResource TextToVis}}">
-                            <TextBlock Text="{Binding Location}" FontSize="9.5" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding Location}" FontSize="9.5" FontWeight="Bold"
                                        Foreground="{StaticResource TextBrush}"/>
+                        </Border>
+                        <!-- "IMPORTANT:", "NOTE:" — a nota se anunciava assim, dentro da primeira
+                             frase. Como selo, ela diz a mesma coisa sem custar uma leitura. -->
+                        <Border CornerRadius="4" Padding="7,3" Margin="0,0,7,0" Background="#5E4A16"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding Destaque, Converter={StaticResource TextToVis}}">
+                            <TextBlock Text="{Binding Destaque}" FontSize="9.5" FontWeight="Bold"
+                                       Foreground="#FFDC8A"/>
                         </Border>
                         <TextBlock Text="{Binding Title}" FontSize="11.5" FontWeight="SemiBold"
                                    VerticalAlignment="Center" Foreground="{StaticResource TextBrush}"
+                                   TextWrapping="Wrap"
                                    Visibility="{Binding Title, Converter={StaticResource TextToVis}}"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12" LineHeight="18"
+
+                    <TextBlock Text="{Binding Lead}" TextWrapping="Wrap" FontSize="12" LineHeight="19"
                                Foreground="{StaticResource TextBrush}"
-                               Visibility="{Binding Text, Converter={StaticResource TextToVis}}"/>
+                               Visibility="{Binding Lead, Converter={StaticResource TextToVis}}"/>
+
+                    <!-- A lista, como lista.
+                         Estas notas sao escritas em markdown de rascunho numa wiki, e os hifens
+                         chegavam aqui no meio do texto corrido. Um item por linha, com a marca
+                         fora da margem do texto, e a diferenca entre ler e decifrar. -->
+                    <ItemsControl ItemsSource="{Binding Itens}" Margin="0,8,0,0"
+                                  Visibility="{Binding Itens.Count, Converter={StaticResource CountToVis}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Width="4" Height="4" Margin="3,8,10,0" VerticalAlignment="Top"
+                                             Fill="{StaticResource TextDimBrush}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding}" TextWrapping="Wrap"
+                                               FontSize="12" LineHeight="19"
+                                               Foreground="{StaticResource TextBrush}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
                     <!-- Verbatim block (ini snippet, launch argument): monospaced and selectable.
                          No inner ScrollViewer — a nested one swallows the mouse wheel and the
                          whole modal stops scrolling while the cursor is over the block. Wrapping
                          instead of clipping, so nothing is lost off the right edge. -->
-                    <Border CornerRadius="6" Padding="9,7" Margin="0,7,0,0" Background="#1A1D24"
+                    <Border CornerRadius="6" Padding="10,8" Margin="0,9,0,0" Background="#1A1D24"
                             BorderBrush="{StaticResource BorderBrush2}" BorderThickness="1"
                             Visibility="{Binding Preformatted, Converter={StaticResource TextToVis}}">
                         <TextBox Text="{Binding Preformatted, Mode=OneWay}" IsReadOnly="True"
@@ -58,7 +97,8 @@
                                  VerticalScrollBarVisibility="Disabled"
                                  Padding="0" ToolTip="{loc:Tr Common_SelectToCopy}"/>
                     </Border>
-                    <ItemsControl ItemsSource="{Binding Links}" Margin="0,7,0,0">
+
+                    <ItemsControl ItemsSource="{Binding Links}" Margin="0,8,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Margin="0,2,0,0" FontSize="11.5">
@@ -829,6 +869,18 @@
                                 </DockPanel>
                             </Border>
 
+                            <!-- As instrucoes do mod, A VISTA.
+                                 Elas moravam atras do bloco recolhido "Detalhes", junto da
+                                 referencia — e ha instrucao ali sem a qual o mod NAO FUNCIONA
+                                 ("reinicie o jogo para o RenoDX valer"). Referencia pode ficar
+                                 guardada; passo obrigatorio, nao. Ver NotasEmDestaque. -->
+                            <StackPanel Margin="0,14,0,0"
+                                        Visibility="{Binding NotasEmDestaque.Count, Converter={StaticResource CountToVis}}">
+                                <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"/>
+                                <ItemsControl ItemsSource="{Binding NotasEmDestaque}"
+                                              ItemTemplate="{StaticResource NoteCard}"/>
+                            </StackPanel>
+
                             <!-- Neural Uplift (DLSS-NR): so aparece quando o addon instalado sabe
                                  acionar a feature e o jogo tem DLSS. O requisito de maquina nao
                                  esconde o cartao - vira o aviso NeuralHasBlocker aqui dentro. -->
@@ -1307,8 +1359,10 @@
                                 </Expander.Header>
                                 <StackPanel Margin="0,10,0,0">
 
+                                    <!-- O que sobra aqui e referencia: contexto, links, o que a
+                                         wiki registra sem pedir acao. -->
                                     <StackPanel Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
-                                        <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock Text="{loc:Tr Dialog_Notes_Reference_Label}" Style="{StaticResource SectionLabel}"/>
                                         <ItemsControl ItemsSource="{Binding Notes}"
                                                       ItemTemplate="{StaticResource NoteCard}"/>
                                     </StackPanel>

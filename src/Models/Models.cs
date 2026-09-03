@@ -83,6 +83,92 @@ public record ModNote(
         Text.Where(c => char.IsLetterOrDigit(c) || c is '+' or '-' or '/' or '.' or '%')
             .Select(char.ToLowerInvariant)
             .ToArray());
+
+    // ----- o texto, quebrado no que ele ja e -----
+    //
+    // Estas notas sao escritas por gente, numa wiki, em markdown de rascunho: uma frase de
+    // abertura, as vezes um "IMPORTANT:" na frente, e uma lista com hifens. Tudo isso chegava na
+    // tela como UM paragrafo, com os hifens no meio do corrido. Ler uma lista escrita em linha e
+    // trabalho que a interface pode fazer pela pessoa.
+    //
+    // A quebra e feita uma vez e guardada: bindings releem propriedade muitas vezes, e isto e
+    // manipulacao de string.
+
+    private (string Lead, IReadOnlyList<string> Itens, string? Destaque)? _partes;
+    private (string Lead, IReadOnlyList<string> Itens, string? Destaque) Partes => _partes ??= Quebrar(Text);
+
+    /// <summary>O texto corrido, sem a lista e sem a palavra de destaque.</summary>
+    public string Lead => Partes.Lead;
+
+    /// <summary>Os itens de lista, ja sem o marcador.</summary>
+    public IReadOnlyList<string> Itens => Partes.Itens;
+
+    /// <summary>"IMPORTANT", "NOTE"... quando a nota comeca assim. Vira selo, e sai do texto.</summary>
+    public string? Destaque => Partes.Destaque;
+
+    /// <summary>O cabecalho do cartao tem algo a mostrar?</summary>
+    public bool TemCabecalho =>
+        !string.IsNullOrWhiteSpace(Location) || !string.IsNullOrWhiteSpace(Title)
+        || !string.IsNullOrWhiteSpace(Destaque);
+
+    /// <summary>Uma nota que pede ACAO, e nao uma que so informa. Decide se ela fica a vista ou
+    /// atras do bloco recolhido de detalhes.</summary>
+    public bool EhAcionavel =>
+        Kind is NoteKind.Step or NoteKind.Warning
+        || Destaque is not null
+        || Itens.Count > 0
+        || Preformatted is not null;
+
+    /// <summary>Palavras com que uma nota se anuncia. So contam no COMECO do texto, seguidas de
+    /// dois-pontos — no meio de uma frase sao palavras comuns.</summary>
+    private static readonly string[] Destaques =
+        ["important", "importante", "note", "nota", "warning", "aviso", "atencao", "atenção", "tip", "dica"];
+
+    private static (string, IReadOnlyList<string>, string?) Quebrar(string texto)
+    {
+        var corpo = (texto ?? "").Replace("\r\n", "\n").Replace('\r', '\n').Trim();
+        string? destaque = null;
+
+        var doisPontos = corpo.IndexOf(':');
+        if (doisPontos is > 0 and < 16)
+        {
+            var cabeca = corpo[..doisPontos].Trim();
+            if (Destaques.Contains(cabeca, StringComparer.OrdinalIgnoreCase))
+            {
+                destaque = cabeca.ToUpperInvariant();
+                corpo = corpo[(doisPontos + 1)..].TrimStart();
+            }
+        }
+
+        var lead = new List<string>();
+        var itens = new List<string>();
+        foreach (var bruta in corpo.Split('\n'))
+        {
+            var linha = bruta.Trim();
+            if (linha.Length == 0) continue;
+            var item = TirarMarcador(linha);
+            if (item is not null) itens.Add(item);
+            // Uma linha comum DEPOIS de a lista comecar e continuacao do ultimo item, e nao um
+            // paragrafo novo: a wiki quebra item longo em duas linhas.
+            else if (itens.Count > 0) itens[^1] = itens[^1] + " " + linha;
+            else lead.Add(linha);
+        }
+        return (string.Join(" ", lead), itens, destaque);
+    }
+
+    /// <summary>A linha e um item de lista? Devolve o texto sem o marcador, ou null.</summary>
+    private static string? TirarMarcador(string linha)
+    {
+        if (linha.Length >= 2 && linha[0] is '-' or '*' or '•' or '·' or '–' && char.IsWhiteSpace(linha[1]))
+            return linha[2..].Trim();
+        // "1. ", "2) " — lista numerada. O numero e recriado pela interface, entao sai daqui.
+        var i = 0;
+        while (i < linha.Length && char.IsDigit(linha[i])) i++;
+        if (i is > 0 and <= 2 && i + 1 < linha.Length && linha[i] is '.' or ')'
+            && char.IsWhiteSpace(linha[i + 1]))
+            return linha[(i + 2)..].Trim();
+        return null;
+    }
 }
 
 /// <summary>State of ReShade + RenoDX inside one game's deploy directory.</summary>
