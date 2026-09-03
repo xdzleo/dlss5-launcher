@@ -2470,6 +2470,28 @@ public class MainViewModel : ObservableObject
         finally { ActionBusy = false; RaiseCommands(); }
     }
 
+    /// <summary>
+    /// Pergunta antes de tirar o DLSS 1.0 de um jogo, e devolve a resposta.
+    ///
+    /// A geracao 1.0 e outra API e ocupa o MESMO arquivo de que o Feeder precisa: os dois nao
+    /// cabem no mesmo jogo. Trocar funciona, mas custa o DLSS proprio do jogo e exige desliga-lo
+    /// nas opcoes dele — com o DLSS ligado, o jogo chama a API 1.0 num arquivo que nao a responde
+    /// mais e morre ao terminar de carregar um save.
+    ///
+    /// E uma troca com consequencia, entao e uma pergunta — como a do anti-cheat. Antes disto o
+    /// launcher decidia sozinho pelo "nao", e jogo com DLSS 1.0 (o Final Fantasy XV e o caso
+    /// conhecido) simplesmente nao tinha DLSS 5, sem que a tela dissesse que havia uma escolha.
+    /// </summary>
+    private static bool AutorizaTrocarDlss1(string targetDir, string nomeDoJogo)
+    {
+        if (!FeederService.UsaDlss1(targetDir)) return false;
+        return DialogWindow.Confirm(
+            Application.Current?.MainWindow,
+            L.T("Feeder_Dlss1_Ask_Title"),
+            L.T("Feeder_Dlss1_Ask_Body", nomeDoJogo),
+            L.T("Feeder_Dlss1_Ask_Confirm"), DialogKind.Warning);
+    }
+
     private async Task ToggleDlss5Async()
     {
         var item = _detailItem;
@@ -2497,7 +2519,8 @@ public class MainViewModel : ObservableObject
                     _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s),
                     default,
                     preferirDxvk: escolha != "dgvoodoo",
-                    forcarDgVoodoo: escolha == "dgvoodoo");
+                    forcarDgVoodoo: escolha == "dgvoodoo",
+                    trocarDlss1: AutorizaTrocarDlss1(dir, item.Name));
                 DetailStatus = r.Ok
                     ? string.Join("  •  ", r.Manual)
                     : r.Blocker ?? string.Join("; ", r.Steps);
@@ -2540,7 +2563,8 @@ public class MainViewModel : ObservableObject
                     _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s),
                     default,
                     preferirDxvk: escolha != "dgvoodoo",
-                    forcarDgVoodoo: escolha == "dgvoodoo");
+                    forcarDgVoodoo: escolha == "dgvoodoo",
+                    trocarDlss1: AutorizaTrocarDlss1(dir, item.Name));
                 // Sem `return` na falha: a releitura logo abaixo e que mostra ate onde a cadeia
                 // chegou, e NeuralApplied e recalculado la a partir do disco.
                 NeuralApplied = r.Ok;

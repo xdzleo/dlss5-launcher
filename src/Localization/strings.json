@@ -1361,9 +1361,31 @@
     "en": "Copying the Super Resolution runtime (this game has none of its own)…",
     "pt-BR": "Copiando o runtime de Super Resolution (este jogo não tem o dele)…"
   },
+  "Feeder_Dlss1_Ask_Body": {
+    "en": "{0} ships DLSS 1.0, an older API that lives in the same file DLSS 5 needs. The two cannot share a game.\n\nInstalling replaces it. After that you MUST set DLSS to Off in the game's own graphics options — with it on, the game calls the 1.0 API on a runtime that no longer answers it and dies when a save finishes loading.\n\nYour original file is kept, and turning DLSS 5 off puts it back.",
+    "note": "{0} = nome do jogo. Modal de confirmacao antes de instalar em jogo com DLSS 1.0.",
+    "pt-BR": "O {0} vem com DLSS 1.0, uma API antiga que ocupa o mesmo arquivo de que o DLSS 5 precisa. Os dois não cabem no mesmo jogo.\n\nInstalar substitui esse arquivo. Depois disso você PRECISA desligar o DLSS nas opções gráficas do próprio jogo — com ele ligado, o jogo chama a API 1.0 num runtime que não a responde mais e morre ao terminar de carregar um save.\n\nO arquivo original fica guardado, e desligar o DLSS 5 devolve ele."
+  },
+  "Feeder_Dlss1_Ask_Confirm": {
+    "en": "Replace it",
+    "pt-BR": "Substituir"
+  },
+  "Feeder_Dlss1_Ask_Title": {
+    "en": "This game uses DLSS 1.0",
+    "pt-BR": "Este jogo usa DLSS 1.0"
+  },
+  "Feeder_Dlss1_Replacing": {
+    "en": "Replacing the DLSS 1.0 runtime, as authorised. Set DLSS to Off in the game's options.",
+    "pt-BR": "Substituindo o runtime do DLSS 1.0, conforme autorizado. Desligue o DLSS nas opções do jogo."
+  },
   "Feeder_Dlss1_Skipped": {
-    "en": "This game uses DLSS 1.0: its runtime was left untouched, because replacing it breaks the game. DLSS 5 is not available here.",
-    "pt-BR": "Este jogo usa DLSS 1.0: o runtime dele ficou intocado, porque substituí-lo quebra o jogo. O DLSS 5 não fica disponível aqui."
+    "en": "This game uses DLSS 1.0 and its runtime was left untouched, so DLSS 5 is not active here. Turn it on again to be asked about replacing it.",
+    "note": "Agora a recusa e uma escolha do usuario, e nao um veredito do launcher.",
+    "pt-BR": "Este jogo usa DLSS 1.0 e o runtime dele ficou intocado, então o DLSS 5 não está valendo aqui. Ligue de novo para receber a pergunta sobre substituí-lo."
+  },
+  "Feeder_Dlss1_TurnOffInGame": {
+    "en": "IN THE GAME: set DLSS to Off in the graphics options. The game's own DLSS is version 1.0 and no longer works here; leaving it on crashes the game when a save finishes loading.",
+    "pt-BR": "NO JOGO: desligue o DLSS nas opções gráficas. O DLSS do próprio jogo é da versão 1.0 e não funciona mais aqui; deixá-lo ligado derruba o jogo ao terminar de carregar um save."
   },
   "Feeder_EarlyAlloc": {
     "en": "Feeder set to allocate on the first frame, before the engine closes its memory pool.",

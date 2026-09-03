@@ -41,7 +41,7 @@ public static class Dlss5Installer
         GameInfo game, string targetDir, string? iniPath, string? exePath, string? addonPath,
         DlssIndexService index, ReShadeService reshade, RhiManifestService? rhi = null,
         IProgress<string>? progress = null, CancellationToken ct = default,
-        bool preferirDxvk = true, bool forcarDgVoodoo = false)
+        bool preferirDxvk = true, bool forcarDgVoodoo = false, bool trocarDlss1 = false)
     {
         var steps = new List<string>();
         var manual = new List<string>();
@@ -486,7 +486,11 @@ public static class Dlss5Installer
                 // runtime nosso como sendo do jogo e ter escolhido a ponte. Num jogo com um exe
                 // por API a convivencia e o objetivo, e nao o defeito.
                 if (!multiApi) NeuralUpliftService.RemoveBridge(targetDir);
-                FeederService.Deploy(targetDir, progress);
+                FeederService.Deploy(targetDir, progress, trocarDlss1);
+                // A instrucao vai junto do resultado: sem desligar o DLSS do proprio jogo, ele
+                // chama a geracao 1.0 num arquivo que agora responde outra API, e morre ao
+                // terminar de carregar um save. Ver FeederService.DeploySuperResolution.
+                if (trocarDlss1) manual.Add(L.T("Feeder_Dlss1_TurnOffInGame"));
                 FeederService.Configure(targetDir, iniPath, progress);
                 // O Feeder resolve o addon de NR por nome literal; sem esta copia ele entrega
                 // frames com o pass sem quem o dirija, e diz isso so no proprio log.

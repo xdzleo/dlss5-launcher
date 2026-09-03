@@ -701,7 +701,26 @@ public static class FeederService
     /// Poe tudo na pasta do jogo: o addon ao lado do proxy do ReShade, os shaders onde o ReShade
     /// procura efeito.
     /// </summary>
-    public static void Deploy(string targetDir, IProgress<string>? progress = null)
+    /// <summary>
+    /// Este jogo tem DLSS da geracao 1.0 na pasta?
+    ///
+    /// E a pergunta que decide se instalar o Feeder aqui exige uma escolha do usuario: 1.0 e
+    /// outra API, ocupa o MESMO arquivo que o Feeder precisa, e as duas nao cabem juntas.
+    /// </summary>
+    public static bool UsaDlss1(string targetDir)
+    {
+        try
+        {
+            var dll = Path.Combine(targetDir, "nvngx_dlss.dll");
+            return File.Exists(dll) && DlssRuntimeService.ReadVersion(dll) is { Major: 1 };
+        }
+        catch { return false; }
+    }
+
+    /// <param name="trocarDlss1">O usuario aceitou perder o DLSS 1.0 do jogo. Ver
+    /// <see cref="DeploySuperResolution"/>.</param>
+    public static void Deploy(string targetDir, IProgress<string>? progress = null,
+                              bool trocarDlss1 = false)
     {
         if (!InLibrary) throw new InvalidOperationException(L.T("Feeder_NotInLibrary"));
 
@@ -742,7 +761,7 @@ public static class FeederService
             try { if (File.Exists(p)) File.Delete(p); } catch (Exception ex) { Log.Warn($"feeder limpar {velho}: {ex.Message}"); }
         }
 
-        DeploySuperResolution(targetDir, progress);
+        DeploySuperResolution(targetDir, progress, trocarDlss1);
         progress?.Report(L.T("Feeder_Deployed"));
     }
 
@@ -755,7 +774,8 @@ public static class FeederService
     /// entra por cima dela, nao tem sobre o que rodar: instalacao completa, log limpo, nada na
     /// tela.
     /// </summary>
-    private static void DeploySuperResolution(string targetDir, IProgress<string>? progress)
+    private static void DeploySuperResolution(string targetDir, IProgress<string>? progress,
+                                              bool trocarDlss1 = false)
     {
         const string arquivo = "nvngx_dlss.dll";
         var origem = Path.Combine(DlssRuntimeService.LibraryDir, arquivo);
@@ -779,11 +799,25 @@ public static class FeederService
         // NeuralUpliftService.Detect ja nao conta DLSS 1.x como "tem DLSS", o que manda o jogo
         // para o Feeder; esta guarda existe porque o caminho do Feeder chegava aqui e recolocava
         // a runtime nova pela porta dos fundos, desfazendo aquela decisao sem dizer nada.
+        //
+        // O que MUDOU: a recusa deixou de ser incondicional. O jogo so morre porque ELE chama o
+        // DLSS 1.0; com o DLSS desligado nas opcoes do proprio jogo, essa chamada nao acontece e
+        // o arquivo moderno serve so ao Feeder, que e quem produz a imagem. Isso e uma escolha
+        // informada, com uma instrucao junto — nao algo para acontecer em silencio. Quem pergunta
+        // e a interface (e o `--trocar-dlss1` na linha de comando); aqui so se obedece.
+        //
+        // O original vai para .renodx-bak como qualquer runtime que trocamos, entao desligar o
+        // DLSS 5 devolve o DLSS 1.0 do jogo.
         if (File.Exists(destino) && DlssRuntimeService.ReadVersion(destino) is { Major: 1 })
         {
-            Log.Warn($"feeder: {targetDir} usa DLSS 1.x; runtime NAO substituido (o jogo quebraria)");
-            progress?.Report(L.T("Feeder_Dlss1_Skipped"));
-            return;
+            if (!trocarDlss1)
+            {
+                Log.Warn($"feeder: {targetDir} usa DLSS 1.x; runtime NAO substituido (o usuario nao autorizou)");
+                progress?.Report(L.T("Feeder_Dlss1_Skipped"));
+                return;
+            }
+            Log.Info($"feeder: {targetDir} usa DLSS 1.x; trocando com autorizacao do usuario");
+            progress?.Report(L.T("Feeder_Dlss1_Replacing"));
         }
 
         // Mesma regra de todo runtime que este launcher escreve: a assinatura da NVIDIA decide.

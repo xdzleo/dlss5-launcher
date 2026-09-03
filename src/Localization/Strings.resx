@@ -1111,8 +1111,29 @@
   <data name="Feeder_DeployingSr" xml:space="preserve">
     <value>Copiando o runtime de Super Resolution (este jogo não tem o dele)…</value>
   </data>
+  <data name="Feeder_Dlss1_Ask_Body" xml:space="preserve">
+    <value>O {0} vem com DLSS 1.0, uma API antiga que ocupa o mesmo arquivo de que o DLSS 5 precisa. Os dois não cabem no mesmo jogo.
+
+Instalar substitui esse arquivo. Depois disso você PRECISA desligar o DLSS nas opções gráficas do próprio jogo — com ele ligado, o jogo chama a API 1.0 num runtime que não a responde mais e morre ao terminar de carregar um save.
+
+O arquivo original fica guardado, e desligar o DLSS 5 devolve ele.</value>
+    <comment>{0} = nome do jogo. Modal de confirmacao antes de instalar em jogo com DLSS 1.0.</comment>
+  </data>
+  <data name="Feeder_Dlss1_Ask_Confirm" xml:space="preserve">
+    <value>Substituir</value>
+  </data>
+  <data name="Feeder_Dlss1_Ask_Title" xml:space="preserve">
+    <value>Este jogo usa DLSS 1.0</value>
+  </data>
+  <data name="Feeder_Dlss1_Replacing" xml:space="preserve">
+    <value>Substituindo o runtime do DLSS 1.0, conforme autorizado. Desligue o DLSS nas opções do jogo.</value>
+  </data>
   <data name="Feeder_Dlss1_Skipped" xml:space="preserve">
-    <value>Este jogo usa DLSS 1.0: o runtime dele ficou intocado, porque substituí-lo quebra o jogo. O DLSS 5 não fica disponível aqui.</value>
+    <value>Este jogo usa DLSS 1.0 e o runtime dele ficou intocado, então o DLSS 5 não está valendo aqui. Ligue de novo para receber a pergunta sobre substituí-lo.</value>
+    <comment>Agora a recusa e uma escolha do usuario, e nao um veredito do launcher.</comment>
+  </data>
+  <data name="Feeder_Dlss1_TurnOffInGame" xml:space="preserve">
+    <value>NO JOGO: desligue o DLSS nas opções gráficas. O DLSS do próprio jogo é da versão 1.0 e não funciona mais aqui; deixá-lo ligado derruba o jogo ao terminar de carregar um save.</value>
   </data>
   <data name="Feeder_EarlyAlloc" xml:space="preserve">
     <value>Feeder ajustado para alocar no primeiro quadro, antes de o motor fechar o pool de memória.</value>

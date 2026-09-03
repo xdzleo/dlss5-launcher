@@ -1111,8 +1111,29 @@
   <data name="Feeder_DeployingSr" xml:space="preserve">
     <value>Copying the Super Resolution runtime (this game has none of its own)…</value>
   </data>
+  <data name="Feeder_Dlss1_Ask_Body" xml:space="preserve">
+    <value>{0} ships DLSS 1.0, an older API that lives in the same file DLSS 5 needs. The two cannot share a game.
+
+Installing replaces it. After that you MUST set DLSS to Off in the game's own graphics options — with it on, the game calls the 1.0 API on a runtime that no longer answers it and dies when a save finishes loading.
+
+Your original file is kept, and turning DLSS 5 off puts it back.</value>
+    <comment>{0} = nome do jogo. Modal de confirmacao antes de instalar em jogo com DLSS 1.0.</comment>
+  </data>
+  <data name="Feeder_Dlss1_Ask_Confirm" xml:space="preserve">
+    <value>Replace it</value>
+  </data>
+  <data name="Feeder_Dlss1_Ask_Title" xml:space="preserve">
+    <value>This game uses DLSS 1.0</value>
+  </data>
+  <data name="Feeder_Dlss1_Replacing" xml:space="preserve">
+    <value>Replacing the DLSS 1.0 runtime, as authorised. Set DLSS to Off in the game's options.</value>
+  </data>
   <data name="Feeder_Dlss1_Skipped" xml:space="preserve">
-    <value>This game uses DLSS 1.0: its runtime was left untouched, because replacing it breaks the game. DLSS 5 is not available here.</value>
+    <value>This game uses DLSS 1.0 and its runtime was left untouched, so DLSS 5 is not active here. Turn it on again to be asked about replacing it.</value>
+    <comment>Agora a recusa e uma escolha do usuario, e nao um veredito do launcher.</comment>
+  </data>
+  <data name="Feeder_Dlss1_TurnOffInGame" xml:space="preserve">
+    <value>IN THE GAME: set DLSS to Off in the graphics options. The game's own DLSS is version 1.0 and no longer works here; leaving it on crashes the game when a save finishes loading.</value>
   </data>
   <data name="Feeder_EarlyAlloc" xml:space="preserve">
     <value>Feeder set to allocate on the first frame, before the engine closes its memory pool.</value>

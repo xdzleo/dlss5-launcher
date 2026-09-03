@@ -699,7 +699,8 @@ public static class Cli
         var det = NeuralUpliftService.Detect(g.InstallDir, target, null);
         var feederAtivo = FeederService.IsDeployed(target);
         var temDlss = det.HasDlss;   // idem: ver a nota em MainViewModel.CheckNeuralAsync
-        Console.WriteLine($"  DLSS proprio   : {(temDlss ? "sim" : "nao")}");
+        Console.WriteLine($"  DLSS proprio   : {(temDlss ? "sim" : "nao")}"
+                          + (FeederService.UsaDlss1(target) ? "  (DLSS 1.0 — outra API; precisa de --trocar-dlss1)" : ""));
 
         var precisaTradutor = DgVoodooService.Applies(exe);
         if (precisaTradutor && pe?.Is64Bit == false)
@@ -750,10 +751,13 @@ public static class Cli
         // meia duzia de arquivos; poder ver a rota escolhida antes disso evita descobrir a
         // decisao errada depois de instalar.
         var soPlano = rest.Any(a => a is "--check" or "--dry-run");
+        // Jogo com DLSS 1.0 fica de fora por padrao: trocar o runtime dele custa o DLSS proprio
+        // do jogo e exige desliga-lo nas opcoes. Pela interface isso e um modal; aqui, uma flag.
+        var trocarDlss1 = rest.Any(a => a is "--trocar-dlss1" or "--replace-dlss1");
         var query = rest.FirstOrDefault(a => !a.StartsWith('-'));
         if (!all && string.IsNullOrWhiteSpace(query))
         {
-            Console.Error.WriteLine("uso: dlss5 <jogo> [--dgvoodoo] [--check] | dlss5 --all");
+            Console.Error.WriteLine("uso: dlss5 <jogo> [--dgvoodoo] [--trocar-dlss1] [--check] | dlss5 --all");
             return 1;
         }
 
@@ -833,7 +837,7 @@ public static class Cli
                 index, reshade, ctx.Rhi,
                 // no modo --all so o resultado interessa; passo a passo poluiria dezenas de jogos
                 alvos.Count == 1 ? new Progress<string>(s => Console.WriteLine("  " + s)) : null,
-                default, preferirDxvk: !usarDgVoodoo, forcarDgVoodoo: forcarDgVoodoo);
+                default, preferirDxvk: !usarDgVoodoo, forcarDgVoodoo: forcarDgVoodoo, trocarDlss1: trocarDlss1);
 
             if (r.Ok)
             {
