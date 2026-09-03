@@ -692,6 +692,84 @@ public class MainViewModel : ObservableObject
                                    bool AvisoSemDlss,
                                    IReadOnlyList<ConflictScanner.Conflito> Conflitos);
 
+    // ---------- leituras de pasta, guardadas ----------
+
+    /// <summary>
+    /// O resultado de cada leitura de pasta, por jogo e por estado da pasta.
+    ///
+    /// Depois de tirar o trabalho repetido e o trabalho da thread errada, o que sobrou do clique
+    /// era disco honesto: ~50 ms lendo, de novo, as mesmas coisas que a visita anterior ja tinha
+    /// lido. E elas nao mudam sozinhas — na pasta de um jogo, quem escreve e este launcher.
+    ///
+    /// A chave leva um CARIMBO da pasta: a data de escrita dela e a do ReShade.ini. Duas chamadas
+    /// de sistema, algumas dezenas de microssegundos. Carimbo igual, resposta pronta; carimbo
+    /// diferente, le de novo. E as acoes que escrevem limpam tudo por conta propria, sem depender
+    /// do carimbo — escrita nossa em subpasta pode nao mexer na data da raiz.
+    /// </summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<(string, long), object?> _leituras = new();
+
+    private static long CarimboDaPasta(string dir)
+    {
+        try
+        {
+            var carimbo = Directory.GetLastWriteTimeUtc(dir).Ticks;
+            var ini = Path.Combine(dir, "ReShade.ini");
+            return File.Exists(ini) ? carimbo ^ File.GetLastWriteTimeUtc(ini).Ticks : carimbo;
+        }
+        catch { return 0; }
+    }
+
+    /// <summary>Le a pasta, ou devolve o que ja foi lido dela neste mesmo estado.</summary>
+    private async Task<T> LerPasta<T>(string chave, string dir, Func<T> ler)
+    {
+        var k = ($"{chave}\u0001{dir}", CarimboDaPasta(dir));
+        if (_leituras.TryGetValue(k, out var pronto)) return (T)pronto!;
+        var lido = await Task.Run(ler);
+        // Teto grosseiro: impede que carimbos mudando sem parar facam o dicionario crescer sem fim.
+        if (_leituras.Count > 2048) _leituras.Clear();
+        _leituras[k] = lido;
+        return lido;
+    }
+
+    /// <summary>
+    /// Le a pasta de um jogo ANTES de alguem clicar nele.
+    ///
+    /// E o mesmo que ExeLocator.Preaquecer ja fazia com a varredura de executaveis, pelo mesmo
+    /// motivo: o trabalho existe de qualquer jeito, e a unica pergunta e se ele acontece com
+    /// alguem esperando na frente da tela ou sem ninguem esperando.
+    /// </summary>
+    private async Task PreaquecerDetalhe(GameItemVm item, CancellationToken ct)
+    {
+        if (ct.IsCancellationRequested || item.TargetDir is not { } dir) return;
+        var instalacao = item.Game.InstallDir;
+        var addon = item.State?.AddonPath;
+        var exe = item.ChosenExe;
+        try
+        {
+            var det = await LerPasta("neural", dir,
+                () => NeuralUpliftService.Detect(instalacao, dir, addon));
+            var ini = item.State?.IniPath ?? Path.Combine(dir, "ReShade.ini");
+            var aplicado = await LerPasta($"aplicado\u0001{ini}", dir,
+                () => NeuralUpliftService.IsApplied(dir, ini, addon));
+            await LerPasta($"cadeia\u0001{exe}\u0001{aplicado}", dir,
+                () => LerCadeia(dir, ini, det, exe, aplicado));
+            await LerPasta("mfg", dir,
+                () => MfgService.Detect(instalacao, dir, NeuralUpliftService.ProbeHost()));
+            await LerPasta("dlss", dir, () =>
+            {
+                var g = DlssRuntimeService.DetectInGame(instalacao);
+                return (g, DlssRuntimeService.Library(), DlssRuntimeService.IsApplied(instalacao));
+            });
+            await LerPasta("saudedlss", dir, () => DlssRuntimeService.CheckHealth(instalacao));
+            if (item.Mod is not null)
+            {
+                await LerPasta("fgfix", dir, () => DlssFixService.Detect(instalacao));
+                await LerPasta("anticheat", dir, () => AntiCheatScanner.Detect(instalacao, dir));
+            }
+        }
+        catch (Exception ex) { Log.Warn($"preaquecer detalhe {item.Name}: {ex.Message}"); }
+    }
+
     /// <summary>Le a pasta e devolve os fatos. Nada aqui toca na interface — pode (e deve) rodar
     /// fora da thread dela.</summary>
     private static LeituraDaCadeia LerCadeia(string targetDir, string iniPath,
@@ -986,8 +1064,8 @@ public class MainViewModel : ObservableObject
 
         var installDir = item.Game.InstallDir;
         var targetDir = item.TargetDir;
-        var det = await Task.Run(() =>
-            MfgService.Detect(installDir, targetDir, NeuralUpliftService.ProbeHost()));
+        var det = await LerPasta("mfg", targetDir,
+            () => MfgService.Detect(installDir, targetDir, NeuralUpliftService.ProbeHost()));
         if (token != _detailToken) return;
 
         _mfgDetection = det;
@@ -1331,7 +1409,22 @@ public class MainViewModel : ObservableObject
                 await BackgroundEnrichAsync(itensParaEnriquecer, pinned, ct);
                 if (ct.IsCancellationRequested) return;
 
-                // 2. aquece a varredura de .exe de TODOS os jogos. Ela desce cinco niveis e custa
+                // 2. le a pasta de cada jogo, para o clique nao ter o que ler (ver LerPasta).
+                //    ANTES das capas: e o que decide se abrir um jogo e instantaneo, e capa e
+                //    enfeite. A ordem aqui e a ordem do que a pessoa sente.
+                foreach (var jogo in itensParaEnriquecer)
+                {
+                    if (ct.IsCancellationRequested) return;
+                    await CederAoClique(ct);
+                    await PreaquecerDetalhe(jogo, ct);
+                }
+                if (ct.IsCancellationRequested) return;
+
+                // 3. as capas.
+                await BaixarCapasAsync(itensParaEnriquecer, ct);
+                if (ct.IsCancellationRequested) return;
+
+                // 4. aquece a varredura de .exe de TODOS os jogos. Ela desce cinco niveis e custa
                 //    ~27 ms por jogo grande; feita ao clicar, e a maior parte da espera do card.
                 //    Feita aqui, o clique encontra o resultado pronto (medido: 27 ms -> 0 ms).
                 foreach (var d in pastas)
@@ -1343,14 +1436,14 @@ public class MainViewModel : ObservableObject
                 }
                 if (ct.IsCancellationRequested) return;
 
-                // 3. procura uma copia do add-on neural mais nova, largada pelo usuario numa pasta
+                // 5. procura uma copia do add-on neural mais nova, largada pelo usuario numa pasta
                 //    de jogo. Percorre a biblioteca inteira, e quem pagava por ela era o PRIMEIRO
                 //    clique em um jogo -- meio segundo, uma vez por sessao, no pior momento
                 //    possivel. Aqui ninguem esta esperando.
                 NeuralUpliftService.AutoDiscoverAddon(pastas!);
                 if (ct.IsCancellationRequested) return;
 
-                // 4. o aviso de runtime trocado, que ninguem esta esperando para agir.
+                // 6. o aviso de runtime trocado, que ninguem esta esperando para agir.
                 await CheckSwappedRuntimesAsync(pastas!);
             }, ct);
         }
@@ -1432,7 +1525,12 @@ public class MainViewModel : ObservableObject
         if (ct.IsCancellationRequested) return;
         // As bolinhas ja estao certas: a grade pode se acertar sem esperar capa nenhuma.
         await dispatcher.InvokeAsync(RefreshViewKeepSelection);
+    }
 
+    /// <summary>As capas dos jogos. Rede, e por isso separado do que decide as bolinhas.</summary>
+    private async Task BaixarCapasAsync(List<GameItemVm> items, CancellationToken ct)
+    {
+        var dispatcher = Application.Current.Dispatcher;
         // As capas em SEGUNDA passada, e em paralelo.
         //
         // Elas sao REDE, e a deteccao que acende as bolinhas e disco local. As duas dividiam o
@@ -1529,7 +1627,9 @@ public class MainViewModel : ObservableObject
             // anti-cheat detectado no disco: aviso sempre visível, mesmo sem nota na wiki
             var installDir = item.Game.InstallDir;
             var targetDir = item.TargetDir;
-            var ac = await Task.Run(() => AntiCheatScanner.Detect(installDir, targetDir));
+            var ac = targetDir is null
+                ? await Task.Run(() => AntiCheatScanner.Detect(installDir, targetDir))
+                : await LerPasta("anticheat", targetDir, () => AntiCheatScanner.Detect(installDir, targetDir));
             if (token != _detailToken) return;
             if (ac != null && Advice.All(a => a.Kind != AdviceKind.AntiCheat))
                 Advice.Insert(0, new Advice("",
@@ -1707,7 +1807,7 @@ public class MainViewModel : ObservableObject
         var item = _detailItem;
         if (item?.Mod is null || item.TargetDir is null) return;
         var installDir = item.Game.InstallDir;
-        var detection = await Task.Run(() => DlssFixService.Detect(installDir));
+        var detection = await LerPasta("fgfix", item.TargetDir, () => DlssFixService.Detect(installDir));
         if (token != _detailToken) return;
         if (!DlssFixService.ShouldOffer(item.Mod, detection)) return;
         _dlssDetection = detection;
@@ -1788,7 +1888,14 @@ public class MainViewModel : ObservableObject
         // cache que o preaquecimento monta na abertura: voltar a um jogo ja visto pagava a
         // varredura inteira de novo (~27 ms num jogo grande, e ela desce cinco niveis). Era o
         // preco de alternar entre dois jogos, cobrado toda vez.
-        if (pastaFoiEscrita) ExeLocator.Invalidar(_detailItem?.Game.InstallDir);
+        if (pastaFoiEscrita)
+        {
+            ExeLocator.Invalidar(_detailItem?.Game.InstallDir);
+            // As leituras guardadas tambem: instalar escreve em subpastas (host64\, vklayer\), e
+            // escrita em subpasta pode nao mexer na data da raiz — que e o carimbo. Aqui a
+            // certeza vale mais do que o custo, e reinstalar nao acontece o tempo todo.
+            _leituras.Clear();
+        }
     }
 
     /// <summary>
@@ -1853,7 +1960,8 @@ public class MainViewModel : ObservableObject
         try { await NeuralUpliftService.FetchAddonAsync(StatusSe(token)); }
         catch (Exception ex) { if (token == _detailToken) DetailStatus = ex.Message; }
         if (token != _detailToken) return;
-        var detection = await Task.Run(() => NeuralUpliftService.Detect(installDir, targetDir, addonPath));
+        var detection = await LerPasta("neural", targetDir,
+            () => NeuralUpliftService.Detect(installDir, targetDir, addonPath));
         if (token != _detailToken) return;
 
         // Offerable exige DLSS no jogo, e essa era a regra certa enquanto a unica forma de rodar
@@ -1957,12 +2065,13 @@ public class MainViewModel : ObservableObject
         // sem mod RenoDX nao ha State; o ReShade.ini fica ao lado do addon na pasta do jogo
         var neuralIni = item.State?.IniPath ?? System.IO.Path.Combine(targetDir, "ReShade.ini");
         var exeDaVez = item.ChosenExe;
-        NeuralApplied = await Task.Run(() =>
-            NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath));
+        NeuralApplied = await LerPasta($"aplicado\u0001{neuralIni}", targetDir,
+            () => NeuralUpliftService.IsApplied(targetDir, neuralIni, addonPath));
         if (token != _detailToken) return;
         // A leitura da pasta fora da thread da interface; so a aplicacao dentro dela.
-        var leitura = await Task.Run(() =>
-            LerCadeia(targetDir, neuralIni, detection, exeDaVez, NeuralApplied));
+        var aplicadoAgora = NeuralApplied;
+        var leitura = await LerPasta($"cadeia\u0001{exeDaVez}\u0001{aplicadoAgora}", targetDir,
+            () => LerCadeia(targetDir, neuralIni, detection, exeDaVez, aplicadoAgora));
         if (token != _detailToken) return;
         AplicarCadeia(leitura);
 
@@ -2011,11 +2120,10 @@ public class MainViewModel : ObservableObject
         var installDir = item.Game.InstallDir;
         var targetDir = item.TargetDir;
 
-        var (inGame, library, applied) = await Task.Run(() =>
+        var (inGame, library, applied) = await LerPasta("dlss", targetDir, () =>
         {
             var g = DlssRuntimeService.DetectInGame(installDir);
-            var l = DlssRuntimeService.Library();
-            return (g, l, DlssRuntimeService.IsApplied(installDir));
+            return (g, DlssRuntimeService.Library(), DlssRuntimeService.IsApplied(installDir));
         });
         if (token != _detailToken) return;
         if (inGame.Count == 0) return;   // jogo sem DLSS: nao ha o que atualizar
@@ -2041,7 +2149,7 @@ public class MainViewModel : ObservableObject
         // Problema comprovado no estado atual do jogo — venha de onde vier (deste launcher, do
         // DLSS Swapper, ou de uma troca manual). So reporta: nao da para saber de fora qual versao
         // este jogo aceita, entao adivinhar o conserto seria repetir o erro que causou isso.
-        var issues = await Task.Run(() => DlssRuntimeService.CheckHealth(installDir));
+        var issues = await LerPasta("saudedlss", targetDir, () => DlssRuntimeService.CheckHealth(installDir));
         if (token != _detailToken) return;
         DlssHealth = issues.Count == 0 ? null
             : string.Join("\n", issues.Select(i => $"[{i.Severity}] {i.Message}"));
