@@ -237,6 +237,10 @@
     <value>{0} matches any part of the name, case-insensitive. Example:</value>
     <comment>pt: "...sem diferenciar maiúsculas. Exemplo:". {0} = Cli_Arg_Game.</comment>
   </data>
+  <data name="Cli_Help_Mfg" xml:space="preserve">
+    <value>Turn Multi Frame Generation on, off, or just report it</value>
+    <comment>pt: "Liga, desliga ou so relata o Multi Frame Generation".</comment>
+  </data>
   <data name="Cli_Help_Neural" xml:space="preserve">
     <value>Read the DLSS 5 neural chain link by link, writing nothing</value>
     <comment>pt: "Lê a cadeia do neural DLSS 5 elo a elo, sem gravar nada".</comment>
@@ -1868,6 +1872,72 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Main_Updates_Updating" xml:space="preserve">
     <value>Updating {0}...</value>
     <comment>{0} = nome do jogo.</comment>
+  </data>
+  <data name="Mfg_Applied" xml:space="preserve">
+    <value>Multi Frame Generation on at {0}x. Turn Frame Generation on in the game's settings.</value>
+    <comment>{0} = multiplicador (2 a 6).</comment>
+  </data>
+  <data name="Mfg_Applying" xml:space="preserve">
+    <value>Installing the Multi Frame Generation add-on...</value>
+  </data>
+  <data name="Mfg_Blocked_Arch" xml:space="preserve">
+    <value>{0} ({1}) has no DLSS Frame Generation to extend — it needs an RTX 40 or newer.</value>
+    <comment>{0} = nome da placa, {1} = rotulo da arquitetura.</comment>
+  </data>
+  <data name="Mfg_Blocked_Gpu" xml:space="preserve">
+    <value>No NVIDIA RTX adapter found ({0}). Multi Frame Generation runs on RTX 40 and RTX 50.</value>
+    <comment>{0} = nome da placa detectada, ou ?.</comment>
+  </data>
+  <data name="Mfg_Blocked_NoStreamline" xml:space="preserve">
+    <value>This game does not ship NVIDIA Streamline Frame Generation, so there is no frame multiplier to raise.</value>
+  </data>
+  <data name="Mfg_Blocked_Provider" xml:space="preserve">
+    <value>The game's Frame Generation runtime is {0}; the patch was verified against {1}. Update the DLSS runtimes above and it becomes available.</value>
+    <comment>{0} = versao encontrada, {1} = lista de versoes aceitas.</comment>
+  </data>
+  <data name="Mfg_Cli_Off" xml:space="preserve">
+    <value>Multi Frame Generation removed from {0}.</value>
+    <comment>{0} = nome do jogo.</comment>
+  </data>
+  <data name="Mfg_Dynamic_Label" xml:space="preserve">
+    <value>Dynamic</value>
+    <comment>Modo em que o proprio add-on escolhe o multiplicador quadro a quadro.</comment>
+  </data>
+  <data name="Mfg_Error_NoAddon" xml:space="preserve">
+    <value>The Multi Frame Generation add-on could not be unpacked from the launcher.</value>
+  </data>
+  <data name="Mfg_Experimental" xml:space="preserve">
+    <value>5x and 6x are experimental: expect artefacts, stutter or a black screen in some games.</value>
+  </data>
+  <data name="Mfg_LastRun" xml:space="preserve">
+    <value>Last run: {0}x applied, {1} rendered to {2} presented FPS.</value>
+    <comment>{0} = multiplicador aplicado, {1} e {2} = quadros por segundo.</comment>
+  </data>
+  <data name="Mfg_LastRun_InGameMenu" xml:space="preserve">
+    <value>Last run: the ceiling was raised, but the launcher could not drive the multiplier in this game. Pick x3 to x6 in the game's own Frame Generation setting.</value>
+    <comment>Quando o add-on patcheia mas nao consegue enganchar o Streamline para comandar o valor.</comment>
+  </data>
+  <data name="Mfg_LastRun_NotApplied" xml:space="preserve">
+    <value>The add-on loaded last run but the game never turned Frame Generation on.</value>
+  </data>
+  <data name="Mfg_Multiplier_Label" xml:space="preserve">
+    <value>Frames per rendered frame</value>
+  </data>
+  <data name="Mfg_Removed" xml:space="preserve">
+    <value>Multi Frame Generation removed.</value>
+  </data>
+  <data name="Mfg_Title" xml:space="preserve">
+    <value>Multi Frame Generation</value>
+    <comment>Nome do recurso da NVIDIA: nao traduzir.</comment>
+  </data>
+  <data name="Mfg_Title_Desc" xml:space="preserve">
+    <value>Raises the frame multiplier past the factory ceiling: 2x to 6x on RTX 40, and up to 6x on RTX 50.</value>
+  </data>
+  <data name="Mfg_Unlocks_Rtx40" xml:space="preserve">
+    <value>Your card caps at 2x from the factory; the patch opens 3x and above.</value>
+  </data>
+  <data name="Mfg_Unlocks_Rtx50" xml:space="preserve">
+    <value>Your card already does up to 4x; the patch raises the ceiling to 6x.</value>
   </data>
   <data name="Neural_AddonFeederName" xml:space="preserve">
     <value>Neural addon also copied under the name the Feeder looks for.</value>

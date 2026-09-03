@@ -105,6 +105,33 @@ If your game draws through any of those, there is a route, and the switch is the
 
 ---
 
+## 🎞️ Multi Frame Generation past the factory ceiling
+
+DLSS 4 generates up to three frames per rendered frame, and NVIDIA reserves anything above 2x for
+the RTX 50 series. **That ceiling is not silicon: it is two comparisons in code.** A `test dl,dl /
+je` in `nvngx_dlssg.dll` asks whether the device is allowed, and a `cmovb` in `sl.dlss_g.dll`
+clamps the count. Neutralised in process memory — never in the file on disk — the range becomes
+**2x to 6x**.
+
+On an RTX 40 that is the difference between having the feature and not having it. On an RTX 50 the
+ceiling rises from 4x to 6x.
+
+Unlocking alone would not be enough on Ada: it collapses the generated samples toward the middle
+of the interval, producing near-duplicate frames. The D157 fix restores their temporal placement,
+and applies only once the adapter is confirmed to be Ada by compute capability. Unconfirmed, it
+falls back to native 2x rather than shipping wrong frames.
+
+Per-game switch, 2x through 6x, and the change **takes effect with the game running**. It works in
+any Streamline game, not just Cyberpunk 2077: the binary is built in this repository
+(`native/mfg/`, an MIT fork of [RTX40MFG-Unlock](https://github.com/dashdogy/RTX40MFG-Unlock)) and
+loaded by ReShade, which the launcher already installs everywhere.
+
+The card does not vanish when it cannot help — it explains: a Frame Generation runtime outside the
+four verified versions, a game without Streamline, or a pre-Ada card, which has no Frame
+Generation to extend in the first place.
+
+---
+
 ## 🔗 Nothing fails silently
 
 Every broken link produces the same symptom from outside, so the launcher refuses to hide them.

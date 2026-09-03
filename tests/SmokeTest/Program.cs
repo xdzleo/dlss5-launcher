@@ -339,6 +339,76 @@ try
 }
 catch (Exception ex) { Check(false, $"add-on embutido: {ex.Message}"); }
 
+// 3h. Multi Frame Generation. Tres coisas que so aparecem em jogo se estiverem certas aqui: o
+// add-on embutido sair intacto, a versao do provedor ser recusada quando nao e uma das quatro
+// conferidas, e o arquivo de controle ter a forma EXATA que o varredor de substring em C do
+// add-on aceita — um campo a mais, uma virgula fora, e ele recusa o arquivo inteiro em silencio.
+try
+{
+    var mfgLib = MfgService.LibraryAddon;
+    var mfgBak = mfgLib + ".smoke-bak";
+    var tinhaMfg = File.Exists(mfgLib);
+    if (tinhaMfg) File.Move(mfgLib, mfgBak, overwrite: true);
+    try
+    {
+        Check(MfgService.EnsureLibrary() && File.Exists(mfgLib),
+            "MFG: o add-on embutido entra na biblioteca (tamanho e SHA-256 conferidos)");
+    }
+    finally { if (tinhaMfg) { try { File.Move(mfgBak, mfgLib, overwrite: true); } catch { } } }
+
+    // As quatro versoes de nvngx_dlssg.dll contra as quais o patch foi validado byte a byte.
+    Check(MfgService.ProviderIsSupported(new Version(310, 8, 0, 0)),
+        "MFG: provedor 310.8.0.x e aceito (o quarto componente nao conta)");
+    Check(!MfgService.ProviderIsSupported(new Version(310, 1, 0, 0)),
+        "MFG: provedor 310.1.0 e recusado — nao foi conferido");
+    Check(!MfgService.ProviderIsSupported(new Version(3, 1, 1, 0)),
+        "MFG: runtime de Frame Generation antigo (3.1.1) e recusado");
+    Check(!MfgService.ProviderIsSupported(null), "MFG: provedor desconhecido e recusado");
+
+    // Multiplicador fora da faixa nao chega ao disco: o add-on recusaria o arquivo inteiro.
+    Check(new MfgService.Config(9).Sane().Multiplier == MfgService.MaxMultiplier,
+        "MFG: multiplicador acima de 6 e limitado a 6");
+    Check(new MfgService.Config(0).Sane().Multiplier == MfgService.MinMultiplier,
+        "MFG: multiplicador abaixo de 2 e limitado a 2");
+
+    var mfgDir = Path.Combine(Path.GetTempPath(), "renodx-smoke-mfg");
+    Directory.CreateDirectory(mfgDir);
+    try
+    {
+        var mfgIni = Path.Combine(mfgDir, "ReShade.ini");
+        File.WriteAllText(mfgIni, "[GENERAL]\n");
+        MfgService.Apply(mfgDir, mfgIni, new MfgService.Config(4), null);
+        Check(File.Exists(Path.Combine(mfgDir, MfgService.AddonFile)), "MFG: add-on posto na pasta");
+        Check(MfgService.IsOurs(mfgDir), "MFG: marcador de propriedade escrito");
+        // Carga antecipada NAO e opcional: o interposer do Streamline sobe junto com o processo, e
+        // um add-on carregado no momento normal do ReShade chegaria depois da feature ja existir.
+        var cargaMfg = new IniFile(mfgIni).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "";
+        Check(cargaMfg.Contains(MfgService.AddonFile, StringComparison.OrdinalIgnoreCase),
+            $"MFG: registrado na carga antecipada ({cargaMfg})");
+        Check(MfgService.ReadConfig(mfgDir).Multiplier == 4, "MFG: o controle grava e le 4x");
+
+        var textoConfig = File.ReadAllText(Path.Combine(mfgDir, MfgService.ConfigFile));
+        Check(textoConfig.Contains("\"mode\": \"fixed\"") && textoConfig.Contains("\"multiplier\": 4"),
+            "MFG: o controle sai na forma que o add-on sabe ler");
+        // 5x e 6x sao experimentais pelo proprio autor, e o modo dinamico so passa de 4x com
+        // autorizacao explicita. Instalar em 6x tem de acender essa autorizacao.
+        MfgService.WriteConfig(mfgDir, new MfgService.Config(6, Experimental56: true));
+        Check(File.ReadAllText(Path.Combine(mfgDir, MfgService.ConfigFile))
+                  .Contains("\"dynamicExperimental56\": true"),
+            "MFG: 6x liga a autorizacao de modo experimental");
+
+        MfgService.Remove(mfgDir, mfgIni);
+        Check(!File.Exists(Path.Combine(mfgDir, MfgService.AddonFile))
+              && !File.Exists(Path.Combine(mfgDir, MfgService.ConfigFile)),
+            "MFG: remover apaga add-on e controle");
+        var cargaDepois = new IniFile(mfgIni).Get("ADDON", "LoadFromDllMain", ignoreCase: true) ?? "";
+        Check(!cargaDepois.Contains(MfgService.AddonFile, StringComparison.OrdinalIgnoreCase),
+            "MFG: remover tira da carga antecipada");
+    }
+    finally { try { Directory.Delete(mfgDir, true); } catch { } }
+}
+catch (Exception ex) { Check(false, $"MFG: {ex.Message}"); }
+
 // 4. manifest
 var manifest = new ManifestService();
 var defs = manifest.GetSettings("cp2077");

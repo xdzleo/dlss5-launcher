@@ -106,6 +106,31 @@ cadeia, não a olho:
 
 ---
 
+## 🎞️ Multi Frame Generation acima do teto de fábrica
+
+O DLSS 4 gera até três quadros por quadro renderizado, e a NVIDIA reserva tudo acima de 2x à
+série RTX 50. **O limite não é do silício: são duas comparações em código.** Um `test dl,dl / je`
+no `nvngx_dlssg.dll` pergunta se o dispositivo pode, e um `cmovb` no `sl.dlss_g.dll` trava o
+teto. Neutralizadas na memória do processo — nunca no arquivo em disco — a faixa vira **2x a 6x**.
+
+Na RTX 40 isso é a diferença entre ter e não ter o recurso. Na RTX 50, o teto sobe de 4x para 6x.
+
+Destravar sozinho não bastaria na RTX 40: a Ada colapsa as amostras para o meio do intervalo, e o
+resultado seriam quadros quase duplicados. A correção D157 devolve a colocação temporal correta —
+e só se aplica com a placa confirmada como Ada pela capacidade de computo. Não confirmando, volta
+ao 2x nativo em vez de entregar quadros errados.
+
+Interruptor por jogo, multiplicador de 2x a 6x, e a troca **vale com o jogo aberto**. Funciona em
+qualquer jogo com Streamline, não só no Cyberpunk 2077: o binário é compilado neste repositório
+(`native/mfg/`, fork MIT de [RTX40MFG-Unlock](https://github.com/dashdogy/RTX40MFG-Unlock)) e
+carregado pelo ReShade, que o launcher já instala em todo jogo.
+
+O cartão não some quando não dá — ele explica: runtime de Frame Generation fora das quatro versões
+conferidas, jogo sem Streamline, ou placa anterior à Ada, que não tem Frame Generation nenhum
+para estender.
+
+---
+
 ## 🔗 Nada falha em silêncio
 
 Todo elo quebrado produz o mesmo sintoma de fora, então o launcher se recusa a escondê-los. A

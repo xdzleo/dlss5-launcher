@@ -88,10 +88,101 @@ public static class Cli
             "fix" or "corrigir" => await FixAsync(rest.FirstOrDefault()),
             "neural" => await NeuralAsync(rest.FirstOrDefault()),
             "dlss5" => await Dlss5Async(rest),
+            "mfg" => await MfgAsync(rest),
             "doctor" => await DoctorAsync(),
             "help" or "h" or "?" => Help(),
             _ => Unknown(cmd),
         };
+    }
+
+    /// <summary>
+    /// Multi Frame Generation: liga, desliga, ou so relata.
+    ///
+    /// Existe pelo mesmo motivo dos outros comandos: a interface e um caminho, nao o unico.
+    /// Quem roda o launcher por script (ou por atalho de biblioteca) precisa poder pedir 4x num
+    /// jogo sem abrir janela.
+    /// </summary>
+    private static async Task<int> MfgAsync(string[] rest)
+    {
+        var desligar = rest.Any(a => a is "--off" or "--remover");
+        var soRelato = rest.Any(a => a is "--check" or "--dry-run");
+        var query = rest.FirstOrDefault(a => !a.StartsWith('-'));
+        // --x N, ou -x N. Um multiplicador fora de 2..6 e erro de digitacao, nao pedido: o
+        // add-on recusaria o arquivo inteiro em silencio, entao a recusa acontece aqui.
+        int? pedido = null;
+        var ix = Array.FindIndex(rest, a => a is "--x" or "-x");
+        if (ix >= 0 && ix + 1 < rest.Length)
+        {
+            if (!int.TryParse(rest[ix + 1], out var n)
+                || n < MfgService.MinMultiplier || n > MfgService.MaxMultiplier)
+            {
+                Console.Error.WriteLine($"multiplicador invalido: use {MfgService.MinMultiplier} a {MfgService.MaxMultiplier}");
+                return 1;
+            }
+            pedido = n;
+        }
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            Console.Error.WriteLine("uso: mfg <jogo> [--x 2..6] [--off] [--check]");
+            return 1;
+        }
+
+        var ctx = await LoadAsync();
+        var g = Resolve(ctx, query, out var err);
+        if (g is null) { Console.Error.WriteLine(err); return 1; }
+
+        var (exe, state) = StateOf(ctx, g);
+        var target = state?.TargetDir ?? g.InstallDir;
+        var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
+        var host = NeuralUpliftService.ProbeHost();
+        var det = MfgService.Detect(g.InstallDir, target, host);
+
+        Console.WriteLine($"jogo     : {g.Name}");
+        Console.WriteLine($"pasta    : {target}");
+        Console.WriteLine($"placa    : {host.GpuName ?? "?"}"
+                          + (host.Sm is { } sm ? $" (sm_{sm}, {CudaFatbin.Rotulo(sm)})" : ""));
+        Console.WriteLine($"streamline: {(det.HasStreamlineFg ? "sim" : "NAO")}"
+                          + $"   runtime FG: {det.ProviderVersion?.ToString() ?? "nao esta na pasta"}"
+                          + (det.HasNgxInGame ? det.ProviderSupported ? "  (conferido)" : "  (NAO conferido)" : ""));
+        Console.WriteLine($"instalado: {(det.Applied ? $"sim, {det.Config.Multiplier}x" : "nao")}");
+        if (det.LastRun is { } s)
+            Console.WriteLine($"ultima sessao: aplicado={s.Applied} {s.AppliedMultiplier}x  "
+                              + $"{s.RealFps:0} -> {s.DlssFps:0} FPS  "
+                              + $"patches wrapper={s.PatchedWrapper} ngx={s.PatchedNgx}");
+        if (det.Blocker is { } b) Console.WriteLine($"bloqueio : {b}");
+
+        if (soRelato) return det.Blocker is null ? 0 : 2;
+
+        try
+        {
+            if (desligar)
+            {
+                MfgService.Remove(target, ini);
+                Console.WriteLine(L.T("Mfg_Cli_Off", g.Name));
+                return 0;
+            }
+            if (det.Blocker is not null) return 2;
+
+            // Sem ReShade o add-on nao tem quem o carregue: a instalacao ficaria completa no
+            // disco e inerte dentro do jogo, que e o desfecho mais dificil de diagnosticar.
+            if (MfgService.NeedsReShade(target) && exe is not null)
+            {
+                var dep = await new ReShadeService().DeployAsync(target, exe, null, null,
+                    new Progress<string>(Console.WriteLine));
+                if (!dep.Success) { Console.Error.WriteLine(dep.Message); return 1; }
+            }
+
+            var mult = pedido
+                       ?? (det.Applied ? det.Config.Multiplier
+                           : ctx.Config.MfgMultiplier.TryGetValue($"{g.Store}_{g.AppId ?? g.InstallDir}", out var m)
+                               ? m : MfgService.MinMultiplier);
+            MfgService.Apply(target, ini,
+                new MfgService.Config(mult, Experimental56: mult > MfgService.MaxSafeMultiplier),
+                new Progress<string>(Console.WriteLine));
+            Console.WriteLine(L.T("Mfg_Applied", mult));
+            return 0;
+        }
+        catch (Exception ex) { Console.Error.WriteLine(ex.Message); return 1; }
     }
 
     /// <summary>Width of the syntax column in the help table.</summary>
@@ -118,6 +209,7 @@ public static class Cli
         HelpRow($"disable {game}", L.T("Cli_Help_Disable"));
         HelpRow($"dlss5 {game} | --all", L.T("Cli_Help_Dlss5"));
         HelpRow($"neural {game}", L.T("Cli_Help_Neural"));
+        HelpRow($"mfg {game} [--x 2..6] [--off]", L.T("Cli_Help_Mfg"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Help_Match", game));

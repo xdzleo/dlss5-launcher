@@ -582,7 +582,7 @@ public static class NeuralUpliftService
 
     /// <summary>Add a file to the early-load list, keeping whatever is already there — other
     /// addons (renodx-dlssfix is a real case) are listed in the same key.</summary>
-    private static void AddToEarlyLoad(IniFile ini, string addonFile)
+    public static void AddToEarlyLoad(IniFile ini, string addonFile)
     {
         var current = ini.Get(AddonSection, EarlyLoadKey, ignoreCase: true) ?? "";
         var entries = current.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -592,7 +592,7 @@ public static class NeuralUpliftService
         ini.Set(AddonSection, EarlyLoadKey, string.Join(',', entries));
     }
 
-    private static void RemoveFromEarlyLoad(IniFile ini, string addonFile)
+    public static void RemoveFromEarlyLoad(IniFile ini, string addonFile)
     {
         var current = ini.Get(AddonSection, EarlyLoadKey, ignoreCase: true);
         if (current is null) return;

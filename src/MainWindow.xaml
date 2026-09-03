@@ -1083,6 +1083,170 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- Multi Frame Generation: quantos quadros o jogo APRESENTA por
+                                 quadro que ele realmente renderiza.
+
+                                 Cartao proprio, e nao um ajuste do cartao de DLSS 5: sao coisas
+                                 independentes. O MFG multiplica quadros em cima do Frame
+                                 Generation que o jogo ja tem, e nao encosta no pass neural — um
+                                 jogo pode ter um sem o outro, nos dois sentidos.
+
+                                 O requisito de placa NAO esconde o cartao; vira o aviso roxo la
+                                 embaixo. Quem tem uma RTX 30 precisa ler por que nao pode, e um
+                                 cartao ausente nao diz isso a ninguem. -->
+                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
+                                    Background="#33202B" BorderBrush="#6E3A55" BorderThickness="1"
+                                    Visibility="{Binding ShowMfg, Converter={StaticResource BoolToVis}}">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
+                                                    HorizontalAlignment="Right">
+                                            <ToggleButton Style="{StaticResource Switch}"
+                                                          IsChecked="{Binding MfgReady, Mode=OneWay}"
+                                                          Command="{Binding MfgCommand}"
+                                                          HorizontalAlignment="Right"
+                                                          AutomationProperties.Name="{loc:Tr Mfg_Title}"/>
+                                            <TextBlock Text="{Binding MfgStateText}" FontSize="10.5"
+                                                       HorizontalAlignment="Right" Margin="0,4,0,0"
+                                                       Foreground="{StaticResource TextDimBrush}"/>
+                                        </StackPanel>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <TextBlock Text="{loc:Tr Mfg_Title}" FontSize="12.5"
+                                                       FontWeight="SemiBold" Foreground="#F0A8C8"/>
+                                            <TextBlock Text="{loc:Tr Mfg_Title_Desc}" FontSize="11"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource TextFaintBrush}"
+                                                       Margin="0,2,0,0"/>
+                                            <!-- O que o patch muda NESTA placa. A mesma acao tem
+                                                 resultados diferentes numa RTX 40 e numa RTX 50, e
+                                                 um texto unico mentiria para uma das duas. -->
+                                            <TextBlock Text="{Binding MfgUnlockText}" FontSize="11"
+                                                       TextWrapping="Wrap" Foreground="#D8A8BE"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <!-- Os cinco multiplicadores, o escolhido preenchido. Mesmo
+                                         formato dos dois botoes de tradutor de D3D9: sao opcoes do
+                                         mesmo nivel, nenhuma delas e a ausencia da outra.
+                                         Com o recurso ligado, trocar aqui reescreve o arquivo que
+                                         o add-on vigia — vale com o jogo aberto. -->
+                                    <DockPanel Margin="0,11,0,0">
+                                        <Border DockPanel.Dock="Right" CornerRadius="7"
+                                                Background="#2A1A24" BorderBrush="#5E3448"
+                                                BorderThickness="1" Padding="2"
+                                                VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="2x" Padding="10,5"
+                                                        Command="{Binding MfgMultiplierCommand}"
+                                                        CommandParameter="2" AutomationProperties.Name="2x">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding MfgIs2x}" Value="True">
+                                                                    <Setter Property="Background" Value="#A03D6B"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <Button Content="3x" Padding="10,5"
+                                                        Command="{Binding MfgMultiplierCommand}"
+                                                        CommandParameter="3" AutomationProperties.Name="3x">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding MfgIs3x}" Value="True">
+                                                                    <Setter Property="Background" Value="#A03D6B"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <Button Content="4x" Padding="10,5"
+                                                        Command="{Binding MfgMultiplierCommand}"
+                                                        CommandParameter="4" AutomationProperties.Name="4x">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding MfgIs4x}" Value="True">
+                                                                    <Setter Property="Background" Value="#A03D6B"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <Button Content="5x" Padding="10,5"
+                                                        Command="{Binding MfgMultiplierCommand}"
+                                                        CommandParameter="5" AutomationProperties.Name="5x">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding MfgIs5x}" Value="True">
+                                                                    <Setter Property="Background" Value="#A03D6B"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <Button Content="6x" Padding="10,5"
+                                                        Command="{Binding MfgMultiplierCommand}"
+                                                        CommandParameter="6" AutomationProperties.Name="6x">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding MfgIs6x}" Value="True">
+                                                                    <Setter Property="Background" Value="#A03D6B"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                        <TextBlock Text="{loc:Tr Mfg_Multiplier_Label}" FontSize="11.5"
+                                                   VerticalAlignment="Center" FontWeight="SemiBold"
+                                                   Foreground="#F0A8C8"/>
+                                    </DockPanel>
+
+                                    <!-- So com a escolha em territorio experimental. Um aviso
+                                         permanente vira paisagem e ninguem le. -->
+                                    <TextBlock Text="{loc:Tr Mfg_Experimental}" FontSize="10.5"
+                                               TextWrapping="Wrap" LineHeight="15" Margin="0,7,0,0"
+                                               Foreground="#E8B860"
+                                               Visibility="{Binding MfgExperimental, Converter={StaticResource BoolToVis}}"/>
+
+                                    <!-- O que a ULTIMA sessao relatou, escrito pelo proprio add-on
+                                         de dentro do jogo. E a unica prova de que o patch pegou:
+                                         copiar arquivo com sucesso nao prova nada sobre quadros. -->
+                                    <Border CornerRadius="7" Padding="9,7" Margin="0,8,0,0"
+                                            Background="#1E2A33" BorderBrush="#356178" BorderThickness="1"
+                                            Visibility="{Binding MfgHasLastRun, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding MfgLastRun}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="#A8D4E8"/>
+                                    </Border>
+
+                                    <!-- por que esta maquina ou este jogo nao pode -->
+                                    <Border CornerRadius="7" Padding="9,7" Margin="0,8,0,0"
+                                            Background="#2E2438" BorderBrush="#5A4270" BorderThickness="1"
+                                            Visibility="{Binding MfgHasBlocker, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding MfgBlocker}" FontSize="11"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource TextFaintBrush}"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
                             <!-- Runtimes de DLSS: independente do neural. Aparece em qualquer jogo
                                  que carregue um runtime NGX, mostrando a versao atual e para onde
                                  ela subiria. Os originais ficam num .renodx-bak ao lado. -->

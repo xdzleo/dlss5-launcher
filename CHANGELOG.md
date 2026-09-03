@@ -1,5 +1,101 @@
 # Changelog
 
+## v1.74.0
+
+**Multi Frame Generation acima do teto de fábrica**, com interruptor por jogo, em qualquer jogo
+com Streamline — não só no Cyberpunk 2077.
+
+### O que trava o MFG na RTX 40
+
+O DLSS 4 gera até três quadros por quadro renderizado (4x), e a NVIDIA reserva tudo acima de 2x
+à série RTX 50. O limite não é do silício: são duas comparações em código, e dá para ler as duas.
+
+| arquivo | instrução | o que ela faz |
+|---|---|---|
+| `nvngx_dlssg.dll` | `test dl,dl` / `je` | pergunta "este dispositivo pode MFG?" e, no não, pula o trecho que liga os modos acima de 2x |
+| `sl.dlss_g.dll` | `mov edx,5` / `cmp ecx,edx` / `cmovb edx,ecx` | trava o número de quadros gerados no menor entre o pedido e o teto |
+
+Neutralizar as duas **na memória do processo** (nunca no arquivo em disco) destrava 2x até 6x.
+Numa RTX 40 é a diferença entre ter e não ter o recurso; numa RTX 50 o teto sobe de 4x para 6x.
+
+Destravar sozinho não basta na RTX 40: a Ada tem um defeito de compactação no meio do intervalo,
+e com mais de um quadro gerado as amostras colapsam para o centro em vez de ocupar as posições
+temporais pedidas — mais FPS no contador, nenhuma fluidez a mais. A correção D157 reescreve em
+memória o programa temporal do slot 9 pelo que a Blackwell usa, e só se aplica com a placa
+confirmada como Ada pela capacidade de computo (8.9) via CUDA. Não confirmando, tudo volta ao 2x
+nativo em vez de entregar quadros errados.
+
+### Como usar
+
+Um cartão novo no modal do jogo, com interruptor e os multiplicadores de 2x a 6x. Com o recurso
+ligado, trocar o multiplicador reescreve o arquivo que o add-on vigia — **vale com o jogo aberto**,
+sem reinstalar nada. Pela linha de comando:
+
+```
+RenoDXLauncher.exe mfg "hogwarts legacy" --x 4
+RenoDXLauncher.exe mfg "cyberpunk" --check
+RenoDXLauncher.exe mfg "control" --off
+```
+
+O cartão diz o que o patch muda **naquela placa**, avisa quando a escolha entra em território
+experimental (5x e 6x, assim chamados pelo autor do patch), e relata o que a última sessão do jogo
+de fato fez — número lido do próprio add-on, de dentro do jogo, e não deduzido de ter copiado
+arquivos.
+
+### O binário é nosso, e o fonte está no repositório
+
+`native/mfg/` traz o fonte C++ com a licença MIT preservada. É um fork de
+[dashdogy/RTX40MFG-Unlock](https://github.com/dashdogy/RTX40MFG-Unlock), que entrega um plugin
+`.asi` do Cyber Engine Tweaks — só do Cyberpunk 2077. O patch em si nunca foi específico daquele
+jogo: ele mira o Streamline. Quatro mudanças trocam o carregador e nada da lógica de patch:
+
+1. **Add-on do ReShade** em vez de `.asi`. O ReShade é o carregador que este launcher já instala
+   em todo jogo, e o `LoadFromDllMain` dele entra antes de o jogo criar a feature de Frame
+   Generation — que é o momento de que este patch precisa.
+2. **Arquivos de controle com nome próprio** (`renodx-mfg.json`, `renodx-mfg-status.json`), lidos
+   ao lado do módulo. O upstream cai num `config.json` na raiz do jogo, nome comum demais para se
+   escrever nele às cegas.
+3. **Ganchos procurados em todo módulo carregado**, e repetidos por um minuto. O upstream só olha
+   a tabela de importação do executável: no Cyberpunk basta, em jogo Unreal quem importa é um
+   plugin que carrega depois.
+4. **Confirmação da placa sem depender de gancho**: não havendo confirmação em 2 s, o CUDA é
+   consultado direto — uma placa CUDA, e a capacidade de computo dela decide.
+
+### Recusas honestas
+
+O cartão não some quando não dá: ele explica. Medido nesta máquina:
+
+| jogo | runtime de FG | resposta |
+|---|---|---|
+| Hogwarts Legacy | 310.8.0 | disponível |
+| Control | 310.8.0 | disponível |
+| Cyberpunk 2077 | 310.1.0 | recusado, com o caminho para resolver (atualizar os runtimes) |
+| A Plague Tale: Requiem | 3.1.1 | recusado |
+
+Placa abaixo de Ada é recusada dizendo por quê: DLSS Frame Generation não existe em RTX 30 ou
+anterior, e não há o que destravar.
+
+### O que foi verificado, e o que não foi
+
+Verificado nesta máquina (RTX 5090), no Hogwarts Legacy, lendo o log do próprio add-on:
+
+- os dois patches entram: `Streamline maximum: patched RVA 0x59519` e
+  `NGX device support: patched RVA 0x61484`;
+- o jogo passa a listar `[STREAMLINE_DLSSG_MODE_X5]` e `X6` na opção de Frame Generation — sem
+  tradução, porque são modos que não deveriam existir e a localização do jogo não tem texto
+  para eles;
+- a confirmação de placa roda e **recusa corretamente**:
+  `D157 adapter verification (cuda): capability=12.0 verified=0`.
+
+Não verificado: o comportamento em hardware Ada. Esta máquina não tem uma RTX 40, então a
+correção D157 nunca chega a se aplicar aqui — o que dá para provar é que o portão que a governa é
+alcançado e responde certo, recusando 12.0 onde aceitaria 8.9.
+
+Em jogo cujo Streamline é carregado por plugin (Hogwarts Legacy é um), o launcher eleva o teto mas
+não comanda o valor; quem escolhe passa a ser o menu do próprio jogo, que agora lista x5 e x6. O
+cartão diz isso depois da primeira sessão, em vez de deixar a pessoa concluir que o número da tela
+foi ignorado.
+
 ## v1.73.0
 
 Correções de interface: cards da grade, modal do jogo, troca de idioma e controles.

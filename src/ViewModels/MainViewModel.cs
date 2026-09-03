@@ -101,6 +101,8 @@ public class MainViewModel : ObservableObject
         ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
         AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && TemBloqueio);
         EscolherTradutorCommand = new RelayCommand<string>(EscolherTradutor, _ => !Busy);
+        MfgCommand = new AsyncRelayCommand(ToggleMfgAsync, () => !Busy && MfgBlocker is null);
+        MfgMultiplierCommand = new RelayCommand<string>(EscolherMfgMultiplicador, _ => !Busy);
         DlssCommand = new AsyncRelayCommand(ToggleDlssAsync, () => !Busy);
         DlssRepairCommand = new AsyncRelayCommand(RepairDlssAsync, () => !Busy);
         RestoreAllDlssCommand = new AsyncRelayCommand(RestoreAllDlssAsync, () => !Busy);
@@ -823,6 +825,217 @@ public class MainViewModel : ObservableObject
     private bool _neuralNeedsRuntime;
     public bool NeuralNeedsRuntime { get => _neuralNeedsRuntime; set => Set(ref _neuralNeedsRuntime, value); }
 
+    // ---------- Multi Frame Generation ----------
+    //
+    // Cartao proprio, e nao um ajuste dentro do cartao de DLSS 5, porque sao coisas
+    // independentes: o MFG multiplica quadros usando o Frame Generation que o JOGO ja tem, e nao
+    // encosta no pass neural. Um jogo pode ter um sem o outro, nos dois sentidos.
+
+    private MfgService.Detection? _mfgDetection;
+
+    private bool _showMfg;
+    public bool ShowMfg { get => _showMfg; set => Set(ref _showMfg, value); }
+
+    private bool _mfgReady;
+    /// <summary>O add-on esta na pasta. E o que o interruptor reflete.</summary>
+    public bool MfgReady
+    {
+        get => _mfgReady;
+        set
+        {
+            // Incondicional, pelo mesmo motivo de Dlss5Ready: um ToggleButton move a si mesmo ao
+            // ser clicado, e so uma notificacao da origem o traz de volta quando a acao falha.
+            _mfgReady = value;
+            OnPropertyChanged(nameof(MfgReady));
+            OnPropertyChanged(nameof(MfgStateText));
+        }
+    }
+
+    public string MfgStateText => L.T(_mfgReady ? "Dlss5_State_On" : "Dlss5_State_Off");
+
+    private string? _mfgBlocker;
+    /// <summary>Por que este jogo ou esta placa nao pode, ou null quando pode.</summary>
+    public string? MfgBlocker
+    {
+        get => _mfgBlocker;
+        set { if (Set(ref _mfgBlocker, value)) OnPropertyChanged(nameof(MfgHasBlocker)); }
+    }
+    public bool MfgHasBlocker => _mfgBlocker != null;
+
+    private string _mfgUnlockText = "";
+    /// <summary>O que o patch muda NESTA placa: destravar 3x+ na RTX 40, elevar o teto na RTX 50.</summary>
+    public string MfgUnlockText { get => _mfgUnlockText; set => Set(ref _mfgUnlockText, value); }
+
+    private string _mfgLastRun = "";
+    /// <summary>O que a ultima sessao do jogo relatou. Vem do proprio add-on, nao de deducao.</summary>
+    public string MfgLastRun
+    {
+        get => _mfgLastRun;
+        set { if (Set(ref _mfgLastRun, value)) OnPropertyChanged(nameof(MfgHasLastRun)); }
+    }
+    public bool MfgHasLastRun => _mfgLastRun.Length > 0;
+
+    private int _mfgMultiplier = 2;
+
+    /// <summary>
+    /// Quantos quadros o jogo apresenta por quadro renderizado.
+    ///
+    /// Com o recurso ligado, mexer aqui reescreve o `renodx-mfg.json` da pasta na hora — o
+    /// add-on vigia esse arquivo em laco, entao a troca vale com o jogo ABERTO, sem reinstalar
+    /// nada. Desligado, a escolha so fica guardada para a proxima instalacao.
+    /// </summary>
+    public int MfgMultiplier
+    {
+        get => _mfgMultiplier;
+        set
+        {
+            var novo = Math.Clamp(value, MfgService.MinMultiplier, MfgService.MaxMultiplier);
+            if (_mfgMultiplier == novo) return;
+            _mfgMultiplier = novo;
+            RaiseMfgMultiplier();
+
+            var item = _detailItem;
+            if (item is null) return;
+            Config.MfgMultiplier[item.Key] = novo;
+            Config.Save();
+            if (!MfgReady || item.TargetDir is not { } dir) return;
+            try
+            {
+                MfgService.WriteConfig(dir, MfgService.ReadConfig(dir) with { Multiplier = novo });
+                DetailStatus = L.T("Mfg_Applied", novo);
+            }
+            catch (Exception ex) { DetailStatus = ex.Message; }
+        }
+    }
+
+    /// <summary>Troca o multiplicador sem gravar nada: e a leitura do disco chegando na tela.</summary>
+    private void MfgMultiplierQuieto(int valor)
+    {
+        _mfgMultiplier = Math.Clamp(valor, MfgService.MinMultiplier, MfgService.MaxMultiplier);
+        RaiseMfgMultiplier();
+    }
+
+    // Um booleano por opcao, para o XAML pintar o botao escolhido sem converter nada — mesma
+    // forma dos dois botoes de tradutor de D3D9.
+    public bool MfgIs2x => _mfgMultiplier == 2;
+    public bool MfgIs3x => _mfgMultiplier == 3;
+    public bool MfgIs4x => _mfgMultiplier == 4;
+    public bool MfgIs5x => _mfgMultiplier == 5;
+    public bool MfgIs6x => _mfgMultiplier == 6;
+
+    /// <summary>Acima de 4x quem chama de experimental e o autor do patch. O aviso aparece so
+    /// quando a escolha esta la, e nao o tempo todo.</summary>
+    public bool MfgExperimental => _mfgMultiplier > MfgService.MaxSafeMultiplier;
+
+    private void RaiseMfgMultiplier()
+    {
+        OnPropertyChanged(nameof(MfgMultiplier));
+        OnPropertyChanged(nameof(MfgIs2x));
+        OnPropertyChanged(nameof(MfgIs3x));
+        OnPropertyChanged(nameof(MfgIs4x));
+        OnPropertyChanged(nameof(MfgIs5x));
+        OnPropertyChanged(nameof(MfgIs6x));
+        OnPropertyChanged(nameof(MfgExperimental));
+    }
+
+    /// <summary>
+    /// Le a pasta e a placa e monta o cartao de MFG.
+    ///
+    /// O cartao aparece onde ha Streamline com Frame Generation — ou onde o add-on JA esta, para
+    /// que desligar continue possivel mesmo se a deteccao mudar de ideia entre versoes. Requisito
+    /// de placa nao esconde o cartao: vira o aviso dentro dele, porque "nao apareceu nada" nao
+    /// explica nada a ninguem.
+    /// </summary>
+    private async Task CheckMfgAsync(int token)
+    {
+        if (token != _detailToken) return;
+        ShowMfg = false;
+        MfgBlocker = null;
+        MfgLastRun = "";
+        _mfgDetection = null;
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+
+        var installDir = item.Game.InstallDir;
+        var targetDir = item.TargetDir;
+        var det = await Task.Run(() =>
+            MfgService.Detect(installDir, targetDir, NeuralUpliftService.ProbeHost()));
+        if (token != _detailToken) return;
+
+        _mfgDetection = det;
+        if (!det.Offerable) return;
+
+        MfgBlocker = det.Blocker;
+        MfgReady = det.Applied;
+        // Instalado manda: o arquivo da pasta e o que o add-on le, e o usuario pode te-lo
+        // editado. Desligado, vale a escolha guardada para este jogo.
+        MfgMultiplierQuieto(det.Applied
+            ? det.Config.Multiplier
+            : Config.MfgMultiplier.TryGetValue(item.Key, out var m) ? m : MfgService.MinMultiplier);
+        MfgUnlockText = L.T(det.JaTinhaMfg ? "Mfg_Unlocks_Rtx50" : "Mfg_Unlocks_Rtx40");
+        MfgLastRun = det.LastRun switch
+        {
+            null => "",
+            { Applied: true } s => L.T("Mfg_LastRun", s.AppliedMultiplier,
+                                       s.RealFps.ToString("0"), s.DlssFps.ToString("0")),
+            // Os dois patches entraram mas o add-on nao conseguiu enganchar o Streamline para
+            // COMANDAR o valor. Acontece em jogo cujo Streamline e carregado por um plugin, e nao
+            // importado pelo executavel -- o Hogwarts Legacy e um. O teto subiu do mesmo jeito, e
+            // quem escolhe o modo passa a ser o menu do proprio jogo, que agora lista x5 e x6.
+            { BridgeReady: false, PatchedWrapper: > 0 } => L.T("Mfg_LastRun_InGameMenu"),
+            { BridgeReady: true } => L.T("Mfg_LastRun_NotApplied"),
+            _ => "",
+        };
+        ShowMfg = true;
+    }
+
+    /// <summary>
+    /// Liga ou desliga o MFG neste jogo.
+    ///
+    /// Ligar poe o ReShade quando falta: e ele quem carrega o add-on, e sem ele a instalacao
+    /// ficaria completa no disco e inerte no jogo.
+    /// </summary>
+    private async Task ToggleMfgAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+        var dir = item.TargetDir;
+        var ini = item.State?.IniPath ?? System.IO.Path.Combine(dir, "ReShade.ini");
+        ActionBusy = true;
+        try
+        {
+            if (MfgReady)
+            {
+                await Task.Run(() => MfgService.Remove(dir, ini));
+                DetailStatus = L.T("Mfg_Removed");
+            }
+            else
+            {
+                if (MfgService.NeedsReShade(dir) && item.ChosenExe is not null)
+                {
+                    DetailStatus = L.T("Neural_InstallingReShade");
+                    var dep = await _reshade.DeployAsync(dir, item.ChosenExe,
+                        _rhi.GraphicsApi(item.Name), _rhi.DllNameOverride(item.Name),
+                        new Progress<string>(s => DetailStatus = s));
+                    if (!dep.Success) { DetailStatus = dep.Message; return; }
+                }
+                var alvo = _mfgMultiplier;
+                await Task.Run(() => MfgService.Apply(dir, ini,
+                    new MfgService.Config(alvo, Experimental56: alvo > MfgService.MaxSafeMultiplier),
+                    new Progress<string>(s => DetailStatus = s)));
+                DetailStatus = L.T("Mfg_Applied", alvo);
+            }
+            if (item == _detailItem) await RefreshFolderAsync(_detailToken);
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    private void EscolherMfgMultiplicador(string qual)
+    {
+        if (int.TryParse(qual, out var n)) MfgMultiplier = n;
+    }
+
     private NeuralUpliftService.Detection? _neuralDetection;
 
     // ---------- runtimes de DLSS ----------
@@ -922,6 +1135,13 @@ public class MainViewModel : ObservableObject
     public AsyncRelayCommand ImportNeuralRuntimeCommand { get; }
     public RelayCommand AfastarConflitosCommand { get; }
     public RelayCommand<string> EscolherTradutorCommand { get; }
+    /// <summary>Liga ou desliga o Multi Frame Generation neste jogo.</summary>
+    public AsyncRelayCommand MfgCommand { get; }
+
+    /// <summary>Troca o multiplicador (2 a 6). Um comando so para os cinco botoes; quem
+    /// distingue e o CommandParameter.</summary>
+    public RelayCommand<string> MfgMultiplierCommand { get; }
+
     public AsyncRelayCommand DlssCommand { get; }
     public AsyncRelayCommand DlssRepairCommand { get; }
     public AsyncRelayCommand RestoreAllDlssCommand { get; }
@@ -984,6 +1204,8 @@ public class MainViewModel : ObservableObject
         // Sem isto os dois botoes do tradutor ficam mortos apos a primeira troca: o CanExecute
         // olha Busy, e Busy so volta ao normal no finally de quem fez a troca.
         EscolherTradutorCommand.RaiseCanExecuteChanged();
+        MfgCommand.RaiseCanExecuteChanged();
+        MfgMultiplierCommand.RaiseCanExecuteChanged();
         DlssCommand.RaiseCanExecuteChanged();
         DlssRepairCommand.RaiseCanExecuteChanged();
         RestoreAllDlssCommand.RaiseCanExecuteChanged();
@@ -1350,6 +1572,7 @@ public class MainViewModel : ObservableObject
     {
         await CheckNeuralAsync(token);
         await RefreshDlssAsync(token);
+        await CheckMfgAsync(token);
         await LoadSettingsSafeAsync(token);
 
         // As bolinhas do card vivem no GameItemVm, nao nesta view model, e nada as tocava

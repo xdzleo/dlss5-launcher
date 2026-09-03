@@ -28,6 +28,17 @@ public class LauncherConfig
     /// depois de o DLSS ja estar avaliando). Nao da para deduzir qual serve sem abrir o jogo.
     /// </summary>
     public Dictionary<string, string> D3d9Translator { get; set; } = new();
+
+    /// <summary>
+    /// Multiplicador de Multi Frame Generation escolhido por jogo (2 a 6). Ausente = 2x.
+    ///
+    /// Guardado aqui, e nao so no `renodx-mfg.json` da pasta do jogo, porque a escolha precisa
+    /// sobreviver a desinstalar e reinstalar: quem experimentou 4x num jogo e desligou para
+    /// testar outra coisa nao quer voltar ao 2x ao religar. Com o recurso ligado, quem manda e o
+    /// arquivo da pasta — e o que o add-on le, e o usuario pode te-lo editado a mao.
+    /// </summary>
+    public Dictionary<string, int> MfgMultiplier { get; set; } = new();
+
     /// <summary>Manually added game folders.</summary>
     public List<string> ManualGameDirs { get; set; } = new();
 
