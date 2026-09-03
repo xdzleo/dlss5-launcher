@@ -43,10 +43,18 @@ public static class ConflictScanner
     /// <param name="Porque">O que ele faz com a NOSSA cadeia — nao o que ele faz em geral.</param>
     /// <param name="PodeAfastar">Se renomear resolve. Falso quando a solucao e outra
     /// (reinstalar o jogo, escolher outro caminho no launcher).</param>
+    /// <param name="Rotulo">
+    /// O nome a mostrar, quando o caminho nao serve de nome.
+    ///
+    /// Nem todo achado e um arquivo: "a ponte e o Feeder estao os dois aqui" e sobre a PASTA, e
+    /// o caminho dela vira o nome do jogo na coluna do arquivo — a lista dizia "Control", como
+    /// se existisse um arquivo com esse nome atrapalhando. Aqui vai o que de fato esta em
+    /// conflito.
+    /// </param>
     public sealed record Conflito(string Caminho, string Ferramenta, string Porque,
-                                  Nivel Grau, bool PodeAfastar)
+                                  Nivel Grau, bool PodeAfastar, string? Rotulo = null)
     {
-        public string Arquivo => Path.GetFileName(Caminho);
+        public string Arquivo => Rotulo ?? Path.GetFileName(Caminho);
     }
 
     /// <summary>Nomes que o Windows resolve na pasta do executavel antes de ir ao sistema — e por
@@ -169,7 +177,8 @@ public static class ConflictScanner
         if (!Dlss5Installer.MultiApiInstalado(dir)
             && FeederService.IsDeployed(dir) && NeuralUpliftService.BridgeDeployed(dir))
             achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_PonteFeeder"),
-                                     Nivel.Bloqueio, PodeAfastar: false));
+                                     Nivel.Bloqueio, PodeAfastar: false,
+                                     Rotulo: $"{NeuralUpliftService.BridgeFile} + {FeederService.AddonFile}"));
 
         // dgVoodoo e DXVK disputam o mesmo d3d9.dll — quem ficar por ultimo ganha, e o outro vira
         // um arquivo que nunca carrega. Na rota D3D10 do DXVK nao ha disputa de nome, mas o
@@ -177,7 +186,8 @@ public static class ConflictScanner
         // resto da tentativa que fechava o Just Cause 2.
         if ((DxvkService.IsDeployed(dir) || DxvkService.IsDeployedD3d10(dir)) && DgVoodooService.IsDeployed(dir))
             achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_DxvkDgVoodoo"),
-                                     Nivel.Bloqueio, PodeAfastar: false));
+                                     Nivel.Bloqueio, PodeAfastar: false,
+                                     Rotulo: "DXVK + dgVoodoo2"));
 
         // ReShade entrando duas vezes no mesmo processo — uma pela camada Vulkan, outra pelo proxy.
         // Carga dupla e a causa conhecida do 0xc0000005 logo no start.

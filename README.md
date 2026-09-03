@@ -105,16 +105,21 @@ If your game draws through any of those, there is a route, and the switch is the
 
 ---
 
-## 🎞️ Multi Frame Generation past the factory ceiling
+## 🎞️ Multi Frame Generation patch, for the RTX 40 ⚠️ experimental
 
 DLSS 4 generates up to three frames per rendered frame, and NVIDIA reserves anything above 2x for
 the RTX 50 series. **That ceiling is not silicon: it is two comparisons in code.** A `test dl,dl /
 je` in `nvngx_dlssg.dll` asks whether the device is allowed, and a `cmovb` in `sl.dlss_g.dll`
-clamps the count. Neutralised in process memory — never in the file on disk — the range becomes
-**2x to 6x**.
+clamps the count. Neutralised in process memory — never in the file on disk — the RTX 40 starts
+offering **3x, 4x, 5x and 6x** in place of the 2x it ships with.
 
-On an RTX 40 that is the difference between having the feature and not having it. On an RTX 50 the
-ceiling rises from 4x to 6x.
+It is called a patch because that is what it is: NVIDIA code altered in memory. Expect it to break
+with a driver or game update, and the card says so before you switch it on.
+
+It does not appear on an RTX 50. That card already does Multi Frame Generation from the factory,
+up to 4x, through the game's own settings and the NVIDIA app; what the patch would add there is 5x
+and 6x, which the patch's own author calls experimental — not reason enough for one more card on
+the screen of someone who already has the feature.
 
 Unlocking alone would not be enough on Ada: it collapses the generated samples toward the middle
 of the interval, producing near-duplicate frames. The D157 fix restores their temporal placement,

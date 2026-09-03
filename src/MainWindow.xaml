@@ -1068,7 +1068,7 @@
                                                         VerticalAlignment="Top" Margin="8,0,0,0"
                                                         Command="{Binding AfastarConflitosCommand}"
                                                         ToolTip="{loc:Tr Conflito_Botao_Explicar}"
-                                                        Visibility="{Binding TemBloqueio, Converter={StaticResource BoolToVis}}">
+                                                        Visibility="{Binding PodeAfastarAlgum, Converter={StaticResource BoolToVis}}">
                                                     <TextBlock Text="{loc:Tr Conflito_Botao_Afastar}" FontSize="11.5"/>
                                                 </Button>
                                                 <StackPanel>
@@ -1157,8 +1157,22 @@
                                                        Foreground="{StaticResource TextDimBrush}"/>
                                         </StackPanel>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                            <TextBlock Text="{loc:Tr Mfg_Title}" FontSize="12.5"
-                                                       FontWeight="SemiBold" Foreground="#F0A8C8"/>
+                                            <!-- O selo fica no titulo, e nao no fim do texto: e a
+                                                 primeira coisa a saber sobre este cartao. Patch de
+                                                 memoria em binario da NVIDIA quebra com
+                                                 atualizacao de driver, e quem liga precisa saber
+                                                 disso antes de ligar, nao depois. -->
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{loc:Tr Mfg_Title}" FontSize="12.5"
+                                                           FontWeight="SemiBold" Foreground="#F0A8C8"
+                                                           VerticalAlignment="Center"/>
+                                                <Border CornerRadius="4" Padding="7,2" Margin="9,0,0,0"
+                                                        Background="#5E4A16" VerticalAlignment="Center">
+                                                    <TextBlock Text="{loc:Tr Mfg_Experimental_Badge}"
+                                                               FontSize="9" FontWeight="Bold"
+                                                               Foreground="#FFDC8A"/>
+                                                </Border>
+                                            </StackPanel>
                                             <TextBlock Text="{loc:Tr Mfg_Title_Desc}" FontSize="11"
                                                        TextWrapping="Wrap"
                                                        Foreground="{StaticResource TextFaintBrush}"

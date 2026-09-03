@@ -1,5 +1,58 @@
 # Changelog
 
+## v1.76.0
+
+Faxina na tela do jogo: um cartão a menos, um recurso com o nome certo, e as instruções legíveis.
+
+### O MFG virou "patch", é experimental, e só aparece na RTX 40
+
+O nome importa: não é um recurso do launcher, é **alteração de código da NVIDIA em memória**. Vai
+quebrar com atualização de driver ou de jogo, e agora o cartão diz isso com um selo
+**EXPERIMENTAL** ao lado do título, antes de você ligar — e não numa nota depois.
+
+E ele **sumiu da RTX 50**. Aquela placa já faz Multi Frame Generation de fábrica até 4x, pelo menu
+do próprio jogo e pelo app da NVIDIA. O que o patch acrescentaria ali são 5x e 6x, que o próprio
+autor chama de experimentais: não é motivo para um cartão a mais na tela de quem já tem o recurso
+funcionando. A linha de comando ainda explica o porquê, para quem for procurar.
+
+Continua aparecendo em placa que não alcança **se já estiver instalado** — trocar de placa não
+pode deixar o recurso ligado sem caminho de volta.
+
+### O cartão de runtimes de DLSS saiu
+
+Ele oferecia atualizar ou restaurar os runtimes do jogo, que é o que o DLSS Swapper faz, e não é
+o que este launcher é. Pior: o botão de restaurar desfaz o que a instalação do DLSS 5 pôs, então
+dois controles do mesmo painel puxavam para lados opostos.
+
+Havia ainda uma promessa falsa: o bloqueio do MFG mandava "atualize os runtimes de DLSS acima", e
+aquele botão **nunca trocou Frame Generation** — só Super Resolution e Ray Reconstruction, por
+decisão antiga e documentada (o `nvngx_dlssg.dll` anda em conjunto com o Streamline do jogo). O
+texto agora diz a verdade.
+
+O aviso de topo de "runtime trocado em N jogos", com o botão de devolver todos, continua.
+
+### Instruções do mod: parágrafo é parágrafo, lista é lista
+
+As notas do RenoDX vêm de uma wiki, escritas em markdown de rascunho — uma frase, às vezes um
+`IMPORTANT:` na frente, e itens com hífen. Tudo isso chegava na tela como um parágrafo corrido,
+com os hífens no meio das frases.
+
+Agora o texto é quebrado no que ele já é: o parágrafo separado dos itens, cada item com marcador
+fora da margem, e o `IMPORTANT:` como selo no cabeçalho em vez de ocupar o começo da primeira
+frase. O cabeçalho some inteiro quando não há nada nele, em vez de deixar um vão no topo de toda
+nota sem título.
+
+### O cartão de conflitos parou de mentir o nome
+
+Um achado sobre a **pasta** — "a ponte e o Feeder estão os dois aqui" — mostrava o nome da pasta
+na coluna do arquivo, então a lista dizia `Control`, como se existisse um arquivo com esse nome
+atrapalhando. Agora diz o que de fato está em conflito:
+`dlss5-dx11-bridge.addon64 + dlss5-feed.addon64`.
+
+E o botão "afastar os que bloqueiam" só aparece quando há algo que ele consegue afastar. Antes
+aparecia com qualquer bloqueio, inclusive nos que se resolvem reinstalando — e ali ele não fazia
+nada.
+
 ## v1.75.0
 
 Jogo com **DLSS 1.0** deixa de ser recusado, e o runtime neural passa a ser encontrado sem rede.

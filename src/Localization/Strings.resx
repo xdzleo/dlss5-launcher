@@ -1913,6 +1913,10 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Nenhuma placa NVIDIA RTX encontrada ({0}). O Multi Frame Generation roda em RTX 40 e RTX 50.</value>
     <comment>{0} = nome da placa detectada, ou ?.</comment>
   </data>
+  <data name="Mfg_Blocked_JaTem" xml:space="preserve">
+    <value>A {0} já faz Multi Frame Generation de fábrica, até 4x, pelas opções do próprio jogo e pelo app da NVIDIA. O patch existe para a RTX 40, que para em 2x.</value>
+    <comment>{0} = nome da placa. So a linha de comando mostra: na interface o cartao nem aparece.</comment>
+  </data>
   <data name="Mfg_Blocked_NoStreamline" xml:space="preserve">
     <value>Este jogo não traz o Frame Generation da NVIDIA (Streamline), então não há multiplicador de quadros para elevar.</value>
   </data>
@@ -1934,6 +1938,10 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Mfg_Experimental" xml:space="preserve">
     <value>5x e 6x são experimentais: espere artefatos, engasgos ou tela preta em alguns jogos.</value>
   </data>
+  <data name="Mfg_Experimental_Badge" xml:space="preserve">
+    <value>EXPERIMENTAL</value>
+    <comment>Selo no cabecalho do cartao. Curto: ele fica ao lado do titulo.</comment>
+  </data>
   <data name="Mfg_LastRun" xml:space="preserve">
     <value>Última sessão: {0}x aplicado, {1} para {2} quadros por segundo.</value>
     <comment>{0} = multiplicador aplicado, {1} e {2} = quadros por segundo.</comment>
@@ -1952,17 +1960,14 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Multi Frame Generation removido.</value>
   </data>
   <data name="Mfg_Title" xml:space="preserve">
-    <value>Multi Frame Generation</value>
-    <comment>Nome do recurso da NVIDIA: nao traduzir.</comment>
+    <value>Patch de Multi Frame Generation</value>
+    <comment>"patch" de proposito: e uma alteracao de memoria em binario da NVIDIA, e nao um recurso do launcher. "Multi Frame Generation" e nome da NVIDIA e nao se traduz.</comment>
   </data>
   <data name="Mfg_Title_Desc" xml:space="preserve">
-    <value>Eleva o multiplicador de quadros acima do teto de fábrica: 2x a 6x na RTX 40, e até 6x na RTX 50.</value>
+    <value>Abre os multiplicadores de quadros que a RTX 40 não recebe: de 3x a 6x, no lugar do 2x que ela traz. Ele altera código da NVIDIA na memória — espere que quebre com atualização de driver ou de jogo.</value>
   </data>
   <data name="Mfg_Unlocks_Rtx40" xml:space="preserve">
     <value>Sua placa para em 2x de fábrica; o patch abre de 3x para cima.</value>
-  </data>
-  <data name="Mfg_Unlocks_Rtx50" xml:space="preserve">
-    <value>Sua placa já faz até 4x; o patch eleva o teto para 6x.</value>
   </data>
   <data name="Neural_AddonFeederName" xml:space="preserve">
     <value>Addon neural copiado também com o nome que o Feeder procura.</value>

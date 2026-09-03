@@ -2453,22 +2453,28 @@
     "en": "Multi Frame Generation removed.",
     "pt-BR": "Multi Frame Generation removido."
   },
+  "Mfg_Blocked_JaTem": {
+    "en": "{0} already does Multi Frame Generation from the factory, up to 4x, through the game's own settings and the NVIDIA app. The patch exists for the RTX 40, which is capped at 2x.",
+    "note": "{0} = nome da placa. So a linha de comando mostra: na interface o cartao nem aparece.",
+    "pt-BR": "A {0} já faz Multi Frame Generation de fábrica, até 4x, pelas opções do próprio jogo e pelo app da NVIDIA. O patch existe para a RTX 40, que para em 2x."
+  },
+  "Mfg_Experimental_Badge": {
+    "en": "EXPERIMENTAL",
+    "note": "Selo no cabecalho do cartao. Curto: ele fica ao lado do titulo.",
+    "pt-BR": "EXPERIMENTAL"
+  },
   "Mfg_Title": {
-    "en": "Multi Frame Generation",
-    "note": "Nome do recurso da NVIDIA: nao traduzir.",
-    "pt-BR": "Multi Frame Generation"
+    "en": "Multi Frame Generation patch",
+    "note": "\"patch\" de proposito: e uma alteracao de memoria em binario da NVIDIA, e nao um recurso do launcher. \"Multi Frame Generation\" e nome da NVIDIA e nao se traduz.",
+    "pt-BR": "Patch de Multi Frame Generation"
   },
   "Mfg_Title_Desc": {
-    "en": "Raises the frame multiplier past the factory ceiling: 2x to 6x on RTX 40, and up to 6x on RTX 50.",
-    "pt-BR": "Eleva o multiplicador de quadros acima do teto de fábrica: 2x a 6x na RTX 40, e até 6x na RTX 50."
+    "en": "Opens the frame multipliers the RTX 40 is locked out of: 3x to 6x, instead of the 2x it ships with. It patches NVIDIA code in memory — expect it to break with driver or game updates.",
+    "pt-BR": "Abre os multiplicadores de quadros que a RTX 40 não recebe: de 3x a 6x, no lugar do 2x que ela traz. Ele altera código da NVIDIA na memória — espere que quebre com atualização de driver ou de jogo."
   },
   "Mfg_Unlocks_Rtx40": {
     "en": "Your card caps at 2x from the factory; the patch opens 3x and above.",
     "pt-BR": "Sua placa para em 2x de fábrica; o patch abre de 3x para cima."
-  },
-  "Mfg_Unlocks_Rtx50": {
-    "en": "Your card already does up to 4x; the patch raises the ceiling to 6x.",
-    "pt-BR": "Sua placa já faz até 4x; o patch eleva o teto para 6x."
   },
   "Neural_AddonFeederName": {
     "en": "Neural addon also copied under the name the Feeder looks for.",

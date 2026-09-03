@@ -106,14 +106,21 @@ cadeia, não a olho:
 
 ---
 
-## 🎞️ Multi Frame Generation acima do teto de fábrica
+## 🎞️ Patch de Multi Frame Generation, para a RTX 40 ⚠️ experimental
 
 O DLSS 4 gera até três quadros por quadro renderizado, e a NVIDIA reserva tudo acima de 2x à
 série RTX 50. **O limite não é do silício: são duas comparações em código.** Um `test dl,dl / je`
 no `nvngx_dlssg.dll` pergunta se o dispositivo pode, e um `cmovb` no `sl.dlss_g.dll` trava o
-teto. Neutralizadas na memória do processo — nunca no arquivo em disco — a faixa vira **2x a 6x**.
+teto. Neutralizadas na memória do processo — nunca no arquivo em disco — a RTX 40 passa a
+oferecer **3x, 4x, 5x e 6x** no lugar do 2x com que ela sai de fábrica.
 
-Na RTX 40 isso é a diferença entre ter e não ter o recurso. Na RTX 50, o teto sobe de 4x para 6x.
+É chamado de patch porque é isso: alteração de código da NVIDIA em memória. Espere que quebre
+com atualização de driver ou de jogo, e o cartão diz isso antes de você ligar.
+
+Na RTX 50 ele não aparece. Ela já faz Multi Frame Generation de fábrica até 4x, pelo menu do
+próprio jogo e pelo app da NVIDIA; o que o patch acrescentaria ali são 5x e 6x, que o próprio
+autor chama de experimentais — não é motivo para um cartão a mais na tela de quem já tem o
+recurso funcionando.
 
 Destravar sozinho não bastaria na RTX 40: a Ada colapsa as amostras para o meio do intervalo, e o
 resultado seriam quadros quase duplicados. A correção D157 devolve a colocação temporal correta —

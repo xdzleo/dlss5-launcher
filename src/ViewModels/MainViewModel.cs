@@ -99,7 +99,7 @@ public class MainViewModel : ObservableObject
             if (Selected is not null) _ = LoadDetailSafeAsync();
         };
         ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
-        AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && TemBloqueio);
+        AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && PodeAfastarAlgum);
         EscolherTradutorCommand = new RelayCommand<string>(EscolherTradutor, _ => !Busy);
         MfgCommand = new AsyncRelayCommand(ToggleMfgAsync, () => !Busy && MfgBlocker is null);
         MfgMultiplierCommand = new RelayCommand<string>(EscolherMfgMultiplicador, _ => !Busy);
@@ -559,6 +559,26 @@ public class MainViewModel : ObservableObject
         private set { _temConflitos = value; OnPropertyChanged(nameof(TemConflitos)); }
     }
 
+    private bool _podeAfastarAlgum;
+
+    /// <summary>
+    /// Ha na lista ao menos um conflito que o botao consegue afastar.
+    ///
+    /// O botao aparecia com QUALQUER bloqueio, e nem todo bloqueio e afastavel: "a ponte e o
+    /// Feeder estao os dois nesta pasta" e um estado da nossa propria instalacao, que se resolve
+    /// reinstalando e nao renomeando arquivo. Nesses casos o botao aparecia e nao fazia nada.
+    /// </summary>
+    public bool PodeAfastarAlgum
+    {
+        get => _podeAfastarAlgum;
+        private set
+        {
+            _podeAfastarAlgum = value;
+            OnPropertyChanged(nameof(PodeAfastarAlgum));
+            AfastarConflitosCommand.RaiseCanExecuteChanged();
+        }
+    }
+
     private bool _temBloqueio;
     /// <summary>Ao menos um conflito impede a cadeia de funcionar — muda a cor do cartao e
     /// habilita o botao de afastar.</summary>
@@ -911,6 +931,8 @@ public class MainViewModel : ObservableObject
         var bloqueios = r.Conflitos.Count(c => c.Grau == ConflictScanner.Nivel.Bloqueio);
         TemConflitos = r.Conflitos.Count > 0;
         TemBloqueio = bloqueios > 0;
+        PodeAfastarAlgum = r.Conflitos.Any(c => c.Grau == ConflictScanner.Nivel.Bloqueio
+                                                && c.PodeAfastar);
         ConflitosResumo = r.Conflitos.Count == 0
             ? L.T("Conflito_Nenhum")
             : L.T("Conflito_Resumo", r.Conflitos.Count, bloqueios);
@@ -1085,7 +1107,7 @@ public class MainViewModel : ObservableObject
             ? det.Config.Multiplier
             : Config.MfgMultiplier.TryGetValue(item.Key, out var m) ? m : MfgService.PadraoPara(det.Sm),
             det.Sm);
-        MfgUnlockText = L.T(det.JaTinhaMfg ? "Mfg_Unlocks_Rtx50" : "Mfg_Unlocks_Rtx40");
+        MfgUnlockText = L.T("Mfg_Unlocks_Rtx40");
         MfgLastRun = det.LastRun switch
         {
             null => "",
@@ -1750,6 +1772,7 @@ public class MainViewModel : ObservableObject
         Conflitos.Clear();
         TemConflitos = false;
         TemBloqueio = false;
+        PodeAfastarAlgum = false;
         ConflitosResumo = "";
         BridgeActive = false;
         FeederActive = false;

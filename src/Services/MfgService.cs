@@ -83,18 +83,15 @@ public static class MfgService
     public const int MaxMultiplier = 6;
 
     /// <summary>
-    /// Os multiplicadores que o patch ACRESCENTA nesta placa.
+    /// Os multiplicadores que o patch ACRESCENTA.
     ///
-    /// O seletor mostra o que o launcher entrega, e nao a lista inteira. Numa RTX 50 o jogo ja
-    /// faz ate 4x sozinho: oferecer 2x, 3x ou 4x aqui seria oferecer o que ja existe no menu do
-    /// proprio jogo, e escolher um deles nao mudaria nada. Numa RTX 40 o mesmo vale para o 2x,
-    /// que e o teto de fabrica dela.
+    /// De 3x para cima: 2x e o teto de fabrica da RTX 40, e "sem o patch" nao e uma escolha do
+    /// seletor — e o interruptor do cartao, que desligado devolve a placa ao que ela fazia.
     ///
-    /// E por isso que nao ha 2x em lugar nenhum: "sem o patch" nao e uma escolha do seletor, e o
-    /// interruptor do cartao — desligar devolve a placa ao que ela fazia de fabrica.
+    /// A lista nao depende mais da placa porque o patch so e oferecido em uma (ver
+    /// <see cref="Detection.GpuCapable"/>).
     /// </summary>
-    public static IReadOnlyList<int> MultiplicadoresPara(int? sm) =>
-        sm >= 120 ? [5, 6] : [3, 4, 5, 6];
+    public static IReadOnlyList<int> MultiplicadoresPara(int? sm) => [3, 4, 5, 6];
 
     /// <summary>O primeiro que o patch acrescenta: o menor passo acima do teto de fabrica.</summary>
     public static int PadraoPara(int? sm) => MultiplicadoresPara(sm)[0];
@@ -104,10 +101,16 @@ public static class MfgService
     public const int MaxSafeMultiplier = 4;
 
     /// <summary>
-    /// Ada. E o piso REAL, e nao uma escolha nossa: Frame Generation do DLSS depende do
-    /// acelerador de fluxo optico da geracao Ada, e placa anterior (RTX 30, RTX 20) nao tem a
-    /// feature para destravar. Destravar o portao numa Ampere nao produziria 2x — produziria
-    /// chamada a um caminho que nao existe.
+    /// Ada, e SO Ada. A unica geracao em que este patch tem o que fazer.
+    ///
+    /// Abaixo dela nao ha o que destravar: Frame Generation do DLSS depende do acelerador de
+    /// fluxo optico da Ada, e RTX 30 ou 20 nao tem a feature. Destravar o portao numa Ampere nao
+    /// produziria 2x — produziria chamada a um caminho que nao existe.
+    ///
+    /// Acima dela nao ha o que oferecer: a RTX 50 ja faz MFG de fabrica ate 4x, pelo menu do
+    /// proprio jogo e pelo app da NVIDIA. O que o patch acrescentaria ali sao 5x e 6x, que o
+    /// proprio autor chama de experimentais — nao e motivo para um cartao a mais na tela de quem
+    /// ja tem o recurso funcionando.
     /// </summary>
     public const int MinSm = 89;
 
@@ -161,14 +164,14 @@ public static class MfgService
         /// do jogo. "Sua placa e de 2020" nao aponta nada: e so um cartao ocupando espaco em todo
         /// jogo da lista para repetir um fato que nao muda.
         /// </summary>
-        public bool GpuCapable => Sm >= MinSm;
+        public bool GpuCapable => Sm == MinSm;
 
         /// <summary>O cartao aparece? So onde ha a rota que o patch entende E a placa alcanca —
         /// ou onde ele ja esta instalado, para que desligar continue possivel mesmo depois de
         /// trocar de placa ou de a deteccao mudar de ideia.</summary>
         public bool Offerable => (HasStreamlineFg && GpuCapable) || Applied;
 
-        /// <summary>Esta placa ja fazia MFG sozinha, e o que o patch entrega e o teto maior.</summary>
+        /// <summary>Esta placa ja faz MFG de fabrica — o patch nao e oferecido nela.</summary>
         public bool JaTinhaMfg => Sm >= 120;
     }
 
@@ -265,6 +268,9 @@ public static class MfgService
         string? bloqueio =
             sm is null ? L.T("Mfg_Blocked_Gpu", host.GpuName ?? "?")
             : sm < MinSm ? L.T("Mfg_Blocked_Arch", host.GpuName ?? "?", CudaFatbin.Rotulo(sm.Value))
+            // Placa que ja faz MFG de fabrica: o cartao nem aparece (GpuCapable), e este texto
+            // existe para a linha de comando dizer por que.
+            : sm > MinSm ? L.T("Mfg_Blocked_JaTem", host.GpuName ?? "?")
             : wrapper is null && !aplicado ? L.T("Mfg_Blocked_NoStreamline")
             : ngx is not null && !ProviderIsSupported(versao)
                 ? L.T("Mfg_Blocked_Provider", versao?.ToString() ?? "?",

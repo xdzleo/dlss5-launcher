@@ -370,8 +370,11 @@ try
     var detAmpere = new MfgService.Detection(true, true, new Version(310, 8, 0), true, false,
                                              new MfgService.Config(), 86, "bloqueio", null);
     Check(!detAmpere.Offerable, "MFG: placa anterior a Ada nao mostra o cartao");
-    Check((detAmpere with { Sm = 89 }).Offerable, "MFG: RTX 40 mostra o cartao");
-    Check((detAmpere with { Sm = 120 }).Offerable, "MFG: RTX 50 mostra o cartao (teto de 4x para 6x)");
+    Check((detAmpere with { Sm = 89 }).Offerable, "MFG: RTX 40 mostra o cartao — e a unica que precisa");
+    // A RTX 50 ja faz MFG de fabrica ate 4x, pelo menu do jogo e pelo app da NVIDIA. O que o
+    // patch acrescentaria ali sao 5x e 6x experimentais: nao vale um cartao na tela de quem ja
+    // tem o recurso.
+    Check(!(detAmpere with { Sm = 120 }).Offerable, "MFG: RTX 50 nao mostra o cartao — ja faz de fabrica");
     Check((detAmpere with { Applied = true }).Offerable,
         "MFG: ja instalado continua aparecendo mesmo em placa que nao alcanca, para poder desligar");
     Check(!(detAmpere with { Sm = 89, HasStreamlineFg = false }).Offerable,
@@ -379,14 +382,11 @@ try
 
     // O seletor mostra o que o PATCH acrescenta, e nao a faixa inteira: numa RTX 50 o jogo ja faz
     // ate 4x pelo menu dele, entao oferecer 2x a 4x seria oferecer o que ja existe.
-    Check(MfgService.MultiplicadoresPara(120).SequenceEqual(new[] { 5, 6 }),
-        "MFG: RTX 50 so oferece 5x e 6x — ate 4x ela ja faz sozinha");
     Check(MfgService.MultiplicadoresPara(89).SequenceEqual(new[] { 3, 4, 5, 6 }),
-        "MFG: RTX 40 oferece de 3x a 6x — 2x e o teto de fabrica dela");
-    Check(!MfgService.MultiplicadoresPara(120).Contains(2)
-          && !MfgService.MultiplicadoresPara(89).Contains(2),
+        "MFG: o seletor oferece de 3x a 6x — 2x e o teto de fabrica da RTX 40");
+    Check(!MfgService.MultiplicadoresPara(89).Contains(2),
         "MFG: 2x nunca e opcao do seletor — voltar ao de fabrica e desligar o interruptor");
-    Check(MfgService.PadraoPara(120) == 5 && MfgService.PadraoPara(89) == 3,
+    Check(MfgService.PadraoPara(89) == 3,
         "MFG: o padrao e o menor passo acima do teto de fabrica");
 
     // Multiplicador fora da faixa nao chega ao disco: o add-on recusaria o arquivo inteiro.
