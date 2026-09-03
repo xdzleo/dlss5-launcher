@@ -1606,7 +1606,20 @@ public class MainViewModel : ObservableObject
             // So a passada que chegou ao fim sendo a atual: as substituidas saem pelo meio, e o
             // tempo delas nao e o que a pessoa esperou.
             if (token == _detailToken)
-                Log.Info($"detalhe: {relogio.ElapsedMilliseconds} ms ({Selected?.Name ?? "-"})");
+            {
+                var trabalho = relogio.ElapsedMilliseconds;
+                var nome = Selected?.Name ?? "-";
+                // DOIS numeros, porque so o primeiro nao e o que a pessoa sente.
+                //
+                // O relogio parava aqui, quando o CODIGO terminava — e a tela ainda nao existia:
+                // montar e pintar o painel acontece depois, na fila do dispatcher. Medir so o
+                // trabalho escondia justamente a parte visivel da espera. ContextIdle corre
+                // depois de layout e render, entao e o instante em que o painel esta na tela.
+                Application.Current?.Dispatcher.BeginInvoke(
+                    System.Windows.Threading.DispatcherPriority.ContextIdle,
+                    () => Log.Info($"detalhe: {trabalho} ms de trabalho, "
+                                   + $"{relogio.ElapsedMilliseconds} ms ate a tela ({nome})"));
+            }
         }
     }
 
