@@ -1359,15 +1359,10 @@ public class MainViewModel : ObservableObject
             await indexTask;
 
             StatusText = L.T("Main_Status_ScanningGames");
-            // the folder scan only surfaces dirs whose NAME matches a catalog game,
-            // so standalone installs appear without polluting the grid with random folders
-            var knownNames = _catalogEntries
-                .SelectMany(e => e.NormalizedAliases)
-                .ToHashSet(StringComparer.Ordinal);
-            bool KnownGame(string folderName) =>
-                knownNames.Contains(MatchService.Normalize(folderName))
-                || knownNames.Contains(MatchService.Normalize(MatchService.StripEditionSuffix(folderName)));
-            var games = await StoreScanners.ScanAllAsync(KnownGame);
+            // A varredura de pastas soltas nao exige mais que o nome conste no catalogo: repack e
+            // jogo copiado a mao tem pasta com nome que nenhum catalogo tem. O catalogo vai junto
+            // so para dar o nome bonito a quem ele reconhecer (ver StoreScanners.ScanGameFolders).
+            var games = await StoreScanners.ScanAllAsync(_catalogEntries);
             // a hand-picked folder is named by whoever packed it, not by the developer — the
             // resolver reads the exe and the parent folders to find out which game it is
             // Pelo mesmo caminho que o CLI usa. Um deposito (Downloads, Desktop, a raiz de uma

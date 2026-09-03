@@ -433,6 +433,22 @@ try
 }
 catch (Exception ex) { Check(false, $"MFG: {ex.Message}"); }
 
+// 3i. A varredura de jogos soltos deixou de exigir que o nome da pasta conste no catalogo — era
+// o portao que escondia todo repack. O que impede a grade de encher de aplicativo agora e esta
+// pergunta: o executavel parece um JOGO? As listas ja distinguiam CrashBandicoot.exe de
+// crashreport.exe; o que faltava era a varredura poder consultá-las.
+Check(ExeLocator.PareceExeDeJogo(@"C:\x\CrashBandicoot.exe", "Crash Bandicoot"),
+    "varredura: CrashBandicoot.exe e jogo, apesar de conter \"crash\"");
+Check(ExeLocator.PareceExeDeJogo(@"C:\x\MortalShell.exe", "Mortal.Shell.II-InsaneRamZes"),
+    "varredura: o exe do jogo passa mesmo com pasta de repack");
+Check(!ExeLocator.PareceExeDeJogo(@"C:\x\unins000.exe", "Qualquer Jogo"),
+    "varredura: unins000.exe nao e jogo");
+Check(!ExeLocator.PareceExeDeJogo(@"C:\x\vcredist_x64.exe", "Qualquer Jogo"),
+    "varredura: vcredist nao e jogo");
+
+Check(!ExeLocator.PareceExeDeJogo(@"C:\x\crashreport.exe", "Qualquer Jogo"),
+    "varredura: crashreport.exe nao e jogo");
+
 // 4. manifest
 var manifest = new ManifestService();
 var defs = manifest.GetSettings("cp2077");

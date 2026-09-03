@@ -250,10 +250,7 @@ public static class Cli
         var catalog = await new CatalogService().LoadAsync();
         var rhi = new RhiManifestService();
         await rhi.LoadAsync();
-        var known = catalog.SelectMany(e => e.NormalizedAliases).ToHashSet(StringComparer.Ordinal);
-        bool Known(string n) => known.Contains(MatchService.Normalize(n))
-            || known.Contains(MatchService.Normalize(MatchService.StripEditionSuffix(n)));
-        var games = await StoreScanners.ScanAllAsync(Known);
+        var games = await StoreScanners.ScanAllAsync(catalog);
         var config = LauncherConfig.Load();
         games.AddRange(FolderGameResolver.ResolverPastasManuais(config.ManualGameDirs, catalog));
         return new Ctx(games, catalog, config, new ManifestService(), rhi);
@@ -1224,10 +1221,7 @@ public static class Cli
         Time("EA", StoreScanners.ScanEa);
         Time("Battle.net", StoreScanners.ScanBattleNet);
         Time("Rockstar", StoreScanners.ScanRockstar);
-        var known = catalog.SelectMany(e => e.NormalizedAliases).ToHashSet(StringComparer.Ordinal);
-        Time(L.T("Cli_Doctor_Scanner_Folders"), () => StoreScanners.ScanGameFolders(n =>
-            known.Contains(MatchService.Normalize(n))
-            || known.Contains(MatchService.Normalize(MatchService.StripEditionSuffix(n)))));
+        Time(L.T("Cli_Doctor_Scanner_Folders"), () => StoreScanners.ScanGameFolders(catalog));
 
         var reshadeDir = Path.Combine(AppPaths.DataDir, "reshade");
         Console.WriteLine();

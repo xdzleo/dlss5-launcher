@@ -61,6 +61,28 @@ jogo: ele mira o Streamline. Quatro mudanças trocam o carregador e nada da lóg
 4. **Confirmação da placa sem depender de gancho**: não havendo confirmação em 2 s, o CUDA é
    consultado direto — uma placa CUDA, e a capacidade de computo dela decide.
 
+### Jogos soltos: repack, port portátil, cópia feita à mão
+
+A varredura de disco exigia que o **nome da pasta constasse no catálogo**, e esse portão era um
+erro de premissa: o catálogo diz quais jogos têm mod de HDR do RenoDX, não quais jogos existem.
+DLSS 5, ReShade e o add-on neural genérico funcionam em jogo que o catálogo nunca ouviu falar — e
+era justamente o repack, cuja pasta se chama `Mortal.Shell.II-InsaneRamZes`, que nunca casava. O
+jogo estava no disco e o launcher fingia não ver.
+
+No lugar do portão, a pergunta certa: **esta pasta tem um executável que parece um jogo?** Quem
+responde é a lista que já separava `CrashBandicoot.exe` de `crashreport.exe`, agora consultável
+pela varredura. E quem dá o nome é o resolvedor que já existia para pastas adicionadas à mão, que
+tira "Mortal Shell II" daquela pasta pelo `ProductName` do executável.
+
+Uma pasta também passa a ser reconhecida como biblioteca **pelo conteúdo**, e não só por se
+chamar `Games`: dois ou mais filhos que parecem jogo, e ao menos metade deles. Então
+`D:\MinhaColecao\<jogos>` funciona.
+
+Medido nesta máquina contra o [DLSS5-Swapper](https://github.com/rakanki911/DLSS5-Swapper), que
+já fazia isso: antes ele achava três pastas soltas que o launcher não achava; agora os dois acham
+as mesmas, e o launcher continua cobrindo cinco lojas que ele não varre (Xbox, Ubisoft, EA,
+Battle.net e Rockstar).
+
 ### Recusas honestas
 
 O cartão não some quando não dá: ele explica. Medido nesta máquina:

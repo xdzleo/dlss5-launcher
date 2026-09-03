@@ -14,9 +14,9 @@ namespace RenoDXLauncher.Services;
 /// </summary>
 public static partial class StoreScanners
 {
-    /// <param name="knownGameName">Optional predicate: does this folder name match a catalog
-    /// game? Enables the generic disk scan (standalone installs outside any launcher).</param>
-    public static async Task<List<GameInfo>> ScanAllAsync(Func<string, bool>? knownGameName = null)
+    /// <param name="catalog">Catalogo de mods, so para dar nome as pastas que ele reconhece.
+    /// Passar null desliga a varredura de jogos soltos.</param>
+    public static async Task<List<GameInfo>> ScanAllAsync(IReadOnlyList<CatalogEntry>? catalog = null)
     {
         var tasks = new List<Task<List<GameInfo>>>
         {
@@ -29,8 +29,8 @@ public static partial class StoreScanners
             Task.Run(ScanBattleNet),
             Task.Run(ScanRockstar),
         };
-        if (knownGameName != null)
-            tasks.Add(Task.Run(() => ScanGameFolders(knownGameName)));
+        if (catalog != null)
+            tasks.Add(Task.Run(() => ScanGameFolders(catalog)));
         var results = await Task.WhenAll(tasks);
         var games = results.SelectMany(r => r).ToList();
         // de-dup by normalized install dir (a game can appear via more than one scanner);
@@ -508,15 +508,57 @@ public static partial class StoreScanners
         "nvidia", "temp", "tmp", "drivers", "msocache", "config.msi", "inetpub", "xboxgames",
     };
 
+    /// <summary>
+    /// Nomes que uma pasta de BIBLIOTECA costuma ter. Reconhecida por nome, os filhos dela e que
+    /// sao candidatos a jogo — nao ela.
+    ///
+    /// As bibliotecas de loja entram na lista pelo mesmo motivo dos nomes humanos: sem elas,
+    /// `D:\SteamLibrary` seria examinada como se fosse um jogo, encontraria um .exe tres niveis
+    /// abaixo (em steamapps\common\<jogo>\) e a biblioteca inteira apareceria na grade como um
+    /// unico "jogo" chamado SteamLibrary.
+    /// </summary>
     private static readonly HashSet<string> GamesDirNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "games", "jogos", "game", "gaming", "my games", "meus jogos",
+        "steamlibrary", "gog games", "gog galaxy", "epic games", "xbox games",
+        "origin games", "ea games", "repack", "repacks", "emulation", "emuladores",
     };
 
-    /// <summary>Walk every fixed drive's root folders (and one level inside "Games"-style
-    /// folders); a folder becomes a game when its NAME matches a catalog entry and it
-    /// contains an exe. Catches manual/standalone installs with zero configuration.</summary>
-    public static List<GameInfo> ScanGameFolders(Func<string, bool> knownGameName)
+    /// <summary>
+    /// Nomes que aparecem DENTRO de uma biblioteca e nunca sao um jogo: encanamento de loja,
+    /// saves, e as subpastas que um jogo tem por dentro (para o caso de uma pasta de jogo ser
+    /// confundida com biblioteca).
+    /// </summary>
+    private static readonly HashSet<string> NaoEhJogoDir = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "steamapps", "gamesave", "gamesaves", "workshop", "downloading", "shadercache",
+        "temp", "tmp", "backup", "backups", "reshade-shaders", "save", "saves",
+        "savegame", "savegames", "redist", "commonredist", "_commonredist", "installer",
+        "installers", "setup", "dlc", "mods", "tools", "sdk", "cache", "logs",
+        "bin", "bin64", "binaries", "engine", "content", "data", "config", "docs",
+    };
+
+    /// <summary>
+    /// Jogos soltos: os que nenhuma loja registrou.
+    ///
+    /// Repack, port portatil, jogo copiado da maquina antiga, pasta que alguem descompactou. Sao
+    /// invisiveis para qualquer varredura de loja porque nao ha loja: existe uma pasta e um
+    /// executavel dentro dela.
+    ///
+    /// Esta varredura ja exigiu que o NOME da pasta constasse no catalogo, e esse portao era um
+    /// erro. O catalogo diz quais jogos tem mod de HDR do RenoDX — nao diz quais jogos existem.
+    /// DLSS 5, ReShade e o add-on neural generico funcionam em jogo que o catalogo nunca ouviu
+    /// falar, e era justamente o repack, cuja pasta se chama "Mortal.Shell.II-InsaneRamZes", que
+    /// nunca casava. O usuario tinha de adicionar a pasta a mao para ver na tela um jogo que
+    /// estava no disco dele o tempo todo.
+    ///
+    /// O que substitui o portao e a pergunta certa: esta pasta contem um executavel que parece um
+    /// JOGO? Quem responde e <see cref="ExeLocator.PareceExeDeJogo"/>, com as listas que ja
+    /// separam CrashBandicoot.exe de crashreport.exe. E quem da o nome e o
+    /// <see cref="FolderGameResolver"/>, que ja sabe tirar "Mortal Shell II" daquela pasta.
+    /// </summary>
+    /// <param name="catalog">Para dar nome de catalogo a pasta que o catalogo reconhecer.</param>
+    public static List<GameInfo> ScanGameFolders(IReadOnlyList<CatalogEntry> catalog)
     {
         var games = new List<GameInfo>();
         foreach (var drive in DriveInfo.GetDrives())
@@ -524,35 +566,44 @@ public static partial class StoreScanners
             try
             {
                 if (drive.DriveType != DriveType.Fixed || !drive.IsReady) continue;
-                var candidates = new List<string>();
+                var candidatos = new List<string>();
                 foreach (var dir in Directory.GetDirectories(drive.RootDirectory.FullName))
                 {
                     var name = Path.GetFileName(dir);
-                    if (SkipRootDirs.Contains(name)) continue;
-                    if (GamesDirNames.Contains(name))
+                    if (SkipRootDirs.Contains(name) || name.StartsWith('$')) continue;
+
+                    // Biblioteca por NOME ou por CONTEUDO. A segunda forma e o que faz
+                    // `D:\MinhaColecao\<jogos>` funcionar sem que ninguem tenha de chamar a pasta
+                    // de "Games".
+                    if (GamesDirNames.Contains(name) || EhBiblioteca(dir))
                     {
-                        try { candidates.AddRange(Directory.GetDirectories(dir)); }
-                        catch { }
+                        try
+                        {
+                            foreach (var filho in Directory.GetDirectories(dir))
+                                if (!NaoEhJogoDir.Contains(Path.GetFileName(filho)))
+                                    candidatos.Add(filho);
+                        }
+                        catch (Exception ex) { Log.Warn($"folder scan {dir}: {ex.Message}"); }
                     }
-                    else candidates.Add(dir);
+                    // Nao e biblioteca: a propria pasta pode ser um jogo largado na raiz do disco.
+                    else candidatos.Add(dir);
                 }
-                foreach (var dir in candidates)
+
+                foreach (var dir in candidatos)
                 {
                     try
                     {
-                        var name = Path.GetFileName(dir);
-                        if (name.Length < 3 || !knownGameName(name)) continue;
-                        var options = new EnumerationOptions
-                        {
-                            IgnoreInaccessible = true,
-                            RecurseSubdirectories = true,
-                            MaxRecursionDepth = 3,
-                            AttributesToSkip = FileAttributes.ReparsePoint,
-                        };
-                        if (!Directory.EnumerateFiles(dir, "*.exe", options).Any()) continue;
+                        if (Path.GetFileName(dir).Length < 3) continue;
+                        // Downloads, Area de Trabalho e raiz de unidade nao sao jogos, por mais
+                        // executaveis que tenham dentro.
+                        if (FolderGameResolver.EhDeposito(dir)) continue;
+                        if (!TemExeDeJogo(dir)) continue;
+                        // O resolvedor da o nome: do catalogo quando reconhece, senao do
+                        // ProductName do executavel, senao da pasta sem as decoracoes de release.
+                        var resolvido = FolderGameResolver.Resolve(dir, catalog);
                         games.Add(new GameInfo
                         {
-                            Name = name,
+                            Name = resolvido.Name,
                             InstallDir = dir,
                             Store = GameStore.Folder,
                         });
@@ -565,6 +616,51 @@ public static partial class StoreScanners
         return games;
     }
 
+    /// <summary>Ate onde a busca por executavel desce. Tres niveis cobrem o repack que enterra o
+    /// jogo numa subpasta e o layout `Jogo\Binaries\Win64\` da Unreal.</summary>
+    private static readonly EnumerationOptions BuscaDeExe = new()
+    {
+        IgnoreInaccessible = true,
+        RecurseSubdirectories = true,
+        MaxRecursionDepth = 3,
+        AttributesToSkip = FileAttributes.ReparsePoint,
+    };
+
+    /// <summary>Ha aqui dentro um executavel que parece um jogo? Para de procurar no primeiro.</summary>
+    private static bool TemExeDeJogo(string dir)
+    {
+        try
+        {
+            var nome = Path.GetFileName(dir);
+            return Directory.EnumerateFiles(dir, "*.exe", BuscaDeExe)
+                .Any(f => ExeLocator.PareceExeDeJogo(f, nome));
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Esta pasta e uma biblioteca de jogos, pelo que tem dentro?
+    ///
+    /// Dois filhos que parecem jogo, e ao menos metade deles. Um filho sozinho e mais comum em
+    /// pasta de aplicativo do que em biblioteca, e a proporcao evita que uma pasta com trinta
+    /// coisas e dois jogos arraste as outras vinte e oito para a grade.
+    ///
+    /// O teto de filhos existe para nao pagar a descida de tres niveis em pasta de milhares de
+    /// itens, que nunca e biblioteca de jogo.
+    /// </summary>
+    private static bool EhBiblioteca(string dir)
+    {
+        try
+        {
+            var filhos = Directory.GetDirectories(dir);
+            if (filhos.Length < 2 || filhos.Length > 300) return false;
+            var jogos = filhos.Count(f => !NaoEhJogoDir.Contains(Path.GetFileName(f))
+                                          && TemExeDeJogo(f));
+            return jogos >= 2 && jogos * 2 >= filhos.Length;
+        }
+        catch { return false; }
+    }
+
     private static string? FirstExisting(params string[] paths) => paths.FirstOrDefault(File.Exists);
 }
 
@@ -572,7 +668,6 @@ public static class Log
 {
     private static readonly object Gate = new();
     public static string LogPath { get; } = Path.Combine(AppPaths.DataDir, "launcher.log");
-
     public static void Warn(string message) => Write("WARN", message);
     public static void Info(string message) => Write("INFO", message);
 

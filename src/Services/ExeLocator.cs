@@ -459,6 +459,16 @@ public static class ExeLocator
         return GluedStubs.Any(g => compact.Contains(g, StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// Este .exe parece o jogo, e nao um instalador, atualizador ou auxiliar?
+    ///
+    /// Publico para a varredura de disco: ela precisa decidir se uma pasta e um jogo, e "tem
+    /// algum .exe dentro" nao serve — toda pasta de aplicativo tem. As listas que respondem isso
+    /// ja estao curadas aqui e ja distinguem CrashBandicoot.exe de crashreport.exe; duplica-las
+    /// na varredura seria manter duas verdades sobre a mesma pergunta.
+    /// </summary>
+    public static bool PareceExeDeJogo(string path, string nomeDaPasta) => !IsStub(path, nomeDaPasta);
+
     private static IEnumerable<string> SafeGetExes(string dir)
     {
         try { return Directory.GetFiles(dir, "*.exe", SearchOption.TopDirectoryOnly); }
