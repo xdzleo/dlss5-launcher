@@ -100,6 +100,8 @@ public class MainViewModel : ObservableObject
         };
         ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
         AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && PodeAfastarAlgum);
+        CorrigirConflitosCommand = new AsyncRelayCommand(CorrigirConflitosAsync,
+                                                        () => !Busy && PodeCorrigirReinstalando);
         EscolherTradutorCommand = new RelayCommand<string>(EscolherTradutor, _ => !Busy);
         MfgCommand = new AsyncRelayCommand(ToggleMfgAsync, () => !Busy && MfgBlocker is null);
         MfgMultiplierCommand = new RelayCommand<string>(EscolherMfgMultiplicador, _ => !Busy);
@@ -559,6 +561,21 @@ public class MainViewModel : ObservableObject
         private set { _temConflitos = value; OnPropertyChanged(nameof(TemConflitos)); }
     }
 
+    private bool _podeCorrigirReinstalando;
+
+    /// <summary>Ao menos um dos bloqueios se resolve refazendo a instalacao (ver
+    /// <see cref="ConflictScanner.Conflito.CorrigeReinstalando"/>).</summary>
+    public bool PodeCorrigirReinstalando
+    {
+        get => _podeCorrigirReinstalando;
+        private set
+        {
+            _podeCorrigirReinstalando = value;
+            OnPropertyChanged(nameof(PodeCorrigirReinstalando));
+            CorrigirConflitosCommand.RaiseCanExecuteChanged();
+        }
+    }
+
     private bool _podeAfastarAlgum;
 
     /// <summary>
@@ -933,6 +950,8 @@ public class MainViewModel : ObservableObject
         TemBloqueio = bloqueios > 0;
         PodeAfastarAlgum = r.Conflitos.Any(c => c.Grau == ConflictScanner.Nivel.Bloqueio
                                                 && c.PodeAfastar);
+        PodeCorrigirReinstalando = r.Conflitos.Any(c => c.Grau == ConflictScanner.Nivel.Bloqueio
+                                                       && c.CorrigeReinstalando);
         ConflitosResumo = r.Conflitos.Count == 0
             ? L.T("Conflito_Nenhum")
             : L.T("Conflito_Resumo", r.Conflitos.Count, bloqueios);
@@ -1246,6 +1265,9 @@ public class MainViewModel : ObservableObject
     }
     public AsyncRelayCommand ImportNeuralRuntimeCommand { get; }
     public RelayCommand AfastarConflitosCommand { get; }
+
+    /// <summary>Refaz a instalacao para desfazer um conflito que ela mesma criou.</summary>
+    public AsyncRelayCommand CorrigirConflitosCommand { get; }
     public RelayCommand<string> EscolherTradutorCommand { get; }
     /// <summary>Liga ou desliga o Multi Frame Generation neste jogo.</summary>
     public AsyncRelayCommand MfgCommand { get; }
@@ -1312,6 +1334,7 @@ public class MainViewModel : ObservableObject
         ModCommand.RaiseCanExecuteChanged();
         ImportNeuralRuntimeCommand.RaiseCanExecuteChanged();
         AfastarConflitosCommand.RaiseCanExecuteChanged();
+        CorrigirConflitosCommand.RaiseCanExecuteChanged();
         // Sem isto os dois botoes do tradutor ficam mortos apos a primeira troca: o CanExecute
         // olha Busy, e Busy so volta ao normal no finally de quem fez a troca.
         EscolherTradutorCommand.RaiseCanExecuteChanged();
@@ -1773,6 +1796,7 @@ public class MainViewModel : ObservableObject
         TemConflitos = false;
         TemBloqueio = false;
         PodeAfastarAlgum = false;
+        PodeCorrigirReinstalando = false;
         ConflitosResumo = "";
         BridgeActive = false;
         FeederActive = false;
@@ -2343,21 +2367,49 @@ public class MainViewModel : ObservableObject
                 await Task.Run(() => NeuralUpliftService.Remove(dir, ini));
                 DetailStatus = L.T("Main_Neural_Removed");
             }
-            else
-            {
-                // A escolha do tradutor, quando o usuario fez uma. Sem escolha, o padrao decide.
-                var escolha = Config.D3d9Translator.TryGetValue(item.Key, out var t) ? t : null;
-                var r = await Dlss5Installer.InstallAsync(
-                    item.Game, dir, ini, item.ChosenExe, item.State?.AddonPath,
-                    _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s),
-                    default,
-                    preferirDxvk: escolha != "dgvoodoo",
-                    forcarDgVoodoo: escolha == "dgvoodoo",
-                    trocarDlss1: AutorizaTrocarDlss1(dir, item.Name));
-                DetailStatus = r.Ok
-                    ? string.Join("  •  ", r.Manual)
-                    : r.Blocker ?? string.Join("; ", r.Steps);
-            }
+            else await InstalarDlss5Async(item, dir, ini);
+            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken, pastaFoiEscrita: true);
+        }
+        catch (Exception ex) { DetailStatus = ex.Message; }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>Monta a cadeia inteira nesta pasta. O caminho de instalar, e o de consertar —
+    /// sao o mesmo trabalho, e ter dois seria ter duas verdades sobre como instalar.</summary>
+    private async Task InstalarDlss5Async(GameItemVm item, string dir, string ini)
+    {
+        // A escolha do tradutor, quando o usuario fez uma. Sem escolha, o padrao decide.
+        var escolha = Config.D3d9Translator.TryGetValue(item.Key, out var t) ? t : null;
+        var r = await Dlss5Installer.InstallAsync(
+            item.Game, dir, ini, item.ChosenExe, item.State?.AddonPath,
+            _dlssIndex, _reshade, _rhi, new Progress<string>(s => DetailStatus = s),
+            default,
+            preferirDxvk: escolha != "dgvoodoo",
+            forcarDgVoodoo: escolha == "dgvoodoo",
+            trocarDlss1: AutorizaTrocarDlss1(dir, item.Name));
+        DetailStatus = r.Ok
+            ? string.Join("  •  ", r.Manual)
+            : r.Blocker ?? string.Join("; ", r.Steps);
+    }
+
+    /// <summary>
+    /// Refaz a instalacao para desfazer um conflito que ELA mesma criou.
+    ///
+    /// "A ponte e o Feeder estao os dois nesta pasta" nao se resolve renomeando arquivo: as duas
+    /// pecas sao nossas, e quem sabe qual delas este jogo precisa e o instalador — ele escolhe a
+    /// rota e tira a outra do caminho. Antes o cartao acusava o problema e oferecia um botao que
+    /// nao servia para ele; agora o botao e o conserto.
+    /// </summary>
+    private async Task CorrigirConflitosAsync()
+    {
+        var item = _detailItem;
+        if (item?.TargetDir is null) return;
+        var dir = item.TargetDir;
+        var ini = item.State?.IniPath ?? System.IO.Path.Combine(dir, "ReShade.ini");
+        ActionBusy = true;
+        try
+        {
+            await InstalarDlss5Async(item, dir, ini);
             if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken, pastaFoiEscrita: true);
         }
         catch (Exception ex) { DetailStatus = ex.Message; }

@@ -51,8 +51,15 @@ public static class ConflictScanner
     /// se existisse um arquivo com esse nome atrapalhando. Aqui vai o que de fato esta em
     /// conflito.
     /// </param>
+    /// <param name="CorrigeReinstalando">
+    /// Este achado e um estado da NOSSA propria instalacao, e some refazendo-a.
+    ///
+    /// Renomear arquivo nao resolve: as pecas em conflito sao as duas nossas, e quem sabe qual
+    /// delas o jogo precisa e o instalador — ele escolhe a rota e tira a outra do caminho.
+    /// </param>
     public sealed record Conflito(string Caminho, string Ferramenta, string Porque,
-                                  Nivel Grau, bool PodeAfastar, string? Rotulo = null)
+                                  Nivel Grau, bool PodeAfastar, string? Rotulo = null,
+                                  bool CorrigeReinstalando = false)
     {
         public string Arquivo => Rotulo ?? Path.GetFileName(Caminho);
     }
@@ -178,7 +185,8 @@ public static class ConflictScanner
             && FeederService.IsDeployed(dir) && NeuralUpliftService.BridgeDeployed(dir))
             achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_PonteFeeder"),
                                      Nivel.Bloqueio, PodeAfastar: false,
-                                     Rotulo: $"{NeuralUpliftService.BridgeFile} + {FeederService.AddonFile}"));
+                                     Rotulo: $"{NeuralUpliftService.BridgeFile} + {FeederService.AddonFile}",
+                                     CorrigeReinstalando: true));
 
         // dgVoodoo e DXVK disputam o mesmo d3d9.dll — quem ficar por ultimo ganha, e o outro vira
         // um arquivo que nunca carrega. Na rota D3D10 do DXVK nao ha disputa de nome, mas o
@@ -187,7 +195,7 @@ public static class ConflictScanner
         if ((DxvkService.IsDeployed(dir) || DxvkService.IsDeployedD3d10(dir)) && DgVoodooService.IsDeployed(dir))
             achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_DxvkDgVoodoo"),
                                      Nivel.Bloqueio, PodeAfastar: false,
-                                     Rotulo: "DXVK + dgVoodoo2"));
+                                     Rotulo: "DXVK + dgVoodoo2", CorrigeReinstalando: true));
 
         // ReShade entrando duas vezes no mesmo processo — uma pela camada Vulkan, outra pelo proxy.
         // Carga dupla e a causa conhecida do 0xc0000005 logo no start.

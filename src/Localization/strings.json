@@ -906,6 +906,14 @@
     "en": "Move the blocking ones aside",
     "pt-BR": "Afastar os que bloqueiam"
   },
+  "Conflito_Botao_Corrigir": {
+    "en": "Fix it",
+    "pt-BR": "Corrigir"
+  },
+  "Conflito_Botao_Corrigir_Explicar": {
+    "en": "Builds the DLSS 5 chain again and leaves only the piece this game needs. Nothing else in the folder is touched.",
+    "pt-BR": "Monta a cadeia do DLSS 5 de novo e deixa só a peça que este jogo precisa. Nada mais na pasta é tocado."
+  },
   "Conflito_Botao_Explicar": {
     "en": "Renames them with a suffix — nothing is deleted, and removing the suffix puts them back.",
     "pt-BR": "Renomeia com um sufixo — nada é apagado, e tirar o sufixo devolve tudo ao lugar."

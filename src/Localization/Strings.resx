@@ -490,6 +490,12 @@
   <data name="Conflito_Botao_Afastar" xml:space="preserve">
     <value>Afastar os que bloqueiam</value>
   </data>
+  <data name="Conflito_Botao_Corrigir" xml:space="preserve">
+    <value>Corrigir</value>
+  </data>
+  <data name="Conflito_Botao_Corrigir_Explicar" xml:space="preserve">
+    <value>Monta a cadeia do DLSS 5 de novo e deixa só a peça que este jogo precisa. Nada mais na pasta é tocado.</value>
+  </data>
   <data name="Conflito_Botao_Explicar" xml:space="preserve">
     <value>Renomeia com um sufixo — nada é apagado, e tirar o sufixo devolve tudo ao lugar.</value>
   </data>

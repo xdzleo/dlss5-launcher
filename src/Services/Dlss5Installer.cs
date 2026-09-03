@@ -455,12 +455,25 @@ public static class Dlss5Installer
         {
             NeuralUpliftService.Apply(targetDir, iniPath, det.UsesGeneric, progress);
             Step(det.UsesGeneric ? L.T("Dlss5_Step_AddonGeneric") : L.T("Dlss5_Step_AddonGame"));
+
+            // O que esta rota NAO pede sai da pasta, antes de ela por o que pede.
+            //
+            // Isto morava dentro de cada ramo, entao a limpeza so acontecia quando o OUTRO
+            // caminho era instalado. Numa pasta que nao pede nem ponte nem Feeder — jogo cujo mod
+            // proprio dirige o pass, como o Control Ultimate Edition — ninguem limpava: sobras de
+            // instalacoes anteriores ficavam la, o cartao de conflitos acusava "a ponte e o Feeder
+            // estao os dois aqui", e reinstalar nao resolvia porque nenhum ramo rodava.
+            //
+            // A excecao continua sendo a pasta multi-API, onde os dois sao pedidos de proposito e
+            // tirar um desfaria metade do trabalho.
+            if (!multiApi)
+            {
+                if (!precisaPonte) NeuralUpliftService.RemoveBridge(targetDir);
+                if (!precisaFeeder) FeederService.Remove(targetDir);
+            }
+
             if (precisaPonte)
             {
-                // A remocao do Feeder vale para o caso EXCLUSIVO: um jogo com uma API so, em que
-                // ter os dois e residuo de uma troca. Quando a pasta tem um exe por API, os dois
-                // sao pedidos de proposito e tirar um desfaria metade do trabalho.
-                if (!multiApi) FeederService.Remove(targetDir);
                 NeuralUpliftService.DeployBridge(targetDir, progress);
                 Step(L.T("Dlss5_Step_Bridge"));
                 // Com os dois caminhos instalados nao ha mais executavel "certo" para abrir — que
@@ -481,11 +494,6 @@ public static class Dlss5Installer
             }
             if (precisaFeeder)
             {
-                // Exclusivos quando o jogo tem uma API so — e uma pasta podia ter as duas por
-                // historico: o Sonic ficou assim depois de o launcher ter lido, por engano, um
-                // runtime nosso como sendo do jogo e ter escolhido a ponte. Num jogo com um exe
-                // por API a convivencia e o objetivo, e nao o defeito.
-                if (!multiApi) NeuralUpliftService.RemoveBridge(targetDir);
                 FeederService.Deploy(targetDir, progress, trocarDlss1);
                 // A instrucao vai junto do resultado: sem desligar o DLSS do proprio jogo, ele
                 // chama a geracao 1.0 num arquivo que agora responde outra API, e morre ao

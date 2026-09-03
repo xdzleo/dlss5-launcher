@@ -1064,6 +1064,21 @@
                                             Visibility="{Binding TemConflitos, Converter={StaticResource BoolToVis}}">
                                         <StackPanel>
                                             <DockPanel>
+                                                <!-- Dois consertos, porque sao dois problemas.
+                                                     Mod de terceiro na vaga do nosso proxy se
+                                                     resolve renomeando o arquivo dele; duas pecas
+                                                     NOSSAS na mesma pasta, nao — quem sabe qual
+                                                     delas o jogo precisa e o instalador. Cada
+                                                     botao aparece so quando serve para o que
+                                                     esta na lista. -->
+                                                <Button DockPanel.Dock="Right" Padding="10,6"
+                                                        VerticalAlignment="Top" Margin="8,0,0,0"
+                                                        Command="{Binding CorrigirConflitosCommand}"
+                                                        Style="{StaticResource AccentButton}"
+                                                        ToolTip="{loc:Tr Conflito_Botao_Corrigir_Explicar}"
+                                                        Visibility="{Binding PodeCorrigirReinstalando, Converter={StaticResource BoolToVis}}">
+                                                    <TextBlock Text="{loc:Tr Conflito_Botao_Corrigir}" FontSize="11.5"/>
+                                                </Button>
                                                 <Button DockPanel.Dock="Right" Padding="10,6"
                                                         VerticalAlignment="Top" Margin="8,0,0,0"
                                                         Command="{Binding AfastarConflitosCommand}"

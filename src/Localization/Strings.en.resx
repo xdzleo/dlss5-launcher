@@ -490,6 +490,12 @@
   <data name="Conflito_Botao_Afastar" xml:space="preserve">
     <value>Move the blocking ones aside</value>
   </data>
+  <data name="Conflito_Botao_Corrigir" xml:space="preserve">
+    <value>Fix it</value>
+  </data>
+  <data name="Conflito_Botao_Corrigir_Explicar" xml:space="preserve">
+    <value>Builds the DLSS 5 chain again and leaves only the piece this game needs. Nothing else in the folder is touched.</value>
+  </data>
   <data name="Conflito_Botao_Explicar" xml:space="preserve">
     <value>Renames them with a suffix — nothing is deleted, and removing the suffix puts them back.</value>
   </data>
