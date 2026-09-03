@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.75.0
+
+Jogo com **DLSS 1.0** deixa de ser recusado, e o runtime neural passa a ser encontrado sem rede.
+
+### Final Fantasy XV, e todo jogo preso na primeira geração do DLSS
+
+O caminho do Feeder precisa de um `nvngx_dlss.dll` moderno para ter uma feature de Super
+Resolution sobre a qual rodar o passe. O FFXV traz a geração 1.0, que é **outra API e ocupa o
+mesmo arquivo**. Os dois não cabem no mesmo jogo — e o launcher decidia sozinho pelo "não": o
+runtime ficava intocado, a cadeia ficava incompleta, e a tela não dizia que havia uma escolha.
+
+A recusa estava fundamentada numa falha real e medida: o jogo morre ao terminar de carregar um
+save. Mas ela só acontece porque **o jogo** chama a API 1.0. Com o DLSS desligado nas opções dele,
+a chamada não acontece e o arquivo moderno serve só ao Feeder.
+
+Então virou pergunta, com a instrução junto. Um modal antes de instalar, como já acontece com
+anti-cheat, e `--trocar-dlss1` na linha de comando. O original vai para `.renodx-bak`: desligar o
+DLSS 5 devolve o DLSS 1.0 do jogo. E o primeiro passo manual ao terminar é o que evita a falha —
+*NO JOGO: desligue o DLSS nas opções gráficas*.
+
+Verificado no FFXV desta máquina: 3.600 quadros entregues a 2560x1421, motion vectors 100%
+não-nulos (média 38,4 px), profundidade com variância real, NGX evaluate em 0,71 ms, 105 fps.
+
+### O runtime neural sem depender de rede
+
+A busca automática passa a olhar primeiro as pastas das **outras ferramentas de DLSS instaladas**
+na máquina, antes de Downloads, Desktop e pastas de jogo. Várias delas embarcam esse runtime de
+165 MB; quem já tem uma não precisa baixar de novo, e sem internet é a diferença entre funcionar
+e não funcionar.
+
+E a busca ficou correta, não só mais ampla: ela só aceita uma cópia que traga os **kernels desta
+placa**, lidos com o leitor de fatbin do próprio launcher. Antes pegava a primeira cópia de
+tamanho plausível — o mesmo buraco que a 1.72 fechou na busca pela rede e que continuava aberto na
+busca em disco. Um runtime sem os kernels certos instala inteiro e não roda nada.
+
+### `instalado <jogo>`: o que o launcher pôs, e o que devolve
+
+Lista, a partir do disco, tudo que a instalação colocou na pasta, os originais guardados que
+voltam ao desligar, a chave de carga antecipada e qual proxy o ReShade ocupa.
+
+É de propósito uma leitura do disco e não um manifesto gravado na instalação: um manifesto
+descreve o que o instalador *achou* que fez, e envelhece quando alguém renomeia um arquivo,
+atualiza o jogo por cima ou passa outra ferramenta ali. A lista montada dos marcadores que a
+própria desinstalação consulta não pode divergir da realidade.
+
 ## v1.74.0
 
 **Multi Frame Generation acima do teto de fábrica**, com interruptor por jogo, em qualquer jogo
