@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -86,7 +86,7 @@ public class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(ModStateText));
             OnPropertyChanged(nameof(Dlss5StateText));
-            OnPropertyChanged(nameof(DlssButtonText));
+
             OnPropertyChanged(nameof(NeuralButtonText));
             OnPropertyChanged(nameof(DlssFixButtonText));
             OnPropertyChanged(nameof(UpdateAllText));
@@ -103,8 +103,7 @@ public class MainViewModel : ObservableObject
         EscolherTradutorCommand = new RelayCommand<string>(EscolherTradutor, _ => !Busy);
         MfgCommand = new AsyncRelayCommand(ToggleMfgAsync, () => !Busy && MfgBlocker is null);
         MfgMultiplierCommand = new RelayCommand<string>(EscolherMfgMultiplicador, _ => !Busy);
-        DlssCommand = new AsyncRelayCommand(ToggleDlssAsync, () => !Busy);
-        DlssRepairCommand = new AsyncRelayCommand(RepairDlssAsync, () => !Busy);
+
         RestoreAllDlssCommand = new AsyncRelayCommand(RestoreAllDlssAsync, () => !Busy);
         LaunchGameCommand = new RelayCommand(LaunchGame, () => Selected != null);
         OpenMaintainerCommand = new RelayCommand(OpenMaintainer,
@@ -755,12 +754,7 @@ public class MainViewModel : ObservableObject
                 () => LerCadeia(dir, ini, det, exe, aplicado));
             await LerPasta("mfg", dir,
                 () => MfgService.Detect(instalacao, dir, NeuralUpliftService.ProbeHost()));
-            await LerPasta("dlss", dir, () =>
-            {
-                var g = DlssRuntimeService.DetectInGame(instalacao);
-                return (g, DlssRuntimeService.Library(), DlssRuntimeService.IsApplied(instalacao));
-            });
-            await LerPasta("saudedlss", dir, () => DlssRuntimeService.CheckHealth(instalacao));
+
             if (item.Mod is not null)
             {
                 await LerPasta("fgfix", dir, () => DlssFixService.Detect(instalacao));
@@ -1162,35 +1156,7 @@ public class MainViewModel : ObservableObject
     private bool _buscaAddonFeita;
     private bool _buscaRuntimeFeita;
 
-    // ---------- runtimes de DLSS ----------
 
-    /// <summary>O jogo carrega pelo menos um runtime NGX. Sem isso nao ha o que atualizar.</summary>
-    private bool _showDlss;
-    public bool ShowDlss { get => _showDlss; set => Set(ref _showDlss, value); }
-
-    /// <summary>Ha backup na pasta do jogo: algum runtime ali e nosso, nao o do estudio.</summary>
-    private bool _dlssApplied;
-    public bool DlssApplied
-    {
-        get => _dlssApplied;
-        set { if (Set(ref _dlssApplied, value)) OnPropertyChanged(nameof(DlssButtonText)); }
-    }
-
-    public string DlssButtonText => L.T(_dlssApplied ? "Main_Dlss_Restore" : "Main_Dlss_Update");
-
-    /// <summary>O que o jogo tem hoje, versus o que a biblioteca pode oferecer.</summary>
-    private string? _dlssSummary;
-    public string? DlssSummary { get => _dlssSummary; set => Set(ref _dlssSummary, value); }
-
-    /// <summary>Problema comprovado no estado atual dos runtimes do jogo, ou null. Aparece
-    /// independente de quem causou — este launcher, o DLSS Swapper, ou troca feita a mao.</summary>
-    private string? _dlssHealth;
-    public string? DlssHealth
-    {
-        get => _dlssHealth;
-        set { if (Set(ref _dlssHealth, value)) OnPropertyChanged(nameof(DlssHasIssue)); }
-    }
-    public bool DlssHasIssue => _dlssHealth != null;
 
     private string _detailStatus = "";
     public string DetailStatus { get => _detailStatus; set => Set(ref _detailStatus, value); }
@@ -1266,8 +1232,7 @@ public class MainViewModel : ObservableObject
     /// distingue e o CommandParameter.</summary>
     public RelayCommand<string> MfgMultiplierCommand { get; }
 
-    public AsyncRelayCommand DlssCommand { get; }
-    public AsyncRelayCommand DlssRepairCommand { get; }
+
     public AsyncRelayCommand RestoreAllDlssCommand { get; }
     public RelayCommand LaunchGameCommand { get; }
     public RelayCommand OpenMaintainerCommand { get; }
@@ -1330,8 +1295,7 @@ public class MainViewModel : ObservableObject
         EscolherTradutorCommand.RaiseCanExecuteChanged();
         MfgCommand.RaiseCanExecuteChanged();
         MfgMultiplierCommand.RaiseCanExecuteChanged();
-        DlssCommand.RaiseCanExecuteChanged();
-        DlssRepairCommand.RaiseCanExecuteChanged();
+
         RestoreAllDlssCommand.RaiseCanExecuteChanged();
         OpenMaintainerCommand.RaiseCanExecuteChanged();
         OpenNexusCommand.RaiseCanExecuteChanged();
@@ -1776,7 +1740,6 @@ public class MainViewModel : ObservableObject
     {
         DetalhePronto = false;
         ShowNeural = false;
-        ShowDlss = false;
         ShowDlssFix = false;
         ShowMfg = false;
         NeuralBlocker = null;
@@ -1793,9 +1756,7 @@ public class MainViewModel : ObservableObject
         MostraAvisoSemDlss = false;
         MostraTradutorD3d9 = false;
         MostraTradutorD3d10 = false;
-        DlssSummary = null;
-        DlssHealth = null;
-        DlssApplied = false;
+
         MfgBlocker = null;
         MfgLastRun = "";
         MfgUnlockText = "";
@@ -1909,8 +1870,7 @@ public class MainViewModel : ObservableObject
         // thread da interface, e o SynchronizationContext do WPF traz cada continuacao de volta
         // para ela. O que de fato corre em paralelo e o Task.Run de dentro de cada uma, que e
         // disco -- que era exatamente o que estava sendo serializado a toa.
-        await Task.WhenAll(CheckNeuralAsync(token), RefreshDlssAsync(token),
-                           CheckMfgAsync(token), CheckDlssFixAsync(token));
+        await Task.WhenAll(CheckNeuralAsync(token), CheckMfgAsync(token), CheckDlssFixAsync(token));
 
         // Os ajustes do mod SAEM do caminho critico.
         //
@@ -2153,58 +2113,6 @@ public class MainViewModel : ObservableObject
         ShowNeural = true;
     }
 
-    /// <summary>Estado dos runtimes de DLSS do jogo: o que ele carrega e o que a biblioteca tem
-    /// de mais novo. Independente do neural — vale para qualquer jogo com DLSS.</summary>
-    private async Task RefreshDlssAsync(int token)
-    {
-        if (token != _detailToken) return;
-        ShowDlss = false;
-        DlssSummary = null;
-        DlssHealth = null;
-        var item = _detailItem;
-        if (item?.TargetDir is null) return;
-        if (_rhi.SkipsDlss(item.Game.Name)) return;
-
-        var installDir = item.Game.InstallDir;
-        var targetDir = item.TargetDir;
-
-        var (inGame, library, applied) = await LerPasta("dlss", targetDir, () =>
-        {
-            var g = DlssRuntimeService.DetectInGame(installDir);
-            return (g, DlssRuntimeService.Library(), DlssRuntimeService.IsApplied(installDir));
-        });
-        if (token != _detailToken) return;
-        if (inGame.Count == 0) return;   // jogo sem DLSS: nao ha o que atualizar
-
-        // uma linha por feature, com a versao do jogo e, quando houver, para onde subiria
-        var byName = library.ToDictionary(r => r.FileName, StringComparer.OrdinalIgnoreCase);
-        var lines = inGame
-            .GroupBy(r => r.FileName, StringComparer.OrdinalIgnoreCase)
-            .Select(g =>
-            {
-                var cur = g.OrderBy(r => r.Version).First();   // a mais antiga manda: e a que limita
-                var text = $"{cur.Feature} {cur.Version}";
-                if (!DlssRuntimeService.IsSwappable(cur.FileName))
-                    // Sem isso o usuario ve o Frame Generation listado, clica em Atualizar e nada
-                    // acontece com ele — parece defeito, e e decisao deliberada.
-                    text += " (" + L.T("Dlss_NotSwapped") + ")";
-                else if (byName.TryGetValue(cur.FileName, out var lib) && lib.Version > cur.Version)
-                    text += $" → {lib.Version}";
-                return text;
-            });
-        DlssSummary = string.Join("   ", lines);
-
-        // Problema comprovado no estado atual do jogo — venha de onde vier (deste launcher, do
-        // DLSS Swapper, ou de uma troca manual). So reporta: nao da para saber de fora qual versao
-        // este jogo aceita, entao adivinhar o conserto seria repetir o erro que causou isso.
-        var issues = await LerPasta("saudedlss", targetDir, () => DlssRuntimeService.CheckHealth(installDir));
-        if (token != _detailToken) return;
-        DlssHealth = issues.Count == 0 ? null
-            : string.Join("\n", issues.Select(i => $"[{i.Severity}] {i.Message}"));
-
-        DlssApplied = applied;
-        ShowDlss = true;
-    }
 
     /// <summary>
     /// Na abertura, avisa se algum jogo ficou com runtime trocado.
@@ -2295,105 +2203,7 @@ public class MainViewModel : ObservableObject
         finally { ActionBusy = false; RaiseCommands(); }
     }
 
-    /// <summary>Conserta o conjunto de runtimes quebrado — o botao existe porque apontar o defeito
-    /// e mandar a pessoa resolver na pasta nao serve para quem usa um launcher.</summary>
-    private async Task RepairDlssAsync()
-    {
-        var item = _detailItem;
-        if (item?.TargetDir is null) return;
-        var installDir = item.Game.InstallDir;
-        var targetDir = item.TargetDir;
-        var iniPath = item.State?.IniPath ?? System.IO.Path.Combine(targetDir, "ReShade.ini");
-        ActionBusy = true;
-        try
-        {
-            // ---- 1. o conjunto de runtimes ----
-            // Sem backup, o conserto precisa de um conjunto COMPLETO de referencia; procura um
-            // antes de desistir.
-            if (!System.IO.Directory.Exists(DlssRuntimeService.LibrarySetDir))
-            {
-                var refs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList();
-                refs.Add(System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
-                await Task.Run(() => DlssRuntimeService.AutoDiscoverStreamlineSet(
-                    refs!, new Progress<string>(s => DetailStatus = s)));
-            }
 
-            var notas = new List<string>();
-            try
-            {
-                var r = await Task.Run(() => DlssRuntimeService.Repair(installDir, targetDir,
-                    new Progress<string>(s => DetailStatus = s)));
-                notas.AddRange(r.Notes);
-            }
-            catch (Exception ex) { notas.Add(ex.Message); }
-
-            // ---- 2. a cadeia que carrega o filtro ----
-            // Consertar so os runtimes deixava metade do problema de pe: sem o ReShade, sem o
-            // addon ou sem a chave ligada, o sintoma e identico ao das DLLs erradas — o jogo abre
-            // e nada acontece. Quem clica em Corrigir quer o conjunto TODO funcionando, entao a
-            // verificacao vai ate o fim da cadeia.
-            var det = await Task.Run(() => NeuralUpliftService.Detect(installDir, targetDir,
-                item.State?.AddonPath));
-            if (det.Offerable && det.Host.Blocker is null)
-            {
-                if (det.NeedsReShade && item.ChosenExe is not null)
-                {
-                    DetailStatus = L.T("Neural_InstallingReShade");
-                    var dep = await _reshade.DeployAsync(targetDir, item.ChosenExe, null, null,
-                        new Progress<string>(s => DetailStatus = s));
-                    notas.Add(dep.Success ? L.T("Neural_ReShadeInstalled") : dep.Message);
-                }
-
-                if (!NeuralUpliftService.IsApplied(targetDir, iniPath, item.State?.AddonPath))
-                {
-                    await Task.Run(() => NeuralUpliftService.Apply(targetDir, iniPath, det.UsesGeneric,
-                        new Progress<string>(s => DetailStatus = s)));
-                    notas.Add(L.T("Neural_Applied"));
-                }
-            }
-
-            DetailStatus = string.Join("; ", notas.Where(n => !string.IsNullOrWhiteSpace(n)));
-            if (item == _detailItem) await RefreshNeuralAndSettingsAsync(_detailToken, pastaFoiEscrita: true);
-        }
-        catch (Exception ex) { DetailStatus = ex.Message; }
-        finally { ActionBusy = false; RaiseCommands(); }
-    }
-
-    /// <summary>Atualiza os runtimes do jogo para os da biblioteca, ou devolve os originais.</summary>
-    private async Task ToggleDlssAsync()
-    {
-        var item = _detailItem;
-        if (item?.TargetDir is null) return;
-        var installDir = item.Game.InstallDir;
-        var targetDir = item.TargetDir;
-        ActionBusy = true;
-        try
-        {
-            if (DlssApplied)
-            {
-                var n = await Task.Run(() => DlssRuntimeService.Restore(installDir, targetDir));
-                DetailStatus = L.T("Main_Dlss_Restored", n);
-            }
-            else
-            {
-                // A biblioteca se enche das copias que ja estao na maquina: todo jogo com DLSS
-                // carrega um runtime assinado, e o mais novo entre eles serve para o mais antigo.
-                var dirs = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).Distinct().ToList();
-                await Task.Run(() => DlssRuntimeService.AutoDiscover(
-                    dirs!, new Progress<string>(s => DetailStatus = s)));
-
-                var r = await Task.Run(() => DlssRuntimeService.Apply(installDir, targetDir,
-                    new Progress<string>(s => DetailStatus = s)));
-                DetailStatus = r.Updated > 0
-                    ? L.T("Main_Dlss_Updated", r.Updated) + " — " + string.Join("; ", r.Notes)
-                    : L.T("Main_Dlss_AlreadyCurrent", r.AlreadyCurrent);
-            }
-            if (item == _detailItem) await RefreshDlssAsync(_detailToken);
-        }
-        catch (Exception ex) { DetailStatus = ex.Message; }
-        finally { ActionBusy = false; RaiseCommands(); }
-    }
 
     /// <summary>
     /// O botao unico. Liga: roda a cadeia inteira pelo mesmo <see cref="Dlss5Installer"/> que o

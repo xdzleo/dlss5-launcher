@@ -1917,8 +1917,8 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Este jogo não traz o Frame Generation da NVIDIA (Streamline), então não há multiplicador de quadros para elevar.</value>
   </data>
   <data name="Mfg_Blocked_Provider" xml:space="preserve">
-    <value>O runtime de Frame Generation do jogo é {0}; o patch foi conferido contra {1}. Atualize os runtimes de DLSS acima e ele fica disponível.</value>
-    <comment>{0} = versao encontrada, {1} = lista de versoes aceitas.</comment>
+    <value>O runtime de Frame Generation do jogo é {0}; o patch foi conferido contra {1}. Ele fica disponível quando o jogo trouxer uma dessas — o launcher não troca esse runtime, porque ele anda em conjunto com os arquivos do Streamline do jogo.</value>
+    <comment>{0} = versao encontrada, {1} = lista de versoes aceitas. NAO prometer que o launcher atualiza: Frame Generation nao e trocavel (ver DlssRuntimeService.Swappable).</comment>
   </data>
   <data name="Mfg_Cli_Off" xml:space="preserve">
     <value>Multi Frame Generation removido de {0}.</value>

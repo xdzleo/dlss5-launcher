@@ -1917,8 +1917,8 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>This game does not ship NVIDIA Streamline Frame Generation, so there is no frame multiplier to raise.</value>
   </data>
   <data name="Mfg_Blocked_Provider" xml:space="preserve">
-    <value>The game's Frame Generation runtime is {0}; the patch was verified against {1}. Update the DLSS runtimes above and it becomes available.</value>
-    <comment>{0} = versao encontrada, {1} = lista de versoes aceitas.</comment>
+    <value>The game's Frame Generation runtime is {0}; the patch was verified against {1}. It becomes available when the game ships one of those — the launcher does not swap this runtime, because it moves as a set with the game's Streamline files.</value>
+    <comment>{0} = versao encontrada, {1} = lista de versoes aceitas. NAO prometer que o launcher atualiza: Frame Generation nao e trocavel (ver DlssRuntimeService.Swappable).</comment>
   </data>
   <data name="Mfg_Cli_Off" xml:space="preserve">
     <value>Multi Frame Generation removed from {0}.</value>

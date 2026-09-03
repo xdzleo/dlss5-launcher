@@ -2409,9 +2409,9 @@
     "pt-BR": "Este jogo não traz o Frame Generation da NVIDIA (Streamline), então não há multiplicador de quadros para elevar."
   },
   "Mfg_Blocked_Provider": {
-    "en": "The game's Frame Generation runtime is {0}; the patch was verified against {1}. Update the DLSS runtimes above and it becomes available.",
-    "note": "{0} = versao encontrada, {1} = lista de versoes aceitas.",
-    "pt-BR": "O runtime de Frame Generation do jogo é {0}; o patch foi conferido contra {1}. Atualize os runtimes de DLSS acima e ele fica disponível."
+    "en": "The game's Frame Generation runtime is {0}; the patch was verified against {1}. It becomes available when the game ships one of those — the launcher does not swap this runtime, because it moves as a set with the game's Streamline files.",
+    "note": "{0} = versao encontrada, {1} = lista de versoes aceitas. NAO prometer que o launcher atualiza: Frame Generation nao e trocavel (ver DlssRuntimeService.Swappable).",
+    "pt-BR": "O runtime de Frame Generation do jogo é {0}; o patch foi conferido contra {1}. Ele fica disponível quando o jogo trouxer uma dessas — o launcher não troca esse runtime, porque ele anda em conjunto com os arquivos do Streamline do jogo."
   },
   "Mfg_Cli_Off": {
     "en": "Multi Frame Generation removed from {0}.",

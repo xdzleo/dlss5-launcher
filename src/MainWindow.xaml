@@ -1286,51 +1286,6 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Runtimes de DLSS: independente do neural. Aparece em qualquer jogo
-                                 que carregue um runtime NGX, mostrando a versao atual e para onde
-                                 ela subiria. Os originais ficam num .renodx-bak ao lado. -->
-                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
-                                    Background="#1B2733" BorderBrush="#2F4A5E" BorderThickness="1"
-                                    Visibility="{Binding ShowDlss, Converter={StaticResource BoolToVis}}">
-                                <StackPanel>
-                                    <DockPanel>
-                                        <Button DockPanel.Dock="Right" Padding="12,8" VerticalAlignment="Center"
-                                                Command="{Binding DlssCommand}"
-                                                AutomationProperties.Name="{loc:Tr Dialog_Dlss_Title}">
-                                            <TextBlock Text="{Binding DlssButtonText}" FontSize="12"/>
-                                        </Button>
-                                        <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                            <TextBlock Text="{loc:Tr Dialog_Dlss_Title}" FontSize="12.5"
-                                                       FontWeight="SemiBold" Foreground="#8FD0F0"/>
-                                            <TextBlock Text="{loc:Tr Dialog_Dlss_Desc}" FontSize="11"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
-                                        </StackPanel>
-                                    </DockPanel>
-
-                                    <!-- o que o jogo tem hoje, e para onde subiria -->
-                                    <TextBlock Text="{Binding DlssSummary}" FontSize="11.5" Margin="0,9,0,0"
-                                               TextWrapping="Wrap" FontFamily="Consolas"
-                                               Foreground="#B8D8EC"/>
-
-                                    <!-- Estado comprovadamente quebrado. Aparece venha de onde vier
-                                         (este launcher, DLSS Swapper, troca manual): so reporta,
-                                         porque de fora nao da para saber qual versao o jogo aceita. -->
-                                    <Border CornerRadius="7" Padding="9,7" Margin="0,9,0,0"
-                                            Background="#3A2424" BorderBrush="#7A4242" BorderThickness="1"
-                                            Visibility="{Binding DlssHasIssue, Converter={StaticResource BoolToVis}}">
-                                        <DockPanel>
-                                            <Button DockPanel.Dock="Right" Padding="10,6" Margin="8,0,0,0"
-                                                    VerticalAlignment="Center"
-                                                    Command="{Binding DlssRepairCommand}">
-                                                <TextBlock Text="{loc:Tr Main_Dlss_Repair}" FontSize="11.5"/>
-                                            </Button>
-                                            <TextBlock Text="{Binding DlssHealth}" FontSize="11" TextWrapping="Wrap"
-                                                       VerticalAlignment="Center" Foreground="#F0B8B8"/>
-                                        </DockPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
 
                             <!-- Leitura de referencia: as instrucoes, o executavel escolhido e o
                                  veredito do log.
