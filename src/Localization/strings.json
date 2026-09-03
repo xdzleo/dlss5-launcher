@@ -903,6 +903,21 @@
     "en": "Moved aside: {0} ({1})",
     "pt-BR": "Afastado: {0} ({1})"
   },
+  "Conflito_Grau_Bloqueio": {
+    "en": "Blocking",
+    "note": "Pastilha de gravidade de um conflito: impede o DLSS 5 de funcionar.",
+    "pt-BR": "Bloqueio"
+  },
+  "Conflito_Grau_Aviso": {
+    "en": "Warning",
+    "note": "Pastilha de gravidade: pode atrapalhar.",
+    "pt-BR": "Aviso"
+  },
+  "Conflito_Grau_Info": {
+    "en": "Info",
+    "note": "Pastilha de gravidade: convive, so para saber que existe.",
+    "pt-BR": "Info"
+  },
   "Conflito_Porque_Proxy": {
     "en": "{1} occupies {0} — the slot our ReShade needs to load. While it sits there, the DLSS 5 chain never starts in this executable.",
     "pt-BR": "O {1} ocupa o {0} — a vaga que o nosso ReShade precisa para carregar. Enquanto ele estiver aí, a cadeia do DLSS 5 não começa neste executável."

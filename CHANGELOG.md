@@ -1,5 +1,58 @@
 # Changelog
 
+## v1.73.0
+
+Correções de interface: cards da grade, modal do jogo, troca de idioma e controles.
+
+### Cards da grade
+
+- A capa saía **quadrada por cima dos cantos arredondados** do card (e da capa grande do
+  modal): o `Border` do WPF arredonda só o que ele mesmo pinta e não recorta os filhos. A capa e
+  o escurecido do título agora têm o próprio raio, concêntrico com a moldura.
+- O aviso "nenhum jogo encontrado" **piscava durante a abertura**, por cima da barra de
+  progresso, antes de a varredura olhar o disco. Só aparece com a carga terminada.
+- Largura mínima da janela subiu de 1100 para 1240 px: abaixo disso a barra de cima
+  transbordava e o botão do guia era cortado (em português, mais ainda).
+- O card se apresentava ao leitor de tela (e à automação) como
+  `RenoDXLauncher.ViewModels.GameItemVm`; agora se apresenta pelo nome do jogo.
+
+### Modal do jogo
+
+- **Modal em branco**: com o filtro "instalados" ativo, desligar o mod HDR reavaliava o filtro,
+  o card sumia de baixo do modal, a lista perdia a seleção e o modal ficava aberto sem título,
+  sem capa e com os botões mortos. O jogo aberto no modal nunca sai mais da grade; ela se acerta
+  ao fechar.
+- O mesmo caso pela outra ponta: recarregar a lista com o modal aberto esvaziava a grade e
+  deixava o modal apontando para um jogo que não existe mais. O modal fecha antes da troca.
+- A pastilha de gravidade dos conflitos mostrava o nome cru do enum ("Bloqueio", "Aviso",
+  "Info") em qualquer idioma, inclusive em inglês.
+- O bloco monoespaçado das notas (trecho de .ini, argumento de linha de comando) ganhava uma
+  segunda moldura: o template da caixa de texto fixava 1 px de borda e ignorava o
+  `BorderThickness=0` pedido.
+- O botão de Reparo encolhia em direção ao canto superior esquerdo ao ser pressionado
+  (`CenterX/CenterY` em pixels no lugar de uma origem relativa).
+
+### Troca de idioma
+
+- Trocar o idioma **zerava o filtro da grade em silêncio**: a combo recebia a lista nova, não
+  achava o item de antes, ficava em branco e devolvia -1. O índice é preservado, e -1 nunca é
+  aceito.
+- Textos que ficavam no idioma antigo até reiniciar: o botão da correção de FG, "Atualizar N",
+  o aviso de versão nova do launcher, o cabeçalho das notas do motor, os elos da cadeia, o
+  resumo de conflitos, o motivo do bloqueio, as notas e o tooltip/crédito do mantenedor. A tela
+  de detalhe é relida na troca.
+
+### Controles
+
+- `CheckBox` e `Expander` vinham com o tema claro do Windows (caixa branca, seta num círculo
+  branco), brilhando no painel escuro. Ganharam o mesmo desenho dos demais controles.
+
+### Diagnóstico
+
+- Erros de binding do WPF, que antes só apareciam na janela de Output do depurador, vão para o
+  log do launcher (`binding: ...`). Um `{Binding}` quebrado deixa um pedaço da tela vazio sem
+  exceção nenhuma; agora deixa rastro.
+
 ## v1.72.0
 
 DLSS 5 em **toda RTX**, e o add-on **dentro do launcher** — sem baixar nada, sem colocar arquivo

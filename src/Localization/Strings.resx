@@ -485,6 +485,18 @@
   <data name="Conflito_Botao_Explicar" xml:space="preserve">
     <value>Renomeia com um sufixo — nada é apagado, e tirar o sufixo devolve tudo ao lugar.</value>
   </data>
+  <data name="Conflito_Grau_Aviso" xml:space="preserve">
+    <value>Aviso</value>
+    <comment>Pastilha de gravidade: pode atrapalhar.</comment>
+  </data>
+  <data name="Conflito_Grau_Bloqueio" xml:space="preserve">
+    <value>Bloqueio</value>
+    <comment>Pastilha de gravidade de um conflito: impede o DLSS 5 de funcionar.</comment>
+  </data>
+  <data name="Conflito_Grau_Info" xml:space="preserve">
+    <value>Info</value>
+    <comment>Pastilha de gravidade: convive, so para saber que existe.</comment>
+  </data>
   <data name="Conflito_Nenhum" xml:space="preserve">
     <value>Não há nada aqui disputando espaço com o DLSS 5.</value>
   </data>

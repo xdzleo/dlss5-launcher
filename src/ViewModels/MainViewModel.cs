@@ -36,6 +36,9 @@ public class MainViewModel : ObservableObject
     {
         GamesView = CollectionViewSource.GetDefaultView(Games);
         GamesView.Filter = FilterGame;
+        // O aviso de grade vazia depende da view filtrada E do estado da carga (ver ShowEmptyState).
+        ((System.Collections.Specialized.INotifyCollectionChanged)GamesView).CollectionChanged +=
+            (_, _) => OnPropertyChanged(nameof(ShowEmptyState));
         RefreshCommand = new AsyncRelayCommand(() => LoadAsync(forceRefresh: true), () => !Busy);
         InstallCommand = new AsyncRelayCommand(InstallAsync, () => !Busy && Selected?.Mod?.DownloadUrl != null);
         ToggleCommand = new AsyncRelayCommand(ToggleAsync, () => !Busy && Selected?.IsInstalled == true);
@@ -71,13 +74,29 @@ public class MainViewModel : ObservableObject
         // reiniciar, apesar de dois comentarios no codigo afirmarem o contrario.
         L.Instance.PropertyChanged += (_, _) =>
         {
+            // A combo do filtro recebe um array NOVO, e o WPF procura o item escolhido entre os
+            // novos comparando por valor: em outro idioma nenhum bate, a selecao e limpa e o
+            // binding devolve -1: a combo ficava em branco e o filtro voltava a "todos" sem
+            // ninguem pedir. O indice e guardado antes e reafirmado depois (o setter ja ignora o
+            // -1; a notificacao e o que reposiciona a combo no item certo).
+            var filtro = _filterIndex;
             OnPropertyChanged(nameof(FilterOptions));
+            _filterIndex = filtro;
+            OnPropertyChanged(nameof(FilterIndex));
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(ModStateText));
             OnPropertyChanged(nameof(Dlss5StateText));
             OnPropertyChanged(nameof(DlssButtonText));
             OnPropertyChanged(nameof(NeuralButtonText));
+            OnPropertyChanged(nameof(DlssFixButtonText));
+            OnPropertyChanged(nameof(UpdateAllText));
+            OnPropertyChanged(nameof(LauncherUpdateTitle));
+            OnPropertyChanged(nameof(LauncherUpdateDetail));
+            OnPropertyChanged(nameof(EngineNotesHeader));
             foreach (var g in Games) g.RaiseLocalizedText();
+            // O que a tela de detalhe GUARDA como texto pronto (os rotulos dos elos da cadeia, o
+            // resumo dos conflitos, o motivo do bloqueio, as notas) so muda sendo lido de novo.
+            if (Selected is not null) _ = LoadDetailSafeAsync();
         };
         ImportNeuralRuntimeCommand = new AsyncRelayCommand(ImportNeuralRuntimeAsync, () => !Busy);
         AfastarConflitosCommand = new RelayCommand(AfastarConflitos, () => !Busy && TemBloqueio);
@@ -183,6 +202,7 @@ public class MainViewModel : ObservableObject
             if (_loading == value) return;
             _loading = value;
             OnPropertyChanged(nameof(Busy));
+            OnPropertyChanged(nameof(ShowEmptyState));
             RaiseCommands();
         }
     }
@@ -201,6 +221,13 @@ public class MainViewModel : ObservableObject
 
     /// <summary>Qualquer operação longa em andamento (liga a ProgressBar e trava os comandos).</summary>
     public bool Busy => _loading || _actionBusy;
+
+    /// <summary>
+    /// A grade vazia merece o aviso de "nenhum jogo". Nao durante a carga: a lista NASCE vazia, e
+    /// o aviso aparecia por cima da barra de progresso nos primeiros segundos de toda abertura,
+    /// "nenhum jogo encontrado" enquanto a varredura ainda nem tinha olhado o disco.
+    /// </summary>
+    public bool ShowEmptyState => GamesView.IsEmpty && !_loading;
 
     private string _search = "";
     public string Search
@@ -223,12 +250,24 @@ public class MainViewModel : ObservableObject
     public int FilterIndex
     {
         get => _filterIndex;
-        set { if (Set(ref _filterIndex, value)) GamesView.Refresh(); }
+        set
+        {
+            // -1 nunca e escolha do usuario: uma combo nao se deixa desmarcar. E o que o WPF
+            // devolve quando a lista de opcoes e trocada (troca de idioma) e o item de antes nao
+            // consta na nova; aceitar isso zerava o filtro em silencio.
+            if (value < 0) return;
+            if (Set(ref _filterIndex, value)) GamesView.Refresh();
+        }
     }
 
     private bool FilterGame(object o)
     {
         if (o is not GameItemVm g) return false;
+        // O jogo aberto no modal nunca sai da grade. O filtro "instalados", reavaliado logo depois
+        // de desligar o mod, tirava o card de baixo do modal: a ListBox perdia a selecao, Selected
+        // virava null e o modal ficava aberto e vazio (sem titulo, sem capa, botoes mortos). A
+        // grade se acerta quando o modal fecha (ver IsDialogOpen).
+        if (ReferenceEquals(g, _selected)) return true;
         if (_filterIndex == 1 && !g.HasMod) return false;
         if (_filterIndex == 2 && !g.IsInstalled) return false;
         if (_filterIndex == 3 && g.HasMod) return false;
@@ -275,7 +314,12 @@ public class MainViewModel : ObservableObject
         set
         {
             if (!Set(ref _isDialogOpen, value)) return;
-            if (!value) Selected = null;   // closing clears the selection highlight
+            if (value) return;
+            var solto = Selected;
+            Selected = null;   // closing clears the selection highlight
+            // O card ficou na grade por estar selecionado (ver FilterGame); se hoje ele nao passa
+            // no filtro, sai agora, com o modal fechado, e nao por baixo dele.
+            if (solto is not null && !FilterGame(solto)) GamesView.Refresh();
         }
     }
 
@@ -985,6 +1029,10 @@ public class MainViewModel : ObservableObject
             // chamado "WinBox" — o ProductName de uma ferramenta de rede baixada la.
             games.AddRange(FolderGameResolver.ResolverPastasManuais(Config.ManualGameDirs, _catalogEntries));
 
+            // O modal, se estiver aberto, fecha ANTES de a lista ser trocada: esvaziar a grade
+            // deixa a ListBox sem selecao, Selected vira null e o modal continuava aberto, em
+            // branco, apontando para um jogo que nao existe mais.
+            IsDialogOpen = false;
             Games.Clear();
             foreach (var g in games)
             {

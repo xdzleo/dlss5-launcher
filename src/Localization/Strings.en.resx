@@ -485,6 +485,18 @@
   <data name="Conflito_Botao_Explicar" xml:space="preserve">
     <value>Renames them with a suffix — nothing is deleted, and removing the suffix puts them back.</value>
   </data>
+  <data name="Conflito_Grau_Aviso" xml:space="preserve">
+    <value>Warning</value>
+    <comment>Pastilha de gravidade: pode atrapalhar.</comment>
+  </data>
+  <data name="Conflito_Grau_Bloqueio" xml:space="preserve">
+    <value>Blocking</value>
+    <comment>Pastilha de gravidade de um conflito: impede o DLSS 5 de funcionar.</comment>
+  </data>
+  <data name="Conflito_Grau_Info" xml:space="preserve">
+    <value>Info</value>
+    <comment>Pastilha de gravidade: convive, so para saber que existe.</comment>
+  </data>
   <data name="Conflito_Nenhum" xml:space="preserve">
     <value>Nothing else here competes with DLSS 5.</value>
   </data>

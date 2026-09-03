@@ -68,6 +68,11 @@ public class GameItemVm : ObservableObject
         OnPropertyChanged(nameof(BadgeText));
         OnPropertyChanged(nameof(StoreLabel));
         OnPropertyChanged(nameof(ModStatusText));
+        // Tambem traduzem por conta propria: o tooltip do selo de estabilidade e o credito de
+        // "comunidade" quando o mod nao tem mantenedor nomeado (a inicial acompanha o nome).
+        OnPropertyChanged(nameof(ModStatusTooltip));
+        OnPropertyChanged(nameof(MaintainerName));
+        OnPropertyChanged(nameof(MaintainerInitial));
     }
     public string ModStatusTooltip => L.T(ModIsStable
         ? "Main_ModStatus_Stable_Tooltip"

@@ -157,7 +157,12 @@
                                         <BlurEffect Radius="16"/>
                                     </Border.Effect>
                                 </Border>
-                                <Border x:Name="Bd" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                <!-- RenderTransformOrigin relativo: o encolhimento do clique gira em
+                                     torno do centro. CenterX/CenterY no ScaleTransform sao em pixels,
+                                     e 0.5 px e o canto: o botao pulava para cima e para a esquerda
+                                     ao ser pressionado. -->
+                                <Border x:Name="Bd" CornerRadius="10" Padding="{TemplateBinding Padding}"
+                                        RenderTransformOrigin="0.5,0.5">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="#FFA155" Offset="0"/>
@@ -178,7 +183,7 @@
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="Bd" Property="RenderTransform">
                                         <Setter.Value>
-                                            <ScaleTransform ScaleX="0.985" ScaleY="0.96" CenterX="0.5" CenterY="0.5"/>
+                                            <ScaleTransform ScaleX="0.985" ScaleY="0.96"/>
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>
@@ -310,11 +315,16 @@
                 <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="FontSize" Value="12.5"/>
                 <Setter Property="Padding" Value="8,6"/>
+                <!-- A espessura vem do controle, nao do template: a caixa monoespacada das notas
+                     pede BorderThickness=0 e ganhava uma segunda moldura dentro do cartao, porque
+                     o template fixava 1 px e ignorava o pedido. -->
+                <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TextBox">
                             <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="7">
                                 <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
                                               VerticalAlignment="Center"/>
@@ -329,10 +339,98 @@
                 </Setter>
             </Style>
 
+            <!-- CheckBox e Expander: o WPF traz os dois no tema claro do Windows (caixa branca com
+                 borda cinza, seta dentro de um circulo branco) e eram os unicos controles da
+                 interface desenhados assim, brilhando no meio do painel escuro. Mesmo vocabulario
+                 dos demais: fundo de cartao, borda, laranja quando ativo. -->
             <Style TargetType="CheckBox">
                 <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
                 <Setter Property="FontSize" Value="12.5"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CheckBox">
+                            <StackPanel Orientation="Horizontal" Background="Transparent">
+                                <Border x:Name="Box" Width="17" Height="17" CornerRadius="4" VerticalAlignment="Center"
+                                        Background="{StaticResource CardBrush}" BorderThickness="1"
+                                        BorderBrush="{StaticResource BorderStrongBrush}">
+                                    <Path x:Name="Mark" Data="{StaticResource IconCheck}" Fill="#14100A"
+                                          Stretch="Uniform" Width="11" Height="11" Visibility="Collapsed"/>
+                                </Border>
+                                <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"/>
+                            </StackPanel>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                    <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.45"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Expander">
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Expander">
+                            <DockPanel>
+                                <ToggleButton DockPanel.Dock="Top" HorizontalAlignment="Left" Cursor="Hand"
+                                              IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                              Content="{TemplateBinding Header}"
+                                              ContentTemplate="{TemplateBinding HeaderTemplate}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent" Padding="0,3">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <!-- a seta aponta para a direita fechado, para baixo aberto -->
+                                                    <Path x:Name="Chevron" Data="{StaticResource IconChevron}"
+                                                          Fill="{StaticResource TextFaintBrush}" Stretch="Uniform"
+                                                          Width="11" Height="11" VerticalAlignment="Center"
+                                                          Margin="0,0,7,0" RenderTransformOrigin="0.5,0.5">
+                                                        <Path.RenderTransform>
+                                                            <RotateTransform Angle="-90"/>
+                                                        </Path.RenderTransform>
+                                                    </Path>
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Chevron" Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <RotateTransform Angle="0"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Chevron" Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed"
+                                                  Margin="{TemplateBinding Padding}"/>
+                            </DockPanel>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsExpanded" Value="True">
+                                    <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <!-- ========== combo ========== -->

@@ -5,7 +5,7 @@
         xmlns:local="clr-namespace:RenoDXLauncher"
         xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
         Icon="Assets/app.png"
-        Title="{loc:Tr App_Name}" Height="920" Width="1560" MinWidth="1100" MinHeight="660"
+        Title="{loc:Tr App_Name}" Height="920" Width="1560" MinWidth="1240" MinHeight="660"
         Background="{StaticResource BgBrush}"
         TextOptions.TextFormattingMode="Ideal"
         UseLayoutRounding="True"
@@ -21,6 +21,7 @@
         <local:NoteColorConverter x:Key="NoteBg"/>
         <local:NoteColorConverter x:Key="NoteBorder" Border="True"/>
         <local:NivelColorConverter x:Key="NivelToBrush"/>
+        <local:NivelTextConverter x:Key="NivelToText"/>
 
         <!-- ===== one piece of guidance: where to do it, who said it, and the exact text ===== -->
         <DataTemplate x:Key="NoteCard">
@@ -89,15 +90,19 @@
                         <TextBlock Text="{Binding Initials}" FontSize="44" FontWeight="Bold"
                                    Foreground="#3A414E" HorizontalAlignment="Center"
                                    VerticalAlignment="Center" Margin="0,0,0,40"/>
-                        <!-- cover -->
-                        <Border Visibility="{Binding HasCover, Converter={StaticResource BoolToVis}}">
+                        <!-- cover. CornerRadius aqui tambem: o Border de fora arredonda so o que ELE
+                             pinta (fundo e borda) e nao recorta os filhos, entao a capa saia quadrada
+                             por cima dos quatro cantos arredondados do card. Raio 11 = 12 da moldura
+                             menos 1 px de borda, para os dois arcos ficarem concentricos. -->
+                        <Border CornerRadius="11"
+                                Visibility="{Binding HasCover, Converter={StaticResource BoolToVis}}">
                             <Border.Background>
                                 <ImageBrush ImageSource="{Binding CoverPath, Converter={StaticResource CoverImage}}"
                                             Stretch="UniformToFill"/>
                             </Border.Background>
                         </Border>
                         <!-- scrim so the title is always legible over any art -->
-                        <Border VerticalAlignment="Bottom" Height="128">
+                        <Border VerticalAlignment="Bottom" Height="128" CornerRadius="0,0,11,11">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                     <GradientStop Color="#00101216" Offset="0"/>
@@ -437,6 +442,9 @@
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Padding" Value="0"/>
+                        <!-- Sem isto o card se apresenta ao leitor de tela (e a automacao) como
+                             RenoDXLauncher.ViewModels.GameItemVm, o ToString do objeto. -->
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
@@ -458,7 +466,7 @@
             </ListBox>
 
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
-                        Visibility="{Binding GamesView.IsEmpty, Converter={StaticResource BoolToVis}}">
+                        Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVis}}">
                 <Path Data="{StaticResource IconSearch}" Fill="#39404E" Stretch="Uniform"
                       Width="44" Height="44" HorizontalAlignment="Center"/>
                 <TextBlock Text="{loc:Tr Main_Empty_Title}" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"
@@ -504,7 +512,9 @@
                                 <TextBlock Text="{Binding Selected.Initials}" FontSize="52" FontWeight="Bold"
                                            Foreground="#3A414E" HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
-                                <Border Visibility="{Binding Selected.HasCover, Converter={StaticResource BoolToVis}}">
+                                <!-- Raio 11 pelo mesmo motivo do card: a moldura nao recorta o filho. -->
+                                <Border CornerRadius="11"
+                                        Visibility="{Binding Selected.HasCover, Converter={StaticResource BoolToVis}}">
                                     <Border.Background>
                                         <ImageBrush ImageSource="{Binding Selected.CoverPath, Converter={StaticResource CoverImage}}"
                                                     Stretch="UniformToFill"/>
@@ -1032,7 +1042,7 @@
                                                                         Padding="6,2" Margin="0,0,8,0"
                                                                         VerticalAlignment="Center"
                                                                         Background="{Binding Grau, Converter={StaticResource NivelToBrush}}">
-                                                                    <TextBlock Text="{Binding Grau}" FontSize="10"
+                                                                    <TextBlock Text="{Binding Grau, Converter={StaticResource NivelToText}}" FontSize="10"
                                                                                FontWeight="SemiBold" Foreground="#12100A"/>
                                                                 </Border>
                                                                 <TextBlock Text="{Binding Ferramenta}" FontSize="10.5"

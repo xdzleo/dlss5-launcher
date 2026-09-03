@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 
@@ -156,6 +157,26 @@ public class NivelColorConverter : IValueConverter
         } : "#8A8F98";
         return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
     }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Gravidade de um conflito -> o rotulo da pastilha, traduzido.
+///
+/// A pastilha mostrava o nome cru do enum ("Bloqueio", "Aviso", "Info") em qualquer idioma,
+/// inclusive na interface em ingles, ao lado de textos traduzidos.
+/// </summary>
+public class NivelTextConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is ConflictScanner.Nivel n ? L.T(n switch
+        {
+            ConflictScanner.Nivel.Bloqueio => "Conflito_Grau_Bloqueio",
+            ConflictScanner.Nivel.Aviso => "Conflito_Grau_Aviso",
+            _ => "Conflito_Grau_Info",
+        }) : "";
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
