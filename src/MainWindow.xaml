@@ -641,7 +641,11 @@
                         </StackPanel>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
-<StackPanel>
+                        <!-- Os cartoes entram TODOS DE UMA VEZ (ver DetalhePronto).
+                             Cada um acendia sozinho ao terminar a leitura dele, e as leituras
+                             terminam em ordens diferentes: o painel pipocava a cada jogo aberto.
+                             A espera ate estar tudo pronto e de alguns milissegundos. -->
+                        <StackPanel Visibility="{Binding DetalhePronto, Converter={StaticResource BoolToVis}}">
 
                             <!-- UPDATE WARNING: the reason the user asked for this -->
                             <Border CornerRadius="10" Padding="13,12" Margin="0,14,0,0" Background="#332612"

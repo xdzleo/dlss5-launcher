@@ -1405,26 +1405,27 @@ public class MainViewModel : ObservableObject
             var pastas = Games.Select(g => g.Game.InstallDir).Where(d => d is not null).ToList();
             _ = Task.Run(async () =>
             {
-                // 1. o que a tela mostra: bolinhas, selos e capas.
+                // 1. o que decide as bolinhas e os selos da grade.
                 await BackgroundEnrichAsync(itensParaEnriquecer, pinned, ct);
                 if (ct.IsCancellationRequested) return;
 
-                // 2. le a pasta de cada jogo, para o clique nao ter o que ler (ver LerPasta).
-                //    ANTES das capas: e o que decide se abrir um jogo e instantaneo, e capa e
-                //    enfeite. A ordem aqui e a ordem do que a pessoa sente.
+                // 2. as capas e a leitura das pastas AO MESMO TEMPO.
+                //
+                // Uma e rede e a outra e disco: nao disputam, e nao ha por que uma esperar a
+                // outra. Ja foram nas duas ordens possiveis e as duas estavam erradas -- capas
+                // antes atrasava o primeiro clique, leitura antes deixava a grade sem capa por
+                // muito tempo, que foi pior porque e visivel.
+                var capas = BaixarCapasAsync(itensParaEnriquecer, ct);
                 foreach (var jogo in itensParaEnriquecer)
                 {
-                    if (ct.IsCancellationRequested) return;
+                    if (ct.IsCancellationRequested) break;
                     await CederAoClique(ct);
                     await PreaquecerDetalhe(jogo, ct);
                 }
+                await capas;
                 if (ct.IsCancellationRequested) return;
 
-                // 3. as capas.
-                await BaixarCapasAsync(itensParaEnriquecer, ct);
-                if (ct.IsCancellationRequested) return;
-
-                // 4. aquece a varredura de .exe de TODOS os jogos. Ela desce cinco niveis e custa
+                // 3. aquece a varredura de .exe de TODOS os jogos. Ela desce cinco niveis e custa
                 //    ~27 ms por jogo grande; feita ao clicar, e a maior parte da espera do card.
                 //    Feita aqui, o clique encontra o resultado pronto (medido: 27 ms -> 0 ms).
                 foreach (var d in pastas)
@@ -1436,14 +1437,14 @@ public class MainViewModel : ObservableObject
                 }
                 if (ct.IsCancellationRequested) return;
 
-                // 5. procura uma copia do add-on neural mais nova, largada pelo usuario numa pasta
+                // 4. procura uma copia do add-on neural mais nova, largada pelo usuario numa pasta
                 //    de jogo. Percorre a biblioteca inteira, e quem pagava por ela era o PRIMEIRO
                 //    clique em um jogo -- meio segundo, uma vez por sessao, no pior momento
                 //    possivel. Aqui ninguem esta esperando.
                 NeuralUpliftService.AutoDiscoverAddon(pastas!);
                 if (ct.IsCancellationRequested) return;
 
-                // 6. o aviso de runtime trocado, que ninguem esta esperando para agir.
+                // 5. o aviso de runtime trocado, que ninguem esta esperando para agir.
                 await CheckSwappedRuntimesAsync(pastas!);
             }, ct);
         }
@@ -1531,6 +1532,10 @@ public class MainViewModel : ObservableObject
     private async Task BaixarCapasAsync(List<GameItemVm> items, CancellationToken ct)
     {
         var dispatcher = Application.Current.Dispatcher;
+        // No log porque ja foi quebrado uma vez sem ninguem notar: as capas ficaram atras de uma
+        // fila longa e a grade passou a demorar para ilustrar. Um numero por sessao responde.
+        var relogio = System.Diagnostics.Stopwatch.StartNew();
+        var postas = 0;
         // As capas em SEGUNDA passada, e em paralelo.
         //
         // Elas sao REDE, e a deteccao que acende as bolinhas e disco local. As duas dividiam o
@@ -1549,11 +1554,15 @@ public class MainViewModel : ObservableObject
             {
                 var cover = await CoverService.GetCoverAsync(item.Game, item.Mod?.SteamAppId);
                 if (cover != null && !ct.IsCancellationRequested)
+                {
                     await dispatcher.InvokeAsync(() => item.CoverPath = cover);
+                    Interlocked.Increment(ref postas);
+                }
             }
             catch (Exception ex) { Log.Warn($"capa {item.Name}: {ex.Message}"); }
             finally { portao.Release(); }
         }));
+        Log.Info($"capas: {postas} de {items.Count} em {relogio.ElapsedMilliseconds} ms");
     }
 
     /// <summary>
@@ -1727,8 +1736,24 @@ public class MainViewModel : ObservableObject
     /// Zerar aqui custa nada e faz o modal nascer honesto: sem informacao e melhor do que
     /// informacao de outro jogo.
     /// </summary>
+    private bool _detalhePronto;
+
+    /// <summary>
+    /// A leitura do jogo terminou e os cartoes podem aparecer — todos juntos.
+    ///
+    /// Cada cartao acendia sozinho, no instante em que a leitura DELE terminava, e as leituras
+    /// terminam em ordens diferentes a cada jogo: o painel pipocava. Mesmo rapido, pipocar e o
+    /// que se ve, porque olho pega movimento.
+    ///
+    /// Com as leituras guardadas, a espera entre abrir o modal e ter tudo pronto e de alguns
+    /// milissegundos — curta demais para valer um esqueleto de carregamento, e curta demais para
+    /// alguem reclamar de um painel vazio. Entao o painel espera, e entra inteiro.
+    /// </summary>
+    public bool DetalhePronto { get => _detalhePronto; set => Set(ref _detalhePronto, value); }
+
     private void LimparCartoes()
     {
+        DetalhePronto = false;
         ShowNeural = false;
         ShowDlss = false;
         ShowDlssFix = false;
@@ -1772,6 +1797,8 @@ public class MainViewModel : ObservableObject
     {
         await RefreshNeuralAndSettingsAsync(token);
         if (token != _detailToken) return;
+        // Tudo lido: o painel entra inteiro (ver DetalhePronto).
+        DetalhePronto = true;
         RaiseCommands();
 
         // Envolvida: solta, uma falha de rede viraria excecao nao observada; nao tem try/catch
