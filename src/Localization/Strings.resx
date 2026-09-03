@@ -203,6 +203,10 @@
     <value>Registra uma pasta de jogo que as lojas não conhecem</value>
     <comment>pt: "que as lojas não conhecem".</comment>
   </data>
+  <data name="Cli_Help_Auditoria" xml:space="preserve">
+    <value>Lê a cadeia do DLSS 5 de todos os jogos e diz quais estão inteiros</value>
+    <comment>pt: "Le a cadeia do DLSS 5 de todos os jogos e diz quais estao inteiros".</comment>
+  </data>
   <data name="Cli_Help_Check" xml:space="preserve">
     <value>Verifica atualização dos mods instalados</value>
     <comment>pt com acento no resx: "Verifica atualização dos mods instalados".</comment>

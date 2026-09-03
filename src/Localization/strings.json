@@ -222,6 +222,11 @@
     "note": "pt: \"...sem diferenciar maiúsculas. Exemplo:\". {0} = Cli_Arg_Game.",
     "pt-BR": "{0} casa com qualquer parte do nome, sem diferenciar maiusculas. Exemplo:"
   },
+  "Cli_Help_Auditoria": {
+    "en": "Read the DLSS 5 chain of every game and say which ones are whole",
+    "note": "pt: \"Le a cadeia do DLSS 5 de todos os jogos e diz quais estao inteiros\".",
+    "pt-BR": "Lê a cadeia do DLSS 5 de todos os jogos e diz quais estão inteiros"
+  },
   "Cli_Help_Instalado": {
     "en": "List what the launcher put in a game's folder, and what it would give back",
     "note": "pt: \"Lista o que o launcher pos na pasta de um jogo, e o que devolveria\".",

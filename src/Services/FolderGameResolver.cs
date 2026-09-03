@@ -67,6 +67,32 @@ public static partial class FolderGameResolver
         }
     }
 
+    /// <summary>Perfil do usuario e as pastas de sistema dentro dele, ja em caminho completo.</summary>
+    private static readonly HashSet<string> PerfilEPastasDele = Montar();
+
+    private static HashSet<string> Montar()
+    {
+        var s = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in new[]
+                 {
+                     Environment.SpecialFolder.UserProfile, Environment.SpecialFolder.Desktop,
+                     Environment.SpecialFolder.MyDocuments, Environment.SpecialFolder.MyMusic,
+                     Environment.SpecialFolder.MyPictures, Environment.SpecialFolder.MyVideos,
+                 })
+        {
+            try
+            {
+                var p = Environment.GetFolderPath(f);
+                if (!string.IsNullOrEmpty(p)) s.Add(Path.TrimEndingDirectorySeparator(p));
+            }
+            catch { }
+        }
+        // Downloads nao tem SpecialFolder no .NET; fica ao lado do perfil, que ja esta acima.
+        var perfil = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (!string.IsNullOrEmpty(perfil)) s.Add(Path.Combine(perfil, "Downloads"));
+        return s;
+    }
+
     /// <summary>
     /// Esta pasta e um deposito, e nao um jogo?
     ///
@@ -88,6 +114,11 @@ public static partial class FolderGameResolver
                     || string.Equals(raiz.TrimEnd(Path.DirectorySeparatorChar), full,
                                      StringComparison.OrdinalIgnoreCase)))
                 return true;
+            // O PERFIL do usuario, pelo caminho e nao pelo nome: ele se chama como a pessoa se
+            // chama ("Admin"), e nome nenhum numa lista pega isso. Era por ai que a varredura
+            // entrava, achava um .exe qualquer tres niveis abaixo, em Downloads, e devolvia a
+            // pasta inteira do usuario como se fosse um jogo.
+            if (PerfilEPastasDele.Contains(full)) return true;
             return PastasDoUsuario.Contains(Path.GetFileName(full));
         }
         catch { return false; }

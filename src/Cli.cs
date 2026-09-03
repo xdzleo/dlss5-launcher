@@ -90,6 +90,7 @@ public static class Cli
             "dlss5" => await Dlss5Async(rest),
             "mfg" => await MfgAsync(rest),
             "instalado" or "installed" => await InstaladoAsync(rest.FirstOrDefault()),
+            "auditoria" or "audit" => await AuditoriaAsync(rest),
             "doctor" => await DoctorAsync(),
             "help" or "h" or "?" => Help(),
             _ => Unknown(cmd),
@@ -268,6 +269,121 @@ public static class Cli
         return 0;
     }
 
+    /// <summary>
+    /// Le a cadeia de TODOS os jogos e diz, um por um, se cada um esta inteiro.
+    ///
+    /// A pergunta "esta tudo funcionando?" nao tem resposta clicando em 54 cartoes, e abrir 54
+    /// jogos nao e resposta que caiba num dia. O que da para responder sem abrir nada e o que a
+    /// tela ja responde por jogo: os elos estao todos no lugar, e ha algo na pasta disputando
+    /// espaco? Isso e feito aqui pela MESMA leitura que a janela usa (ver Dlss5ChainReader), e
+    /// nao por uma segunda implementacao que discordaria dela em algum caso.
+    ///
+    /// O que ele NAO prova: que a imagem sai na tela. Para isso existe a coluna do log — o
+    /// veredito que o ReShade deixou na ultima vez que o jogo rodou de verdade.
+    /// </summary>
+    private static async Task<int> AuditoriaAsync(string[] rest)
+    {
+        var soInstalados = rest.Any(a => a is "--instalados" or "--installed");
+        var ctx = await LoadAsync();
+        var host = NeuralUpliftService.ProbeHost();
+        Console.WriteLine($"placa: {host.GpuName ?? "?"}"
+                          + (host.Sm is { } sm ? $" (sm_{sm}, {CudaFatbin.Rotulo(sm)})" : "")
+                          + $"   driver: {host.DriverBranch}");
+        Console.WriteLine();
+        Console.WriteLine($"{"JOGO",-42} {"DLSS 5",-10} {"LOJA",-9} {"CADEIA",-8} {"CONFLITO",-9} LOG");
+        Console.WriteLine(new string('-', 100));
+
+        int inteiros = 0, quebrados = 0, semInstalar = 0, comConflito = 0;
+        var pendencias = new List<string>();
+        var consertaveis = new List<string>();
+
+        foreach (var g in ctx.Games.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            var (exeDetectado, state) = StateOf(ctx, g);
+            var target = state?.TargetDir ?? g.InstallDir;
+            var exe = state?.ExePath ?? exeDetectado;
+            var ini = state?.IniPath ?? Path.Combine(target, "ReShade.ini");
+
+            Dlss5ChainReader.LeituraDaCadeia leitura;
+            bool aplicado;
+            try
+            {
+                var det = NeuralUpliftService.Detect(g.InstallDir, target, state?.AddonPath);
+                aplicado = NeuralUpliftService.IsApplied(target, ini, state?.AddonPath);
+                leitura = Dlss5ChainReader.LerCadeia(target, ini, det, exe, aplicado);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{Curto(g.Name, 42),-42} {"erro",-10} {"-",-8} {"-",-9} {ex.GetType().Name}");
+                continue;
+            }
+
+            // "Instalado" aqui e ter add-on nosso na pasta, e nao a cadeia inteira: um jogo com
+            // uma peca faltando esta instalado E quebrado, e sao dois fatos diferentes.
+            var temNosso = NeuralUpliftService.DeployedGenericAddon(target) != null;
+            if (soInstalados && !temNosso) continue;
+            var elosOk = leitura.Elos.Count > 0 && leitura.Elos.All(e => e.Ok);
+            var bloqueios = leitura.Conflitos.Count(c => c.Grau == ConflictScanner.Nivel.Bloqueio);
+            var faltando = leitura.Elos.Where(e => !e.Ok).Select(e => e.Label).ToList();
+
+            string estado;
+            if (!temNosso) { estado = "-"; semInstalar++; }
+            else if (elosOk) { estado = "ligado"; inteiros++; }
+            else { estado = "QUEBRADO"; quebrados++; }
+            if (bloqueios > 0) comConflito++;
+
+            var log = "-";
+            if (state?.AddonPath is not null)
+            {
+                try
+                {
+                    var r = ReShadeLogService.Check(target);
+                    log = r.Result switch
+                    {
+                        LoadResult.Loaded => "carregou",
+                        LoadResult.NoLog => "nunca rodou",
+                        LoadResult.NotLoaded => "NAO CARREGOU",
+                        _ => r.Result.ToString(),
+                    };
+                }
+                catch { log = "?"; }
+            }
+
+            Console.WriteLine($"{Curto(g.Name, 42),-42} {estado,-10} "
+                              + $"{g.Store,-9} "
+                              + $"{(temNosso ? elosOk ? "ok" : $"{faltando.Count} faltam" : "-"),-8} "
+                              + $"{(bloqueios > 0 ? $"{bloqueios} bloq." : "-"),-9} {log}");
+
+            if (temNosso && (!elosOk || bloqueios > 0)) consertaveis.Add(g.Name);
+            if (temNosso && !elosOk) pendencias.Add($"  {g.Name}: falta {string.Join(", ", faltando)}");
+            if (bloqueios > 0)
+                foreach (var c in leitura.Conflitos.Where(c => c.Grau == ConflictScanner.Nivel.Bloqueio))
+                    pendencias.Add($"  {g.Name}: {c.Arquivo} — {c.Porque}");
+
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"inteiros: {inteiros}   quebrados: {quebrados}   "
+                          + $"sem instalar: {semInstalar}   com conflito: {comConflito}");
+        if (pendencias.Count > 0)
+        {
+            Console.WriteLine();
+            Console.WriteLine("o que precisa de atencao:");
+            foreach (var p in pendencias.Distinct()) Console.WriteLine(p);
+            // Elo faltando e disputa de espaco na pasta se resolvem os dois do mesmo jeito:
+            // instalar de novo, que hoje tira o que a rota escolhida nao pede antes de por o
+            // que ela pede. Esta varredura so LE — quem escreve e o comando abaixo, com o jogo
+            // na frente, para ninguem mexer em 16 pastas sem ter dito que queria.
+            Console.WriteLine();
+            Console.WriteLine("para consertar, um por um:");
+            foreach (var n in consertaveis.Distinct())
+                Console.WriteLine($"  RenoDXLauncher.exe dlss5 \"{n}\"");
+        }
+        return quebrados > 0 || comConflito > 0 ? 2 : 0;
+    }
+
+    private static string Curto(string s, int n) => s.Length <= n ? s : s[..(n - 1)] + "…";
+
     /// <summary>Width of the syntax column in the help table.</summary>
     private const int HelpSyntaxWidth = 26;
 
@@ -294,6 +410,7 @@ public static class Cli
         HelpRow($"neural {game}", L.T("Cli_Help_Neural"));
         HelpRow($"mfg {game} [--x 2..6] [--off]", L.T("Cli_Help_Mfg"));
         HelpRow($"instalado {game}", L.T("Cli_Help_Instalado"));
+        HelpRow("auditoria", L.T("Cli_Help_Auditoria"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Help_Match", game));

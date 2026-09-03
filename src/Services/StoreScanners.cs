@@ -504,6 +504,10 @@ public static partial class StoreScanners
     private static readonly HashSet<string> SkipRootDirs = new(StringComparer.OrdinalIgnoreCase)
     {
         "windows", "program files", "program files (x86)", "programdata", "users", "onedrive",
+        // Junction legada para C:\Users. Sem ela na lista, "users" era pulado e o perfil
+        // entrava assim mesmo por esta porta dos fundos: a varredura achou winbox64.exe dentro
+        // de Downloads e ofereceu a pasta do usuario como se fosse um jogo.
+        "documents and settings",
         "$recycle.bin", "system volume information", "recovery", "perflogs", "intel", "amd",
         "nvidia", "temp", "tmp", "drivers", "msocache", "config.msi", "inetpub", "xboxgames",
     };

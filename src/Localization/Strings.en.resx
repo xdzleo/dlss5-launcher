@@ -203,6 +203,10 @@
     <value>Register a game folder the stores do not know about</value>
     <comment>pt: "que as lojas não conhecem".</comment>
   </data>
+  <data name="Cli_Help_Auditoria" xml:space="preserve">
+    <value>Read the DLSS 5 chain of every game and say which ones are whole</value>
+    <comment>pt: "Le a cadeia do DLSS 5 de todos os jogos e diz quais estao inteiros".</comment>
+  </data>
   <data name="Cli_Help_Check" xml:space="preserve">
     <value>Check for updates to installed mods</value>
     <comment>pt com acento no resx: "Verifica atualização dos mods instalados".</comment>
