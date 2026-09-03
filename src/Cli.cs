@@ -175,7 +175,7 @@ public static class Cli
             var mult = pedido
                        ?? (det.Applied ? det.Config.Multiplier
                            : ctx.Config.MfgMultiplier.TryGetValue($"{g.Store}_{g.AppId ?? g.InstallDir}", out var m)
-                               ? m : MfgService.MinMultiplier);
+                               ? m : MfgService.PadraoPara(host.Sm));
             MfgService.Apply(target, ini,
                 new MfgService.Config(mult, Experimental56: mult > MfgService.MaxSafeMultiplier),
                 new Progress<string>(Console.WriteLine));

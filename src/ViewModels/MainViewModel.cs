@@ -995,7 +995,9 @@ public class MainViewModel : ObservableObject
         get => _mfgMultiplier;
         set
         {
-            var novo = Math.Clamp(value, MfgService.MinMultiplier, MfgService.MaxMultiplier);
+            var novo = _mfgOfertas.Contains(value)
+                ? value
+                : Math.Clamp(value, MfgService.MinMultiplier, MfgService.MaxMultiplier);
             if (_mfgMultiplier == novo) return;
             _mfgMultiplier = novo;
             RaiseMfgMultiplier();
@@ -1015,15 +1017,24 @@ public class MainViewModel : ObservableObject
     }
 
     /// <summary>Troca o multiplicador sem gravar nada: e a leitura do disco chegando na tela.</summary>
-    private void MfgMultiplierQuieto(int valor)
+    private void MfgMultiplierQuieto(int valor, int? sm)
     {
-        _mfgMultiplier = Math.Clamp(valor, MfgService.MinMultiplier, MfgService.MaxMultiplier);
+        _mfgOfertas = MfgService.MultiplicadoresPara(sm);
+        // Um valor que esta placa nao oferece nao pode ficar selecionado: viria de um arquivo
+        // escrito a mao, ou de uma troca de placa depois de instalado. Cai no menor que o patch
+        // acrescenta aqui, que e o passo mais conservador disponivel.
+        _mfgMultiplier = _mfgOfertas.Contains(valor) ? valor : MfgService.PadraoPara(sm);
         RaiseMfgMultiplier();
     }
 
+    // Quais opcoes o seletor MOSTRA nesta placa (ver MfgService.MultiplicadoresPara). Numa RTX 50
+    // o jogo ja faz ate 4x sozinho, entao so 5x e 6x sao coisa do patch.
+    private IReadOnlyList<int> _mfgOfertas = MfgService.MultiplicadoresPara(null);
+    public bool MfgOferece3x => _mfgOfertas.Contains(3);
+    public bool MfgOferece4x => _mfgOfertas.Contains(4);
+
     // Um booleano por opcao, para o XAML pintar o botao escolhido sem converter nada — mesma
     // forma dos dois botoes de tradutor de D3D9.
-    public bool MfgIs2x => _mfgMultiplier == 2;
     public bool MfgIs3x => _mfgMultiplier == 3;
     public bool MfgIs4x => _mfgMultiplier == 4;
     public bool MfgIs5x => _mfgMultiplier == 5;
@@ -1036,7 +1047,8 @@ public class MainViewModel : ObservableObject
     private void RaiseMfgMultiplier()
     {
         OnPropertyChanged(nameof(MfgMultiplier));
-        OnPropertyChanged(nameof(MfgIs2x));
+        OnPropertyChanged(nameof(MfgOferece3x));
+        OnPropertyChanged(nameof(MfgOferece4x));
         OnPropertyChanged(nameof(MfgIs3x));
         OnPropertyChanged(nameof(MfgIs4x));
         OnPropertyChanged(nameof(MfgIs5x));
@@ -1077,7 +1089,8 @@ public class MainViewModel : ObservableObject
         // editado. Desligado, vale a escolha guardada para este jogo.
         MfgMultiplierQuieto(det.Applied
             ? det.Config.Multiplier
-            : Config.MfgMultiplier.TryGetValue(item.Key, out var m) ? m : MfgService.MinMultiplier);
+            : Config.MfgMultiplier.TryGetValue(item.Key, out var m) ? m : MfgService.PadraoPara(det.Sm),
+            det.Sm);
         MfgUnlockText = L.T(det.JaTinhaMfg ? "Mfg_Unlocks_Rtx50" : "Mfg_Unlocks_Rtx40");
         MfgLastRun = det.LastRun switch
         {

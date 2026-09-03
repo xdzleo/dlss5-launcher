@@ -377,6 +377,18 @@ try
     Check(!(detAmpere with { Sm = 89, HasStreamlineFg = false }).Offerable,
         "MFG: jogo sem Streamline nao mostra o cartao");
 
+    // O seletor mostra o que o PATCH acrescenta, e nao a faixa inteira: numa RTX 50 o jogo ja faz
+    // ate 4x pelo menu dele, entao oferecer 2x a 4x seria oferecer o que ja existe.
+    Check(MfgService.MultiplicadoresPara(120).SequenceEqual(new[] { 5, 6 }),
+        "MFG: RTX 50 so oferece 5x e 6x — ate 4x ela ja faz sozinha");
+    Check(MfgService.MultiplicadoresPara(89).SequenceEqual(new[] { 3, 4, 5, 6 }),
+        "MFG: RTX 40 oferece de 3x a 6x — 2x e o teto de fabrica dela");
+    Check(!MfgService.MultiplicadoresPara(120).Contains(2)
+          && !MfgService.MultiplicadoresPara(89).Contains(2),
+        "MFG: 2x nunca e opcao do seletor — voltar ao de fabrica e desligar o interruptor");
+    Check(MfgService.PadraoPara(120) == 5 && MfgService.PadraoPara(89) == 3,
+        "MFG: o padrao e o menor passo acima do teto de fabrica");
+
     // Multiplicador fora da faixa nao chega ao disco: o add-on recusaria o arquivo inteiro.
     Check(new MfgService.Config(9).Sane().Multiplier == MfgService.MaxMultiplier,
         "MFG: multiplicador acima de 6 e limitado a 6");

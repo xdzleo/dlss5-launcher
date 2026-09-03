@@ -82,6 +82,23 @@ public static class MfgService
     public const int MinMultiplier = 2;
     public const int MaxMultiplier = 6;
 
+    /// <summary>
+    /// Os multiplicadores que o patch ACRESCENTA nesta placa.
+    ///
+    /// O seletor mostra o que o launcher entrega, e nao a lista inteira. Numa RTX 50 o jogo ja
+    /// faz ate 4x sozinho: oferecer 2x, 3x ou 4x aqui seria oferecer o que ja existe no menu do
+    /// proprio jogo, e escolher um deles nao mudaria nada. Numa RTX 40 o mesmo vale para o 2x,
+    /// que e o teto de fabrica dela.
+    ///
+    /// E por isso que nao ha 2x em lugar nenhum: "sem o patch" nao e uma escolha do seletor, e o
+    /// interruptor do cartao — desligar devolve a placa ao que ela fazia de fabrica.
+    /// </summary>
+    public static IReadOnlyList<int> MultiplicadoresPara(int? sm) =>
+        sm >= 120 ? [5, 6] : [3, 4, 5, 6];
+
+    /// <summary>O primeiro que o patch acrescenta: o menor passo acima do teto de fabrica.</summary>
+    public static int PadraoPara(int? sm) => MultiplicadoresPara(sm)[0];
+
     /// <summary>Acima de 4x quem chama de experimental e o autor do patch, nao nos. A interface
     /// marca a fronteira; ela nao e um bloqueio.</summary>
     public const int MaxSafeMultiplier = 4;

@@ -1141,22 +1141,14 @@
                                                 BorderThickness="1" Padding="2"
                                                 VerticalAlignment="Center" Margin="8,0,0,0">
                                             <StackPanel Orientation="Horizontal">
-                                                <Button Content="2x" Padding="10,5"
-                                                        Command="{Binding MfgMultiplierCommand}"
-                                                        CommandParameter="2" AutomationProperties.Name="2x">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button" BasedOn="{StaticResource SegBtn}">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding MfgIs2x}" Value="True">
-                                                                    <Setter Property="Background" Value="#A03D6B"/>
-                                                                    <Setter Property="Foreground" Value="White"/>
-                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
+                                                <!-- Nao ha 2x aqui, e nao ha o teto de fabrica da
+                                                     placa: o seletor mostra o que o PATCH
+                                                     acrescenta. Numa RTX 50 o jogo ja faz ate 4x
+                                                     pelo menu dele, entao 3x e 4x somem tambem
+                                                     (ver MfgService.MultiplicadoresPara). Voltar
+                                                     ao de fabrica e desligar o interruptor. -->
                                                 <Button Content="3x" Padding="10,5"
+                                                        Visibility="{Binding MfgOferece3x, Converter={StaticResource BoolToVis}}"
                                                         Command="{Binding MfgMultiplierCommand}"
                                                         CommandParameter="3" AutomationProperties.Name="3x">
                                                     <Button.Style>
@@ -1172,6 +1164,7 @@
                                                     </Button.Style>
                                                 </Button>
                                                 <Button Content="4x" Padding="10,5"
+                                                        Visibility="{Binding MfgOferece4x, Converter={StaticResource BoolToVis}}"
                                                         Command="{Binding MfgMultiplierCommand}"
                                                         CommandParameter="4" AutomationProperties.Name="4x">
                                                     <Button.Style>
