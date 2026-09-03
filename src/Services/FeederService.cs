@@ -41,8 +41,6 @@ public static class FeederService
     public const string Addon32File = "dlss5-feed.addon32";
     public const string Host64Exe = "dlss5-feed-host64.exe";
     public const string Host64Dir = "host64";
-    private const string Addon32Url = "https://github.com/jlrouzies-fr/DLSS5-Feeder/releases/latest/download/dlss5-feed.addon32";
-    private const string Host64Url = "https://github.com/jlrouzies-fr/DLSS5-Feeder/releases/latest/download/dlss5-feed-host64.exe";
 
     // Propriedades calculadas, e nao inicializadas: campo estatico e inicializado na ordem de
     // declaracao, e estes vem antes de LibraryDir no arquivo. Como inicializados, recebiam
@@ -100,10 +98,23 @@ public static class FeederService
         "include/lumenite_Projections.fxh", "include/lumenite_ColorManagement.fxh",
     ];
 
-    // latest/download em vez de uma tag fixa: o Feeder acabou de nascer (v0.1.0) e vai mudar
-    // rapido. Fixar versao aqui congelaria o launcher numa build antiga do dia da integracao.
-    private const string AddonUrl = "https://github.com/jlrouzies-fr/DLSS5-Feeder/releases/latest/download/dlss5-feed.addon64";
-    private const string FxUrl = "https://github.com/jlrouzies-fr/DLSS5-Feeder/releases/latest/download/DLSS5_Feed.fx";
+    /// <summary>
+    /// O Feeder vem da ultima release, e desde a v0.8.0 ela publica UM zip — nao mais os arquivos
+    /// soltos.
+    ///
+    /// As quatro URLs `releases/latest/download/&lt;arquivo&gt;` que este servico usava responderam 404
+    /// a partir dai: o redirecionamento para a tag mais nova funciona, o arquivo dentro dela nao
+    /// existe mais. O efeito era o caminho do Feeder inteiro morto em maquina limpa —
+    /// "Dlss5_Blocked_NoFeeder" em todo jogo sem DLSS — enquanto quem ja tinha a biblioteca de
+    /// antes da v0.8.0 continuava funcionando e nao via nada.
+    ///
+    /// O pacote traz as quatro pecas de uma vez, o que resolve tambem um risco que as URLs
+    /// soltas tinham: o addon32 e o host64 falam um protocolo de pipe entre si, e baixa-los de
+    /// releases diferentes (uma entre um download e o outro) os deixaria incompativeis.
+    /// </summary>
+    private const string FeederRepo = "jlrouzies-fr/DLSS5-Feeder";
+    private static readonly System.Text.RegularExpressions.Regex FeederZipAsset =
+        new(@"^DLSS5-Feeder-[0-9][0-9A-Za-z.\-]*\.zip$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
     // O instalador do ReShade poe o dxgi.dll e nada mais: a pasta Shaders fica vazia. O
     // DLSS5_Feed.fx abre com #include "ReShade.fxh" e falha a compilar sem ele — e o sintoma nao
@@ -274,14 +285,67 @@ public static class FeederService
         Directory.CreateDirectory(LibraryDir);
         progress?.Report(L.T("Feeder_Fetching32"));
         using var http = NewClient();
-        if (!File.Exists(LibraryAddon32)) await BaixarAsync(http, Addon32Url, LibraryAddon32, ct);
-        if (!File.Exists(LibraryHost64)) await BaixarAsync(http, Host64Url, LibraryHost64, ct);
+        var pacote = await AbrirPacoteAsync(http, progress, ct);
+        try
+        {
+            if (!File.Exists(LibraryAddon32)) TirarDoPacote(pacote, Addon32File, LibraryAddon32);
+            if (!File.Exists(LibraryHost64)) TirarDoPacote(pacote, Host64Exe, LibraryHost64);
+        }
+        finally { ApagarPacote(pacote); }
         if (!EhPe(LibraryAddon32) || !EhPe(LibraryHost64))
         {
             TryDelete(LibraryAddon32);
             TryDelete(LibraryHost64);
             throw new InvalidOperationException(L.T("Feeder_BadDownload"));
         }
+    }
+
+    /// <summary>
+    /// Baixa o pacote da ultima release e o abre numa pasta temporaria da biblioteca.
+    ///
+    /// O asset e resolvido pela pagina de release (sem cota de API) e por PADRAO de nome: o
+    /// projeto ja mudou de esquema uma vez, e fixar `DLSS5-Feeder-0.12.0.zip` seria repetir o
+    /// erro que trouxe a gente ate aqui. `releases/latest` exclui pre-release, entao um beta nao
+    /// entra sozinho.
+    /// </summary>
+    private static async Task<string> AbrirPacoteAsync(HttpClient http, IProgress<string>? progress,
+                                                       CancellationToken ct)
+    {
+        var url = await GitHubReleaseService.LatestAssetAsync(http, FeederRepo, FeederZipAsset, ct)
+                  ?? throw new InvalidOperationException(L.T("Feeder_BadDownload"));
+        var zip = Path.Combine(LibraryDir, "pacote.zip");
+        var pasta = Path.Combine(LibraryDir, "pacote");
+        try { if (Directory.Exists(pasta)) Directory.Delete(pasta, recursive: true); } catch { }
+        await BaixarAsync(http, url, zip, ct);
+        try
+        {
+            System.IO.Compression.ZipFile.ExtractToDirectory(zip, pasta, overwriteFiles: true);
+        }
+        catch (Exception ex)
+        {
+            TryDelete(zip);
+            throw new InvalidOperationException(L.T("Feeder_BadDownload"), ex);
+        }
+        TryDelete(zip);
+        Log.Info($"feeder: pacote aberto de {url}");
+        return pasta;
+    }
+
+    /// <summary>Copia um arquivo do pacote para a biblioteca, achando-o pelo NOME em qualquer
+    /// nivel: o zip organiza em subpastas (host64\, reshade-shaders\Shaders\) e o layout ja
+    /// mudou entre versoes.</summary>
+    private static void TirarDoPacote(string pasta, string nome, string destino)
+    {
+        var achado = Directory.EnumerateFiles(pasta, nome, SearchOption.AllDirectories).FirstOrDefault()
+                     ?? throw new InvalidOperationException(L.T("Feeder_BadDownload"));
+        Directory.CreateDirectory(Path.GetDirectoryName(destino)!);
+        File.Copy(achado, destino, overwrite: true);
+    }
+
+    private static void ApagarPacote(string pasta)
+    {
+        try { if (Directory.Exists(pasta)) Directory.Delete(pasta, recursive: true); }
+        catch (Exception ex) { Log.Warn($"feeder pacote: {ex.Message}"); }
     }
 
     /// <summary>
@@ -465,10 +529,15 @@ public static class FeederService
         if (!File.Exists(LibraryAddon) || !File.Exists(LibraryFx))
         {
             progress?.Report(L.T("Feeder_Fetching"));
-            await BaixarAsync(http, AddonUrl, LibraryAddon, ct);
-            await BaixarAsync(http, FxUrl, LibraryFx, ct);
-            // O addon e um PE; o .fx e texto. Um servidor que devolve pagina de erro com 200
-            // passaria pelos dois sem isto.
+            var pacote = await AbrirPacoteAsync(http, progress, ct);
+            try
+            {
+                TirarDoPacote(pacote, AddonFile, LibraryAddon);
+                TirarDoPacote(pacote, FxFile, LibraryFx);
+            }
+            finally { ApagarPacote(pacote); }
+            // O addon e um PE; o .fx e texto. Um pacote com o arquivo errado dentro passaria
+            // pelos dois sem isto.
             if (new FileInfo(LibraryAddon).Length < 4096 || !EhPe(LibraryAddon))
             {
                 File.Delete(LibraryAddon);
@@ -548,10 +617,23 @@ public static class FeederService
         if (!File.Exists(LibraryAddon)) return -1;
         using var http = NewClient();
 
-        var addon = await http.GetByteArrayAsync(AddonUrl, ct);
+        // Do mesmo pacote que o FetchAsync usa: as pecas do Feeder tem de vir todas da mesma
+        // release (ver o comentario de FeederRepo).
+        var pacote = await AbrirPacoteAsync(http, progress, ct);
+        byte[] addon, fx;
+        try
+        {
+            var doPacote = Directory.EnumerateFiles(pacote, AddonFile, SearchOption.AllDirectories).FirstOrDefault();
+            var fxNoPacote = Directory.EnumerateFiles(pacote, FxFile, SearchOption.AllDirectories).FirstOrDefault();
+            if (doPacote is null || fxNoPacote is null)
+                throw new InvalidOperationException(L.T("Feeder_BadDownload"));
+            addon = await File.ReadAllBytesAsync(doPacote, ct);
+            fx = await File.ReadAllBytesAsync(fxNoPacote, ct);
+        }
+        finally { ApagarPacote(pacote); }
+
         if (addon.Length < 4096 || addon[0] != (byte)'M' || addon[1] != (byte)'Z')
             throw new InvalidOperationException(L.T("Feeder_BadDownload"));
-        var fx = await http.GetByteArrayAsync(FxUrl, ct);
         if (!System.Text.Encoding.ASCII.GetString(fx).Contains("texMotionVectors", StringComparison.Ordinal))
             throw new InvalidOperationException(L.T("Feeder_MvNoProvider"));
 

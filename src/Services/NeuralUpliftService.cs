@@ -651,8 +651,16 @@ public static class NeuralUpliftService
     /// provava a autoria de UMA versao — e a alternativa real nao era "hash de todas", era ficar
     /// parado numa de agosto.
     /// </summary>
-    private const string BridgeUrl =
-        "https://github.com/NIGos/dlss5-dx11-bridge/releases/latest/download/dlss5-dx11-bridge.addon64";
+    /// <remarks>
+    /// E o REPOSITORIO que e fixado, nao o nome do arquivo. A URL anterior apontava direto para
+    /// `releases/latest/download/dlss5-dx11-bridge.addon64` e passou a responder 404 quando o
+    /// projeto virou `dlss5-bridge` e o asset foi renomeado junto — o log desta maquina tem
+    /// dezenas de "atualizar ponte: 404". Resolver o asset pela pagina de release sobrevive ao
+    /// proximo rename; o padrao aceita os dois nomes.
+    /// </remarks>
+    private const string BridgeRepo = "NIGos/dlss5-bridge";
+    private static readonly System.Text.RegularExpressions.Regex BridgeAsset =
+        new(@"^dlss5-(dx11-)?bridge\.addon64$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
     public static string LibraryBridge { get; } = Path.Combine(LibraryDir, BridgeFile);
 
@@ -764,7 +772,9 @@ public static class NeuralUpliftService
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-        var bytes = await http.GetByteArrayAsync(BridgeUrl, ct);
+        var url = await GitHubReleaseService.LatestAssetAsync(http, BridgeRepo, BridgeAsset, ct)
+                  ?? throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", BridgeRepo));
+        var bytes = await http.GetByteArrayAsync(url, ct);
         if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
             throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", bytes.Length));
         var texto = System.Text.Encoding.ASCII.GetString(bytes);
@@ -840,11 +850,16 @@ public static class NeuralUpliftService
         Log.Info($"dlss5 bridge deployed to {targetDir}");
     }
 
-    private const string CommunityAddonUrl =
-        "https://github.com/zhubaohi/FF7R-DLSS5/releases/download/v1/renodx-dlss5-v2.5.addon64";
-    private const string CommunityAddonSha256 =
-        "87AEF9DDD937C7241E6BF8D8EFEA0045D63559135E254C60DAB316DB3D3A4AEE";
-    private const long CommunityAddonLength = 391168;
+    /// <summary>
+    /// O addon embutido no proprio launcher: build 4.70, o mesmo que o mirror do RHI publica.
+    ///
+    /// Ver o comentario do EmbeddedResource no csproj para o porque de ele vir embutido. O hash
+    /// esta aqui para o recurso ser conferido ao sair do executavel — um recurso embutido nao
+    /// atravessa a rede, mas atravessa uma edicao errada deste repositorio.
+    /// </summary>
+    private const string EmbeddedAddonSha256 =
+        "D5ADF82EB44B065F4C590AC91FE824BAB07AFEA0EB9F994BDE936710C8593952";
+    private const long EmbeddedAddonLength = 1732608;
 
     /// <summary>
     /// Put the launcher's own copy of the generic addon into the library.
@@ -907,40 +922,52 @@ public static class NeuralUpliftService
         return null;
     }
 
-    public static async Task<bool> FetchAddonAsync(IProgress<string>? progress = null,
-                                                   CancellationToken ct = default)
+    /// <summary>
+    /// Poe o addon embutido na biblioteca. Sem rede, sem passo manual.
+    ///
+    /// O nome continua sendo async e "Fetch" porque e o que a cadeia inteira chama; o que mudou e
+    /// que nao ha mais nada a buscar. Antes isto baixava de uma URL fixada que hoje responde 404
+    /// — e o launcher inteiro parava ali, com "falta o addon na biblioteca", sem que o usuario
+    /// tivesse o que fazer a respeito.
+    /// </summary>
+    public static Task<bool> FetchAddonAsync(IProgress<string>? progress = null,
+                                             CancellationToken ct = default)
     {
-        // A copy already here won — whether the user put it there or a previous fetch did.
-        if (File.Exists(LibraryAddon)) return false;
+        // A copy already here won — whether the user put it there or a previous extraction did.
+        if (File.Exists(LibraryAddon)) return Task.FromResult(false);
 
         try
         {
             progress?.Report(L.T("Neural_FetchingAddon"));
-            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-            var bytes = await http.GetByteArrayAsync(CommunityAddonUrl, ct);
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var nome = asm.GetManifestResourceNames()
+                          .FirstOrDefault(n => n.EndsWith("renodx-dlss5.addon64", StringComparison.OrdinalIgnoreCase))
+                       ?? throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", "recurso ausente"));
+            using var s = asm.GetManifestResourceStream(nome)!;
+            using var ms = new MemoryStream();
+            s.CopyTo(ms);
+            var bytes = ms.ToArray();
 
-            // Nothing signs this file, so the bytes are the whole guarantee. A mismatch is not a
-            // warning to log and continue past: it means the thing on the other end is not what
-            // this was tested against, and installing it would put an unknown DLL in a game.
-            if (bytes.Length != CommunityAddonLength)
+            // Nada assina este arquivo, entao os bytes sao a garantia inteira — e um recurso
+            // embutido tambem pode ter sido trocado por engano numa edicao do repositorio.
+            if (bytes.Length != EmbeddedAddonLength)
                 throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", bytes.Length));
             var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
-            if (!hash.Equals(CommunityAddonSha256, StringComparison.OrdinalIgnoreCase))
+            if (!hash.Equals(EmbeddedAddonSha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", hash));
             if (!AddonSupportsNeuralRendering2(bytes))
                 throw new InvalidOperationException(L.T("Neural_Import_NotNrAddon"));
 
             Directory.CreateDirectory(LibraryDir);
-            await File.WriteAllBytesAsync(LibraryAddon, bytes, ct);
-            // Stamped so a later launcher build may replace it; a hand import clears the stamp.
-            await File.WriteAllTextAsync(AddonStamp, CommunityAddonSha256, ct);
-            Log.Info("neural addon fetched from the community release and verified by hash");
-            return true;
+            File.WriteAllBytes(LibraryAddon, bytes);
+            // Carimbado para um launcher futuro poder substituir; uma importacao manual limpa o
+            // carimbo e a copia do usuario passa a mandar.
+            File.WriteAllText(AddonStamp, EmbeddedAddonSha256);
+            Log.Info("neural addon: copia embutida (4.70) posta na biblioteca e conferida por hash");
+            return Task.FromResult(true);
         }
-        catch (OperationCanceledException) { throw; }
         catch (InvalidOperationException) { throw; }
-        catch (Exception ex) { Log.Warn($"neural addon fetch: {ex.Message}"); return false; }
+        catch (Exception ex) { Log.Warn($"neural addon embutido: {ex.Message}"); return Task.FromResult(false); }
     }
 
     private static bool AddonSupportsNeuralRendering2(byte[] bytes) => IndexOf(bytes, Marker) >= 0;
@@ -1018,16 +1045,24 @@ public static class NeuralUpliftService
             && !n.Contains("GTX", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
+        /// A arquitetura CUDA desta placa (120 Blackwell, 89 Ada, 86 Ampere, 75 Turing).
+        ///
+        /// E por este numero que o runtime e escolhido, e nao por "e Blackwell?": os builds da
+        /// comunidade cobrem conjuntos diferentes de arquiteturas, e o do proprio NVIDIA cobre
+        /// so `sm_120`. Ver <see cref="CudaFatbin"/> e DlssIndexService.NeuralCandidates.
+        /// </summary>
+        public int? Sm => CudaFatbin.SmDoNome(GpuName);
+
+        /// <summary>
         /// Quanto o pass custa nesta placa. O modelo e FP8 com kernels de Blackwell; fora dela o
-        /// build `.SF` usa binarios patcheados (RTX 40) ou um caminho FP16 (RTX 20/30), e o preco
-        /// sobe bastante. Dizer isso antes evita a conclusao errada de "instalei e ficou lento".
+        /// build da comunidade usa kernels retargetados (RTX 40) ou um caminho FP16 (RTX 20/30),
+        /// e o preco sobe bastante. Dizer isso antes evita a conclusao errada de "instalei e
+        /// ficou lento".
         /// </summary>
         public string? CustoEstimado =>
             !TemTensorCore ? null
-            : Blackwell ? "RTX 50"
-            : GpuName?.Contains("RTX 40", StringComparison.OrdinalIgnoreCase) == true
-              || GpuName?.Contains("RTX 4", StringComparison.OrdinalIgnoreCase) == true ? "RTX 40"
-            : "RTX 20/30";
+            : Sm switch { >= 120 => "RTX 50", 89 => "RTX 40", 86 => "RTX 30", 75 => "RTX 20", _ => null }
+              ?? (Blackwell ? "RTX 50" : "RTX 20/30");
 
         public bool Ready => GpuOk && DriverBranch >= MinDriverBranch && RuntimeInLibrary;
 
@@ -1037,6 +1072,12 @@ public static class NeuralUpliftService
             !GpuOk ? L.T("Neural_Blocked_Gpu", GpuName ?? "?")
             : DriverBranch < MinDriverBranch ? L.T("Neural_Blocked_Driver", DriverBranch, MinDriverBranch)
             : !RuntimeInLibrary ? L.T("Neural_Blocked_Runtime", RuntimeFile)
+            // O runtime esta na biblioteca, mas sem kernel para esta placa: a cadeia ficaria
+            // verde e o pass nunca rodaria. E o unico bloqueio que so aparece DEPOIS de o
+            // arquivo existir, e por isso vem por ultimo.
+            : Sm is { } meu && RuntimeServeAPlaca(meu) == false
+              ? L.T("Neural_Blocked_RuntimeArch", CudaFatbin.Rotulo(meu),
+                    ListarArquiteturas(ArquiteturasDoRuntime()))
             : null;
     }
 
@@ -1643,7 +1684,11 @@ public static class NeuralUpliftService
     private static readonly Dictionary<string, string> BuildsDaComunidade =
         new(StringComparer.OrdinalIgnoreCase)
         {
+            // Universais (sm_75/86/89/120): as unicas builds que rodam em RTX 20 e 30.
             ["310.8.SF-v2"] = "6EB209E764F39872625DEBD6ABAF45E2BB6322F6F270F781F70C059AE30B3927",
+            ["310.8.SF"] = "4C5BD1171C7336B4B04FB394DE51DA285AB6EAD6F922D7AFDEC163F71C319D74",
+            // Kernels retargetados para Ada (sm_89 + sm_120), sem o custo do caminho FP16.
+            ["310.8.0-RTX40"] = "4B8D19BC3EFF58A084F5ECA7489C921501C203450169FB82FF4F649A4482BA05",
         };
 
     /// <summary>Origem fixada no RHI + SHA-256 conferido. Ver <see cref="BuildsDaComunidade"/>.
@@ -1685,17 +1730,53 @@ public static class NeuralUpliftService
     {
         if (File.Exists(LibraryRuntime)) return null;
 
-        // O build tem de caber na GPU desta maquina. O modelo original e sm_120 (Blackwell); os
-        // builds `.SF` do ShortFuse acrescentam binarios para RTX 40 e um caminho FP16 para
-        // RTX 20/30. Baixar o errado dava o pior desfecho possivel: 158 MB, instalacao limpa, e
-        // o pass sem rodar na placa do usuario.
-        var blackwell = IsBlackwell(ProbeHost().GpuName);
-        var entry = index.NeuralFor(blackwell) ?? index.Newest(DlssIndexService.KindNeural);
-        if (entry is null) { Log.Warn("neural runtime: index has no dlssnr entry"); return null; }
-        Log.Info($"neural runtime: escolhido {entry.Version} (blackwell={blackwell})");
+        // O build tem de caber na GPU desta maquina, e "caber" nao e opiniao: e a lista de
+        // arquiteturas CUDA dentro do arquivo. O modelo da NVIDIA traz `sm_120` e mais nada, e
+        // numa RTX 20/30/40 ele instala inteiro e nao roda — 158 MB, cadeia verde, tela sem
+        // mudanca e log sem uma linha de erro. Era esse o "so funciona em RTX 50".
+        //
+        // Por isso os candidatos vem em lista: a preferencia por geracao decide a ORDEM, o
+        // fatbin do arquivo baixado decide o RESULTADO, e um build que nao sirva cede a vez ao
+        // proximo em vez de virar uma instalacao morta.
+        var host = ProbeHost();
+        var sm = host.Sm;
+        var candidatos = index.NeuralCandidates(sm);
+        if (candidatos.Count == 0) { Log.Warn("neural runtime: index has no dlssnr entry"); return null; }
+        Log.Info($"neural runtime: placa {host.GpuName ?? "?"} (sm_{sm?.ToString() ?? "?"}); "
+                 + $"candidatos: {string.Join(" > ", candidatos.Select(c => c.Version))}");
 
-        try
+        InvalidOperationException? ultimaRecusa = null;
+        foreach (var entry in candidatos)
         {
+            try
+            {
+                var v = await TentarRuntimeAsync(entry, sm, progress, ct);
+                if (v is not null) return v;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (InvalidOperationException ex)
+            {
+                // Recusa com motivo (assinatura, hash, arquitetura): guarda e tenta o proximo —
+                // a lista existe justamente para isso.
+                Log.Warn($"neural runtime {entry.Version}: {ex.Message}");
+                ultimaRecusa = ex;
+            }
+            catch (Exception ex) { Log.Warn($"neural runtime {entry.Version}: {ex.Message}"); }
+        }
+        if (ultimaRecusa is not null) throw ultimaRecusa;
+        return null;
+    }
+
+    /// <summary>
+    /// Baixa UM candidato e o aceita, ou explica por que nao. Devolve a versao aceita, ou null
+    /// quando o arquivo nem chegou (falha de rede, arquivo ausente no pacote).
+    /// </summary>
+    private static async Task<string?> TentarRuntimeAsync(DlssIndexService.Entry entry, int? sm,
+                                                          IProgress<string>? progress,
+                                                          CancellationToken ct)
+    {
+        {
+            Log.Info($"neural runtime: tentando {entry.Version}");
             var dir = await DlssIndexService.FetchAsync(entry, progress, ct);
             var dll = Directory.EnumerateFiles(dir, RuntimeFile, SearchOption.AllDirectories).FirstOrDefault();
             if (dll is null) { Log.Warn($"neural runtime: {RuntimeFile} not in the archive"); return null; }
@@ -1735,20 +1816,92 @@ public static class NeuralUpliftService
             if (new FileInfo(dll).Length < 32L * 1024 * 1024)
                 throw new InvalidOperationException(L.T("Neural_Import_TooSmall"));
 
+            // A ultima palavra e do arquivo. Assinatura e hash dizem de ONDE ele veio; so os
+            // registros fatbin dizem se ha codigo para ESTA placa. Um build sem o `sm` dela
+            // instala sem erro nenhum e nunca roda — o modo de falha que este projeto inteiro
+            // existe para nao repetir.
+            var archs = CudaFatbin.Arquiteturas(dll);
+            if (sm is { } meu && archs.Count > 0 && !archs.Contains(meu))
+                throw new InvalidOperationException(L.T("Neural_Fetch_WrongArch",
+                    entry.Version, CudaFatbin.Rotulo(meu), ListarArquiteturas(archs)));
+            if (archs.Count == 0)
+                Log.Warn($"neural runtime {entry.Version}: nao consegui ler as arquiteturas; seguindo pela origem");
+
             Directory.CreateDirectory(LibraryDir);
             File.Copy(dll, LibraryRuntime, overwrite: true);
+            GravarArquiteturas(LibraryRuntime, archs);
             try
             {
                 if (motivoComunidade is not null) File.WriteAllText(RuntimeCustomMark, motivoComunidade);
                 else if (File.Exists(RuntimeCustomMark)) File.Delete(RuntimeCustomMark);
             }
             catch (Exception ex) { Log.Warn($"neural runtime mark: {ex.Message}"); }
-            Log.Info($"neural runtime fetched from the RHI index ({entry.Version})");
+            Log.Info($"neural runtime fetched from the RHI index ({entry.Version}; "
+                     + $"arquiteturas: {ListarArquiteturas(archs)})");
             return entry.Version;
         }
-        catch (OperationCanceledException) { throw; }
-        catch (InvalidOperationException) { throw; }
-        catch (Exception ex) { Log.Warn($"neural runtime fetch: {ex.Message}"); return null; }
+    }
+
+    /// <summary>As arquiteturas de um runtime, em texto, para log e mensagem.</summary>
+    private static string ListarArquiteturas(IReadOnlySet<int> archs) =>
+        archs.Count == 0 ? "?" : string.Join(", ", archs.OrderBy(a => a).Select(a => $"sm_{a} ({CudaFatbin.Rotulo(a)})"));
+
+    /// <summary>Onde fica a lista de arquiteturas do runtime da biblioteca, para nao varrer
+    /// 165 MB a cada leitura de tela.</summary>
+    private static string RuntimeArchMark => LibraryRuntime + ".sm";
+
+    private static void GravarArquiteturas(string dll, IReadOnlySet<int> archs)
+    {
+        try
+        {
+            if (archs.Count == 0) { if (File.Exists(RuntimeArchMark)) File.Delete(RuntimeArchMark); return; }
+            // O tamanho entra junto: trocado o arquivo por fora, a marca deixa de valer.
+            File.WriteAllText(RuntimeArchMark,
+                new FileInfo(dll).Length + ":" + string.Join(",", archs.OrderBy(a => a)));
+        }
+        catch (Exception ex) { Log.Warn($"neural runtime arch mark: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// As arquiteturas do runtime que esta na biblioteca — da marca, quando ela descreve este
+    /// arquivo; do proprio arquivo quando nao. Conjunto vazio significa "nao sei", e quem chama
+    /// nao deve concluir nada dai.
+    /// </summary>
+    public static IReadOnlySet<int> ArquiteturasDoRuntime()
+    {
+        if (!File.Exists(LibraryRuntime)) return new HashSet<int>();
+        try
+        {
+            var tamanho = new FileInfo(LibraryRuntime).Length;
+            if (File.Exists(RuntimeArchMark))
+            {
+                var partes = File.ReadAllText(RuntimeArchMark).Split(':');
+                if (partes.Length == 2 && long.TryParse(partes[0], out var t) && t == tamanho)
+                    return partes[1].Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(s => int.TryParse(s, out var n) ? n : -1)
+                                    .Where(n => n > 0).ToHashSet();
+            }
+        }
+        catch (Exception ex) { Log.Warn($"neural runtime arch read: {ex.Message}"); }
+
+        var archs = CudaFatbin.Arquiteturas(LibraryRuntime);
+        GravarArquiteturas(LibraryRuntime, archs);
+        return archs;
+    }
+
+    /// <summary>
+    /// O runtime da biblioteca tem codigo para esta placa? `null` = nao deu para saber.
+    ///
+    /// Existe porque a copia na biblioteca pode ter vindo de outro lugar que nao o indice — o
+    /// usuario importou pela tela, ou uma versao anterior do launcher baixou o build da NVIDIA
+    /// para uma placa que nao e Blackwell. Nesses casos o arquivo esta la, a cadeia fica verde,
+    /// e o pass nunca roda.
+    /// </summary>
+    public static bool? RuntimeServeAPlaca(int? sm)
+    {
+        if (sm is not { } meu) return null;
+        var archs = ArquiteturasDoRuntime();
+        return archs.Count == 0 ? null : archs.Contains(meu);
     }
 
     /// <summary>

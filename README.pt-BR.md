@@ -51,12 +51,20 @@ explica o porquê e o que conferir.
 O Neural Rendering roda em tensor core, então **toda GeForce RTX serve — séries 20, 30, 40 e 50.**
 O launcher escolhe sozinho o build certo para a sua placa:
 
-| Placa | Build que o launcher instala | Custo do passe |
-| --- | --- | --- |
-| 🟢 RTX 50 | o modelo FP8 da própria NVIDIA, assinado por ela | nativo |
-| 🟢 RTX 40 | rebuild `.SF` da comunidade (kernels patcheados), origem + SHA-256 conferidos | maior |
-| 🟢 RTX 20 / 30 | rebuild `.SF` da comunidade, caminho FP16 | bem maior — a interface avisa |
-| ⛔ GTX / GT / MX, AMD, Intel | sem tensor core | o launcher diz isso **antes** de baixar 158 MB |
+| Placa | Build que o launcher instala | Kernels que ele traz | Custo do passe |
+| --- | --- | --- | --- |
+| 🟢 RTX 50 | `310.8.0` — o modelo FP8 da própria NVIDIA, assinado | `sm_120` | nativo |
+| 🟢 RTX 40 | `310.8.0-RTX40` — kernels retargetados para Ada | `sm_89`, `sm_120` | maior |
+| 🟢 RTX 30 | `310.8.SF-v2` — rebuild da comunidade, caminho FP16 | `sm_75`, `86`, `89`, `120` | bem maior — a interface avisa |
+| 🟢 RTX 20 | o mesmo build universal | `sm_75`, `86`, `89`, `120` | bem maior |
+| ⛔ GTX / GT / MX, AMD, Intel | nenhum | — | o launcher diz isso **antes** de baixar 158 MB |
+
+**Quem decide é o arquivo, não uma tabela.** O runtime é uma biblioteca CUDA: o código de GPU vai
+em registros `fatbin`, um por arquitetura. O build da própria NVIDIA traz `sm_120` e mais nada,
+então numa RTX 20/30/40 ele instala inteiro e **nunca roda** — sem erro do add-on, do jogo ou do
+log. O launcher lê esses registros dentro do arquivo baixado (70 ms em 165 MB): se o build não
+tem kernel para a sua placa, ele passa para o próximo candidato em vez de deixar 158 MB que não
+rodam, e um runtime que já esteja na biblioteca e não sirva vira um bloqueio com o motivo escrito.
 
 ---
 
@@ -220,8 +228,8 @@ assinado da NVIDIA é usado.
 A mesma regra em tudo. O ReShade é conferido contra um certificado fixado antes de ser extraído (e
 o ZIP anexado ao setup dele está coberto por essa assinatura — um byte alterado lá dentro muda o
 status para HashMismatch). Toda outra peça vem do projeto que a fez, na hora da instalação, por
-HTTPS para uma lista fechada de hosts. A única coisa embutida no exe é o par de 124 KB das metades
-com transporte Vulkan.
+HTTPS para uma lista fechada de hosts. O que viaja dentro do exe — o add-on neural de 1,7 MB e o
+par de 124 KB das metades com transporte Vulkan — é conferido por SHA-256 ao sair de lá.
 
 ### 6. 🔍 A cadeia é visível, o plano é imprimível, as decisões são testáveis
 
@@ -253,8 +261,11 @@ Tudo vem dos projetos que fizeram cada peça, na hora da instalação:
 | dgVoodoo2 | [dege-diosg/dgVoodoo2](https://github.com/dege-diosg/dgVoodoo2) |
 | OptiScaler | [optiscaler/OptiScaler](https://github.com/optiscaler/OptiScaler) |
 
-A única coisa embutida no exe é o par de metades de 32 bits com o transporte Vulkan (124 KB),
-construído do fonte MIT do Feeder — elas não existem em release público.
+Duas coisas viajam dentro do exe: o **add-on neural** (1,7 MB, build 4.70), para não haver nada a
+baixar nem arquivo a largar em pasta — a URL de onde ele vinha respondeu 404 quando aquele release
+trocou de asset, e o arquivo não tem casa estável em lugar nenhum — e o par de metades de 32 bits
+com o transporte Vulkan (124 KB), construído do fonte MIT do Feeder, que não existem em release
+público. Um add-on mais novo que você já tenha continua ganhando do embutido.
 
 ## 🧰 Também faz
 

@@ -1876,7 +1876,7 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <comment>{0} = branch instalado, {1} = branch minimo.</comment>
   </data>
   <data name="Neural_Blocked_Gpu" xml:space="preserve">
-    <value>Precisa de uma GeForce RTX série 50. A placa encontrada aqui foi: {0}. Os kernels do modelo só existem compilados para Blackwell (sm_120) — driver novo não resolve.</value>
+    <value>Precisa de uma placa NVIDIA RTX — qualquer geração, da 20 à 50. A placa encontrada aqui foi: {0}. O modelo roda em tensor core, que GTX, GT e MX não têm, e driver nenhum acrescenta.</value>
     <comment>{0} = nome da placa.</comment>
   </data>
   <data name="Neural_Blocked_ReShade" xml:space="preserve">
@@ -1885,6 +1885,9 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Neural_Blocked_Runtime" xml:space="preserve">
     <value>Falta o {0}. Ele não vem em driver nem no SDK público da NVIDIA, então é tirado de um jogo que o distribui ou baixado do índice do RHI — nos dois casos só é instalado se a NVIDIA assinou.</value>
     <comment>{0} = nome do arquivo.</comment>
+  </data>
+  <data name="Neural_Blocked_RuntimeArch" xml:space="preserve">
+    <value>O runtime neural que está na biblioteca não tem código para a sua placa ({0}). Ele atende: {1}. Remova-o nas Configurações para o launcher baixar o build feito para a sua GPU.</value>
   </data>
   <data name="Neural_CompilerUpgraded" xml:space="preserve">
     <value>O jogo trazia um compilador de shaders de 2013 ({0}); trocado pelo do Windows ({1}) para o passe neural conseguir compilar. O original foi guardado.</value>
@@ -1899,7 +1902,7 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Copiando o runtime de Ray Reconstruction…</value>
   </data>
   <data name="Neural_Fetch_BadAddon" xml:space="preserve">
-    <value>O addon baixado não corresponde aos bytes esperados ({0}). Ele não foi instalado.</value>
+    <value>O add-on não corresponde aos bytes esperados ({0}). Ele não foi instalado.</value>
     <comment>{0} = hash ou tamanho recebido.</comment>
   </data>
   <data name="Neural_Fetch_BadOrigin" xml:space="preserve">
@@ -1915,12 +1918,15 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Neural_Fetch_UnknownCommunity" xml:space="preserve">
     <value>"{0}" é um rebuild da comunidade que este launcher ainda não conhece — não tem assinatura da NVIDIA nem hash conferido. Atualize o launcher; recusar 158 MB de código não verificado é a resposta segura aqui.</value>
   </data>
+  <data name="Neural_Fetch_WrongArch" xml:space="preserve">
+    <value>O runtime {0} não traz código para uma {1}. Esse build atende: {2}. Tentando o próximo.</value>
+  </data>
   <data name="Neural_Fetched" xml:space="preserve">
     <value>Runtime neural {0} baixado e verificado.</value>
     <comment>{0} = versão, ex. 310.8.0.</comment>
   </data>
   <data name="Neural_FetchingAddon" xml:space="preserve">
-    <value>Baixando o addon neural…</value>
+    <value>Instalando o add-on neural que vem junto com o launcher…</value>
   </data>
   <data name="Neural_Host64Deployed" xml:space="preserve">
     <value>Addon e runtimes copiados para o processo auxiliar.</value>

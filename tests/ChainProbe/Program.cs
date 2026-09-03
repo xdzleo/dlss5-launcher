@@ -22,11 +22,53 @@ if (args.Contains("--indice"))
 {
     var idx = new DlssIndexService();
     await idx.LoadAsync();
-    foreach (var bw in new[] { true, false })
+    // Por ARQUITETURA, e nao por "e Blackwell?": e assim que a escolha acontece desde a 1.72.
+    // O build da NVIDIA so tem kernels sm_120, entao numa RTX 20/30/40 ele nao pode sair aqui.
+    foreach (var (sm, placa) in new (int?, string)[]
+             { (120, "RTX 50"), (89, "RTX 40"), (86, "RTX 30"), (75, "RTX 20"), (null, "desconhecida") })
     {
-        var e = idx.NeuralFor(bw);
-        Console.WriteLine($"  blackwell={bw,-5} -> {e?.Version ?? "(nenhum)"}");
-        if (e is not null) Console.WriteLine($"      {e.Url}");
+        var lista = idx.NeuralCandidates(sm);
+        Console.WriteLine($"  {placa,-12} (sm_{sm?.ToString() ?? "?"}) -> {string.Join(" > ", lista.Select(e => e.Version))}");
+    }
+    return 0;
+}
+
+// --ponte baixa a ponte de DX11 para a biblioteca. Existe porque a URL dela ja quebrou uma vez
+// em silencio (o projeto foi renomeado e o asset junto), e o unico jeito de notar era abrir um
+// jogo DX11 com DLSS proprio e ver a cadeia vermelha.
+if (args.Contains("--ponte"))
+{
+    var antes = File.Exists(NeuralUpliftService.LibraryBridge);
+    Console.WriteLine($"  ja na biblioteca: {antes}");
+    try
+    {
+        var veio = await NeuralUpliftService.FetchBridgeAsync(new Progress<string>(s => Console.WriteLine("  " + s)));
+        var ok = File.Exists(NeuralUpliftService.LibraryBridge);
+        Console.WriteLine($"  baixou={veio}  existe={ok}"
+                          + (ok ? $"  ({new FileInfo(NeuralUpliftService.LibraryBridge).Length:N0} bytes)" : ""));
+        return ok ? 0 : 2;
+    }
+    catch (Exception ex) { Console.WriteLine($"  FALHOU: {ex.Message}"); return 2; }
+}
+
+// --sm <nvngx_dlssnr.dll...> diz para QUAIS PLACAS cada build tem kernel, lendo os registros
+// fatbin de dentro do arquivo. E a resposta para "instalei e nada acontece" numa RTX 40: o build
+// da NVIDIA so tem sm_120, e ninguem — nem o addon, nem o jogo, nem o log — diz isso.
+if (args.Contains("--sm"))
+{
+    var placa = NeuralUpliftService.ProbeHost().GpuName;
+    var meuSm = CudaFatbin.SmDoNome(placa);
+    Console.WriteLine($"  esta placa : {placa ?? "?"}  ->  {(meuSm is { } s ? $"sm_{s} ({CudaFatbin.Rotulo(s)})" : "sem sm conhecido")}");
+    foreach (var dll in args.Where(a => !a.StartsWith("--")))
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var archs = CudaFatbin.Arquiteturas(dll);
+        sw.Stop();
+        var lista = archs.Count == 0 ? "(nao consegui ler)"
+                  : string.Join(", ", archs.OrderBy(a => a).Select(a => $"sm_{a} {CudaFatbin.Rotulo(a)}"));
+        var veredito = archs.Count == 0 ? "?" : meuSm is null ? "?" : archs.Contains(meuSm.Value) ? "RODA" : "NAO RODA";
+        Console.WriteLine($"  [{veredito,-8}] {Path.GetFileName(dll),-32} {sw.ElapsedMilliseconds,5} ms  {lista}");
+        Console.WriteLine($"             {dll}");
     }
     return 0;
 }

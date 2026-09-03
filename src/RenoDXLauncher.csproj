@@ -16,7 +16,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>RenoDXLauncher</AssemblyName>
     <RootNamespace>RenoDXLauncher</RootNamespace>
-    <Version>1.71.0</Version>
+    <Version>1.72.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Idiomas que o app fala. Sem esta lista o SDK descarta os satelites de recurso,
          e so o idioma neutro (pt-BR, que fica no proprio assembly) sobreviveria.
@@ -87,10 +87,23 @@
     <EmbeddedResource Include="Assets\Mods.fallback.md" />
     <EmbeddedResource Include="Assets\games-index.fallback.json" />
     <EmbeddedResource Include="Assets\rhi_manifest.fallback.json" />
-    <!-- O addon de Neural Rendering NAO vai embutido. O build proprio foi tentado e nao e
-         distribuivel: ele instala os ganchos de dentro do callback de present, com a thread de
-         render ja dentro das funcoes sendo patcheadas, e o jogo abre em tela preta. O launcher
-         busca o build da comunidade, fixado por hash - ver NeuralUpliftService. -->
+    <!-- O addon de Neural Rendering da comunidade (1,7 MB), build 4.70 do mirror do RHI
+         (github.com/RankFTW/rhi-repo, tag renodx-dlss5-4.70, zip sha256 d6e356d0...a536e6;
+         o .addon64 de dentro tem sha256 D5ADF82E...93952 e FileVersion 0.2026.0828.0517).
+
+         Vai embutido porque a alternativa era pior de duas formas. A URL fixada anterior
+         (zhubaohi/FF7R-DLSS5 v2.5) passou a responder 404 quando aquele release trocou de
+         arquivo, e sem addon na biblioteca a instalacao inteira para com "falta o
+         renodx-neural.addon64" - um instalador de um clique cujo primeiro passo virava "va achar
+         um DLL". E o arquivo nao tem release estavel em lugar nenhum: circula renomeado por
+         Discord e por mirrors que reescrevem o proprio asset.
+
+         Um build proprio nao resolve: foi tentado e nao e distribuivel - ele instala os ganchos
+         de dentro do callback de present, com a thread de render ja dentro das funcoes sendo
+         patcheadas, e o jogo abre em tela preta.
+
+         Uma copia mais nova que o usuario tenha continua ganhando: ver AutoDiscoverAddon. -->
+    <EmbeddedResource Include="Assets\neural\renodx-dlss5.addon64" />
   </ItemGroup>
 
   <!-- O runtime pack traz createdump.exe, o utilitario de dump de processo da Microsoft.

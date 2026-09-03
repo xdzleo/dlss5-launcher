@@ -51,12 +51,21 @@ why and what to check.
 Neural Rendering runs on tensor cores, so **every GeForce RTX qualifies — 20, 30, 40 and 50 series.**
 The launcher picks the right build for your card by itself:
 
-| GPU | Build the launcher installs | Cost of the pass |
-| --- | --- | --- |
-| 🟢 RTX 50 | NVIDIA's own FP8 model, signed by NVIDIA | native |
-| 🟢 RTX 40 | `.SF` community rebuild (patched kernels), origin + SHA-256 verified | higher |
-| 🟢 RTX 20 / 30 | `.SF` community rebuild, FP16 path | much higher — the UI tells you |
-| ⛔ GTX / GT / MX, AMD, Intel | no tensor cores | the launcher says so **before** downloading 158 MB |
+| GPU | Build the launcher installs | Kernels it carries | Cost of the pass |
+| --- | --- | --- | --- |
+| 🟢 RTX 50 | `310.8.0` — NVIDIA's own FP8 model, signed | `sm_120` | native |
+| 🟢 RTX 40 | `310.8.0-RTX40` — kernels re-targeted to Ada | `sm_89`, `sm_120` | higher |
+| 🟢 RTX 30 | `310.8.SF-v2` — community rebuild, FP16 path | `sm_75`, `86`, `89`, `120` | much higher — the UI tells you |
+| 🟢 RTX 20 | same universal build | `sm_75`, `86`, `89`, `120` | much higher |
+| ⛔ GTX / GT / MX, AMD, Intel | none | — | the launcher says so **before** downloading 158 MB |
+
+**The file decides, not a table.** The runtime is a CUDA library: its GPU code sits in `fatbin`
+records, one per architecture. NVIDIA's own build carries `sm_120` and nothing else, so on an
+RTX 20/30/40 it installs completely and never runs — no error from the add-on, the game or the
+log. The launcher reads those records out of the downloaded file (70 ms on 165 MB): if the build
+has no kernel for your card it moves to the next candidate instead of leaving you with 158 MB
+that cannot run, and a runtime already in the library that does not fit your card becomes a
+blocker with the reason spelled out.
 
 ---
 
@@ -249,8 +258,11 @@ Everything is fetched from the projects that made it, at install time:
 | dgVoodoo2 | [dege-diosg/dgVoodoo2](https://github.com/dege-diosg/dgVoodoo2) |
 | OptiScaler | [optiscaler/OptiScaler](https://github.com/optiscaler/OptiScaler) |
 
-The only thing bundled in the exe is the pair of 32-bit halves with the Vulkan transport (124 KB),
-built from the Feeder's MIT source — they exist in no public release.
+Two things ride inside the exe instead: the **neural add-on** (1.7 MB, build 4.70), so nothing has
+to be downloaded or dropped into a folder by hand — the URL it used to come from went 404 when
+that release swapped its asset, and the file has no stable home anywhere — and the pair of 32-bit
+halves with the Vulkan transport (124 KB), built from the Feeder's MIT source, which exist in no
+public release. A newer add-on you already have still wins over the bundled one.
 
 ## 🧰 Also does
 

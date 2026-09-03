@@ -172,49 +172,91 @@ public class DlssIndexService
     }
 
     /// <summary>
-    /// O build de Neural Rendering que ESTA GPU consegue rodar.
+    /// Builds de Neural Rendering que o RHI publica como release mas NAO lista no manifesto.
     ///
-    /// O modelo original (310.8.0) traz kernels sm_120 e roda so em Blackwell — e por isso que o
-    /// launcher recusava RTX 20/30/40 e mandava o usuario achar um arquivo sozinho. O manifesto
-    /// do RHI publica tambem os builds `.SF` (do ShortFuse), que acrescentam binarios patcheados
-    /// para RTX 40 e um caminho FP16 para RTX 20/30.
+    /// O `310.8.0-RTX40` e o caso que motiva isto: ele existe em
+    /// `github.com/RankFTW/rhi-repo/releases/tag/dlssnr-310.8.0-RTX40` desde 30/08 e o
+    /// `dlss_manifest.json` so lista `310.8.0`, `310.8.SF` e `310.8.SF-v2`. Sem ele, uma RTX 40
+    /// so tinha o `.SF` — que roda, mas pelo caminho FP16 pensado para as placas SEM FP8, mais
+    /// caro do que o build com os kernels retargetados para sm_89.
     ///
-    /// A ordenacao normal nunca os escolhia: "310.8.SF-v2" nao e uma versao parseavel, entao
-    /// Version.TryParse falhava e a entrada caia para 0.0, atras do 310.8.0. O resultado era o
-    /// launcher baixar justamente o build que a placa do usuario nao roda.
-    ///
-    /// Em Blackwell qualquer um serve e o mais novo ganha; fora dela, so o `.SF` serve.
+    /// Entram aqui apenas releases do proprio RHI (a origem que
+    /// <see cref="NeuralUpliftService.BuildDaComunidadeConfiavel"/> exige) e cujo SHA-256 do DLL
+    /// esta fixado no launcher. Uma entrada daqui perde para a do manifesto se as duas existirem:
+    /// o manifesto e a fonte viva.
     /// </summary>
-    public Entry? NeuralFor(bool blackwell)
+    private static readonly Entry[] NeuraisNaoListados =
     {
-        if (!_byKind.TryGetValue(KindNeural, out var list) || list.Count == 0) return null;
+        new(KindNeural, "310.8.0-RTX40",
+            "https://github.com/RankFTW/rhi-repo/releases/download/dlssnr-310.8.0-RTX40/nvngx_dlssnr_310.8.0-RTX40.zip"),
+    };
 
-        static int Peso(Entry e) =>
-            e.Version.Contains("SF-v2", StringComparison.OrdinalIgnoreCase) ? 3
-            : e.Version.Contains(".SF", StringComparison.OrdinalIgnoreCase) ? 2
-            : 1;
+    /// <summary>
+    /// Os builds de Neural Rendering que servem a esta placa, do melhor para o pior.
+    ///
+    /// O modelo original (310.8.0) traz kernels `sm_120` e SO ELES — conferido lendo os registros
+    /// fatbin do proprio arquivo (ver <see cref="CudaFatbin"/>). Numa RTX 20/30/40 ele instala
+    /// inteiro e nao roda: nao ha kernel para a placa, e nem o addon nem o jogo nem o log dizem
+    /// isso. Era essa a origem do "so funciona em RTX 50".
+    ///
+    /// O que cada build cobre, medido nos arquivos e nao deduzido do nome:
+    ///
+    ///   310.8.0         sm_120                      RTX 50
+    ///   310.8.0-RTX40   sm_89, sm_120               RTX 40 e 50
+    ///   310.8.SF        sm_75, 86, 89, 120          RTX 20, 30, 40 e 50
+    ///   310.8.SF-v2     sm_75, 86, 89, 120          idem, build mais novo
+    ///
+    /// A preferencia segue a placa: cada geracao ganha o build feito para ela, e os universais
+    /// entram atras como rede de seguranca. Em Blackwell o original vem primeiro porque e o unico
+    /// ASSINADO pela NVIDIA — os outros sao binarios patcheados, aceitos so por origem e hash.
+    ///
+    /// Devolve uma LISTA e nao um vencedor porque a palavra final e do arquivo baixado: quem
+    /// chama confere o fatbin e passa para o proximo candidato se o build nao servir.
+    /// </summary>
+    public IReadOnlyList<Entry> NeuralCandidates(int? sm)
+    {
+        _byKind.TryGetValue(KindNeural, out var doManifesto);
+        var lista = (doManifesto ?? new List<Entry>()).ToList();
+        foreach (var extra in NeuraisNaoListados)
+            if (!lista.Any(e => e.Version.Equals(extra.Version, StringComparison.OrdinalIgnoreCase)))
+                lista.Add(extra);
+        if (lista.Count == 0) return lista;
 
-        var candidatos = blackwell ? list : list.Where(e => Peso(e) >= 2).ToList();
-        if (candidatos.Count == 0)
+        // Ordem de preferencia por arquitetura. Quanto menor o numero, mais cedo tentamos.
+        int Peso(Entry e)
         {
-            // Nenhum build multi-geracao no indice: devolve o que houver e deixa a checagem de
-            // GPU decidir, em vez de dizer "nao ha runtime" para quem so precisa de outro build.
-            Log.Warn("dlss index: nenhum build .SF listado; caindo no mais novo");
-            return Newest(KindNeural);
+            var v = e.Version;
+            var original = !v.Contains("SF", StringComparison.OrdinalIgnoreCase)
+                           && !v.Contains("RTX40", StringComparison.OrdinalIgnoreCase);
+            var rtx40 = v.Contains("RTX40", StringComparison.OrdinalIgnoreCase);
+            var sfV2 = v.Contains("SF-v2", StringComparison.OrdinalIgnoreCase);
+            var sf = v.Contains(".SF", StringComparison.OrdinalIgnoreCase);
+
+            return sm switch
+            {
+                // Blackwell: o assinado primeiro; depois os patcheados, que tambem trazem sm_120.
+                >= 120 => original ? 0 : rtx40 ? 1 : sfV2 ? 2 : 3,
+                // Ada: o build com kernels sm_89; depois os universais. O original nao serve.
+                89 => rtx40 ? 0 : sfV2 ? 1 : sf ? 2 : 9,
+                // Turing e Ampere: so os universais tem sm_75/sm_86.
+                75 or 86 => sfV2 ? 0 : sf ? 1 : 9,
+                // Placa desconhecida: o universal cobre mais casos, e o fatbin decide depois.
+                _ => sfV2 ? 0 : sf ? 1 : rtx40 ? 2 : 3,
+            };
         }
 
-        // Em Blackwell ganha o ORIGINAL; fora dela, o `.SF` mais novo.
-        //
-        // A ordenacao era `OrderByDescending(Peso)` para os dois casos, e com isso o `.SF` ficava
-        // em primeiro tambem em Blackwell — o oposto do que este metodo diz fazer. Numa serie 50 o
-        // build da NVIDIA e a referencia: e ele que a placa foi feita para rodar (FP8, kernels
-        // sm_120), e e o unico assinado, o que evita depender do hash fixado no launcher.
-        //
-        // O peso 1 e o original, entao "menor peso primeiro" o escolhe.
-        return blackwell
-            ? candidatos.OrderBy(Peso).FirstOrDefault()
-            : candidatos.OrderByDescending(Peso).FirstOrDefault();
+        return lista.OrderBy(Peso)
+                    .ThenByDescending(e => Version.TryParse(e.Version, out var v) ? v : new Version(0, 0))
+                    .ToList();
     }
+
+    /// <summary>O primeiro candidato para esta placa. Existe para quem so quer exibir a escolha
+    /// (o `--check` do CLI, a sonda); a instalacao usa a lista inteira.</summary>
+    public Entry? NeuralFor(int? sm) => NeuralCandidates(sm).FirstOrDefault();
+
+    /// <summary>Compatibilidade com quem so sabe dizer "e Blackwell?". Blackwell vira sm_120;
+    /// o resto fica sem arquitetura conhecida, que e o caminho conservador da lista.</summary>
+    public Entry? NeuralFor(bool blackwell) => NeuralFor(blackwell ? 120 : (int?)null);
 
     /// <summary>
     /// Download one entry's archive and unpack it into its own folder under the launcher's

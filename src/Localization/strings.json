@@ -1135,6 +1135,14 @@
     "en": "No DLSS runtime in the library yet. Scan for runtimes first — every game with DLSS carries one.",
     "pt-BR": "Nenhum runtime de DLSS na biblioteca ainda. Faça a varredura primeiro — todo jogo com DLSS carrega um."
   },
+  "Neural_Fetch_WrongArch": {
+    "en": "The {0} runtime carries no code for a {1}. That build supports: {2}. Trying the next one.",
+    "pt-BR": "O runtime {0} não traz código para uma {1}. Esse build atende: {2}. Tentando o próximo."
+  },
+  "Neural_Blocked_RuntimeArch": {
+    "en": "The neural runtime in the library has no code for your card ({0}). It supports: {1}. Remove it in Settings so the launcher can fetch the build made for your GPU.",
+    "pt-BR": "O runtime neural que está na biblioteca não tem código para a sua placa ({0}). Ele atende: {1}. Remova-o nas Configurações para o launcher baixar o build feito para a sua GPU."
+  },
   "Dlss_NotNvidia": {
     "en": "Not signed by NVIDIA (signer: {0}). Skipped.",
     "note": "{0} = subject do certificado encontrado.",
@@ -2353,9 +2361,9 @@
     "pt-BR": "Precisa do driver {1} ou mais novo. Este é o {0}."
   },
   "Neural_Blocked_Gpu": {
-    "en": "Needs a GeForce RTX 50 series. The adapter found here is: {0}. The model kernels only ship compiled for Blackwell (sm_120) — a newer driver will not change that.",
+    "en": "Needs an NVIDIA RTX card — any generation, 20 through 50. The adapter found here is: {0}. The model runs on tensor cores, which GTX, GT and MX do not have, and no driver adds them.",
     "note": "{0} = nome da placa.",
-    "pt-BR": "Precisa de uma GeForce RTX série 50. A placa encontrada aqui foi: {0}. Os kernels do modelo só existem compilados para Blackwell (sm_120) — driver novo não resolve."
+    "pt-BR": "Precisa de uma placa NVIDIA RTX — qualquer geração, da 20 à 50. A placa encontrada aqui foi: {0}. O modelo roda em tensor core, que GTX, GT e MX não têm, e driver nenhum acrescenta."
   },
   "Neural_Blocked_ReShade": {
     "en": "ReShade is not installed in this game. The neural addon is a ReShade addon, so it needs that host to load.",
@@ -2383,9 +2391,9 @@
     "pt-BR": "Copiando o runtime de Ray Reconstruction…"
   },
   "Neural_Fetch_BadAddon": {
-    "en": "The downloaded addon does not match the expected bytes ({0}). It was not installed.",
+    "en": "The add-on does not match the expected bytes ({0}). It was not installed.",
     "note": "{0} = hash ou tamanho recebido.",
-    "pt-BR": "O addon baixado não corresponde aos bytes esperados ({0}). Ele não foi instalado."
+    "pt-BR": "O add-on não corresponde aos bytes esperados ({0}). Ele não foi instalado."
   },
   "Neural_Fetch_NotGenuine": {
     "en": "The downloaded runtime is not signed by NVIDIA with an intact digest ({0}). It was not installed.",
@@ -2398,8 +2406,8 @@
     "pt-BR": "Runtime neural {0} baixado e verificado."
   },
   "Neural_FetchingAddon": {
-    "en": "Downloading the neural addon…",
-    "pt-BR": "Baixando o addon neural…"
+    "en": "Unpacking the neural add-on that ships with the launcher…",
+    "pt-BR": "Instalando o add-on neural que vem junto com o launcher…"
   },
   "Neural_Host64Deployed": {
     "en": "Addon and runtimes copied to the helper process.",

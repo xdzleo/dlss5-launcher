@@ -453,10 +453,18 @@ public static class Cli
         // Quem decide se a placa serve e GpuOk, nao a arquitetura: uma RTX 20/30/40 roda o
         // build `.SF`. O texto antigo dizia "so serie 50" para essas placas e, tres linhas
         // depois, "pronto para aplicar" — o usuario lia a primeira e desistia.
+        // A arquitetura, e nao "e Blackwell?": e ela que decide qual build de runtime serve, e
+        // dizer o numero deixa a linha conferivel contra o que o `--sm` da sonda mostra.
         Console.WriteLine($"  GPU            : {host.GpuName ?? "nenhuma NVIDIA encontrada"}"
-                          + (host.Blackwell ? " (Blackwell, ok)"
-                             : host.GpuOk ? $" (ok, build .SF; custo do pass: {host.CustoEstimado ?? "?"})"
+                          + (host.Sm is { } smPlaca ? $"  (sm_{smPlaca}, {CudaFatbin.Rotulo(smPlaca)})" : "")
+                          + (host.GpuOk ? $"  custo do pass: {host.CustoEstimado ?? "?"}"
                              : " — sem tensor core nao ha o que rode o modelo"));
+        if (host.RuntimeInLibrary && host.Sm is { } smConf)
+        {
+            var archs = NeuralUpliftService.ArquiteturasDoRuntime();
+            Console.WriteLine($"  runtime serve  : {(archs.Count == 0 ? "? (nao consegui ler as arquiteturas)" : archs.Contains(smConf) ? "sim" : "NAO — este build nao tem kernel para a sua placa")}"
+                              + (archs.Count == 0 ? "" : $"  [{string.Join(", ", archs.OrderBy(a => a).Select(a => "sm_" + a))}]"));
+        }
         Console.WriteLine($"  driver         : branch {host.DriverBranch}"
                           + (host.DriverBranch >= NeuralUpliftService.MinDriverBranch
                              ? " (ok)" : $" — precisa de {NeuralUpliftService.MinDriverBranch}+"));

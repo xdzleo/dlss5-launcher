@@ -1,5 +1,78 @@
 # Changelog
 
+## v1.72.0
+
+DLSS 5 em **toda RTX**, e o add-on **dentro do launcher** — sem baixar nada, sem colocar arquivo
+na mão.
+
+### Por que só funcionava em RTX 50
+
+O runtime neural é uma biblioteca CUDA: o código de GPU vai embutido em registros `fatbin`, um
+por arquitetura. Lendo esses registros dentro dos arquivos (`tests/ChainProbe --sm`, ~70 ms num
+arquivo de 165 MB), a resposta aparece inteira:
+
+| build | kernels que traz | placas |
+|---|---|---|
+| `310.8.0` — o da NVIDIA, assinado | `sm_120` | **só RTX 50** |
+| `310.8.0-RTX40` | `sm_89`, `sm_120` | RTX 40 e 50 |
+| `310.8.SF` / `310.8.SF-v2` | `sm_75`, `86`, `89`, `120` | RTX 20, 30, 40 e 50 |
+
+Numa RTX 20/30/40, o build da NVIDIA instala inteiro e **não roda**: não há kernel para a placa,
+e ninguém reporta isso — nem o add-on, nem o jogo, nem o log. Cadeia verde, tela igual.
+
+O launcher já escolhia um `.SF` fora da série 50 desde a 1.59, mas **a tela nunca chegava lá**:
+`CheckNeuralAsync` só buscava o runtime quando a placa era Blackwell, então numa RTX 30 o cartão
+mostrava "falta o nvngx_dlssnr.dll" com o botão que resolveria isso desabilitado. O CLI já não
+tinha essa trava — o que explica o sintoma ser "não funciona na interface".
+
+### O que passou a acontecer
+
+- **A escolha é por arquitetura, não por "é Blackwell?"**: `sm_120` recebe o build assinado da
+  NVIDIA, `sm_89` o build com kernels de Ada, `sm_86` e `sm_75` os universais. O
+  `310.8.0-RTX40` entrou junto — ele existe como release do RHI desde 30/08 e não está no
+  manifesto que o launcher lê, então uma RTX 40 ficava com o caminho FP16, mais caro do que
+  precisava.
+- **O arquivo tem a palavra final.** Depois de baixar, o launcher lê os `fatbin` e, se não houver
+  kernel para a placa, passa para o próximo candidato em vez de instalar 158 MB que nunca rodam.
+  A ordem por geração só decide a fila.
+- **Um runtime que já esteja na biblioteca e não sirva** vira um bloqueio com o motivo escrito —
+  "este build atende sm_120; a sua placa é RTX 40" — em vez de silêncio. A leitura fica em cache
+  ao lado do arquivo, então não custa nada nas telas seguintes.
+- **A trava de Blackwell saiu da interface**: qualquer RTX busca o runtime sozinha.
+- O texto de recusa dizia "precisa de uma RTX série 50". Agora diz o que é verdade: precisa de
+  tensor core, o que toda RTX tem.
+
+### O add-on vem junto
+
+O add-on neural (build 4.70, 1,7 MB) agora é **embutido no executável** e sai dele direto para a
+biblioteca, conferido por SHA-256. Ninguém precisa procurar arquivo em Discord nem largar nada em
+pasta nenhuma.
+
+Isso também consertou uma falha que já estava em produção: a URL fixada de onde ele era baixado
+(`zhubaohi/FF7R-DLSS5`) **passou a responder 404** quando aquele release trocou de arquivo. Numa
+máquina limpa a instalação inteira parava em "falta o renodx-neural.addon64 na biblioteca" — um
+instalador de um clique cujo primeiro passo virava "vá achar um DLL". Uma cópia mais nova que o
+usuário tenha continua ganhando da embutida.
+
+### Outras duas URLs mortas
+
+- **Feeder**: desde a v0.8.0 o projeto publica um ZIP, e as quatro URLs de arquivo solto que o
+  launcher usava respondiam 404 — todo jogo sem DLSS ficava sem rota em máquina limpa. Agora vem
+  do pacote da última release (hoje 0.12.0), com as peças todas da mesma versão: o add-on de 32
+  bits e o processo auxiliar falam um protocolo entre si, e baixá-los de releases diferentes os
+  deixaria incompatíveis.
+- **Ponte DX11**: o projeto virou `NIGos/dlss5-bridge` e o asset foi renomeado junto; o log desta
+  máquina tem dezenas de "atualizar ponte: 404". Agora o asset é resolvido pela página de release
+  por padrão de nome, o que sobrevive ao próximo rename. Voltou a baixar (v1.4.7, 465 KB).
+
+### Verificado
+
+Reinstalação do zero com a biblioteca apagada: o add-on saiu do executável (hash confere), o
+Feeder veio do pacote 0.12.0, a ponte baixou, e o *Just Cause 2* rodou com o passe neural
+avaliando. A escolha por placa está coberta no SmokeTest; o que **não** dá para provar nesta
+máquina é o passe rodando numa RTX 20/30/40 — aqui só há uma RTX 5090. O que está provado é que
+cada placa recebe um build que contém os kernels dela, lido do arquivo.
+
 ## v1.71.0
 
 Uma caçada a bugs no código inteiro: 62 defeitos confirmados por revisão adversarial (cada achado

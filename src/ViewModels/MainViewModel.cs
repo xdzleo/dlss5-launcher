@@ -1403,7 +1403,14 @@ public class MainViewModel : ObservableObject
         // O runtime nao vem em driver nem em SDK publico: as unicas copias sao as que ja estao
         // nesta maquina. Procura sozinho antes de pedir que o usuario ache o arquivo na mao —
         // achar um .dll de 158 MB pelo Explorer nao e trabalho do usuario.
-        if (detection.Host.Blackwell
+        //
+        // GpuOk, e nao Blackwell: quem decide se a placa roda o pass e o tensor core, e o
+        // launcher escolhe o build de runtime pela arquitetura dela. Exigir Blackwell aqui
+        // deixava toda RTX 20/30/40 sem busca automatica — a tela mostrava "falta o
+        // nvngx_dlssnr.dll" e o botao que resolveria isso vinha desabilitado, enquanto o CLI e o
+        // interruptor de DLSS 5 baixavam o arquivo normalmente. Era o "so funciona em RTX 50"
+        // que o usuario via.
+        if (detection.Host.GpuOk
             && detection.Host.DriverBranch >= NeuralUpliftService.MinDriverBranch
             && !detection.Host.RuntimeInLibrary)
         {
@@ -1444,7 +1451,8 @@ public class MainViewModel : ObservableObject
         _neuralDetection = detection;
         // o bloqueio do host (GPU/driver/runtime) vem primeiro; so depois o do caminho generico
         NeuralBlocker = detection.Host.Blocker ?? detection.GenericBlocker;
-        NeuralNeedsRuntime = detection.Host.Blackwell
+        // Idem: o botao "baixar o runtime" aparece para qualquer placa que rode o pass.
+        NeuralNeedsRuntime = detection.Host.GpuOk
             && detection.Host.DriverBranch >= NeuralUpliftService.MinDriverBranch
             && !detection.Host.RuntimeInLibrary;
         // sem mod RenoDX nao ha State; o ReShade.ini fica ao lado do addon na pasta do jogo

@@ -279,6 +279,66 @@ if (File.Exists(NeuralUpliftService.LibraryAddon))
 }
 else Console.WriteLine("SKIP  Apply duplicado: addon generico nao esta na biblioteca desta maquina");
 
+// 3f. A placa decide o build do runtime. O modelo da NVIDIA traz kernels sm_120 e SO eles: numa
+// RTX 20/30/40 ele instala inteiro e nao roda, sem erro em lugar nenhum. Era o "so funciona em
+// RTX 50".
+Check(CudaFatbin.SmDoNome("NVIDIA GeForce RTX 5090") == 120, "RTX 5090 -> sm_120 (Blackwell)");
+Check(CudaFatbin.SmDoNome("NVIDIA GeForce RTX 4080 SUPER") == 89, "RTX 4080 -> sm_89 (Ada)");
+Check(CudaFatbin.SmDoNome("NVIDIA GeForce RTX 3070 Ti") == 86, "RTX 3070 -> sm_86 (Ampere)");
+Check(CudaFatbin.SmDoNome("NVIDIA GeForce RTX 2060") == 75, "RTX 2060 -> sm_75 (Turing)");
+Check(CudaFatbin.SmDoNome("NVIDIA RTX 5000 Ada Generation") == 89,
+    "'RTX 5000 Ada Generation' e Ada, nao Blackwell (o mesmo engano que a checagem antiga fazia)");
+Check(CudaFatbin.SmDoNome("NVIDIA GeForce GTX 1080") is null, "GTX 1080 nao tem sm que sirva");
+Check(CudaFatbin.SmDoNome("AMD Radeon RX 7900 XTX") is null, "placa nao-NVIDIA nao tem sm");
+
+var idxSm = new DlssIndexService();
+await idxSm.LoadAsync();
+string Primeiro(int? sm) => idxSm.NeuralCandidates(sm).FirstOrDefault()?.Version ?? "(nenhum)";
+Check(Primeiro(120) == "310.8.0", $"RTX 50 recebe o build assinado da NVIDIA ({Primeiro(120)})");
+Check(Primeiro(89).Contains("RTX40"), $"RTX 40 recebe o build com kernels sm_89 ({Primeiro(89)})");
+Check(Primeiro(86).Contains("SF"), $"RTX 30 recebe o build universal ({Primeiro(86)})");
+Check(Primeiro(75).Contains("SF"), $"RTX 20 recebe o build universal ({Primeiro(75)})");
+// O 310.8.0 nao pode ser o primeiro fora da serie 50 — e o unico erro aqui que instala 158 MB
+// que nunca rodam.
+Check(!Primeiro(89).Equals("310.8.0") && !Primeiro(86).Equals("310.8.0") && !Primeiro(75).Equals("310.8.0"),
+    "o build so-Blackwell nunca lidera fora da serie 50");
+
+// A leitura dos registros fatbin, contra o runtime real desta maquina quando ele existe: e ela
+// que tem a palavra final, e sem ela a ordem acima seria so um palpite.
+var runtimeLocal = NeuralUpliftService.LibraryRuntime;
+if (File.Exists(runtimeLocal))
+{
+    var archs = CudaFatbin.Arquiteturas(runtimeLocal);
+    Check(archs.Count > 0, $"leio as arquiteturas do runtime da biblioteca ({string.Join(",", archs.OrderBy(a => a))})");
+    var meu = CudaFatbin.SmDoNome(NeuralUpliftService.ProbeHost().GpuName);
+    if (meu is { } m && archs.Count > 0)
+        Check(NeuralUpliftService.RuntimeServeAPlaca(m) == archs.Contains(m),
+            $"RuntimeServeAPlaca concorda com o arquivo (sm_{m} presente={archs.Contains(m)})");
+}
+else Console.WriteLine("SKIP  fatbin: nao ha runtime na biblioteca desta maquina");
+
+// 3g. O add-on vem embutido: nenhuma URL, nenhum passo manual. Era a peca que faltava quando a
+// URL fixada anterior virou 404 e a instalacao parava em "falta o addon na biblioteca".
+try
+{
+    var libAddon = NeuralUpliftService.LibraryAddon;
+    var guardado = libAddon + ".smoke-bak";
+    var tinha = File.Exists(libAddon);
+    if (tinha) File.Move(libAddon, guardado, overwrite: true);
+    try
+    {
+        var veio = await NeuralUpliftService.FetchAddonAsync();
+        Check(veio && File.Exists(libAddon), "o add-on embutido entra na biblioteca sem rede nenhuma");
+        Check(NeuralUpliftService.AddonSupportsNeuralRendering(libAddon),
+            "e um add-on que sabe acionar o Neural Rendering (marcador nos bytes)");
+    }
+    finally
+    {
+        if (tinha) { try { File.Move(guardado, libAddon, overwrite: true); } catch { } }
+    }
+}
+catch (Exception ex) { Check(false, $"add-on embutido: {ex.Message}"); }
+
 // 4. manifest
 var manifest = new ManifestService();
 var defs = manifest.GetSettings("cp2077");
