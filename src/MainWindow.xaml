@@ -868,23 +868,6 @@
                                         </Button>
                                     </StackPanel>
                                 </DockPanel>
-
-                                <!-- As instrucoes do mod, DENTRO do cartao dele.
-                                     Elas moravam atras do bloco recolhido "Detalhes", junto da
-                                     referencia — e ha instrucao ali sem a qual o mod NAO FUNCIONA
-                                     ("reinicie o jogo para o RenoDX valer"). Sao instrucoes DESTE
-                                     mod, entao pertencem ao cartao dele: fora, viravam uma secao
-                                     solta que nao dizia de quem era. Referencia continua
-                                     recolhida. Ver NotasEmDestaque. -->
-                                <Border Height="1" Background="#33543A" Margin="0,12,0,0"
-                                        Visibility="{Binding NotasEmDestaque.Count, Converter={StaticResource CountToVis}}"/>
-                                <StackPanel Margin="0,12,0,0"
-                                            Visibility="{Binding NotasEmDestaque.Count, Converter={StaticResource CountToVis}}">
-                                    <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"
-                                               Foreground="#8FE0A8"/>
-                                    <ItemsControl ItemsSource="{Binding NotasEmDestaque}"
-                                                  ItemTemplate="{StaticResource NoteCard}"/>
-                                </StackPanel>
                                 </StackPanel>
                             </Border>
 
@@ -1366,10 +1349,8 @@
                                 </Expander.Header>
                                 <StackPanel Margin="0,10,0,0">
 
-                                    <!-- O que sobra aqui e referencia: contexto, links, o que a
-                                         wiki registra sem pedir acao. -->
                                     <StackPanel Visibility="{Binding Notes.Count, Converter={StaticResource CountToVis}}">
-                                        <TextBlock Text="{loc:Tr Dialog_Notes_Reference_Label}" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock Text="{loc:Tr Dialog_Notes_Label}" Style="{StaticResource SectionLabel}"/>
                                         <ItemsControl ItemsSource="{Binding Notes}"
                                                       ItemTemplate="{StaticResource NoteCard}"/>
                                     </StackPanel>

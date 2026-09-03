@@ -687,11 +687,7 @@
     "note": "Titulo do cartao.",
     "pt-BR": "Addon do DLSS 5"
   },
-  "Dialog_Notes_Reference_Label": {
-    "en": "ABOUT THIS MOD",
-    "note": "Secao recolhida: o que a wiki registra sem pedir acao.",
-    "pt-BR": "SOBRE ESTE MOD"
-  },
+
   "Dialog_Notes_Label": {
     "en": "HOW TO SET UP THIS GAME",
     "pt-BR": "COMO AJUSTAR ESTE JOGO"

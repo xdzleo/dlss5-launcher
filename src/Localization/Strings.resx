@@ -653,10 +653,6 @@
   <data name="Dialog_Notes_Label" xml:space="preserve">
     <value>COMO AJUSTAR ESTE JOGO</value>
   </data>
-  <data name="Dialog_Notes_Reference_Label" xml:space="preserve">
-    <value>SOBRE ESTE MOD</value>
-    <comment>Secao recolhida: o que a wiki registra sem pedir acao.</comment>
-  </data>
   <data name="Dialog_OpenFolder" xml:space="preserve">
     <value>Abrir a pasta do jogo</value>
     <comment>Botao so de icone: a mesma chave serve de ToolTip e de AutomationProperties.Name.</comment>

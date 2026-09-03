@@ -443,20 +443,6 @@ public class MainViewModel : ObservableObject
     /// <summary>Everything known about how to configure THIS game, from every source.</summary>
     public ObservableCollection<ModNote> Notes { get; } = new();
 
-    /// <summary>
-    /// As notas que pedem ACAO, separadas das que so informam.
-    ///
-    /// Todas moravam atras do bloco recolhido "Detalhes", e ele nasce fechado de proposito — a
-    /// referencia nao pode empurrar o interruptor para fora da tela. So que junto com a
-    /// referencia ia a instrucao do proprio mod, e ha instrucao ali sem a qual ele NAO FUNCIONA:
-    /// no Black Myth: Wukong, "reinicie o jogo para o RenoDX valer" estava escondido atras de um
-    /// clique que ninguem tem motivo para dar.
-    ///
-    /// Quem pede acao fica a vista, logo abaixo do interruptor do mod. Quem so informa continua
-    /// recolhido. Ver <see cref="ModNote.EhAcionavel"/>.
-    /// </summary>
-    public ObservableCollection<ModNote> NotasEmDestaque { get; } = new();
-
     /// <summary>Things to know BEFORE installing (required ReShade version, external download,
     /// anti-cheat). Rendered above the install button on purpose: below it they sat under the
     /// fold, so the user pressed Install without ever seeing the prerequisite.</summary>
@@ -1651,7 +1637,6 @@ public class MainViewModel : ObservableObject
         Settings.Clear();
         Advice.Clear();
         Notes.Clear();
-        NotasEmDestaque.Clear();
         Prerequisites.Clear();
         EngineNotes.Clear();
         DetailStatus = "";
@@ -2639,8 +2624,6 @@ public class MainViewModel : ObservableObject
             // prerequisites are hoisted above the install button wherever they came from
             if (n.Location == "ANTES DE INSTALAR" && !ReferenceEquals(into, EngineNotes))
                 Prerequisites.Add(n);
-            // Instrucao do mod fica a vista; referencia fica recolhida (ver NotasEmDestaque).
-            else if (ReferenceEquals(into, Notes) && n.EhAcionavel) NotasEmDestaque.Add(n);
             else into.Add(n);
         }
 
@@ -2794,10 +2777,7 @@ public class MainViewModel : ObservableObject
             {
                 // "no knobs" does not mean "nothing to do": several of these mods are configured
                 // entirely from the game's own menu, and the author says how in the notes above.
-                // As duas listas: a instrucao do autor do mod agora pode estar em qualquer uma
-                // delas, dependendo de pedir acao ou so informar.
-                bool hasInstructions = Notes.Concat(NotasEmDestaque)
-                    .Any(n => n.Source == NoteSource.ModSource);
+                bool hasInstructions = Notes.Any(n => n.Source == NoteSource.ModSource);
                 SetNoSettings(L.T(hasInstructions
                     ? "Main_NoSettings_InGameOnly"
                     : "Main_NoSettings_Fixed"));

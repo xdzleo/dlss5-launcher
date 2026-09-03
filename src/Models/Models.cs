@@ -111,13 +111,7 @@ public record ModNote(
         !string.IsNullOrWhiteSpace(Location) || !string.IsNullOrWhiteSpace(Title)
         || !string.IsNullOrWhiteSpace(Destaque);
 
-    /// <summary>Uma nota que pede ACAO, e nao uma que so informa. Decide se ela fica a vista ou
-    /// atras do bloco recolhido de detalhes.</summary>
-    public bool EhAcionavel =>
-        Kind is NoteKind.Step or NoteKind.Warning
-        || Destaque is not null
-        || Itens.Count > 0
-        || Preformatted is not null;
+
 
     /// <summary>Palavras com que uma nota se anuncia. So contam no COMECO do texto, seguidas de
     /// dois-pontos — no meio de uma frase sao palavras comuns.</summary>
