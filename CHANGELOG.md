@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.78.0
+
+Uma correção que devolve o DLSS 5 a dez jogos de DirectX 11, e a interface refeita como sistema
+em vez de trinta cores escritas na mão.
+
+### A Ponte segue a API do jogo, e não o DLSS próprio dele
+
+O botão de consertar apagava o pass neural em jogo DX11 sem DLSS. A regra dizia que a Ponte e o
+Feeder eram excludentes, o conserto tirava a Ponte, e dentro do jogo o log passava a dizer:
+
+```
+ERROR [DLSS 5 Neural Rendering] feature 18 create failed with 0xbad00002
+[feed] ##### DEVICE REMOVED at "ExecuteCommandLists" (0x887A0005) #####
+```
+
+As duas peças respondem perguntas diferentes. O **Feeder fabrica** os dados que o jogo não
+entrega — cor, profundidade, vetores de movimento. A **Ponte dá** ao pass um device D3D12 onde
+rodar. Num jogo de DirectX 11 esse device não existe, tenha ele DLSS ou não, e era só isso que a
+condição antiga confundia ao exigir DLSS nativo para instalar a Ponte.
+
+Então: a rota da Ponte passou a seguir a API; Ponte + Feeder deixou de ser conflito; e a leitura
+da cadeia passou a cobrar **as duas** quando a rota pede as duas — ela vinha dizendo `ok` com o
+pass morto dentro do jogo, que foi por onde o defeito escapou da auditoria.
+
+Quem já instalou: reinstale o DLSS 5 nos jogos de DirectX 11 sem DLSS — INSIDE, Shadow of Mordor,
+Sekiro, Sonic Frontiers e afins. A tela agora mostra o elo `DX11 bridge` faltando neles.
+
+### Os ícones viraram um conjunto só
+
+Havia meio conjunto preenchido e meio vazado, com pesos diferentes — e "Atualizar lista" e
+"Procurar atualizações" eram **a mesma seta circular**: dois botões distintos com o mesmo desenho.
+
+Agora são glifos de traço no mesmo grid de 24 com o mesmo peso, que é a regra que a Apple põe
+acima de qualquer outra para ícone de interface: mesmo tamanho, mesmo nível de detalhe, mesma
+espessura, conversando com o peso do texto ao lado.
+
+A barra tinha cinco pilhas contornadas em fila, todas do mesmo peso — uma parede de botões em que
+nenhum era mais importante que outro. Viraram símbolos sem moldura em dois grupos, o que mexe na
+lista e o que abre outra janela, com a moldura aparecendo só sob o ponteiro.
+
+### Superfícies de vidro, e não trinta cores soltas
+
+Cada cartão trazia o próprio par de cores no código, com raio e espaçamento próprios. São seis
+estilos agora, e o que faz uma superfície parecer vidro não é transparência: é a luz vindo de
+cima — uma linha clara na borda superior que se apaga na inferior. Junto, a barra de título
+escura e o fundo Mica do Windows 11.
+
+### O RenoDX HDR ganhou selo OPCIONAL
+
+Ele é o primeiro cartão da coluna e traz o nome do launcher, então lia como *o* recurso — quem só
+queria DLSS 5 ficava achando que teria de ligar o HDR antes. São add-ons independentes, cada um
+com seu interruptor.
+
+### Miudezas
+
+Dois textos que saíam cortados na borda — o aviso da ponte DX11 e o do runtime da comunidade —
+porque texto que quebra linha dentro de painel horizontal recebe largura infinita e nunca quebra.
+
 ## v1.77.0
 
 Uma varredura que audita a biblioteca inteira, e três defeitos que ela encontrou — dois deles
