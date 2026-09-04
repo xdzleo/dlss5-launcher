@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -96,30 +97,42 @@ public static class FluidScroll
         if (sv is null) { Log.Warn("fluid scroll: nenhum ScrollViewer neste elemento"); return; }
         sv.PreviewMouseWheel -= AoGirar;
         sv.PreviewMouseWheel += AoGirar;
-        sv.ScrollChanged -= AoRolar;
-        sv.ScrollChanged += AoRolar;
+        // A barra, e nao o ScrollChanged.
+        //
+        // A v1.85.0 escutava ScrollChanged e comparava o deslocamento novo com o ultimo valor
+        // empurrado, para descobrir se a mudanca tinha sido nossa. Duas coisas erradas nisso, e
+        // as duas aparecem justamente quando se rola rapido:
+        //
+        //   A animacao tiquea a 360 Hz e o ScrollChanged chega por passagem de layout — varios
+        //   empurroes cabem entre dois eventos. O evento entao trazia um deslocamento ATRASADO
+        //   em relacao ao ultimo empurrao, a comparacao dava "nao foi a gente", e a animacao se
+        //   cancelava sozinha no meio do movimento.
+        //
+        //   E o cancelamento acontecia DENTRO do callback da propriedade que estava sendo
+        //   animada — mexer na animacao ali e reentrancia, e o resultado nao e previsivel.
+        //
+        // O evento Scroll da barra nao tem nenhum dos dois problemas: ele dispara so quando a
+        // PESSOA mexe na barra (arrasta o cursor, clica na pista), nunca por mudanca
+        // programatica. E o unico caso que precisava mesmo ser interrompido.
+        sv.RemoveHandler(ScrollBar.ScrollEvent,
+                         (ScrollEventHandler)AoArrastarBarra);
+        sv.AddHandler(ScrollBar.ScrollEvent,
+                      (ScrollEventHandler)AoArrastarBarra);
     }
 
-    /// <summary>
-    /// Alguem mexeu na rolagem que nao fomos nos: solta a animacao onde ela esta.
-    ///
-    /// A rolagem tem outros donos — a barra arrastada, as setas do teclado, e o ScrollIntoView
-    /// que a lista faz sozinha ao selecionar um jogo. Sem isto, a animacao continuava empurrando
-    /// para o alvo dela enquanto a pessoa arrastava a barra para outro lugar: os dois puxando o
-    /// mesmo deslocamento em direcoes diferentes, que na tela aparece como a barra "escapando"
-    /// da mao.
-    ///
-    /// Aqui a comparacao com o ultimo valor empurrado e segura, ao contrario de dentro do
-    /// tratamento da roda: este evento chega DEPOIS de o deslocamento ja ter mudado.
-    /// </summary>
-    private static void AoRolar(object sender, ScrollChangedEventArgs e)
+    /// <summary>A pessoa pegou a barra de rolagem: solta a animacao onde ela esta, para as duas
+    /// nao puxarem o mesmo deslocamento para lados diferentes.</summary>
+    private static void AoArrastarBarra(object sender, ScrollEventArgs e)
     {
         if (sender is not ScrollViewer sv) return;
         if (sv.GetValue(EstadoProperty) is not Estado st || !st.Correndo) return;
-        if (!double.IsNaN(st.UltimoEmpurrado)
-            && Math.Abs(e.VerticalOffset - st.UltimoEmpurrado) < 0.5) return;
+        Soltar(sv, st, sv.VerticalOffset);
+    }
 
-        sv.SetValue(DeslocamentoProperty, e.VerticalOffset);
+    /// <summary>Tira a animacao do caminho deixando o deslocamento onde esta.</summary>
+    private static void Soltar(ScrollViewer sv, Estado st, double onde)
+    {
+        sv.SetValue(DeslocamentoProperty, onde);
         sv.BeginAnimation(DeslocamentoProperty, null);
         st.Correndo = false;
         st.Alvo = double.NaN;
@@ -159,7 +172,20 @@ public static class FluidScroll
         // O relogio continua no criterio para o caso de a animacao ter sido interrompida sem
         // avisar (elemento removido da arvore no meio do movimento).
         var agora = Environment.TickCount64;
-        var partida = st.Correndo && !double.IsNaN(st.Alvo) && agora - st.Quando < 1000
+        // Somar cliques so vale enquanto eles vao para o MESMO lado.
+        //
+        // Este era o defeito que aparecia ao descer rapido e subir logo depois. Cinco cliques
+        // para baixo deixam o alvo muito abaixo do que a tela mostra — o movimento ainda esta a
+        // caminho dele. O clique para cima partia desse alvo e tirava uma fileira dele, ou seja:
+        // continuava sendo um destino la embaixo. A tela seguia DESCENDO depois de a pessoa ter
+        // mandado subir, e so muitos cliques depois e que o sentido virava.
+        //
+        // Invertendo a direcao, a conta parte de onde o olho esta — o deslocamento atual — e o
+        // movimento troca de sentido no primeiro clique, que e o que qualquer rolagem do sistema
+        // faz.
+        var descendo = e.Delta < 0;
+        var mesmoLado = !double.IsNaN(st.Alvo) && (st.Alvo > sv.VerticalOffset) == descendo;
+        var partida = st.Correndo && mesmoLado && agora - st.Quando < 1000
                       ? st.Alvo : sv.VerticalOffset;
 
         // A distancia segue o TAMANHO do giro, e nao so o sentido. Roda de mouse manda 120 por

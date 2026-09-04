@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.86.0
+
+Descer rápido e subir logo em seguida: a tela continuava descendo. E a rolagem se cancelava
+sozinha no meio do movimento. As duas coisas eram da roda do mouse, e as duas eram minhas.
+
+### Inverter o sentido partia do lugar errado
+
+Somar cliques só vale enquanto eles vão para o mesmo lado. Cinco cliques para baixo deixam o
+alvo muito abaixo do que a tela mostra — o movimento ainda está a caminho dele. O clique para
+cima partia **desse alvo** e tirava uma fileira dele: continuava sendo um destino lá embaixo. A
+tela seguia descendo depois de a pessoa ter mandado subir, e só muitos cliques depois é que o
+sentido virava.
+
+Agora, invertendo o sentido, a conta parte de onde o olho está. Medido: cinco cliques descendo,
+e um clique subindo no meio do movimento para em 23,32% — exatamente um passo acima dos 33,45%
+onde a tela estava naquele instante.
+
+### E a animação se cancelava sozinha
+
+A v1.85.0 escutava `ScrollChanged` para descobrir se a rolagem tinha mudado por outro caminho,
+comparando o deslocamento novo com o último valor empurrado. Duas coisas erradas nisso, e as
+duas aparecem justamente quando se rola rápido:
+
+A animação tiqueia a 360 Hz e o `ScrollChanged` chega por passagem de layout — vários empurrões
+cabem entre dois eventos. O evento então trazia um deslocamento atrasado em relação ao último
+empurrão, a comparação dava "não fomos nós", e o movimento se interrompia no meio.
+
+Pior: esse cancelamento acontecia dentro do callback da propriedade que estava sendo animada.
+Mexer na animação ali é reentrância, e o resultado não é previsível.
+
+Quem avisa agora é o evento `Scroll` da barra, que dispara só quando a **pessoa** mexe na barra
+— nunca por mudança programática. Era o único caso que precisava mesmo ser interrompido.
+
 ## v1.85.0
 
 Quatro defeitos da rolagem que entrou na v1.84.0. Todos meus, e três deles só apareceram medindo.
