@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.87.0
+
+A roda passou a empurrar em vez de mandar. E uma correção do que a v1.84.0 anunciou.
+
+### Primeiro, o desmentido
+
+A v1.84.0 disse que as animações passaram a rodar na taxa do monitor, 360 Hz. **Não passaram.**
+Medido dentro do app, com a rolagem acontecendo: o tique chega a cada 15,5 ms com o
+`Timeline.DesiredFrameRate` sobrescrito e a cada 15,9 ms sem ele. Os mesmos ~64 Hz. A chamada
+saiu do código: algo que não muda nada mensurável, com um log afirmando que muda, é pior que
+nada.
+
+### A roda agora empurra
+
+Um tween por clique é uma sequência de arranques: cada clique começava uma curva nova em
+velocidade cheia por cima de outra que estava desacelerando. Num giro seguido, isso é um trem de
+solavancos no ritmo dos cliques — e é a diferença para arrastar a barra, que é **um** movimento
+contínuo. Não era taxa de quadros; era a forma do movimento.
+
+Agora o clique não diz para onde ir, ele empurra: a velocidade soma, decai por exponencial
+(τ = 110 ms) e a posição é a integral dela. Não há curva para reiniciar, então girar depressa
+acelera de verdade.
+
+Com uma diferença deliberada em relação à física: **inverter o sentido mata o embalo em vez de
+descontar dele**. Cinco cliques para baixo deixam a velocidade em 9000 px/s; um clique para cima
+tiraria 2000 e sobrariam 7000 ainda descendo — a tela continuaria descendo depois de você mandar
+subir. Nenhuma rolagem de sistema se comporta assim: girar para o outro lado é um cancelamento.
+
+### O que não deu para medir, e por quê
+
+Não consigo aferir taxa de quadros a partir daqui. Nesta sessão os dois relógios — composição e
+animação — entregam ~102 ms, e isso contradiz o relato de que arrastar a barra é liso: se o app
+compusesse a 10 Hz, a barra seria igualmente picotada. A janela roda sem ninguém olhando para
+ela, e o Windows estrangula a composição nesse caso. O que dá para medir daqui é o custo do
+passo, e ele é 0,1 ms — o app está ocioso entre os quadros.
+
+Por isso esta versão não promete número nenhum de quadros. O que ela muda é a forma do movimento.
+
 ## v1.86.0
 
 Descer rápido e subir logo em seguida: a tela continuava descendo. E a rolagem se cancelava

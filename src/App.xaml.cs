@@ -15,9 +15,16 @@ public partial class App : Application
         // comando, que tambem e traduzido. Config vazia = idioma do Windows.
         L.SetLanguage(LauncherConfig.Load().Language);
 
-        // Antes de a primeira janela existir: OverrideMetadata so vale para relogios criados
-        // depois dele, e um Storyboard iniciado na abertura ja teria nascido a 60.
-        FluidScroll.UsarTaxaDoMonitor();
+        // A chamada FluidScroll.UsarTaxaDoMonitor() saiu daqui.
+        //
+        // Ela sobrescrevia Timeline.DesiredFrameRate com a taxa do monitor (360 Hz nesta
+        // maquina) e a v1.84.0 anunciou isso como ganho. Nao era: medido dentro do app, com a
+        // rolagem acontecendo, o tique chega a cada 15,5 ms com o override e a cada 15,9 ms sem
+        // ele — os mesmos ~64 Hz. Codigo que nao muda nada medivel, com um log afirmando que
+        // muda, e pior do que codigo nenhum.
+        //
+        // A rolagem agora anda por CompositionTarget.Rendering, que e o ritmo real de composicao
+        // da janela — sem prometer numero nenhum.
 
         // headless mode: any argument means "run a command and exit" — no window.
         if (e.Args.Length > 0)
