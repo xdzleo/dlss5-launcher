@@ -175,18 +175,20 @@ public static class ConflictScanner
 
     private static void VarrerNossasDuplicidades(string dir, string? exePath, List<Conflito> achados)
     {
-        // Ponte e Feeder na mesma pasta. Nao e hipotese: uma versao anterior deste launcher lia um
-        // runtime NOSSO como sendo do jogo, trocava de caminho e deixava o anterior para tras.
+        // Ponte + Feeder na mesma pasta DEIXOU de ser conflito, e a licao custou um jogo do
+        // usuario.
         //
-        // A marca de multi-API isenta: num jogo com um executavel por API os dois sao instalados
-        // juntos de proposito, e acusar isso seria a tela chamando de defeito o que ela mesma
-        // acabou de fazer.
-        if (!Dlss5Installer.MultiApiInstalado(dir)
-            && FeederService.IsDeployed(dir) && NeuralUpliftService.BridgeDeployed(dir))
-            achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_PonteFeeder"),
-                                     Nivel.Bloqueio, PodeAfastar: false,
-                                     Rotulo: $"{NeuralUpliftService.BridgeFile} + {FeederService.AddonFile}",
-                                     CorrigeReinstalando: true));
+        // A regra dizia que os dois eram exclusivos, o botao de consertar tirava a ponte, e no
+        // Saints Row The Third — DirectX 11, sem DLSS proprio — o resultado foi o pass neural
+        // parar de existir: `feature 18 create failed with 0xbad00002` e, logo depois, o device
+        // D3D12 privado do Feeder removido no ExecuteCommandLists. O Hollow Knight, mesma rota e
+        // com a ponte intacta, cria a feature 18 sem uma falha sequer.
+        //
+        // O motivo esta no que cada peca faz. O Feeder fabrica os dados (cor, profundidade,
+        // vetores) que o jogo nao entrega; a Ponte da ao pass neural um device D3D12 onde rodar,
+        // que num jogo de DirectX 11 nao existe. Sao respostas para perguntas diferentes, e um
+        // jogo DX11 sem DLSS precisa das DUAS. Ver Dlss5Installer.Rotear, que era onde a ponte
+        // estava presa a "o jogo tem DLSS proprio".
 
         // dgVoodoo e DXVK disputam o mesmo d3d9.dll — quem ficar por ultimo ganha, e o outro vira
         // um arquivo que nunca carrega. Na rota D3D10 do DXVK nao ha disputa de nome, mas o

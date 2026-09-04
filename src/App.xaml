@@ -264,11 +264,24 @@
             </Style>
 
             <!-- ========== icon helper ========== -->
+            <!-- Glifo de interface: TRACO, nunca preenchimento.
+                 Os desenhos vem do Lucide, que sao linhas num grid de 24 — pinta-los com Fill
+                 fecha cada linha numa mancha e o icone vira um borrao. Ponta e junta
+                 arredondadas pelo mesmo motivo que a fonte da interface e arredondada: e o
+                 peso do traco conversando com o peso do texto ao lado, que e a regra que a
+                 Apple poe acima de qualquer outra para icone de interface.
+                 O traco de 2 e no grid de 24, e o Stretch o reduz junto com o desenho — entao
+                 um icone de 13 px e um de 17 px tem a MESMA espessura relativa, como as
+                 escalas do SF Symbols. -->
             <Style x:Key="IconPath" TargetType="Path">
-                <Setter Property="Fill" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Stroke" Value="{StaticResource TextBrush}"/>
+                <Setter Property="StrokeThickness" Value="2"/>
+                <Setter Property="StrokeLineJoin" Value="Round"/>
+                <Setter Property="StrokeStartLineCap" Value="Round"/>
+                <Setter Property="StrokeEndLineCap" Value="Round"/>
                 <Setter Property="Stretch" Value="Uniform"/>
-                <Setter Property="Width" Value="15"/>
-                <Setter Property="Height" Value="15"/>
+                <Setter Property="Width" Value="16"/>
+                <Setter Property="Height" Value="16"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
 
@@ -496,6 +509,69 @@
                 <Setter Property="BorderThickness" Value="1"/>
             </Style>
 
+            <!-- Botao de simbolo, sem moldura.
+                 A barra tinha cinco pilulas contornadas em fila, todas do mesmo peso: uma
+                 parede de botoes em que nenhum era mais importante que o outro, e a moldura de
+                 cada um competia com o desenho de dentro. A regra da Apple para barra com mais
+                 de tres acoes e trocar rotulo por simbolo; e a moldura so aparece quando o
+                 ponteiro esta em cima, que e quando ela serve para alguma coisa (dizer o que
+                 vai ser clicado).
+                 34 px de alvo para um glifo de 17: o alvo de clique nao encolhe junto com o
+                 desenho. -->
+            <Style x:Key="GlyphButton" TargetType="Button">
+                <Setter Property="Width" Value="34"/>
+                <Setter Property="Height" Value="34"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" CornerRadius="10" Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#16FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#24FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- O glifo dentro do GlyphButton: apagado em repouso, aceso sob o ponteiro. E o
+                 mesmo gesto do Finder e da barra do Safari — a fila inteira fica quieta, e so
+                 aquele em que voce esta acende. -->
+            <Style x:Key="GlyphIcon" TargetType="Path" BasedOn="{StaticResource IconPath}">
+                <Setter Property="Width" Value="17"/>
+                <Setter Property="Height" Value="17"/>
+                <Setter Property="Stroke" Value="{StaticResource TextDimBrush}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}"
+                                 Value="True">
+                        <Setter Property="Stroke" Value="{StaticResource TextBrush}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Separador entre grupos de acao. Um fio, nao uma barra: ele existe para dizer que
+                 "atualizar" e "configurar" sao assuntos diferentes, sem virar mais um traco
+                 forte na tela. -->
+            <Style x:Key="ToolDivider" TargetType="Border">
+                <Setter Property="Width" Value="1"/>
+                <Setter Property="Height" Value="18"/>
+                <Setter Property="Margin" Value="7,0"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Background" Value="#1FFFFFFF"/>
+            </Style>
+
             <Style x:Key="ToolButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                 <Setter Property="Padding" Value="11,7"/>
                 <Setter Property="Background" Value="Transparent"/>
@@ -552,7 +628,7 @@
                                 <Border x:Name="Box" Width="17" Height="17" CornerRadius="4" VerticalAlignment="Center"
                                         Background="{StaticResource CardBrush}" BorderThickness="1"
                                         BorderBrush="{StaticResource BorderStrongBrush}">
-                                    <Path x:Name="Mark" Data="{StaticResource IconCheck}" Fill="#14100A"
+                                    <Path x:Name="Mark" Data="{StaticResource IconCheck}" Stroke="#14100A" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Stretch="Uniform" Width="11" Height="11" Visibility="Collapsed"/>
                                 </Border>
                                 <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"
@@ -592,7 +668,7 @@
                                                 <StackPanel Orientation="Horizontal">
                                                     <!-- a seta aponta para a direita fechado, para baixo aberto -->
                                                     <Path x:Name="Chevron" Data="{StaticResource IconChevron}"
-                                                          Fill="{StaticResource TextFaintBrush}" Stretch="Uniform"
+                                                          Stroke="{StaticResource TextFaintBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                                           Width="11" Height="11" VerticalAlignment="Center"
                                                           Margin="0,0,7,0" RenderTransformOrigin="0.5,0.5">
                                                         <Path.RenderTransform>
@@ -611,7 +687,7 @@
                                                     </Setter>
                                                 </Trigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Chevron" Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                                    <Setter TargetName="Chevron" Property="Stroke" Value="{StaticResource AccentBrush}"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -677,7 +753,7 @@
                                                 <Path HorizontalAlignment="Right" VerticalAlignment="Center"
                                                       Margin="0,0,9,0" Width="13" Height="13" Stretch="Uniform"
                                                       Data="{StaticResource IconChevron}"
-                                                      Fill="{StaticResource TextDimBrush}"/>
+                                                      Stroke="{StaticResource TextDimBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">

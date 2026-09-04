@@ -286,9 +286,11 @@ public static class Dlss5Installer
         var rota = RotearPasta(targetDir, exePath, temDlssNativo);
         var ehVulkan = rota.EhVulkan;
         // Os dois caminhos ao mesmo tempo e uma instalacao INTENCIONAL, e nao o residuo de uma
-        // troca mal feita. A marca diz isso para quem ler a pasta depois -- o scanner de
-        // conflitos, e o proximo reinstalar.
-        var multiApi = rota.Ponte && rota.Feeder;
+        // troca mal feita. Acontece em duas situacoes, e nao mais so numa: a pasta com um
+        // executavel por API, e o jogo de DirectX 11 sem DLSS proprio — onde o Feeder fabrica os
+        // dados e a Ponte da o device D3D12 em que o pass roda. Tirar uma das duas ali apaga o
+        // pass neural (ver Rotear).
+        var asDuasRotas = rota.Ponte && rota.Feeder;
         var upscaler = rota.Upscaler;
         var precisaPonte = rota.Ponte;
         var precisaOpti = rota.OptiScaler;
@@ -466,7 +468,7 @@ public static class Dlss5Installer
             //
             // A excecao continua sendo a pasta multi-API, onde os dois sao pedidos de proposito e
             // tirar um desfaria metade do trabalho.
-            if (!multiApi)
+            if (!asDuasRotas)
             {
                 if (!precisaPonte) NeuralUpliftService.RemoveBridge(targetDir);
                 if (!precisaFeeder) FeederService.Remove(targetDir);
@@ -479,7 +481,7 @@ public static class Dlss5Installer
                 // Com os dois caminhos instalados nao ha mais executavel "certo" para abrir — que
                 // era o unico motivo deste aviso existir. Ele so vale quando so a Ponte foi
                 // instalada e o jogo tem mais de um executavel.
-                if (!multiApi) manual.Add(L.T("Dlss5_Manual_UseDx11Exe"));
+                if (!asDuasRotas) manual.Add(L.T("Dlss5_Manual_UseDx11Exe"));
             }
             if (precisaOpti)
             {
@@ -517,7 +519,7 @@ public static class Dlss5Installer
                 // por API. A marca separa isso do caso que o scanner de conflitos deve acusar:
                 // duas metades que ficaram juntas por historico. Sem ela, a instalacao correta
                 // seria reportada como defeito na propria tela que acabou de faze-la.
-                if (multiApi)
+                if (asDuasRotas)
                 {
                     try
                     {
@@ -772,7 +774,16 @@ public static class Dlss5Installer
         // um addon inerte na pasta e, pior, o passo manual mandava "abra pelo executavel de
         // DirectX 11", que no DOOM Eternal nao existe.
         var ehVulkan = VulkanLayerService.Applies(exePath);
-        var ponte = temDlssNativo && !alcancaD3d12 && !ehVulkan;
+        // A ponte segue a API do jogo, e NAO o fato de ele ter DLSS proprio.
+        //
+        // Ela existia so para jogo com DLSS nativo, pela ideia de que o que ela faz e espelhar o
+        // contrato de DLSS do jogo. Faz, mas essa e a consequencia; o que ela resolve e mais
+        // basico: dar ao pass neural um device D3D12 onde rodar, que num jogo de DirectX 11 nao
+        // existe. Um jogo DX11 SEM DLSS tambem precisa disso — ali quem produz o contrato e o
+        // Feeder, no device privado dele, e sem a ponte a criacao da feature 18 falha com
+        // 0xbad00002 e o device morre no ExecuteCommandLists seguinte. Foi o que aconteceu no
+        // Saints Row The Third quando o botao de consertar tirou a ponte de la.
+        var ponte = !alcancaD3d12 && !ehVulkan;
 
         // Jogo com FSR ou XeSS proprio e sem DLSS: o OptiScaler redireciona o upscaler que ele ja
         // tem. Vem ANTES do Feeder na decisao, e por um motivo de qualidade, nao de gosto — o

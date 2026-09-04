@@ -169,7 +169,7 @@
                                 Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                 ToolTip="{loc:Tr Main_Tile_Update_Tooltip}">
                             <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource IconWarning}" Fill="#231A05" Stretch="Uniform"
+                                <Path Data="{StaticResource IconWarning}" Stroke="#231A05" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                       Width="11" Height="11" VerticalAlignment="Center"/>
                                 <TextBlock Text="{loc:Tr Main_Tile_UpdateBadge}" FontSize="9" FontWeight="Bold" Margin="4,0,0,0"
                                            Foreground="#231A05" VerticalAlignment="Center"/>
@@ -359,7 +359,7 @@
                     <Grid Width="234" Margin="0,0,10,0">
                         <TextBox x:Name="SearchBox" VerticalContentAlignment="Center" Padding="33,7,9,7"
                                  Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Path Data="{StaticResource IconSearch}" Fill="{StaticResource TextFaintBrush}"
+                        <Path Data="{StaticResource IconSearch}" Stroke="{StaticResource TextFaintBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Left"
                               VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False"/>
                         <TextBlock Text="{loc:Tr Main_SearchPlaceholder}" Foreground="{StaticResource TextFaintBrush}"
@@ -395,46 +395,48 @@
                             </Style>
                         </Button.Style>
                         <StackPanel Orientation="Horizontal">
-                            <Path Data="{StaticResource IconWarning}" Fill="#231A05" Stretch="Uniform"
+                            <Path Data="{StaticResource IconWarning}" Stroke="#231A05" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                   Width="14" Height="14" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding UpdateAllText}" Margin="7,0,0,0" VerticalAlignment="Center"
                                        Foreground="#231A05" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
-
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="{loc:Tr Main_Refresh_Name}" Command="{Binding RefreshCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconRefresh}"/>
-                            <TextBlock Text="{loc:Tr Common_Refresh}" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <!-- Os cinco em fila viraram simbolos sem moldura, em dois grupos: o que
+                         mexe na LISTA (reler a pasta, procurar versao nova, acrescentar jogo) e
+                         o que abre OUTRA JANELA (ajustes, guia). O fio entre eles faz o trabalho
+                         que cinco molduras iguais nao faziam.
+                         Cada um leva ToolTip com o nome inteiro: sem rotulo na tela, o nome tem
+                         de estar em algum lugar — e o leitor de tela continua lendo o
+                         AutomationProperties.Name. -->
+                    <Button Style="{StaticResource GlyphButton}"
+                            ToolTip="{loc:Tr Common_Refresh}"
+                            AutomationProperties.Name="{loc:Tr Main_Refresh_Name}" Command="{Binding RefreshCommand}">
+                        <Path Style="{StaticResource GlyphIcon}" Data="{StaticResource IconRefresh}"/>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" AutomationProperties.Name="{loc:Tr Main_CheckUpdates}" Command="{Binding CheckUpdatesCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconUpdate}"/>
-                            <TextBlock Text="{loc:Tr Main_CheckUpdates}" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <Button Style="{StaticResource GlyphButton}"
+                            ToolTip="{loc:Tr Main_CheckUpdates}"
+                            AutomationProperties.Name="{loc:Tr Main_CheckUpdates}" Command="{Binding CheckUpdatesCommand}">
+                        <Path Style="{StaticResource GlyphIcon}" Data="{StaticResource IconUpdate}"/>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0"
+                    <Button Style="{StaticResource GlyphButton}"
+                            ToolTip="{loc:Tr Main_AddGame_Name}"
                             AutomationProperties.Name="{loc:Tr Main_AddGame_Name}" Command="{Binding AddManualGameCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPlus}"/>
-                            <TextBlock Text="{loc:Tr Common_Add}" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Path Style="{StaticResource GlyphIcon}" Data="{StaticResource IconPlus}"/>
                     </Button>
+
+                    <Border Style="{StaticResource ToolDivider}"/>
+
                     <!-- Ajustes do app: as pecas compartilhadas do DLSS 5 e a calibracao da tela.
-                         Tudo o que vale para todos os jogos e nao pertence a nenhum mora aqui —
-                         a barra tinha dois botoes para isso e agora tem um. So o icone: a
-                         engrenagem e reconhecivel sem rotulo e a barra ja estava cheia. -->
-                    <Button Style="{StaticResource ToolButton}" Margin="0,0,7,0" Padding="11,8"
+                         Tudo o que vale para todos os jogos e nao pertence a nenhum mora aqui. -->
+                    <Button Style="{StaticResource GlyphButton}"
                             ToolTip="{loc:Tr Settings_Title}"
                             AutomationProperties.Name="{loc:Tr Settings_Title}" Click="OnSettingsClick">
-                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconGear}"/>
+                        <Path Style="{StaticResource GlyphIcon}" Data="{StaticResource IconGear}"/>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" AutomationProperties.Name="{loc:Tr Main_Guide}" Click="OnGuideClick">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource IconPath}" Data="{StaticResource IconBook}"/>
-                            <TextBlock Text="{loc:Tr Main_Guide}" Margin="7,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <Button Style="{StaticResource GlyphButton}"
+                            ToolTip="{loc:Tr Main_Guide}"
+                            AutomationProperties.Name="{loc:Tr Main_Guide}" Click="OnGuideClick">
+                        <Path Style="{StaticResource GlyphIcon}" Data="{StaticResource IconBook}"/>
                     </Button>
                 </StackPanel>
                 <Border/>
@@ -463,7 +465,7 @@
                         Style="{StaticResource AccentButton}" Command="{Binding UpdateLauncherCommand}">
                     <TextBlock Text="{loc:Tr Update_Banner_Button}" FontSize="11.5"/>
                 </Button>
-                <Path DockPanel.Dock="Left" Data="{StaticResource IconDownload}" Fill="#8FD0F0"
+                <Path DockPanel.Dock="Left" Data="{StaticResource IconDownload}" Stroke="#8FD0F0" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                       Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center"
                       Margin="0,0,11,0"/>
                 <StackPanel VerticalAlignment="Center">
@@ -533,7 +535,7 @@
 
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
                         Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVis}}">
-                <Path Data="{StaticResource IconSearch}" Fill="#39404E" Stretch="Uniform"
+                <Path Data="{StaticResource IconSearch}" Stroke="#39404E" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                       Width="44" Height="44" HorizontalAlignment="Center"/>
                 <TextBlock Text="{loc:Tr Main_Empty_Title}" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"
                            Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
@@ -598,7 +600,7 @@
                         <Button Margin="0,12,0,0" Padding="12,10" Command="{Binding LaunchGameCommand}"
                                 AutomationProperties.Name="{loc:Tr Main_Play}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Path Data="{StaticResource IconPlay}" Fill="{StaticResource TextBrush}"
+                                <Path Data="{StaticResource IconPlay}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
                                 <TextBlock Text="{loc:Tr Main_Play}" Margin="8,0,0,0" FontSize="12.5" FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
@@ -632,7 +634,7 @@
                                         VerticalAlignment="Center" ToolTip="{Binding Selected.ModStatusTooltip}"
                                         Visibility="{Binding Selected.ModIsStable, Converter={StaticResource BoolToVis}}">
                                     <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource IconCheck}" Fill="{StaticResource GreenBrush}"
+                                        <Path Data="{StaticResource IconCheck}" Stroke="{StaticResource GreenBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                               Stretch="Uniform" Width="11" Height="11" VerticalAlignment="Center"/>
                                         <TextBlock Text="{loc:Tr Dialog_Mod_Stable}" FontSize="10.5" FontWeight="SemiBold"
                                                    Foreground="#8FE9C4" Margin="5,0,0,0" VerticalAlignment="Center"/>
@@ -642,7 +644,7 @@
                                         VerticalAlignment="Center" ToolTip="{Binding Selected.ModStatusTooltip}"
                                         Visibility="{Binding Selected.ModIsUnstable, Converter={StaticResource BoolToVis}}">
                                     <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource IconWarning}" Fill="{StaticResource OrangeBrush}"
+                                        <Path Data="{StaticResource IconWarning}" Stroke="{StaticResource OrangeBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                               Stretch="Uniform" Width="11" Height="11" VerticalAlignment="Center"/>
                                         <TextBlock Text="{loc:Tr Dialog_Mod_Unstable}" FontSize="10.5" FontWeight="SemiBold"
                                                    Foreground="#F5C65E" Margin="5,0,0,0" VerticalAlignment="Center"/>
@@ -660,7 +662,7 @@
                                             Click="OnHistoryClick" AutomationProperties.Name="{loc:Tr Dialog_History_Name}"
                                             ToolTip="{loc:Tr Dialog_History_Tooltip}">
                                         <StackPanel Orientation="Horizontal">
-                                            <Path Data="{StaticResource IconUpdate}" Fill="{StaticResource TextBrush}"
+                                            <Path Data="{StaticResource IconHistory}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                   Stretch="Uniform" Width="13" Height="13" VerticalAlignment="Center"/>
                                             <TextBlock Text="{loc:Tr Common_History}" Margin="7,0,0,0" FontSize="12"
                                                        VerticalAlignment="Center"/>
@@ -718,7 +720,7 @@
                                     Visibility="{Binding Selected.HasUpdate, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource IconWarning}" Fill="{StaticResource OrangeBrush}"
+                                        <Path Data="{StaticResource IconWarning}" Stroke="{StaticResource OrangeBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                               Stretch="Uniform" Width="16" Height="16" VerticalAlignment="Center"/>
                                         <TextBlock Text="{loc:Tr Dialog_Update_Title}" FontSize="13" FontWeight="SemiBold"
                                                    Foreground="#F5C65E" Margin="9,0,0,0" VerticalAlignment="Center"/>
@@ -738,7 +740,7 @@
                                             </Style>
                                         </Button.Style>
                                         <StackPanel Orientation="Horizontal">
-                                            <Path Data="{StaticResource IconDownload}" Fill="#231A05" Stretch="Uniform"
+                                            <Path Data="{StaticResource IconDownload}" Stroke="#231A05" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                                   Width="14" Height="14" VerticalAlignment="Center"/>
                                             <TextBlock Text="{loc:Tr Common_Update}" Margin="7,0,0,0" FontSize="12.5"
                                                        FontWeight="SemiBold" Foreground="#231A05"
@@ -761,7 +763,7 @@
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
                                         <StackPanel Orientation="Horizontal">
                                             <Border Style="{StaticResource IconChip}">
-                                                <Path Data="{StaticResource IconInfo}" Fill="#A8D4F0"
+                                                <Path Data="{StaticResource IconInfo}" Stroke="#A8D4F0" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                       Stretch="Uniform" Width="15" Height="15"/>
                                             </Border>
                                             <TextBlock Text="{loc:Tr Dialog_DlssFix_Title}"
@@ -802,7 +804,7 @@
                                 <DockPanel>
                                     <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="10"
                                             Background="#38000000" VerticalAlignment="Center">
-                                        <Path Data="{StaticResource IconWarning}" Fill="#241805" Stretch="Uniform"
+                                        <Path Data="{StaticResource IconWarning}" Stroke="#241805" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                               Width="17" Height="17"/>
                                     </Border>
                                     <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
@@ -875,7 +877,7 @@
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
                                         <StackPanel Orientation="Horizontal">
                                             <Border Style="{StaticResource IconChip}">
-                                                <Path Data="{StaticResource IconMonitor}" Fill="#8FE0A8"
+                                                <Path Data="{StaticResource IconMonitor}" Stroke="#8FE0A8" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                       Stretch="Uniform" Width="15" Height="15"/>
                                             </Border>
                                             <TextBlock Text="{loc:Tr Dialog_Mod_Title}"
@@ -942,7 +944,7 @@
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
                                             <StackPanel Orientation="Horizontal">
                                                 <Border Style="{StaticResource IconChip}">
-                                                    <Path Data="{StaticResource IconSpark}" Fill="#D0A8F0"
+                                                    <Path Data="{StaticResource IconSpark}" Stroke="#D0A8F0" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                           Stretch="Uniform" Width="15" Height="15"/>
                                                 </Border>
                                                 <TextBlock Text="{loc:Tr Dialog_Neural_Title}"
@@ -1093,7 +1095,7 @@
                                             Visibility="{Binding MostraAvisoSemDlss, Converter={StaticResource BoolToVis}}">
                                         <DockPanel>
                                             <Path DockPanel.Dock="Left" Data="{StaticResource IconWarning}"
-                                                  Fill="#E8B860" Stretch="Uniform" Width="14" Height="14"
+                                                  Stroke="#E8B860" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform" Width="14" Height="14"
                                                   VerticalAlignment="Top" Margin="0,1,9,0"/>
                                             <StackPanel>
                                                 <TextBlock Text="{loc:Tr Dlss5_Feeder_Title}" FontSize="11.5"
@@ -1140,7 +1142,7 @@
                                                 <StackPanel>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Border Style="{StaticResource IconChip}">
-                                                            <Path Data="{StaticResource IconWarning}" Fill="#E4D89A"
+                                                            <Path Data="{StaticResource IconWarning}" Stroke="#E4D89A" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                                   Stretch="Uniform" Width="15" Height="15"/>
                                                         </Border>
                                                         <TextBlock Text="{loc:Tr Conflito_Titulo}"
@@ -1234,7 +1236,7 @@
                                                  disso antes de ligar, nao depois. -->
                                             <StackPanel Orientation="Horizontal">
                                                 <Border Style="{StaticResource IconChip}">
-                                                    <Path Data="{StaticResource IconLayers}" Fill="#F0A8C8"
+                                                    <Path Data="{StaticResource IconLayers}" Stroke="#F0A8C8" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                           Stretch="Uniform" Width="15" Height="15"/>
                                                 </Border>
                                                 <TextBlock Text="{loc:Tr Mfg_Title}"
@@ -1444,12 +1446,12 @@
                             <StackPanel Orientation="Horizontal">
                                 <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding OpenFolderCommand}"
                                         ToolTip="{loc:Tr Dialog_OpenFolder}" AutomationProperties.Name="{loc:Tr Dialog_OpenFolder}">
-                                    <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextBrush}"
+                                    <Path Data="{StaticResource IconFolder}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Stretch="Uniform" Width="15" Height="15"/>
                                 </Button>
                                 <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding OpenNexusCommand}"
                                         ToolTip="{loc:Tr Dialog_ModPage}" AutomationProperties.Name="{loc:Tr Dialog_ModPage}">
-                                    <Path Data="{StaticResource IconGlobe}" Fill="{StaticResource TextBrush}"
+                                    <Path Data="{StaticResource IconGlobe}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Stretch="Uniform" Width="15" Height="15"/>
                                 </Button>
                                 <!-- ativar/desativar: trocou de lugar com o remover. Renomear o
@@ -1468,13 +1470,15 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
-                                    <Path Data="{StaticResource IconPower}" Stretch="Uniform" Width="15" Height="15">
+                                    <!-- Stroke, e nao Fill: o desenho e uma linha aberta, e
+                                         preenche-la fecha o contorno numa bolha verde. -->
+                                    <Path Data="{StaticResource IconPower}">
                                         <Path.Style>
-                                            <Style TargetType="Path">
-                                                <Setter Property="Fill" Value="{StaticResource TextDimBrush}"/>
+                                            <Style TargetType="Path" BasedOn="{StaticResource IconPath}">
+                                                <Setter Property="Stroke" Value="{StaticResource TextDimBrush}"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Selected.IsEnabled}" Value="True">
-                                                        <Setter Property="Fill" Value="{StaticResource GreenBrush}"/>
+                                                        <Setter Property="Stroke" Value="{StaticResource GreenBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>

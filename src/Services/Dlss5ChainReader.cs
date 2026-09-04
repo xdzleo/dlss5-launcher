@@ -124,8 +124,15 @@ public static class Dlss5ChainReader
         // Feeder sao exclusivos, e a resposta pode mudar entre uma instalacao e a seguinte
         // (deteccao corrigida, jogo atualizado). Um caminho instalado e completo nao e um elo
         // faltando: trocar de caminho e reinstalar, e e assim que deve ser pedido.
-        var pedePonte = rota.Ponte && !feederAtivo;
-        var pedeFeeder = rota.Feeder && !ponteAtiva;
+        // ...com uma excecao que custou caro: quando a rota pede as DUAS, as duas sao cobradas.
+        //
+        // Com a precedencia aplicada sempre, um jogo DX11 sem DLSS — que precisa da Ponte E do
+        // Feeder — ficava assim: Feeder presente, logo nao se cobra a Ponte; e a cadeia exibia
+        // "ok" com o pass neural morto dentro do jogo. Foi o que a auditoria disse do Saints Row
+        // The Third depois de o botao de consertar tirar a ponte de la.
+        var asDuasRotas = rota.Ponte && rota.Feeder;
+        var pedePonte = rota.Ponte && (asDuasRotas || !feederAtivo);
+        var pedeFeeder = rota.Feeder && (asDuasRotas || !ponteAtiva);
 
         // O aviso "sem DLSS nativo" segue a AUSENCIA de DLSS, nao a presenca do Feeder.
         //

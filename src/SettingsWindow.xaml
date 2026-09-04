@@ -61,7 +61,7 @@
             <StackPanel DockPanel.Dock="Top">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="36" Height="36" CornerRadius="10" Background="#2A1F12">
-                        <Path Data="{StaticResource IconGear}" Fill="{StaticResource AccentBrush}"
+                        <Path Data="{StaticResource IconGear}" Stroke="{StaticResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               Stretch="Uniform" Width="19" Height="19"/>
                     </Border>
                     <StackPanel Margin="13,0,0,0" VerticalAlignment="Center">
@@ -100,7 +100,7 @@
                                     Click="OnImportAddon" Content="{loc:Tr Settings_Addon_Update}"/>
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconDownload}" Fill="#D0A8F0" Stretch="Uniform"
+                                    <Path Data="{StaticResource IconDownload}" Stroke="#D0A8F0" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                           Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="{loc:Tr Settings_Addon_Title}" Style="{StaticResource PieceName}"
                                                Foreground="#D0A8F0" VerticalAlignment="Center"/>
@@ -124,7 +124,7 @@
                                     Content="{loc:Tr Settings_Addon_Update}"/>
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconGlobe}" Fill="#8FD0F0" Stretch="Uniform"
+                                    <Path Data="{StaticResource IconGlobe}" Stroke="#8FD0F0" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                           Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="{loc:Tr Settings_Bridge_Title}" Style="{StaticResource PieceName}"
                                                Foreground="#8FD0F0" VerticalAlignment="Center"/>
@@ -152,7 +152,7 @@
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <Path x:Name="RuntimeIcon" Data="{StaticResource IconCheck}"
-                                          Fill="{StaticResource GreenBrush}"
+                                          Stroke="{StaticResource GreenBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Stretch="Uniform" Width="15" Height="15" VerticalAlignment="Center"
                                           Margin="0,0,8,0"/>
                                     <TextBlock Text="{loc:Tr Settings_Runtime_Title}" Style="{StaticResource PieceName}"
@@ -175,7 +175,7 @@
                                         Padding="10,9" Margin="0,8,0,0" Visibility="Collapsed">
                                     <DockPanel>
                                         <Path DockPanel.Dock="Left" Data="{StaticResource IconWarning}"
-                                              Fill="#E8B860" Stretch="Uniform"
+                                              Stroke="#E8B860" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                                               Width="13" Height="13" VerticalAlignment="Top" Margin="0,1,8,0"/>
                                         <TextBlock Text="{loc:Tr Settings_Runtime_Community}" FontSize="11"
                                                    TextWrapping="Wrap" LineHeight="16"

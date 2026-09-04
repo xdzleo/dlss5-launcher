@@ -14,7 +14,7 @@
                         ToolTip="{loc:Tr History_OpenWeb_Tooltip}"
                         AutomationProperties.Name="{loc:Tr History_OpenWeb_Button}">
                     <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IconGlobe}" Fill="{StaticResource TextBrush}"
+                        <Path Data="{StaticResource IconGlobe}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
                         <TextBlock Text="{loc:Tr History_OpenWeb_Button}" Margin="7,0,0,0" FontSize="12"
                                    VerticalAlignment="Center"/>
@@ -64,7 +64,7 @@
 
             <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
                         Visibility="Collapsed">
-                <Path Data="{StaticResource IconUpdate}" Fill="#39404E" Stretch="Uniform"
+                <Path Data="{StaticResource IconHistory}" Stroke="#39404E" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                       Width="40" Height="40" HorizontalAlignment="Center"/>
                 <TextBlock x:Name="EmptyText" Style="{StaticResource Caption}" Margin="0,14,0,0"
                            HorizontalAlignment="Center" MaxWidth="420" TextAlignment="Center"/>

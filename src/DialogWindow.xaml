@@ -15,7 +15,7 @@
             <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
                 <Border x:Name="IconBadge" Width="36" Height="36" CornerRadius="10" Background="#2A2415"
                         VerticalAlignment="Top">
-                    <Path x:Name="IconGlyph" Data="{StaticResource IconWarning}" Fill="#F0B429"
+                    <Path x:Name="IconGlyph" Data="{StaticResource IconWarning}" Stroke="#F0B429" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                           Stretch="Uniform" Width="19" Height="19"/>
                 </Border>
                 <TextBlock x:Name="TitleText" Style="{StaticResource H1}" FontSize="17" TextWrapping="Wrap"

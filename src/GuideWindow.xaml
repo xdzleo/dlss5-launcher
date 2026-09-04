@@ -26,7 +26,7 @@
                 BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal">
                 <Border Width="38" Height="38" CornerRadius="10" Background="#2A1F12">
-                    <Path Data="{StaticResource IconBook}" Fill="{StaticResource AccentBrush}"
+                    <Path Data="{StaticResource IconBook}" Stroke="{StaticResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                           Stretch="Uniform" Width="20" Height="20"/>
                 </Border>
                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
@@ -104,7 +104,7 @@
                 <Border Background="#3A1E1E" BorderBrush="#6E3232" BorderThickness="1" CornerRadius="10"
                         Padding="14,12" Margin="0,4,0,12">
                     <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IconBlock}" Fill="#FF9E9E" Stretch="Uniform"
+                        <Path Data="{StaticResource IconBlock}" Stroke="#FF9E9E" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
                               Width="18" Height="18" VerticalAlignment="Top" Margin="0,2,0,0"/>
                         <StackPanel Margin="12,0,0,0" MaxWidth="520">
                             <TextBlock Text="{loc:Tr Guide_AntiCheat_Title}" Style="{StaticResource H2}" Foreground="#FFC9C9"/>
