@@ -2861,6 +2861,48 @@
     "en": "missing",
     "pt-BR": "faltando"
   },
+  "Settings_Feeder_Installed": {
+    "en": "Now on {0}. The games only change on the next install.",
+    "pt-BR": "Agora na {0}. Os jogos só mudam na próxima instalação."
+  },
+  "Settings_Feeder_NoRollback": {
+    "en": "No previous version kept yet — there will be one after the first update.",
+    "pt-BR": "Nenhuma versão anterior guardada ainda — vai existir uma depois da primeira atualização."
+  },
+  "Settings_Feeder_Rollback": {
+    "en": "Go back",
+    "pt-BR": "Voltar"
+  },
+  "Settings_Feeder_RollbackTo": {
+    "en": "Go back to {0}",
+    "pt-BR": "Voltar para a {0}"
+  },
+  "Settings_Feeder_State": {
+    "en": "Generates colour, depth and motion vectors for games that have no DLSS. Pinned to {0} — the version that was run in a game and delivered frames.",
+    "note": "pt: explica o que o Feeder faz e por que a versao e fixada.",
+    "pt-BR": "Gera cor, profundidade e vetores de movimento para jogos sem DLSS. Fixado na {0} — a versão que foi rodada num jogo e entregou quadros."
+  },
+  "Settings_Feeder_Title": {
+    "en": "DLSS5 Feeder",
+    "pt-BR": "DLSS5 Feeder"
+  },
+  "Settings_Releases_Beta": {
+    "en": "beta",
+    "pt-BR": "beta"
+  },
+  "Settings_Releases_Install": {
+    "en": "Install",
+    "pt-BR": "Instalar"
+  },
+  "Settings_Releases_Same": {
+    "en": "That is already the one in the library.",
+    "pt-BR": "Essa já é a que está na biblioteca."
+  },
+  "Settings_Releases_Tooltip": {
+    "en": "Every release in the repository, newest first. Betas are listed but never picked on their own.",
+    "note": "pt: explica que a lista traz beta, mas o launcher nunca escolhe um sozinho.",
+    "pt-BR": "Todas as releases do repositório, da mais nova para a mais antiga. Os betas aparecem, mas o launcher nunca escolhe um sozinho."
+  },
   "Settings_Pill_Unknown": {
     "en": "unknown version",
     "pt-BR": "versão desconhecida"

@@ -2250,6 +2250,25 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Settings_Exposure_Label" xml:space="preserve">
     <value>Exposição</value>
   </data>
+  <data name="Settings_Feeder_Installed" xml:space="preserve">
+    <value>Agora na {0}. Os jogos só mudam na próxima instalação.</value>
+  </data>
+  <data name="Settings_Feeder_NoRollback" xml:space="preserve">
+    <value>Nenhuma versão anterior guardada ainda — vai existir uma depois da primeira atualização.</value>
+  </data>
+  <data name="Settings_Feeder_Rollback" xml:space="preserve">
+    <value>Voltar</value>
+  </data>
+  <data name="Settings_Feeder_RollbackTo" xml:space="preserve">
+    <value>Voltar para a {0}</value>
+  </data>
+  <data name="Settings_Feeder_State" xml:space="preserve">
+    <value>Gera cor, profundidade e vetores de movimento para jogos sem DLSS. Fixado na {0} — a versão que foi rodada num jogo e entregou quadros.</value>
+    <comment>pt: explica o que o Feeder faz e por que a versao e fixada.</comment>
+  </data>
+  <data name="Settings_Feeder_Title" xml:space="preserve">
+    <value>DLSS5 Feeder</value>
+  </data>
   <data name="Settings_FilmGrain_Label" xml:space="preserve">
     <value>Granulação de filme</value>
   </data>
@@ -2310,6 +2329,19 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   </data>
   <data name="Settings_Pill_Unknown" xml:space="preserve">
     <value>versão desconhecida</value>
+  </data>
+  <data name="Settings_Releases_Beta" xml:space="preserve">
+    <value>beta</value>
+  </data>
+  <data name="Settings_Releases_Install" xml:space="preserve">
+    <value>Instalar</value>
+  </data>
+  <data name="Settings_Releases_Same" xml:space="preserve">
+    <value>Essa já é a que está na biblioteca.</value>
+  </data>
+  <data name="Settings_Releases_Tooltip" xml:space="preserve">
+    <value>Todas as releases do repositório, da mais nova para a mais antiga. Os betas aparecem, mas o launcher nunca escolhe um sozinho.</value>
+    <comment>pt: explica que a lista traz beta, mas o launcher nunca escolhe um sozinho.</comment>
   </data>
   <data name="Settings_Runtime_Community" xml:space="preserve">
     <value>Build da comunidade — a NVIDIA não assinou este arquivo. Ele existe para rodar nas RTX 40, onde os kernels da NVIDIA não rodam. O autor do patch diz para não usar em jogo online ou com anti-cheat: ele altera um arquivo que o anti-cheat pode conferir.</value>

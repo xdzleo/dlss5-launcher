@@ -659,6 +659,9 @@ public static class NeuralUpliftService
     /// proximo rename; o padrao aceita os dois nomes.
     /// </remarks>
     private const string BridgeRepo = "NIGos/dlss5-bridge";
+
+    /// <summary>O mesmo repositorio, para a tela poder listar as releases dele.</summary>
+    public static string BridgeRepoPublico => BridgeRepo;
     private static readonly System.Text.RegularExpressions.Regex BridgeAsset =
         new(@"^dlss5-(dx11-)?bridge\.addon64$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
@@ -726,12 +729,14 @@ public static class NeuralUpliftService
     /// Substituir arquivo dentro de jogo aberto nao da certo, entao esses ficam de fora e pegam
     /// a versao nova na proxima passada.
     /// </summary>
+    /// <param name="tag">Uma release escolhida na tela; sem ela, a estavel mais recente.</param>
     public static async Task<int> UpdateBridgeAsync(IEnumerable<string> installDirs,
                                                     IProgress<string>? progress = null,
-                                                    CancellationToken ct = default)
+                                                    CancellationToken ct = default,
+                                                    string? tag = null)
     {
         if (!File.Exists(LibraryBridge)) return -1;
-        var bytes = await BaixarPonteAsync(ct);
+        var bytes = await BaixarPonteAsync(ct, tag);
         if (bytes.Length == new FileInfo(LibraryBridge).Length
             && Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes))
                == Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(LibraryBridge))))
@@ -768,11 +773,17 @@ public static class NeuralUpliftService
     /// Sem isso, uma pagina de erro devolvida com 200, ou um asset renomeado na release, viraria
     /// um arquivo com o nome certo que o jogo carrega e que nao faz nada.
     /// </summary>
-    private static async Task<byte[]> BaixarPonteAsync(CancellationToken ct)
+    /// <param name="tag">Uma release escolhida na tela de Configuracoes; sem ela, a estavel
+    /// mais recente.</param>
+    private static async Task<byte[]> BaixarPonteAsync(CancellationToken ct, string? tag = null)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
-        var url = await GitHubReleaseService.LatestAssetAsync(http, BridgeRepo, BridgeAsset, ct)
+        string? url = null;
+        if (tag is not null)
+            url = (await GitHubReleaseService.AssetsAsync(http, BridgeRepo, tag, ct))
+                  .FirstOrDefault(u => BridgeAsset.IsMatch(Path.GetFileName(u)));
+        url ??= await GitHubReleaseService.LatestAssetAsync(http, BridgeRepo, BridgeAsset, ct)
                   ?? throw new InvalidOperationException(L.T("Neural_Fetch_BadAddon", BridgeRepo));
         var bytes = await http.GetByteArrayAsync(url, ct);
         if (bytes.Length < 4096 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
@@ -1975,12 +1986,36 @@ public static class NeuralUpliftService
         {
             if (!File.Exists(path) || new FileInfo(path).Length > 64L * 1024 * 1024) return null;
             var texto = System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(path));
-            // A versao do RUNTIME (v310.8.0) tambem aparece; a do addon e a que nao e 310.
-            return System.Text.RegularExpressions.Regex.Matches(texto, @"\bv(\d+\.\d+\.\d+)\b")
+            // Duas partes bastam. O addon se anuncia como "v4.7" — duas — e a regex exigia tres,
+            // entao a tela dizia "versao desconhecida" de um arquivo que traz a versao escrita
+            // dentro. A do RUNTIME (v310.8.0) tambem aparece no texto; a do addon e a que nao
+            // comeca com 310.
+            return System.Text.RegularExpressions.Regex.Matches(texto, @"\bv(\d+\.\d+(?:\.\d+)?)\b")
                 .Select(m => m.Groups[1].Value)
                 .FirstOrDefault(v => !v.StartsWith("310.", StringComparison.Ordinal));
         }
         catch (Exception ex) { Log.Warn($"neural version {path}: {ex.Message}"); return null; }
+    }
+
+    /// <summary>
+    /// A versao que o proprio PE declara, que e a unica que existe para a Ponte e para o runtime.
+    ///
+    /// A tela mostrava "na biblioteca" e "158 MB" no lugar da versao — quantidade de bytes nao
+    /// e resposta para "qual versao esta instalada?", e foi essa pergunta sem resposta que fez
+    /// a caçada do Feeder beta demorar o que demorou.
+    /// </summary>
+    public static string? ReadFileVersion(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return null;
+            var v = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).FileVersion;
+            // O campo e texto livre, e cada compilador escreve do seu jeito: o runtime da NVIDIA
+            // vem "310,8,0,0". Virgula por ponto para "310.8.0.0" — ler versao com virgula na
+            // tela e ler errado, ainda que o arquivo esteja certo.
+            return string.IsNullOrWhiteSpace(v) ? null : v.Replace(',', '.').Replace(" ", "").Trim();
+        }
+        catch (Exception ex) { Log.Warn($"file version {path}: {ex.Message}"); return null; }
     }
 
     /// <summary>

@@ -394,6 +394,19 @@ public static class Cli
     {
         var novo = rest.Any(a => a is "--novo" or "--latest");
         var voltar = rest.Any(a => a is "--voltar" or "--rollback");
+        // Uma release nomeada, igual a lista da tela de Configuracoes — o mesmo caminho de
+        // codigo, para o que se testa aqui valer para o que a tela faz.
+        var i = Array.FindIndex(rest, a => a is "--versao" or "--version");
+        var tag = i >= 0 && i + 1 < rest.Length ? rest[i + 1] : null;
+        if (tag is not null)
+        {
+            Console.WriteLine(L.T("Cli_Feeder_Buscando"));
+            await FeederService.FetchAsync(new Progress<string>(m => Console.WriteLine("  " + m)),
+                                           forcar: true, tag: tag);
+            Console.WriteLine(L.T("Cli_Feeder_Agora", FeederService.VersaoNaBiblioteca() ?? "?"));
+            Console.WriteLine(L.T("Cli_Feeder_ReinstalarDepois"));
+            return 0;
+        }
 
         if (voltar)
         {
@@ -453,7 +466,7 @@ public static class Cli
         HelpRow($"mfg {game} [--x 2..6] [--off]", L.T("Cli_Help_Mfg"));
         HelpRow($"instalado {game}", L.T("Cli_Help_Instalado"));
         HelpRow("auditoria", L.T("Cli_Help_Auditoria"));
-        HelpRow("feeder [--novo] [--voltar]", L.T("Cli_Help_Feeder"));
+        HelpRow("feeder [--novo] [--versao <tag>] [--voltar]", L.T("Cli_Help_Feeder"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Help_Match", game));

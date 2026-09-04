@@ -128,6 +128,39 @@ public static partial class GitHubReleaseService
                     RegexOptions.IgnoreCase)]
     private static partial Regex PreReleaseRegex();
 
+    /// <param name="Tag">A tag como o repositorio a escreve.</param>
+    /// <param name="PreRelease">O nome dela se anuncia como beta/rc/alpha.</param>
+    public record Release(string Tag, bool PreRelease);
+
+    /// <summary>
+    /// Os releases de um repositorio, do mais novo para o mais antigo.
+    ///
+    /// Lida da PAGINA, e nao da API: a API sem token da 60 chamadas por hora para a maquina
+    /// inteira, e uma lista que a tela abre a cada visita gastaria essa cota por nada.
+    ///
+    /// A pagina ja vem na ordem certa — nao ha ordenacao a fazer aqui, e tentar ordenar por
+    /// numero seria inventar um esquema de versao que o repositorio nao prometeu seguir.
+    /// </summary>
+    public static async Task<List<Release>> ListarReleasesAsync(HttpClient http, string repo,
+                                                                int max = 30,
+                                                                CancellationToken ct = default)
+    {
+        var lista = new List<Release>();
+        try
+        {
+            var html = await http.GetStringAsync($"https://github.com/{repo}/releases", ct);
+            foreach (Match m in Regex.Matches(html, $@"/{Regex.Escape(repo)}/releases/tag/([^""'\s]+)"))
+            {
+                var tag = WebUtility.HtmlDecode(m.Groups[1].Value);
+                if (lista.Any(r => r.Tag == tag)) continue;   // a pagina repete o link por release
+                lista.Add(new Release(tag, EhPreRelease(tag)));
+                if (lista.Count >= max) break;
+            }
+        }
+        catch (Exception ex) { Log.Warn($"github: releases de {repo}: {ex.Message}"); }
+        return lista;
+    }
+
     /// <summary>
     /// A tag estavel mais recente: a `latest`, ou — quando ela se diz beta — a primeira da
     /// lista de releases que nao se diga.

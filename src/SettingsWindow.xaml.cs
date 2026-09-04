@@ -43,6 +43,7 @@ public partial class SettingsWindow : Window
         _pronta = true;
         UpdateTexts();
         Refresh();
+        CarregarReleases();
     }
 
     private IEnumerable<string> InstallDirs() =>
@@ -50,23 +51,51 @@ public partial class SettingsWindow : Window
 
     // ------------------------------------------------------------------ DLSS 5
 
+    /// <summary>
+    /// A versao exata de cada peca, e nao "na biblioteca" ou "158 MB".
+    ///
+    /// Quantidade de bytes nao responde "qual versao esta instalada?", e foi essa pergunta sem
+    /// resposta na tela que fez a caçada do Feeder que derrubava o jogo demorar o que demorou:
+    /// para descobrir o que estava na pasta, foi preciso ler o log do proprio add-on.
+    ///
+    /// Duas versoes convivem em cada arquivo: a que o add-on escreve sobre si (v4.7) e a do PE
+    /// (0.2026.828.517). Elas nao sao a mesma coisa e as duas aparecem — a primeira e a que o
+    /// autor usa para falar da build, a segunda e a que distingue duas builds do mesmo v4.7.
+    /// </summary>
+    private static string VersaoDe(string path, string? interna = null)
+    {
+        var pe = NeuralUpliftService.ReadFileVersion(path);
+        if (interna is not null && pe is not null && !pe.StartsWith(interna, StringComparison.Ordinal))
+            return $"v{interna} · {pe}";
+        if (interna is not null) return $"v{interna}";
+        return pe ?? L.T("Settings_Pill_Unknown");
+    }
+
     private void Refresh()
     {
         var v = NeuralUpliftService.ReadAddonVersion(NeuralUpliftService.LibraryAddon);
         var temAddon = File.Exists(NeuralUpliftService.LibraryAddon);
-        AddonVersionPill.Text = v is not null ? $"v{v}"
-                              : temAddon ? L.T("Settings_Pill_Unknown")
-                              : L.T("Settings_Pill_Missing");
+        AddonVersionPill.Text = temAddon
+            ? VersaoDe(NeuralUpliftService.LibraryAddon, v)
+            : L.T("Settings_Pill_Missing");
         AddonVersionText.Text = temAddon ? L.T("Settings_Addon_Current") : L.T("Settings_Addon_None");
 
         var temPonte = File.Exists(NeuralUpliftService.LibraryBridge);
-        BridgePill.Text = temPonte ? L.T("Settings_Pill_Have") : L.T("Settings_Pill_Missing");
+        BridgePill.Text = temPonte ? VersaoDe(NeuralUpliftService.LibraryBridge) : L.T("Settings_Pill_Missing");
         BridgeText.Text = temPonte ? L.T("Settings_Bridge_Have") : L.T("Settings_Bridge_None");
+
+        var temFeeder = FeederService.VersaoNaBiblioteca() is not null;
+        FeederPill.Text = temFeeder ? FeederService.VersaoNaBiblioteca()! : L.T("Settings_Pill_Missing");
+        FeederText.Text = L.T("Settings_Feeder_State", FeederService.TagPadrao);
+        var anterior = FeederService.VersaoAnterior();
+        FeederRollbackBtn.IsEnabled = anterior is not null;
+        FeederRollbackBtn.ToolTip = anterior is not null
+            ? L.T("Settings_Feeder_RollbackTo", anterior) : L.T("Settings_Feeder_NoRollback");
 
         var temRuntime = File.Exists(NeuralUpliftService.LibraryRuntime);
         var daComunidade = temRuntime && NeuralUpliftService.RuntimeIsCommunityBuild;
         RuntimePill.Text = temRuntime
-            ? $"{new FileInfo(NeuralUpliftService.LibraryRuntime).Length / (1024 * 1024)} MB"
+            ? $"{VersaoDe(NeuralUpliftService.LibraryRuntime)} · {new FileInfo(NeuralUpliftService.LibraryRuntime).Length / (1024 * 1024)} MB"
             : L.T("Settings_Pill_Missing");
         RuntimeText.Text = temRuntime ? L.T("Settings_Runtime_Have") : L.T("Settings_Runtime_None");
 
@@ -75,6 +104,83 @@ public partial class SettingsWindow : Window
         RuntimeWarn.Visibility = daComunidade ? Visibility.Visible : Visibility.Collapsed;
         RuntimeIcon.Data = (System.Windows.Media.Geometry)FindResource(daComunidade ? "IconWarning" : "IconCheck");
         RuntimeIcon.Fill = (Brush)FindResource(daComunidade ? "AccentBrush" : "GreenBrush");
+    }
+
+    /// <summary>
+    /// Preenche as duas listas de release, uma vez por abertura da janela.
+    ///
+    /// Fora da thread da interface e sem bloquear a abertura: sao duas paginas do GitHub, e a
+    /// janela nao pode esperar a rede para aparecer. Falhou (offline, repositorio fora do ar),
+    /// a lista fica vazia e os botoes desligados — o resto da tela continua servindo.
+    /// </summary>
+    private async void CarregarReleases()
+    {
+        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("RenoDXLauncher/1.0");
+        await Task.WhenAll(
+            Encher(BridgeReleases, BridgeInstall, NeuralUpliftService.BridgeRepoPublico, http, null),
+            Encher(FeederReleases, FeederInstall, FeederService.RepoPublico, http, FeederService.TagPadrao));
+
+        static async Task Encher(System.Windows.Controls.ComboBox combo, System.Windows.Controls.Button botao, string repo,
+                                 System.Net.Http.HttpClient http, string? preferida)
+        {
+            var releases = await GitHubReleaseService.ListarReleasesAsync(http, repo);
+            combo.Items.Clear();
+            foreach (var r in releases)
+                // O beta continua na lista, com o nome dele na frente: escondê-lo seria decidir
+                // pela pessoa o que ela pode instalar. O que o launcher nao faz e escolher um
+                // sozinho — ver GitHubReleaseService.EhPreRelease.
+                combo.Items.Add(r.PreRelease ? $"{r.Tag}   ({L.T("Settings_Releases_Beta")})" : r.Tag);
+
+            // O que ja vem selecionado NUNCA e um beta. A lista comeca pela release mais nova, e
+            // com "a primeira" pre-escolhida bastava um clique em Instalar para pousar um beta na
+            // maquina — que e exatamente o acidente que este launcher acabou de consertar.
+            // Preferida (a versao fixada), senao a primeira estavel, senao a primeira.
+            var alvo = preferida is null ? -1
+                     : releases.FindIndex(r => string.Equals(r.Tag, preferida, StringComparison.OrdinalIgnoreCase));
+            if (alvo < 0) alvo = releases.FindIndex(r => !r.PreRelease);
+            combo.SelectedIndex = combo.Items.Count == 0 ? -1 : Math.Max(alvo, 0);
+            botao.IsEnabled = combo.Items.Count > 0;
+        }
+    }
+
+    /// <summary>A tag por tras do item escolhido — o rotulo pode trazer o aviso de beta junto.</summary>
+    private static string? TagEscolhida(System.Windows.Controls.ComboBox combo) =>
+        combo.SelectedItem is string s && s.Length > 0 ? s.Split(' ')[0] : null;
+
+    private async void OnInstallBridgeRelease(object sender, RoutedEventArgs e)
+    {
+        if (TagEscolhida(BridgeReleases) is not { } tag) return;
+        BridgeInstall.IsEnabled = false;
+        try
+        {
+            var n = await NeuralUpliftService.UpdateBridgeAsync(InstallDirs(), null, default, tag);
+            BridgeText.Text = n >= 0 ? L.T("Settings_Bridge_Done", n) : L.T("Settings_Releases_Same");
+        }
+        catch (Exception ex) { BridgeText.Text = ex.Message; }
+        finally { BridgeInstall.IsEnabled = true; Refresh(); }
+    }
+
+    private async void OnInstallFeederRelease(object sender, RoutedEventArgs e)
+    {
+        if (TagEscolhida(FeederReleases) is not { } tag) return;
+        FeederInstall.IsEnabled = false;
+        try
+        {
+            await FeederService.FetchAsync(null, default, forcar: true, tag: tag);
+            FeederText.Text = L.T("Settings_Feeder_Installed", FeederService.VersaoNaBiblioteca() ?? tag);
+        }
+        catch (Exception ex) { FeederText.Text = ex.Message; }
+        finally { FeederInstall.IsEnabled = true; Refresh(); }
+    }
+
+    private void OnFeederRollback(object sender, RoutedEventArgs e)
+    {
+        var antes = FeederService.VersaoAnterior();
+        FeederText.Text = FeederService.VoltarParaAnterior()
+            ? L.T("Settings_Feeder_Installed", antes ?? "?")
+            : L.T("Settings_Feeder_NoRollback");
+        Refresh();
     }
 
     /// <summary>

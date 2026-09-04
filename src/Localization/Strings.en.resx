@@ -2250,6 +2250,25 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Settings_Exposure_Label" xml:space="preserve">
     <value>Exposure</value>
   </data>
+  <data name="Settings_Feeder_Installed" xml:space="preserve">
+    <value>Now on {0}. The games only change on the next install.</value>
+  </data>
+  <data name="Settings_Feeder_NoRollback" xml:space="preserve">
+    <value>No previous version kept yet — there will be one after the first update.</value>
+  </data>
+  <data name="Settings_Feeder_Rollback" xml:space="preserve">
+    <value>Go back</value>
+  </data>
+  <data name="Settings_Feeder_RollbackTo" xml:space="preserve">
+    <value>Go back to {0}</value>
+  </data>
+  <data name="Settings_Feeder_State" xml:space="preserve">
+    <value>Generates colour, depth and motion vectors for games that have no DLSS. Pinned to {0} — the version that was run in a game and delivered frames.</value>
+    <comment>pt: explica o que o Feeder faz e por que a versao e fixada.</comment>
+  </data>
+  <data name="Settings_Feeder_Title" xml:space="preserve">
+    <value>DLSS5 Feeder</value>
+  </data>
   <data name="Settings_FilmGrain_Label" xml:space="preserve">
     <value>Film grain</value>
   </data>
@@ -2310,6 +2329,19 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   </data>
   <data name="Settings_Pill_Unknown" xml:space="preserve">
     <value>unknown version</value>
+  </data>
+  <data name="Settings_Releases_Beta" xml:space="preserve">
+    <value>beta</value>
+  </data>
+  <data name="Settings_Releases_Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Settings_Releases_Same" xml:space="preserve">
+    <value>That is already the one in the library.</value>
+  </data>
+  <data name="Settings_Releases_Tooltip" xml:space="preserve">
+    <value>Every release in the repository, newest first. Betas are listed but never picked on their own.</value>
+    <comment>pt: explica que a lista traz beta, mas o launcher nunca escolhe um sozinho.</comment>
   </data>
   <data name="Settings_Runtime_Community" xml:space="preserve">
     <value>Community build — NVIDIA did not sign this file. It exists to run on RTX 40, where NVIDIA's own kernels do not. The author of the patch says not to use it in online or anti-cheat games: it modifies a file the anti-cheat may check.</value>

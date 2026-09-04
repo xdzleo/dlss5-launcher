@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.82.0
+
+As Configurações passaram a dizer **qual versão** de cada peça está instalada, e a deixar você
+escolher outra.
+
+### A versão exata, em todos os cartões
+
+Antes: "versão desconhecida", "na biblioteca", "158 MB". Nenhuma dessas responde à pergunta que
+se faz ali — *qual versão está instalada?* — e foi essa resposta faltando na tela que fez a caça
+ao Feeder que derrubava o jogo demorar o que demorou: para saber o que havia na pasta, foi
+preciso abrir o log do próprio add-on.
+
+Agora:
+
+| | |
+|---|---|
+| Addon do DLSS 5 | `v4.7 · 0.2026.0828.0517` |
+| Ponte DX11 | `1.4.8.0` |
+| DLSS5 Feeder | `0.12.0.0` |
+| Runtime neural | `310.8.0.0 · 158 MB` |
+
+Duas versões convivem no addon e as duas aparecem: a que ele escreve sobre si (`v4.7`) e a do
+executável (`0.2026.0828.0517`). São coisas diferentes — a primeira é como o autor fala da
+build, a segunda é o que distingue duas builds do mesmo `v4.7`. O "versão desconhecida" vinha de
+uma expressão que exigia três números; o addon escreve dois.
+
+### A lista de releases, e o botão de voltar
+
+A Ponte e o Feeder ganharam a lista de releases do repositório, da mais nova para a mais antiga,
+com **Instalar**. Os betas aparecem na lista — escondê-los seria decidir por você o que pode
+instalar — mas nunca vêm pré-selecionados: o que já vem escolhido é a versão fixada, ou a
+primeira estável. Com "a primeira da lista" pré-escolhida, um clique bastaria para pousar um
+beta na máquina, que é o acidente que a v1.80.0 acabou de consertar.
+
+O Feeder ganhou cartão próprio, com **Voltar** ao lado, que devolve a versão anterior guardada.
+
+Na linha de comando, o mesmo caminho: `feeder --versao v0.11.0-beta.2`.
+
 ## v1.81.0
 
 A versão do Feeder deixou de ser "a que estiver no topo do repositório no dia".

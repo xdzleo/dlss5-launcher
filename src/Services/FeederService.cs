@@ -113,6 +113,9 @@ public static class FeederService
     /// releases diferentes (uma entre um download e o outro) os deixaria incompativeis.
     /// </summary>
     private const string FeederRepo = "jlrouzies-fr/DLSS5-Feeder";
+
+    /// <summary>O mesmo repositorio, para a tela poder listar as releases dele.</summary>
+    public static string RepoPublico => FeederRepo;
     private static readonly System.Text.RegularExpressions.Regex FeederZipAsset =
         new(@"^DLSS5-Feeder-[0-9][0-9A-Za-z.\-]*\.zip$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
@@ -399,12 +402,13 @@ public static class FeederService
     /// que este servico usava passaram a responder 404 de um dia para o outro.
     /// </summary>
     private static async Task<string> AbrirPacoteAsync(HttpClient http, IProgress<string>? progress,
-                                                       CancellationToken ct, bool maisNova = false)
+                                                       CancellationToken ct, bool maisNova = false,
+                                                       string? tag = null)
     {
         string? url = null;
         if (!maisNova)
         {
-            var assets = await GitHubReleaseService.AssetsAsync(http, FeederRepo, TagPadrao, ct);
+            var assets = await GitHubReleaseService.AssetsAsync(http, FeederRepo, tag ?? TagPadrao, ct);
             url = assets.FirstOrDefault(u => FeederZipAsset.IsMatch(Path.GetFileName(u)));
             // A tag fixada pode sumir (release apagado, repositorio renomeado). Ficar sem Feeder
             // nenhum e pior do que pegar a estavel do topo, entao ha para onde cair.
@@ -623,8 +627,10 @@ public static class FeederService
     /// So o usuario liga isto, pela linha de comando; a instalacao normal nunca liga.</param>
     /// <param name="forcar">Rebaixa o pacote mesmo com a biblioteca completa — e o que faz
     /// `--novo` valer alguma coisa numa maquina que ja tem o Feeder.</param>
+    /// <param name="tag">Uma release escolhida a dedo na tela de Configuracoes. Quando vem,
+    /// manda em tudo: nem o padrao nem "a mais nova" tem voz aqui.</param>
     public static async Task FetchAsync(IProgress<string>? progress = null, CancellationToken ct = default,
-                                        bool maisNova = false, bool forcar = false)
+                                        bool maisNova = false, bool forcar = false, string? tag = null)
     {
         if (InLibrary && !forcar) return;
         Directory.CreateDirectory(LibraryDir);
@@ -637,7 +643,7 @@ public static class FeederService
             // quebrar um jogo, `feeder --voltar` desfaz sem ninguem ter de descobrir qual era a
             // versao de antes nem achar o release dela.
             GuardarAnterior();
-            var pacote = await AbrirPacoteAsync(http, progress, ct, maisNova);
+            var pacote = await AbrirPacoteAsync(http, progress, ct, maisNova, tag);
             try
             {
                 TirarDoPacote(pacote, AddonFile, LibraryAddon);
