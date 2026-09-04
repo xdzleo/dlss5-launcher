@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Net;
 
 namespace RenoDXLauncher.Services;
 
@@ -22,7 +23,7 @@ namespace RenoDXLauncher.Services;
 /// a API valer a pena (5000/hora), entao ele e tentado primeiro e a pagina fica como caminho
 /// normal — nao como remendo de emergencia.
 /// </summary>
-public static class GitHubReleaseService
+public static partial class GitHubReleaseService
 {
     private static readonly string[] AllowedHosts =
         { "github.com", "api.github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com" };
@@ -103,9 +104,56 @@ public static class GitHubReleaseService
             catch (Exception ex) { Log.Warn($"github api ({repo}): {ex.Message}; usando a pagina"); }
         }
 
-        var tag = await LatestTagAsync(http, repo, ct);
+        var tag = await TagEstavelAsync(http, repo, ct);
         if (tag is null) return null;
         var assets = await AssetsAsync(http, repo, tag, ct);
         return assets.FirstOrDefault(u => padrao.IsMatch(Path.GetFileName(u)));
+    }
+
+    /// <summary>
+    /// Um release se diz beta pelo NOME, e nao so pela caixinha do GitHub.
+    ///
+    /// `releases/latest` promete devolver so release estavel, e cumpre — desde que quem publicou
+    /// tenha marcado "This is a pre-release". Quando esquece, a v0.12.1-beta.2 vira "latest" e
+    /// desce para a maquina de todo mundo. Foi assim que o Feeder 0.12.1-beta.2 chegou aqui e
+    /// matou o device D3D12 do Saints Row The Third dois segundos depois do primeiro quadro,
+    /// enquanto a 0.12.0 rodava o jogo inteiro sem uma remocao.
+    ///
+    /// Entao o nome tambem conta. Nao e heuristica frouxa: o sufixo -beta/-alpha/-rc/-preview e
+    /// convencao de versionamento semantico, e quem o escreve esta dizendo exatamente isto.
+    /// </summary>
+    public static bool EhPreRelease(string tag) => PreReleaseRegex().IsMatch(tag);
+
+    [GeneratedRegex(@"[-.](alpha|beta|rc|preview|dev|snapshot|nightly)([-.]|\d|$)",
+                    RegexOptions.IgnoreCase)]
+    private static partial Regex PreReleaseRegex();
+
+    /// <summary>
+    /// A tag estavel mais recente: a `latest`, ou — quando ela se diz beta — a primeira da
+    /// lista de releases que nao se diga.
+    /// </summary>
+    public static async Task<string?> TagEstavelAsync(HttpClient http, string repo,
+                                                      CancellationToken ct = default)
+    {
+        var tag = await LatestTagAsync(http, repo, ct);
+        if (tag is not null && !EhPreRelease(tag)) return tag;
+        if (tag is not null) Log.Warn($"github: {repo} aponta {tag} como latest, mas o nome diz beta; procurando a estavel");
+
+        try
+        {
+            var html = await http.GetStringAsync($"https://github.com/{repo}/releases", ct);
+            // A pagina lista os releases do mais novo para o mais antigo, e cada um traz um link
+            // para a propria tag. A ORDEM da pagina e a resposta; nao ha o que ordenar aqui.
+            foreach (Match m in Regex.Matches(html, $@"/{Regex.Escape(repo)}/releases/tag/([^""'\s]+)"))
+            {
+                var candidata = WebUtility.HtmlDecode(m.Groups[1].Value);
+                if (!EhPreRelease(candidata)) return candidata;
+            }
+        }
+        catch (Exception ex) { Log.Warn($"github: lista de releases de {repo}: {ex.Message}"); }
+
+        // Nenhuma estavel encontrada: fica com a que o proprio GitHub chamou de latest, que e
+        // melhor do que nao instalar nada — e o aviso acima ja ficou no log.
+        return tag;
     }
 }

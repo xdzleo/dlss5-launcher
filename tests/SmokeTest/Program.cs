@@ -1006,5 +1006,18 @@ if (match != null)
     Check(!r12.Ponte, "jogo que ja alcanca D3D12 nao pede a Ponte");
 }
 
+// 15. Release que se diz beta no NOME nao e adotado, mesmo quando o GitHub o chama de latest.
+//
+// A v0.12.1-beta.2 do Feeder foi publicada sem marcar "This is a pre-release", virou o
+// `releases/latest` do repositorio e desceu para a maquina do usuario. No Saints Row The
+// Third ela matava o device D3D12 dois segundos depois do primeiro quadro; a 0.12.0 rodava o
+// jogo inteiro. O sufixo do nome era a unica pista disponivel — e basta.
+{
+    foreach (var t in new[] { "v0.12.1-beta.2", "v1.0.0-rc1", "2.0-alpha", "v3.1.0-preview.4", "v0.9-nightly" })
+        Check(GitHubReleaseService.EhPreRelease(t), $"'{t}' e reconhecida como pre-release");
+    foreach (var t in new[] { "v0.12.0", "v1.79.0", "3.2.1", "v2.0.0-1", "v1.4.8" })
+        Check(!GitHubReleaseService.EhPreRelease(t), $"'{t}' passa como estavel");
+}
+
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");
 return failures;

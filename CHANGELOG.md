@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.80.0
+
+O launcher parou de instalar beta. Era ele que estava derrubando o jogo.
+
+### O que acontecia
+
+Hoje de manhã o launcher atualizou o DLSS5-Feeder da **v0.12.0** para a **v0.12.1-beta.2**, e a
+partir daí o Saints Row The Third morria dois segundos depois do primeiro quadro:
+
+```
+[feed] ##### DEVICE REMOVED at checkpoint "ExecuteCommandLists" (reason 0x887A0005) #####
+### CRASH RECORDED ###  exception 0xE06D7363 ... last doing: preparing work
+```
+
+Medido nos dois sentidos, no mesmo jogo e na mesma noite: com a **0.12.1-beta.2** o processo
+morre em 4 segundos com `0xC0000409`; com a **0.12.0** ele passa dos 80 segundos entregando
+quadros, sem uma remoção de device sequer. E sem a nossa cadeia na pasta o jogo também vive —
+ou seja, o crash era nosso.
+
+### Por que um beta desceu como se fosse estável
+
+O `releases/latest` do GitHub promete devolver só release estável, e cumpre — desde que quem
+publicou marque a caixa "This is a pre-release". A v0.12.1-beta.2 foi publicada sem essa marca,
+virou a "latest" do repositório, e o launcher a adotou confiando na promessa.
+
+Agora o **nome** também conta: uma tag com `-beta`, `-alpha`, `-rc`, `-preview`, `-dev`,
+`-snapshot` ou `-nightly` não é adotada, e o launcher volta na lista de releases até achar a
+estável mais recente. Não é adivinhação — esse sufixo é convenção de versionamento semântico, e
+quem o escreve está dizendo exatamente isso.
+
+Vale para todo componente que vem de release do GitHub, não só para o Feeder.
+
+### Se você instalou hoje
+
+Reinstale o DLSS 5 nos jogos: a biblioteca volta para a 0.12.0 e o beta sai das pastas.
+
 ## v1.79.0
 
 Desfaz a regra que a 1.78.0 trouxe. Ela foi escrita a partir de uma falha que aconteceu uma vez
