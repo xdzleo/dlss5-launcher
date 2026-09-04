@@ -2,6 +2,7 @@
 // catalog fetch → match → ReShade provision (real download from reshade.me) →
 // addon download (real renodx-cp2077.addon64) → toggle → settings write/read.
 using System.IO;
+using RenoDXLauncher.Localization;
 using RenoDXLauncher.Models;
 using RenoDXLauncher.Services;
 using RenoDXLauncher.ViewModels;
@@ -918,6 +919,63 @@ if (match != null)
     AddonService.Remove(state, alsoReShade: true);
     Check(!File.Exists(Path.Combine(fakeDir, "dxgi.dll")), "remove: dxgi.dll apagado");
     Check(Directory.GetFiles(fakeDir, "renodx-*.addon*").Length == 0, "remove: addon apagado");
+}
+
+// 12. A rota de 32 bits, onde o pass roda no host64\ e nao no processo do jogo.
+//
+// Os dois casos abaixo nasceram de um jogo que FUNCIONAVA e a leitura chamava de quebrado:
+// o Hitman: Blood Money e o Bully apareciam vermelhos na auditoria rodando DLSS 5. Ficam
+// aqui para que o conserto nao volte atras, e — o que importa tanto quanto — para que o
+// vermelho legitimo continue vermelho.
+{
+    var b32 = Path.Combine(fakeRoot, "Jogo32");
+    var host = Path.Combine(b32, FeederService.Host64Dir);
+    Directory.CreateDirectory(host);
+    var exe32 = Path.Combine(b32, "Jogo32.exe");
+    var sysWow = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SysWOW64", "cmd.exe");
+    File.Copy(File.Exists(sysWow) ? sysWow : Path.Combine(Environment.SystemDirectory, "cmd.exe"), exe32, overwrite: true);
+    // Sobra de instalacao antiga na raiz: e o que fazia TemRuntimeLocal dizer "sim" e o elo
+    // do Ray Reconstruction ser cobrado de um jogo que nunca o teria.
+    File.WriteAllBytes(Path.Combine(b32, "nvngx_dlss.dll"), new byte[16]);
+    File.WriteAllBytes(Path.Combine(host, NeuralUpliftService.RuntimeFile), new byte[16]);
+
+    var det32 = NeuralUpliftService.Detect(b32, b32, null);
+    var rr = Dlss5ChainReader.LerCadeia(b32, Path.Combine(b32, "ReShade.ini"), det32, exe32, false)
+        .Elos.First(e => e.Label == L.T("Dlss5_Link_Rr"));
+    Check(rr.Ok, "RR nao e cobrado quando o runtime mora no host64 (rota de 32 bits)");
+
+    // E o inverso: sem host64, o runtime esta na pasta do jogo, e ali o RR faz falta de verdade.
+    File.Delete(Path.Combine(host, NeuralUpliftService.RuntimeFile));
+    var rr64 = Dlss5ChainReader.LerCadeia(b32, Path.Combine(b32, "ReShade.ini"),
+                                          NeuralUpliftService.Detect(b32, b32, null), exe32, false)
+        .Elos.First(e => e.Label == L.T("Dlss5_Link_Rr"));
+    Check(!rr64.Ok, "RR continua sendo cobrado onde o jogo resolve runtimes na propria pasta");
+}
+
+// 13. Feeder: addon32 de versao anterior e antigo, nao ausente — mas lixo continua sendo lixo.
+{
+    var f32 = Path.Combine(fakeRoot, "Feeder32");
+    var shaders = Path.Combine(f32, "reshade-shaders", "Shaders", "include");
+    var texturas = Path.Combine(f32, "reshade-shaders", "Textures");
+    Directory.CreateDirectory(shaders);
+    Directory.CreateDirectory(texturas);
+    foreach (var n in new[] { "DLSS5_Feed.fx", "lumenite_Kernel.fx", "ReShade.fxh", "ReShadeUI.fxh", "DrawText.fxh" })
+        File.WriteAllBytes(Path.Combine(f32, "reshade-shaders", "Shaders", n), new byte[8]);
+    foreach (var n in new[] { "lumenite_Compute.fxh", "lumenite_Helpers.fxh", "lumenite_Projections.fxh", "lumenite_ColorManagement.fxh" })
+        File.WriteAllBytes(Path.Combine(shaders, n), new byte[8]);
+    File.WriteAllBytes(Path.Combine(texturas, "lumenite_bluenoise256.png"), new byte[8]);
+
+    var addon32 = Path.Combine(f32, "dlss5-feed.addon32");
+    var sysWow = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SysWOW64", "notepad.exe");
+    if (File.Exists(sysWow))
+    {
+        // Um PE de 32 bits de tamanho nenhum dos dois esperados: e exatamente o que um addon
+        // de uma versao anterior do launcher parece para a checagem de integridade.
+        File.Copy(sysWow, addon32, overwrite: true);
+        Check(FeederService.IsDeployed(f32), "addon32 de outro tamanho conta como presente (desatualizado nao e ausente)");
+    }
+    File.WriteAllBytes(addon32, new byte[64]); // truncado: nao e PE nenhum
+    Check(!FeederService.IsDeployed(f32), "addon32 truncado continua reprovado");
 }
 
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");

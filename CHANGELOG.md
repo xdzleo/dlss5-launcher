@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.77.0
+
+Uma varredura que audita a biblioteca inteira, e três defeitos que ela encontrou — dois deles
+no próprio launcher, acusando de quebrado um jogo que funcionava.
+
+### `auditoria`: os 54 jogos, um por um
+
+"Está tudo funcionando?" não se responde clicando em 54 cartões, e abrir 54 jogos não cabe num
+dia. O que dá para responder sem abrir nada é o que a tela já responde por jogo: os elos estão
+todos no lugar, e há algo na pasta disputando espaço.
+
+O comando novo faz isso pela **mesma leitura que a janela usa**. Para tanto, a leitura da cadeia
+saiu da view model para um serviço próprio: uma segunda implementação discordaria da tela em
+algum caso, e o ponto do comando é justamente não discordar. Ele só lê — ao final lista os
+comandos de conserto com o jogo na frente, porque mexer em dezesseis pastas sem ninguém ter
+pedido não é auditar.
+
+### A pasta do usuário aparecia como jogo
+
+`C:\Documents and Settings` é uma junction que volta para o perfil. `users` estava na lista de
+pastas a pular; ela não. A varredura desceu por ali, achou um `.exe` três níveis abaixo, em
+Downloads, e ofereceu a pasta inteira do usuário como se fosse um jogo — e o launcher chegou a
+instalar DLSS 5 lá dentro.
+
+Agora o perfil é recusado por **caminho**, e não por nome: ele se chama como a pessoa se chama,
+e nome nenhum numa lista pega isso.
+
+### Dois vermelhos falsos em jogo de 32 bits
+
+Os dois na mesma rota: aquela em que o pass roda no `host64\`, e não no processo do jogo.
+
+**Ray Reconstruction era cobrado na raiz.** Nessa rota o launcher copia para o host o runtime
+neural e o Super Resolution — RR não, de propósito. Medir a raiz só encontrava sobra de
+instalação antiga, e o elo ficava vermelho para sempre num jogo certo.
+
+**E "desatualizado" era reportado como "ausente".** O `dlss5-feed.addon32` de uma versão
+anterior do launcher não bate com o tamanho da biblioteca nem com o do embutido de hoje, e a
+checagem de integridade concluía que o Feeder não estava lá. O que aquela checagem existe para
+pegar é arquivo truncado, e disso quem dá conta é o cabeçalho PE.
+
+Quatro jogos voltaram a aparecer inteiros: Hitman: Blood Money, Hitman: Absolution, Bully e
+Saints Row 2 — todos rodando DLSS 5 enquanto a tela os dava por quebrados. Os quatro casos
+viraram teste, inclusive os dois inversos: o elo continua vermelho onde a falta é de verdade.
+
 ## v1.76.0
 
 Faxina na tela do jogo: um cartão a menos, um recurso com o nome certo, e as instruções legíveis.
