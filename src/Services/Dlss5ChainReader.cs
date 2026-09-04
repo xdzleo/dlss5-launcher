@@ -88,7 +88,12 @@ public static class Dlss5ChainReader
         // quem resolve e o driver, nao implantamos nada (um runtime parcial na pasta do
         // executavel quebra a resolucao do NGX) — e cobrar o arquivo aqui deixaria a cadeia
         // incompleta para sempre, num jogo que esta certo.
-        var rrEsperado = NeuralUpliftService.TemRuntimeLocal(targetDir);
+        // ...e nunca na rota de 32 bits. Ali quem roda o pass e o host64, e o DeployForHost64
+        // copia o runtime neural e o Super Resolution — RR nao, de proposito. Medir a raiz num
+        // jogo desses so encontra o que sobrou de instalacao antiga, e o elo ficava vermelho para
+        // sempre num jogo certo: o Hitman: Blood Money e o Bully apareciam quebrados na auditoria
+        // enquanto rodavam DLSS 5.
+        var rrEsperado = NeuralUpliftService.TemRuntimeLocal(targetDir) && !runtimeNoHost64;
         elos.Add(new ChainLink(L.T("Dlss5_Link_Rr"),
             !rrEsperado || File.Exists(Path.Combine(targetDir, NeuralUpliftService.RayReconstructionFile))));
         elos.Add(new ChainLink(L.T("Dlss5_Link_EarlyLoad"), early || addon is null));

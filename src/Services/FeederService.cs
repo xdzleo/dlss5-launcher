@@ -177,7 +177,15 @@ public static class FeederService
             var bateComBiblioteca = File.Exists(referencia)
                                     && tamanho == new FileInfo(referencia).Length;
             var bateComEmbutido = eh32 && tamanho == TamanhoEmbutido(Addon32File);
-            if (File.Exists(referencia) && !bateComBiblioteca && !bateComEmbutido) return false;
+            // Um addon32 de uma versao ANTERIOR do launcher nao bate com nenhum dos dois tamanhos
+            // — e continua sendo um addon que carrega e funciona. Chama-lo de ausente era dizer
+            // que o jogo esta quebrado por estar desatualizado, e a auditoria acusou o Bully
+            // assim, com DLSS 5 rodando nele. O que esta checagem existe para pegar e arquivo
+            // truncado ou corrompido; disso quem da conta e o cabecalho PE, e nao o tamanho.
+            var ehAddonDeVerdade = eh32
+                && PeUtils.Inspect(addon, readImports: false) is { Is64Bit: false };
+            if (File.Exists(referencia) && !bateComBiblioteca && !bateComEmbutido && !ehAddonDeVerdade)
+                return false;
         }
         catch { /* sem leitura, aceita o que esta la */ }
 
