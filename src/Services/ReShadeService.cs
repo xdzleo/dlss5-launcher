@@ -223,17 +223,36 @@ public partial class ReShadeService
     /// do modulo tem de existir em algum lugar do arquivo para ser passado adiante. Procurar a
     /// string decide os casos que a tabela sozinha erra.
     /// </summary>
-    private static bool MencionaApiModerna(string exePath)
-    {
-        foreach (var api in new[] { "d3d10.dll", "d3d10_1.dll", "d3d11.dll", "d3d12.dll" })
-            if (ContemTexto(exePath, api)) return true;
-        return false;
-    }
+    /// <summary>Os nomes que denunciam uma API moderna carregada por LoadLibrary.</summary>
+    private static readonly string[] ApisModernas = ["d3d10.dll", "d3d10_1.dll", "d3d11.dll", "d3d12.dll"];
 
-    private static bool ContemTexto(string path, string alvo) =>
-        // Uma implementacao so, rapida e com cache, em PeUtils: eram quatro copias identicas
-        // varrendo o executavel inteiro, e um clique chamava varias delas.
-           PeUtils.ContemTexto(path, alvo);
+    /// <summary>
+    /// UMA passada pelo executavel, e nao quatro.
+    ///
+    /// O PeUtils guarda o resultado da varredura, mas a chave do cache inclui A LISTA de textos
+    /// procurados: perguntar por um nome de cada vez criava quatro entradas diferentes e varria o
+    /// arquivo inteiro quatro vezes. Num executavel grande — o Cyberpunk 2077 tem dezenas de
+    /// megabytes — isso foi medido em 466 ms dentro do clique de instalar, o maior pedaco isolado
+    /// dele. Os quatro nomes numa chamada so custam uma leitura.
+    /// </summary>
+    private static bool MencionaApiModerna(string exePath) =>
+        PeUtils.ProcurarTextos(exePath, ApisModernas).Count > 0;
+
+    /// <summary>
+    /// Faz a leitura cara do executavel ANTES de alguem clicar em instalar.
+    ///
+    /// Mora aqui, e nao em quem chama, para a lista de nomes nao ser duplicada: aquecer com uma
+    /// lista diferente da que PickDllName usa nao aquece nada — a lista faz parte da chave.
+    /// </summary>
+    public static void PreaquecerNomeDoProxy(string exePath)
+    {
+        try
+        {
+            PeUtils.Inspect(exePath);
+            PeUtils.ProcurarTextos(exePath, ApisModernas);
+        }
+        catch (Exception ex) { Log.Warn($"preaquecer proxy {exePath}: {ex.Message}"); }
+    }
 
     public record DeployResult(bool Success, string Message, string? DllName = null);
 

@@ -1,5 +1,51 @@
 # Changelog
 
+## v1.93.0
+
+O interruptor ficou **duas vezes mais rápido**, e parou de fazer a coluna de cartões piscar.
+
+### Instalar: 987 ms → 490 ms
+
+Medido do clique até a tela estar certa de novo, com o diálogo de confirmação descontado (o tempo
+em que a pergunta fica na tela é a pessoa pensando, não o programa trabalhando).
+
+| | antes | agora |
+|---|---|---|
+| Escolher o nome do proxy | 466 ms | **1 ms** |
+| Varredura de anti-cheat | ~400 ms | **1 ms** |
+| Baixar/validar o addon | 248 ms | 248 ms |
+| Reler a pasta | 178 ms | 155 ms |
+| ReShade | 39 ms | 37 ms |
+| **Total** | **987 ms** | **490 ms** |
+
+Desinstalar caiu de 320 ms para 205 ms.
+
+**O nome do proxy custava quatro leituras do executável inteiro.** Para decidir se o ReShade entra
+como `dxgi.dll`, `d3d9.dll` ou `opengl32.dll`, o launcher procura no binário os nomes das APIs
+modernas — porque a tabela de importação mente por omissão em jogo que carrega o D3D12 por
+`LoadLibrary`, como o Cyberpunk 2077. A busca tem cache, mas **a chave inclui a lista de textos
+procurados**: perguntar por um nome de cada vez criava quatro entradas e varria o arquivo quatro
+vezes. Os quatro numa chamada só custam uma leitura.
+
+**E o resto virou pré-aquecimento.** A varredura de anti-cheat e a leitura do executável agora
+acontecem quando o cartão do jogo abre, junto das leituras que já estavam rolando ali — sem
+ninguém esperando na frente da tela. Se você nunca clicar em instalar, custou uma thread de disco
+ociosa.
+
+O que sobrou é o que não dá para acelerar sem perder garantia: 248 ms validando o addon contra o
+servidor (é o que impede o jogo de receber um build velho) e 155 ms relendo a pasta que acabou de
+ser escrita.
+
+### A coluna de cartões parou de sumir e voltar
+
+A cada clique no interruptor, `GamesView.Refresh()` reconstrói a grade, a ListBox perde o
+`SelectedItem` e escreve **nulo** em `Selected` pelo binding. O setter não sabia distinguir isso
+de "o usuário fechou o jogo": limpava o detalhe inteiro, a coluna sumia — e voltava um instante
+depois, quando a linha seguinte devolvia a seleção e o detalhe era relido do zero.
+
+Instalar e desinstalar de fato mudam o que a grade deve mostrar, então o refresh continua. O que
+saiu foi a conclusão errada tirada do nulo que ele produz.
+
 ## v1.92.1
 
 O release da v1.92.0 não publicou, e o motivo não era o app.

@@ -793,6 +793,16 @@ public class MainViewModel : ObservableObject
             // varrer a pasta do jogo la custava ~400 ms de espera com a tela parada. Aqui ela sai
             // de graca, porque este pre-aquecimento ja roda fora do caminho de qualquer clique.
             _ = Task.Run(() => AntiCheatScanner.Preaquecer(instalacao, dir), ct);
+
+            // A tabela de IMPORTACAO do executavel, que so o clique de instalar pedia.
+            //
+            // O PeUtils guarda o que leu, mas a chave inclui "li os imports?" — e o caminho da
+            // instalacao chama Inspect(readImports: false) cedo e so depois o PickDllName, que
+            // precisa dos imports para decidir se o proxy e dxgi, d3d9 ou opengl32. Sao duas
+            // entradas diferentes no cache, entao a segunda chamada pagava o preco inteiro com a
+            // pessoa esperando: medido em 434 ms no Cyberpunk 2077, o maior pedaco isolado do
+            // clique depois que o anti-cheat saiu da frente.
+            if (exe is not null) _ = Task.Run(() => ReShadeService.PreaquecerNomeDoProxy(exe), ct);
             var det = await LerPasta("neural", dir,
                 () => NeuralUpliftService.Detect(instalacao, dir, addon));
             var ini = item.State?.IniPath ?? Path.Combine(dir, "ReShade.ini");
@@ -1812,6 +1822,28 @@ public class MainViewModel : ObservableObject
         // thread da interface, e o SynchronizationContext do WPF traz cada continuacao de volta
         // para ela. O que de fato corre em paralelo e o Task.Run de dentro de cada uma, que e
         // disco -- que era exatamente o que estava sendo serializado a toa.
+        // O que o CLIQUE de instalar vai pedir, pedido agora.
+        //
+        // A tabela de importacao do executavel e o veredito de anti-cheat sao os dois trabalhos
+        // caros que so o clique acordava — medidos em 434 ms e ~400 ms num jogo grande, com a
+        // tela parada esperando. Aqui eles saem junto com as leituras que ja estao acontecendo,
+        // sem ninguem na frente da tela. Se a pessoa nunca clicar em instalar, o custo foi de uma
+        // thread de disco ociosa; se clicar, o clique ja encontra tudo lido.
+        //
+        // Fica AQUI, e nao so no pre-aquecimento de fundo: aquele serve aos jogos que a pessoa
+        // ainda nao abriu, e quem abre um jogo passa por este caminho.
+        if (_detailItem is { } paraAquecer)
+        {
+            var exeParaAquecer = paraAquecer.ChosenExe;
+            var pastaDoJogo = paraAquecer.Game.InstallDir;
+            var pastaAlvo = paraAquecer.TargetDir;
+            _ = Task.Run(() =>
+            {
+                if (exeParaAquecer is not null) ReShadeService.PreaquecerNomeDoProxy(exeParaAquecer);
+                AntiCheatScanner.Preaquecer(pastaDoJogo, pastaAlvo);
+            });
+        }
+
         await Task.WhenAll(CheckNeuralAsync(token), CheckMfgAsync(token), CheckDlssFixAsync(token));
 
         // Os ajustes do mod SAEM do caminho critico.
@@ -2188,7 +2220,7 @@ public class MainViewModel : ObservableObject
     /// 2,4 s eram a caixa de dialogo aberta.
     /// </summary>
     private System.Diagnostics.Stopwatch? _relogioDoInterruptor;
-    private long _msAddon, _msAntiCheat, _msPerfil;
+    private long _msAddon, _msAntiCheat, _msPerfil, _msEstado, _msNome;
 
     private async Task ToggleModAsync()
     {
@@ -2663,7 +2695,9 @@ public class MainViewModel : ObservableObject
             // o rollback de um download falho apagar o ReShade que o usuario ja tinha para os
             // shaders dele — e a tela ainda dizia "rollback feito". So se desfaz o arquivo que
             // ESTA instalacao criou: o nome previsto, e que nao existia antes.
+            var msAntesNome = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             var dllPrevisto = await Task.Run(() => ReShadeService.PickDllName(exe, api, dllOverride));
+            _msNome = (_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesNome;
             var existiaAntes = File.Exists(Path.Combine(dir, dllPrevisto));
             var msAntesDoReShade = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             var deploy = await Task.Run(() => _reshade.DeployAsync(dir, exe, api, dllOverride, progress));
@@ -2697,7 +2731,9 @@ public class MainViewModel : ObservableObject
             }
             // O estado da pasta em que a instalacao DE FATO aconteceu: se o exe da combo mudou
             // no meio, item.State passa a falar da outra pasta, e o perfil iria para o ini errado.
+            var msAntesEstado = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             var state = await Task.Run(() => AddonService.GetState(dir, exe));
+            _msEstado = (_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesEstado;
             item.RefreshState();
 
             var profileMsg = "";
@@ -2727,7 +2763,8 @@ public class MainViewModel : ObservableObject
             var msAntesDaReleitura = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             if (item == _detailItem) await RefreshFolderAsync(_detailToken);
             Log.Info($"interruptor instalar: anti-cheat {_msAntiCheat} ms, reshade {msReShade} ms, addon {_msAddon} ms, "
-                     + $"perfil {_msPerfil} ms, sobra {msAntesDaReleitura - msReShade - _msAddon - _msAntiCheat - _msPerfil} ms, "
+                     + $"perfil {_msPerfil} ms, PickDllName {_msNome} ms, GetState {_msEstado} ms, "
+                     + $"sobra {msAntesDaReleitura - msReShade - _msAddon - _msAntiCheat - _msPerfil - _msEstado - _msNome} ms, "
                      + $"releitura {(_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesDaReleitura} ms");
             DetailStatus = L.T("Install_Success", deploy.Message, profileMsg);
             RefreshViewKeepSelection();
