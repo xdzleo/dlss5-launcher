@@ -245,13 +245,24 @@
             <DataTemplate.Triggers>
                 <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
                     <Setter TargetName="Card" Property="BorderBrush" Value="#5A6478"/>
+                    <!-- Com desaceleracao, e nao linear. Movimento linear comeca e para de
+                         supetao — o olho le os dois instantes como um corte, e a 360 Hz sobra
+                         resolucao temporal justamente para mostrar a diferenca. -->
                     <Trigger.EnterActions>
                         <BeginStoryboard>
                             <Storyboard>
                                 <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleX"
-                                                 To="1.035" Duration="0:0:0.14"/>
+                                                 To="1.035" Duration="0:0:0.15">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
                                 <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleY"
-                                                 To="1.035" Duration="0:0:0.14"/>
+                                                 To="1.035" Duration="0:0:0.15">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
                             </Storyboard>
                         </BeginStoryboard>
                     </Trigger.EnterActions>
@@ -259,9 +270,17 @@
                         <BeginStoryboard>
                             <Storyboard>
                                 <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleX"
-                                                 To="1" Duration="0:0:0.14"/>
+                                                 To="1" Duration="0:0:0.19">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
                                 <DoubleAnimation Storyboard.TargetName="CardScale" Storyboard.TargetProperty="ScaleY"
-                                                 To="1" Duration="0:0:0.14"/>
+                                                 To="1" Duration="0:0:0.19">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
                             </Storyboard>
                         </BeginStoryboard>
                     </Trigger.ExitActions>
@@ -501,6 +520,7 @@
                      Background="Transparent" BorderThickness="0" Margin="10"
                      ItemTemplate="{StaticResource GameTile}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     local:FluidScroll.Ativo="True"
                      VirtualizingPanel.IsVirtualizing="False">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -708,7 +728,8 @@
                             </Border>
                         </StackPanel>
 
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0"
+                                      local:FluidScroll.Ativo="True">
                         <!-- Os cartoes entram TODOS DE UMA VEZ (ver DetalhePronto).
                              Cada um acendia sozinho ao terminar a leitura dele, e as leituras
                              terminam em ordens diferentes: o painel pipocava a cada jogo aberto.

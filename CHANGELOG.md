@@ -1,5 +1,48 @@
 # Changelog
 
+## v1.84.0
+
+A rolagem anda em vez de saltar, e as animações passaram a tiquear na taxa do seu monitor.
+
+### As animações a 360 Hz, e não a 60
+
+O WPF amostra animação a 60 Hz por padrão. Num monitor de 240 ou 360 Hz isso significa que cada
+valor novo é repetido por quatro ou seis quadros: a tela desenha 360 vezes por segundo e o
+movimento continua sendo o de 60. Não é sensação — é a taxa em que os valores mudam.
+
+Agora a taxa vem do monitor, lida na abertura (`animacoes a 360 Hz (taxa do monitor)` no log).
+Não é um número fixo: fixar 240 gastaria bateria numa tela de 60 e deixaria dinheiro na mesa numa
+de 360.
+
+### A roda do mouse ganhou quadros no meio
+
+A roda no WPF não anima nada: cada clique salta três linhas de uma vez e para. O que faltava não
+era taxa de quadros — era **interpolação**: não existia quadro nenhum entre o antes e o depois
+para o monitor mostrar.
+
+Agora o clique vira um alvo e o deslocamento caminha até ele com desaceleração em 190 ms. Os
+cliques se somam: medido, três cliques rápidos andam 30,37% da lista, exatamente o triplo de um
+clique — girar rápido estica o alvo em vez de reiniciar o movimento.
+
+Vale na grade de jogos, no cartão do jogo e nas Configurações.
+
+### Três defeitos que a medição achou no caminho
+
+**Voltava ao topo no fim.** A animação usava `FillBehavior.Stop`, e no fim a propriedade volta ao
+valor base — onde a rolagem estava quando o movimento começou. Medido: 10,13% aos 188 ms, 0% aos
+220 ms.
+
+**O alvo ficava velho.** Quando um clique substitui a animação em andamento, o `Completed` da
+animação trocada nunca dispara — então o alvo nunca era limpo, e um clique dado minutos depois
+partia de um número que não tinha mais nada a ver com a tela.
+
+**A rolagem tem outros donos.** Arrastar a barra, o teclado e o próprio `ScrollIntoView` que a
+lista faz ao selecionar um jogo mexem no deslocamento sem passar por aqui. Agora isso é
+detectado, e o alvo antigo é descartado.
+
+E o touchpad: a distância passou a seguir o tamanho do giro, e não só o sentido. Com o sinal
+apenas, um toque leve de touchpad andava uma fileira inteira.
+
 ## v1.83.0
 
 Escolher uma release passou a valer nos **jogos**, e a escolha passou a durar.

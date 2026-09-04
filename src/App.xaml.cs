@@ -15,6 +15,10 @@ public partial class App : Application
         // comando, que tambem e traduzido. Config vazia = idioma do Windows.
         L.SetLanguage(LauncherConfig.Load().Language);
 
+        // Antes de a primeira janela existir: OverrideMetadata so vale para relogios criados
+        // depois dele, e um Storyboard iniciado na abertura ja teria nascido a 60.
+        FluidScroll.UsarTaxaDoMonitor();
+
         // headless mode: any argument means "run a command and exit" — no window.
         if (e.Args.Length > 0)
         {
