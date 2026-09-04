@@ -723,10 +723,11 @@
                                     <TextBlock Text="{Binding ApiDoJogo}" FontSize="10.5" FontWeight="SemiBold"
                                                Foreground="#8FE9C4"/>
                                 </Border>
-                                <TextBlock Text="{Binding Selected.BadgeText}" FontSize="11.5" FontWeight="SemiBold"
-                                           Margin="10,0,0,0"
-                                           Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"
-                                           Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}"/>
+                                <!-- O selo laranja de "MOD DISPONIVEL / SEM MOD" saiu daqui.
+                                     Ele respondia, em laranja e caixa alta, uma pergunta que o
+                                     cartao do RenoDX HDR logo abaixo responde melhor: existe mod,
+                                     e ele esta valendo? La ha um interruptor e uma palavra; aqui
+                                     havia so um aviso competindo com o nome do jogo. -->
 
                                 <!-- estabilidade do mod, segundo a wiki -->
                                 <Border CornerRadius="5" Padding="7,3" Margin="10,0,0,0" Background="#16382B"

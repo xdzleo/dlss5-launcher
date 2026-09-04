@@ -1549,26 +1549,6 @@ Only continue if you are going to play OFFLINE.</value>
   <data name="Main_AddGame_Name" xml:space="preserve">
     <value>Add Game</value>
   </data>
-  <data name="Main_Badge_Available" xml:space="preserve">
-    <value>MOD AVAILABLE</value>
-  </data>
-  <data name="Main_Badge_Disabled" xml:space="preserve">
-    <value>DISABLED</value>
-  </data>
-  <data name="Main_Badge_Enabled" xml:space="preserve">
-    <value>ENABLED</value>
-  </data>
-  <data name="Main_Badge_NexusOnly" xml:space="preserve">
-    <value>MOD ON NEXUS</value>
-    <comment>Nexus e nome proprio.</comment>
-  </data>
-  <data name="Main_Badge_None" xml:space="preserve">
-    <value>NO MOD</value>
-  </data>
-  <data name="Main_Badge_UpdateAvailable" xml:space="preserve">
-    <value>UPDATE</value>
-    <comment>Selo do tile. A caixa alta esta no recurso porque o XAML nao aplica transformacao de texto.</comment>
-  </data>
   <data name="Main_CheckUpdates" xml:space="preserve">
     <value>Check for Updates</value>
     <comment>Usada no texto do botao e no AutomationProperties.Name.</comment>

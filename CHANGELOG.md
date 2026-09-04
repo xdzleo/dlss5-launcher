@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.90.0
+
+O selo laranja de **MOD DISPONÍVEL / SEM MOD** saiu do cabeçalho do jogo.
+
+Ele respondia, em laranja e caixa alta, uma pergunta que o cartão do RenoDX HDR logo abaixo
+responde melhor: existe mod, e ele está valendo? Lá há um interruptor e uma palavra; ali havia só
+um aviso competindo com o nome do jogo.
+
+Sobrou o que informa: a loja, a **API do jogo** e a estabilidade do mod segundo a wiki.
+
+Com o selo, foram embora o `BadgeText` que o alimentava e as seis chaves de texto dele. O `Badge`
+continua — é ele que decide a bolinha do RenoDX HDR no cartão da grade.
+
 ## v1.89.0
 
 Faxina no cartão do jogo, e a barra de brilho deixou de ser uma barra laranja.

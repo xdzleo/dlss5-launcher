@@ -1970,32 +1970,6 @@
     "en": "Add Game",
     "pt-BR": "Adicionar jogo"
   },
-  "Main_Badge_Available": {
-    "en": "MOD AVAILABLE",
-    "pt-BR": "MOD DISPONÍVEL"
-  },
-  "Main_Badge_Disabled": {
-    "en": "DISABLED",
-    "pt-BR": "DESATIVADO"
-  },
-  "Main_Badge_Enabled": {
-    "en": "ENABLED",
-    "pt-BR": "ATIVADO"
-  },
-  "Main_Badge_NexusOnly": {
-    "en": "MOD ON NEXUS",
-    "note": "Nexus e nome proprio.",
-    "pt-BR": "MOD NO NEXUS"
-  },
-  "Main_Badge_None": {
-    "en": "NO MOD",
-    "pt-BR": "SEM MOD"
-  },
-  "Main_Badge_UpdateAvailable": {
-    "en": "UPDATE",
-    "note": "Selo do tile. A caixa alta esta no recurso porque o XAML nao aplica transformacao de texto.",
-    "pt-BR": "ATUALIZAÇÃO"
-  },
   "Main_CheckUpdates": {
     "en": "Check for Updates",
     "note": "Usada no texto do botao e no AutomationProperties.Name.",

@@ -64,8 +64,7 @@ public class GameItemVm : ObservableObject
     /// <summary>Reavalia os textos que este item traduz por conta propria. Chamado na troca de
     /// idioma — essas propriedades nao passam por {loc:Tr}, entao nada mais as reavaliaria.</summary>
     public void RaiseLocalizedText()
-    {
-        OnPropertyChanged(nameof(BadgeText));
+    {
         OnPropertyChanged(nameof(StoreLabel));
         OnPropertyChanged(nameof(ModStatusText));
         // Tambem traduzem por conta propria: o tooltip do selo de estabilidade e o credito de
@@ -116,8 +115,7 @@ public class GameItemVm : ObservableObject
             // parse de ini por repintura deixava a selecao de jogo visivelmente lenta.
             _dlss5Ligado = LerDlss5Ligado();
             OnPropertyChanged(nameof(State));
-            OnPropertyChanged(nameof(Badge));
-            OnPropertyChanged(nameof(BadgeText));
+            OnPropertyChanged(nameof(Badge));
             OnPropertyChanged(nameof(IsInstalled));
             OnPropertyChanged(nameof(IsEnabled));
             // Sem estas duas as bolinhas so mudavam de cor quando a lista era reconstruida:
@@ -139,8 +137,7 @@ public class GameItemVm : ObservableObject
         {
             if (Set(ref _hasUpdate, value))
             {
-                OnPropertyChanged(nameof(Badge));
-                OnPropertyChanged(nameof(BadgeText));
+                OnPropertyChanged(nameof(Badge));
             }
         }
     }
@@ -153,15 +150,8 @@ public class GameItemVm : ObservableObject
             : Mod.DownloadUrl != null ? ModBadge.Available
             : ModBadge.NexusOnly;
 
-    public string BadgeText => L.T(Badge switch
-    {
-        ModBadge.UpdateAvailable => "Main_Badge_UpdateAvailable",
-        ModBadge.Enabled => "Main_Badge_Enabled",
-        ModBadge.Disabled => "Main_Badge_Disabled",
-        ModBadge.Available => "Main_Badge_Available",
-        ModBadge.NexusOnly => "Main_Badge_NexusOnly",
-        _ => "Main_Badge_None",
-    });
+    // BadgeText saiu junto com o selo laranja que ele alimentava. Badge continua, porque e ele
+    // que decide a bolinha do RenoDX HDR no cartao da grade.
 
     // ----- os dois recursos, lado a lado -----
     //
