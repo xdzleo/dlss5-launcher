@@ -10,8 +10,14 @@
 
             <!-- ========== palette ========== -->
             <SolidColorBrush x:Key="BgBrush" Color="#0F1013"/>
-            <SolidColorBrush x:Key="PanelBrush" Color="#16181D"/>
-            <SolidColorBrush x:Key="CardBrush" Color="#1C1F26"/>
+            <!-- Os paineis deixaram de ser opacos.
+                 O fundo da janela tem dois halos de cor (ver MainWindow); com painel chapado por
+                 cima, eles morriam na primeira borda e a tela voltava a ser cinza sobre cinza.
+                 Com ~90% de opacidade a cor de baixo atravessa o suficiente para o painel ter
+                 tom proprio em cada canto da janela — que e o que a transparencia faz de util
+                 aqui, e nao deixar ver o que ha atras. -->
+            <SolidColorBrush x:Key="PanelBrush" Color="#E616181D"/>
+            <SolidColorBrush x:Key="CardBrush" Color="#D91C1F26"/>
             <SolidColorBrush x:Key="CardHoverBrush" Color="#252932"/>
             <SolidColorBrush x:Key="ElevatedBrush" Color="#22262F"/>
             <SolidColorBrush x:Key="BorderBrush2" Color="#2C313B"/>
@@ -30,6 +36,197 @@
             <SolidColorBrush x:Key="GrayBrush" Color="#4A515D"/>
 
             <FontFamily x:Key="UiFont">pack://application:,,,/Assets/Fonts/#Inter, Segoe UI Variable Text, Segoe UI</FontFamily>
+
+            <!-- ========== superficies de vidro ==========
+
+                 Cada cartao trazia o proprio par de cores escrito na mao no MainWindow: um
+                 #1F2A20 aqui, um #241B33 ali, cada um com raio e padding proprios. O resultado
+                 nao era um painel, era uma colecao de retangulos coloridos — e mudar o visual
+                 significava caçar trinta literais.
+
+                 O que faz uma superficie parecer vidro nao e transparencia: e a LUZ VINDO DE
+                 CIMA. Uma linha clara na borda superior que se apaga na inferior, e um fundo um
+                 tom mais claro em cima do que embaixo. Sao os dois gradientes de cada estilo
+                 abaixo, e e por isso que a moldura nunca e de cor unica.
+
+                 Sombra so nas superficies grandes (o modal, a barra). Nos cartoes ela seria um
+                 DropShadowEffect por cartao dentro de um ScrollViewer — custo de render a cada
+                 rolagem, no painel em que ja se reclamou de latencia. A borda iluminada faz o
+                 mesmo trabalho de graça. -->
+            <CornerRadius x:Key="CardRadius">14</CornerRadius>
+            <Thickness x:Key="CardPad">14,13</Thickness>
+
+            <LinearGradientBrush x:Key="GlassRim" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#30FFFFFF" Offset="0"/>
+                <GradientStop Color="#14FFFFFF" Offset="0.45"/>
+                <GradientStop Color="#0AFFFFFF" Offset="1"/>
+            </LinearGradientBrush>
+
+            <Style x:Key="GlassCard" TargetType="Border">
+                <Setter Property="CornerRadius" Value="{StaticResource CardRadius}"/>
+                <Setter Property="Padding" Value="{StaticResource CardPad}"/>
+                <Setter Property="Margin" Value="0,10,0,0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource GlassRim}"/>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#1E222B" Offset="0"/>
+                            <GradientStop Color="#171A21" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- As pecas de dentro do cartao. Existem para que titulo, texto e selo tenham UM
+                 tamanho cada, e nao um por cartao: era assim que a mesma informacao aparecia em
+                 12.5 num cartao e em 13 no vizinho, sem que ninguem tivesse decidido isso. -->
+            <Style x:Key="CardTitle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource UiFontSemiBold}"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="CardDesc" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="LineHeight" Value="17"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="Margin" Value="0,3,0,0"/>
+                <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+            </Style>
+
+            <!-- Selo do cabecalho: EXPERIMENTAL, OPCIONAL, IMPORTANT. Fundo de branco translucido
+                 em vez de cor propria, para pegar o tom do cartao em que ele esta. -->
+            <Style x:Key="CardBadge" TargetType="Border">
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="7,3"/>
+                <Setter Property="Margin" Value="9,0,0,0"/>
+                <Setter Property="Background" Value="#1AFFFFFF"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="#18FFFFFF"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+
+            <Style x:Key="CardBadgeText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource UiFontSemiBold}"/>
+                <Setter Property="FontSize" Value="9.5"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+            </Style>
+
+            <!-- A pastilha do icone: e ela que da a cada cartao um ponto de entrada para o olho,
+                 no mesmo lugar em todos. -->
+            <Style x:Key="IconChip" TargetType="Border">
+                <Setter Property="Width" Value="30"/>
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="CornerRadius" Value="9"/>
+                <Setter Property="Background" Value="#14FFFFFF"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="#14FFFFFF"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="0,0,10,0"/>
+            </Style>
+
+            <Style x:Key="GlassCardAmber" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+                <Setter Property="BorderBrush">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#8AF0B429" Offset="0"/>
+                            <GradientStop Color="#4DF0B429" Offset="0.5"/>
+                            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#2E2617" Offset="0"/>
+                            <GradientStop Color="#221D12" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="GlassCardBlue" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+                <Setter Property="BorderBrush">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#8A4C9AFF" Offset="0"/>
+                            <GradientStop Color="#4D4C9AFF" Offset="0.5"/>
+                            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#1C2734" Offset="0"/>
+                            <GradientStop Color="#161E29" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="GlassCardGreen" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+                <Setter Property="BorderBrush">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#8A3ECF8E" Offset="0"/>
+                            <GradientStop Color="#4D3ECF8E" Offset="0.5"/>
+                            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#1D2A22" Offset="0"/>
+                            <GradientStop Color="#161F19" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="GlassCardPurple" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+                <Setter Property="BorderBrush">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#8A9F86E8" Offset="0"/>
+                            <GradientStop Color="#4D9F86E8" Offset="0.5"/>
+                            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#26203A" Offset="0"/>
+                            <GradientStop Color="#1B172A" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="GlassCardMagenta" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+                <Setter Property="BorderBrush">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#8AE86AAE" Offset="0"/>
+                            <GradientStop Color="#4DE86AAE" Offset="0.5"/>
+                            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#2E1F2A" Offset="0"/>
+                            <GradientStop Color="#22161F" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <FontFamily x:Key="UiFontSemiBold">pack://application:,,,/Assets/Fonts/#Inter SemiBold, Segoe UI Semibold, Segoe UI</FontFamily>
 
             <!-- ========== typography ========== -->

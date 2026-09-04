@@ -661,6 +661,16 @@
     "note": "Corrige o \"Pagina do mod\" sem acento citado no briefing. Comando e OpenNexusCommand, mas nem todo mod e do Nexus, entao o texto continua generico.",
     "pt-BR": "Abrir a página do mod"
   },
+  "Dialog_Mod_Optional": {
+    "en": "OPTIONAL",
+    "note": "pt: \"OPCIONAL\". Selo do cartao do RenoDX HDR.",
+    "pt-BR": "OPCIONAL"
+  },
+  "Dialog_Mod_OptionalDesc": {
+    "en": "Independent of DLSS 5 — each one has its own switch, and neither needs the other.",
+    "note": "pt: linha que separa o mod de HDR do DLSS 5, sem usar a palavra proibida.",
+    "pt-BR": "Independente do DLSS 5 — cada um tem o próprio interruptor, e nenhum depende do outro."
+  },
   "Dialog_Mod_Desc": {
     "en": "The game's HDR mod. Fine controls live in the game's own overlay — press Home while playing.",
     "pt-BR": "O mod de HDR do jogo. Os controles finos ficam no overlay do próprio jogo — aperte Home jogando."

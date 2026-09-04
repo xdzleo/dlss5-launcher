@@ -9,11 +9,12 @@
         <!-- Um cartao por peca. Todas tem a mesma anatomia — icone, nome, estado, acao — porque
              sao a mesma coisa vista tres vezes: um arquivo que o launcher guarda uma vez e serve
              a todos os jogos. Variar a forma sugeriria uma diferenca que nao existe. -->
-        <Style x:Key="PieceCard" TargetType="Border">
-            <Setter Property="CornerRadius" Value="11"/>
+        <!-- As pecas das Configuracoes herdam a moldura de vidro do resto do app (ver App.xaml):
+             mesmo raio, mesma borda que clareia em cima. Só o espacamento e proprio, porque aqui
+             o cartao e uma linha de lista e nao um bloco solto. -->
+        <Style x:Key="PieceCard" TargetType="Border" BasedOn="{StaticResource GlassCard}">
             <Setter Property="Padding" Value="15,14"/>
             <Setter Property="Margin" Value="0,0,0,11"/>
-            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style x:Key="PieceName" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
@@ -92,7 +93,7 @@
 
                     <!-- 1. O addon. Sem URL estavel: os builds circulam pelo Discord, renomeados
                             a cada versao. Atualizar e apontar para o arquivo baixado. -->
-                    <Border Style="{StaticResource PieceCard}" Background="#241B33" BorderBrush="#4A2F5E">
+                    <Border Style="{StaticResource GlassCardPurple}" Padding="15,14" Margin="0,0,0,11">
                         <DockPanel>
                             <Button DockPanel.Dock="Right" Padding="13,7" VerticalAlignment="Top"
                                     Margin="12,0,0,0" Style="{StaticResource AccentButton}"
@@ -116,7 +117,7 @@
                     <!-- 2. A ponte. Tem release publica, entao o launcher busca sozinho e fixa por
                             hash — mas fixar um hash congela a versao, e por isso o caminho manual
                             existe aqui tambem. -->
-                    <Border Style="{StaticResource PieceCard}" Background="#1E2A33" BorderBrush="#356178">
+                    <Border Style="{StaticResource GlassCardBlue}" Padding="15,14" Margin="0,0,0,11">
                         <DockPanel>
                             <Button DockPanel.Dock="Right" Padding="13,7" VerticalAlignment="Top"
                                     Margin="12,0,0,0" Click="OnImportBridge"
@@ -166,16 +167,20 @@
                                 <!-- So aparece com um build da comunidade instalado. O aviso de
                                      anti-cheat e do proprio autor do patch, nao nosso: ele diz
                                      para nao usar em jogo online protegido. -->
-                                <Border x:Name="RuntimeWarn" CornerRadius="7" Padding="9,7" Margin="0,8,0,0"
-                                        Background="#33291B" BorderBrush="#8A6A30" BorderThickness="1"
-                                        Visibility="Collapsed">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{StaticResource IconWarning}" Fill="#E8B860" Stretch="Uniform"
+                                <!-- DockPanel com largura MaxWidth nenhuma: o aviso tinha 430 px
+                                     fixos, e numa janela mais estreita que isso a frase saia
+                                     cortada na borda ("nao usar em jogo o"). Quem decide a
+                                     largura e o cartao, sempre. -->
+                                <Border x:Name="RuntimeWarn" Style="{StaticResource GlassCardAmber}"
+                                        Padding="10,9" Margin="0,8,0,0" Visibility="Collapsed">
+                                    <DockPanel>
+                                        <Path DockPanel.Dock="Left" Data="{StaticResource IconWarning}"
+                                              Fill="#E8B860" Stretch="Uniform"
                                               Width="13" Height="13" VerticalAlignment="Top" Margin="0,1,8,0"/>
                                         <TextBlock Text="{loc:Tr Settings_Runtime_Community}" FontSize="11"
-                                                   TextWrapping="Wrap" LineHeight="16" MaxWidth="430"
+                                                   TextWrapping="Wrap" LineHeight="16"
                                                    Foreground="#E8C89A"/>
-                                    </StackPanel>
+                                    </DockPanel>
                                 </Border>
                             </StackPanel>
                         </DockPanel>

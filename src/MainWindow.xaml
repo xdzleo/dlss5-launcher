@@ -6,7 +6,7 @@
         xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
         Icon="Assets/app.png"
         Title="{loc:Tr App_Name}" Height="920" Width="1560" MinWidth="1240" MinHeight="660"
-        Background="{StaticResource BgBrush}"
+        Background="#D40C0E12"
         TextOptions.TextFormattingMode="Ideal"
         UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen">
@@ -119,8 +119,11 @@
         <!-- ===== game tile: cover fills the card, text sits on a scrim ===== -->
         <DataTemplate x:Key="GameTile" DataType="{x:Type vm:GameItemVm}">
             <Grid x:Name="Root" Width="184" Height="286" Margin="9">
-                <Border x:Name="Card" CornerRadius="12" Background="{StaticResource CardBrush}"
-                        BorderThickness="1" BorderBrush="{StaticResource BorderBrush2}"
+                <!-- Mesma moldura dos cartoes do modal: raio 14 e a borda que clareia em cima.
+                     A grade e o modal sao a mesma tela; ter dois raios e duas bordas diferentes
+                     era o que fazia o painel parecer montado por duas pessoas. -->
+                <Border x:Name="Card" CornerRadius="14" Background="{StaticResource CardBrush}"
+                        BorderThickness="1" BorderBrush="{StaticResource GlassRim}"
                         RenderTransformOrigin="0.5,0.5" ClipToBounds="True">
                     <Border.RenderTransform>
                         <ScaleTransform x:Name="CardScale" ScaleX="1" ScaleY="1"/>
@@ -132,9 +135,9 @@
                                    VerticalAlignment="Center" Margin="0,0,0,40"/>
                         <!-- cover. CornerRadius aqui tambem: o Border de fora arredonda so o que ELE
                              pinta (fundo e borda) e nao recorta os filhos, entao a capa saia quadrada
-                             por cima dos quatro cantos arredondados do card. Raio 11 = 12 da moldura
+                             por cima dos quatro cantos arredondados do card. Raio 13 = 14 da moldura
                              menos 1 px de borda, para os dois arcos ficarem concentricos. -->
-                        <Border CornerRadius="11"
+                        <Border CornerRadius="13"
                                 Visibility="{Binding HasCover, Converter={StaticResource BoolToVis}}">
                             <Border.Background>
                                 <ImageBrush ImageSource="{Binding CoverPath, Converter={StaticResource CoverImage}}"
@@ -142,7 +145,7 @@
                             </Border.Background>
                         </Border>
                         <!-- scrim so the title is always legible over any art -->
-                        <Border VerticalAlignment="Bottom" Height="128" CornerRadius="0,0,11,11">
+                        <Border VerticalAlignment="Bottom" Height="128" CornerRadius="0,0,13,13">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                     <GradientStop Color="#00101216" Offset="0"/>
@@ -296,6 +299,29 @@
     </Window.Resources>
 
     <Grid>
+    <!-- O fundo: preto-quase, com dois halos de cor muito fracos nos cantos opostos.
+         Uma cor chapada atras de tudo faz cada painel parecer um retangulo colado sobre outro
+         retangulo. Com um leve gradiente por baixo, a mesma superficie passa a ter em cima dela
+         um lugar mais claro e um mais escuro — e e isso que da a impressao de profundidade,
+         antes de qualquer transparencia.
+         Sao dois Rectangle desenhados uma vez, atras de todo o resto: nao entram em layout, nao
+         reagem a mouse, e nao custam nada por quadro. -->
+    <Rectangle IsHitTestVisible="False">
+        <Rectangle.Fill>
+            <RadialGradientBrush GradientOrigin="0.14,0.9" Center="0.14,0.9" RadiusX="0.75" RadiusY="0.8">
+                <GradientStop Color="#26FF8A3D" Offset="0"/>
+                <GradientStop Color="#00FF8A3D" Offset="1"/>
+            </RadialGradientBrush>
+        </Rectangle.Fill>
+    </Rectangle>
+    <Rectangle IsHitTestVisible="False">
+        <Rectangle.Fill>
+            <RadialGradientBrush GradientOrigin="0.88,0.06" Center="0.88,0.06" RadiusX="0.7" RadiusY="0.75">
+                <GradientStop Color="#1F4C9AFF" Offset="0"/>
+                <GradientStop Color="#004C9AFF" Offset="1"/>
+            </RadialGradientBrush>
+        </Rectangle.Fill>
+    </Rectangle>
     <DockPanel>
         <!-- ===== top bar ===== -->
         <Border DockPanel.Dock="Top" Padding="20,13"
@@ -545,15 +571,15 @@
 
                     <!-- coluna da capa -->
                     <StackPanel Grid.Row="0" Grid.Column="0" Width="216" Margin="0,0,24,0">
-                        <Border Height="324" CornerRadius="12" ClipToBounds="True"
+                        <Border Height="324" CornerRadius="14" ClipToBounds="True"
                                 Background="#14161B" BorderThickness="1"
                                 BorderBrush="{StaticResource BorderBrush2}">
                             <Grid>
                                 <TextBlock Text="{Binding Selected.Initials}" FontSize="52" FontWeight="Bold"
                                            Foreground="#3A414E" HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
-                                <!-- Raio 11 pelo mesmo motivo do card: a moldura nao recorta o filho. -->
-                                <Border CornerRadius="11"
+                                <!-- Raio 13 pelo mesmo motivo do card: a moldura nao recorta o filho. -->
+                                <Border CornerRadius="13"
                                         Visibility="{Binding Selected.HasCover, Converter={StaticResource BoolToVis}}">
                                     <Border.Background>
                                         <ImageBrush ImageSource="{Binding Selected.CoverPath, Converter={StaticResource CoverImage}}"
@@ -688,8 +714,7 @@
                         <StackPanel Visibility="{Binding DetalhePronto, Converter={StaticResource BoolToVis}}">
 
                             <!-- UPDATE WARNING: the reason the user asked for this -->
-                            <Border CornerRadius="10" Padding="13,12" Margin="0,14,0,0" Background="#332612"
-                                    BorderBrush="#8A6A1E" BorderThickness="1"
+                            <Border Style="{StaticResource GlassCardAmber}" Margin="0,14,0,0"
                                     Visibility="{Binding Selected.HasUpdate, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal">
@@ -725,8 +750,7 @@
 
 
                             <!-- correcao de DLSS FG: so aparece quando faz sentido -->
-                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
-                                    Background="#1B2733" BorderBrush="#2F4A5E" BorderThickness="1"
+                            <Border Style="{StaticResource GlassCardBlue}" Margin="0,10,0,0"
                                     Visibility="{Binding ShowDlssFix, Converter={StaticResource BoolToVis}}">
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Padding="12,8" VerticalAlignment="Center"
@@ -735,10 +759,16 @@
                                         <TextBlock Text="{Binding DlssFixButtonText}" FontSize="12"/>
                                     </Button>
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="{loc:Tr Dialog_DlssFix_Title}" FontSize="12.5"
-                                                   FontWeight="SemiBold" Foreground="#A8D4F0"/>
-                                        <TextBlock Text="{loc:Tr Dialog_DlssFix_Desc}" FontSize="11"
-                                                   Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Style="{StaticResource IconChip}">
+                                                <Path Data="{StaticResource IconInfo}" Fill="#A8D4F0"
+                                                      Stretch="Uniform" Width="15" Height="15"/>
+                                            </Border>
+                                            <TextBlock Text="{loc:Tr Dialog_DlssFix_Title}"
+                                                       Style="{StaticResource CardTitle}" Foreground="#A8D4F0"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{loc:Tr Dialog_DlssFix_Desc}"
+                                                   Style="{StaticResource CardDesc}" Margin="40,4,0,0"/>
                                     </StackPanel>
                                 </DockPanel>
                             </Border>
@@ -792,8 +822,7 @@
                                  os bytes ficam guardados, que nao e problema de quem usa. -->
 
 
-                            <Border CornerRadius="9" Padding="12,10" Margin="0,12,0,0" Background="#2A2415"
-                                    BorderBrush="#5E4E1E" BorderThickness="1"
+                            <Border Style="{StaticResource GlassCardAmber}" Margin="0,12,0,0"
                                     Visibility="{Binding DetailStatus.Length, Converter={StaticResource CountToVis}}">
                                 <TextBlock Text="{Binding DetailStatus}" TextWrapping="Wrap" FontSize="11.5"
                                            LineHeight="17" Foreground="#F0D9A0"/>
@@ -828,8 +857,7 @@
                                  Um interruptor, tres estados por baixo (ausente / instalado e
                                  ligado / instalado e desligado) e um so em cima: esta valendo ou
                                  nao. Os controles finos vivem no overlay do jogo, com Home. -->
-                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
-                                    Background="#1F2A20" BorderBrush="#33543A" BorderThickness="1"
+                            <Border Style="{StaticResource GlassCardGreen}" Margin="0,10,0,0"
                                     Visibility="{Binding Selected.HasMod, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
                                 <DockPanel>
@@ -845,11 +873,30 @@
                                                    Foreground="{StaticResource TextDimBrush}"/>
                                     </StackPanel>
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="{loc:Tr Dialog_Mod_Title}" FontSize="12.5"
-                                                   FontWeight="SemiBold" Foreground="#8FE0A8"/>
-                                        <TextBlock Text="{loc:Tr Dialog_Mod_Desc}" FontSize="11"
-                                                   TextWrapping="Wrap"
-                                                   Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Style="{StaticResource IconChip}">
+                                                <Path Data="{StaticResource IconMonitor}" Fill="#8FE0A8"
+                                                      Stretch="Uniform" Width="15" Height="15"/>
+                                            </Border>
+                                            <TextBlock Text="{loc:Tr Dialog_Mod_Title}"
+                                                       Style="{StaticResource CardTitle}" Foreground="#8FE0A8"/>
+                                            <!-- OPCIONAL, e dito antes de qualquer outra coisa.
+                                                 Este cartao e o primeiro da coluna e traz o nome do
+                                                 launcher, entao ele lia como O recurso — e quem so
+                                                 queria DLSS 5 ficava com a impressao de que teria de
+                                                 ligar o HDR antes. Os dois nao se tocam: sao add-ons
+                                                 diferentes, cada um com seu interruptor. -->
+                                            <Border Style="{StaticResource CardBadge}">
+                                                <TextBlock Text="{loc:Tr Dialog_Mod_Optional}"
+                                                           Style="{StaticResource CardBadgeText}"
+                                                           Foreground="#8FE0A8"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{loc:Tr Dialog_Mod_Desc}" Style="{StaticResource CardDesc}"
+                                                   Margin="40,4,0,0"/>
+                                        <TextBlock Text="{loc:Tr Dialog_Mod_OptionalDesc}"
+                                                   Style="{StaticResource CardDesc}" Margin="40,4,0,0"
+                                                   Foreground="{StaticResource TextFaintBrush}"/>
                                         <!-- Aplicar o perfil de monitor ficou sem caminho quando a
                                              lista de settings saiu daqui: o valor de nits so era
                                              escrito durante a instalacao, entao mudar o monitor
@@ -874,8 +921,7 @@
                             <!-- Neural Uplift (DLSS-NR): so aparece quando o addon instalado sabe
                                  acionar a feature e o jogo tem DLSS. O requisito de maquina nao
                                  esconde o cartao - vira o aviso NeuralHasBlocker aqui dentro. -->
-                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
-                                    Background="#241B33" BorderBrush="#4A2F5E" BorderThickness="1"
+                            <Border Style="{StaticResource GlassCardPurple}" Margin="0,10,0,0"
                                     Visibility="{Binding ShowNeural, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
                                     <DockPanel>
@@ -894,11 +940,16 @@
                                                        Foreground="{StaticResource TextDimBrush}"/>
                                         </StackPanel>
                                         <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                            <TextBlock Text="{loc:Tr Dialog_Neural_Title}" FontSize="12.5"
-                                                       FontWeight="SemiBold" Foreground="#D0A8F0"/>
-                                            <TextBlock Text="{loc:Tr Dialog_Neural_Desc}" FontSize="11"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{StaticResource TextFaintBrush}" Margin="0,2,0,0"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Style="{StaticResource IconChip}">
+                                                    <Path Data="{StaticResource IconSpark}" Fill="#D0A8F0"
+                                                          Stretch="Uniform" Width="15" Height="15"/>
+                                                </Border>
+                                                <TextBlock Text="{loc:Tr Dialog_Neural_Title}"
+                                                           Style="{StaticResource CardTitle}" Foreground="#D0A8F0"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{loc:Tr Dialog_Neural_Desc}"
+                                                       Style="{StaticResource CardDesc}" Margin="40,4,0,0"/>
                                         </StackPanel>
                                     </DockPanel>
 
@@ -911,8 +962,7 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Style="{StaticResource ChainChip}"
-                                                        Background="#2E2438" BorderBrush="#5A4270">
+                                                <Border Style="{StaticResource ChainChip}" Background="#26203A" BorderBrush="#4D9F86E8">
                                                     <StackPanel Orientation="Horizontal">
                                                         <Ellipse Width="7" Height="7" VerticalAlignment="Center"
                                                                  Margin="0,0,6,0">
@@ -940,8 +990,7 @@
                                          Os dois disputam o mesmo d3d9.dll, entao e um OU outro —
                                          nunca os dois ao mesmo tempo, e por isso e uma lista e nao
                                          duas chaves. -->
-                                    <Border CornerRadius="7" Padding="10,8" Margin="0,10,0,0"
-                                            Background="#2A2438" BorderBrush="#5A4270" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardPurple}" Margin="0,10,0,0"
                                             Visibility="{Binding MostraTradutorD3d9, Converter={StaticResource BoolToVis}}">
                                         <StackPanel>
                                             <DockPanel>
@@ -1005,8 +1054,7 @@
                                          fazer — so o aviso de que o jogo passa a apresentar por Vulkan.
                                          Foi o Just Cause 2 que abriu esta rota; ate a 1.69 ela era uma
                                          recusa. -->
-                                    <Border CornerRadius="7" Padding="10,8" Margin="0,10,0,0"
-                                            Background="#2A2438" BorderBrush="#5A4270" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardPurple}" Margin="0,10,0,0"
                                             Visibility="{Binding MostraTradutorD3d10, Converter={StaticResource BoolToVis}}">
                                         <StackPanel>
                                             <TextBlock Text="{loc:Tr Main_D3d10Translator_Label}" FontSize="11.5"
@@ -1019,15 +1067,20 @@
 
                                     <!-- Ponte DX11 em uso: o jogo nao tem D3D12, e o pass so
                                          existe ali por causa dela. Aparece so onde ela esta. -->
-                                    <Border CornerRadius="7" Padding="9,7" Margin="0,4,0,0"
-                                            Background="#1E2A33" BorderBrush="#356178" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardBlue}" Margin="0,4,0,0"
                                             Visibility="{Binding BridgeActive, Converter={StaticResource BoolToVis}}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Ellipse Width="7" Height="7" VerticalAlignment="Top" Margin="0,5,7,0"
+                                        <!-- DockPanel, e nao StackPanel horizontal: num StackPanel
+                                             o filho recebe largura INFINITA, entao TextWrapping
+                                             nunca tinha onde quebrar e a frase saia cortada na
+                                             borda do cartao ("...onto a second D3D12 device sc"). -->
+                                        <DockPanel>
+                                            <Ellipse DockPanel.Dock="Left" Width="7" Height="7"
+                                                     VerticalAlignment="Top" Margin="0,5,7,0"
                                                      Fill="{StaticResource CyanBrush}"/>
                                             <TextBlock Text="{loc:Tr Dlss5_Bridge_Notice}" FontSize="11"
-                                                       TextWrapping="Wrap" Foreground="#A8D4E8"/>
-                                        </StackPanel>
+                                                       TextWrapping="Wrap" LineHeight="17"
+                                                       Foreground="#A8D4E8"/>
+                                        </DockPanel>
                                     </Border>
 
                                     <!-- Feeder em uso: o jogo nao tem DLSS nenhum, e os dados que
@@ -1036,8 +1089,7 @@
                                          DLSS 5 rende menos do que num jogo que entrega os proprios
                                          vetores, e nao ha ganho de FPS. Quem nao souber disso vai
                                          concluir que instalou errado. -->
-                                    <Border CornerRadius="7" Padding="10,8" Margin="0,4,0,0"
-                                            Background="#33291B" BorderBrush="#8A6A30" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardAmber}" Margin="0,4,0,0"
                                             Visibility="{Binding MostraAvisoSemDlss, Converter={StaticResource BoolToVis}}">
                                         <DockPanel>
                                             <Path DockPanel.Dock="Left" Data="{StaticResource IconWarning}"
@@ -1059,8 +1111,7 @@
                                          vaga do proxy, falsificando a NVAPI, ou duas metades
                                          nossas juntas por historico. Sem isto na tela o usuario
                                          reinstala por cima, que nao resolve. -->
-                                    <Border CornerRadius="7" Padding="10,8" Margin="0,9,0,0"
-                                            Background="#2B2A1E" BorderBrush="#6E6438" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardAmber}" Margin="0,9,0,0"
                                             Visibility="{Binding TemConflitos, Converter={StaticResource BoolToVis}}">
                                         <StackPanel>
                                             <DockPanel>
@@ -1087,11 +1138,17 @@
                                                     <TextBlock Text="{loc:Tr Conflito_Botao_Afastar}" FontSize="11.5"/>
                                                 </Button>
                                                 <StackPanel>
-                                                    <TextBlock Text="{loc:Tr Conflito_Titulo}" FontSize="11.5"
-                                                               FontWeight="SemiBold" Foreground="#E4D89A"/>
-                                                    <TextBlock Text="{Binding ConflitosResumo}" FontSize="11"
-                                                               TextWrapping="Wrap" Margin="0,2,0,0"
-                                                               Foreground="{StaticResource TextFaintBrush}"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Style="{StaticResource IconChip}">
+                                                            <Path Data="{StaticResource IconWarning}" Fill="#E4D89A"
+                                                                  Stretch="Uniform" Width="15" Height="15"/>
+                                                        </Border>
+                                                        <TextBlock Text="{loc:Tr Conflito_Titulo}"
+                                                                   Style="{StaticResource CardTitle}"
+                                                                   Foreground="#E4D89A"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding ConflitosResumo}"
+                                                               Style="{StaticResource CardDesc}" Margin="40,4,0,0"/>
                                                 </StackPanel>
                                             </DockPanel>
                                             <ItemsControl ItemsSource="{Binding Conflitos}" Margin="0,7,0,0">
@@ -1126,8 +1183,7 @@
                                     </Border>
 
                                     <!-- por que esta maquina nao pode ligar -->
-                                    <Border CornerRadius="7" Padding="9,7" Margin="0,9,0,0"
-                                            Background="#2E2438" BorderBrush="#5A4270" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardPurple}" Margin="0,9,0,0"
                                             Visibility="{Binding NeuralHasBlocker, Converter={StaticResource BoolToVis}}">
                                         <DockPanel>
                                             <Button DockPanel.Dock="Right" Padding="10,6" VerticalAlignment="Center"
@@ -1155,8 +1211,7 @@
                                  O requisito de placa NAO esconde o cartao; vira o aviso roxo la
                                  embaixo. Quem tem uma RTX 30 precisa ler por que nao pode, e um
                                  cartao ausente nao diz isso a ninguem. -->
-                            <Border CornerRadius="10" Padding="13,11" Margin="0,10,0,0"
-                                    Background="#33202B" BorderBrush="#6E3A55" BorderThickness="1"
+                            <Border Style="{StaticResource GlassCardMagenta}" Margin="0,10,0,0"
                                     Visibility="{Binding ShowMfg, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
                                     <DockPanel>
@@ -1178,20 +1233,20 @@
                                                  atualizacao de driver, e quem liga precisa saber
                                                  disso antes de ligar, nao depois. -->
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{loc:Tr Mfg_Title}" FontSize="12.5"
-                                                           FontWeight="SemiBold" Foreground="#F0A8C8"
-                                                           VerticalAlignment="Center"/>
-                                                <Border CornerRadius="4" Padding="7,2" Margin="9,0,0,0"
-                                                        Background="#5E4A16" VerticalAlignment="Center">
+                                                <Border Style="{StaticResource IconChip}">
+                                                    <Path Data="{StaticResource IconLayers}" Fill="#F0A8C8"
+                                                          Stretch="Uniform" Width="15" Height="15"/>
+                                                </Border>
+                                                <TextBlock Text="{loc:Tr Mfg_Title}"
+                                                           Style="{StaticResource CardTitle}" Foreground="#F0A8C8"/>
+                                                <Border Style="{StaticResource CardBadge}">
                                                     <TextBlock Text="{loc:Tr Mfg_Experimental_Badge}"
-                                                               FontSize="9" FontWeight="Bold"
+                                                               Style="{StaticResource CardBadgeText}"
                                                                Foreground="#FFDC8A"/>
                                                 </Border>
                                             </StackPanel>
-                                            <TextBlock Text="{loc:Tr Mfg_Title_Desc}" FontSize="11"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{StaticResource TextFaintBrush}"
-                                                       Margin="0,2,0,0"/>
+                                            <TextBlock Text="{loc:Tr Mfg_Title_Desc}"
+                                                       Style="{StaticResource CardDesc}" Margin="40,4,0,0"/>
                                             <!-- O que o patch muda NESTA placa. A mesma acao tem
                                                  resultados diferentes numa RTX 40 e numa RTX 50, e
                                                  um texto unico mentiria para uma das duas. -->
@@ -1297,16 +1352,14 @@
                                     <!-- O que a ULTIMA sessao relatou, escrito pelo proprio add-on
                                          de dentro do jogo. E a unica prova de que o patch pegou:
                                          copiar arquivo com sucesso nao prova nada sobre quadros. -->
-                                    <Border CornerRadius="7" Padding="9,7" Margin="0,8,0,0"
-                                            Background="#1E2A33" BorderBrush="#356178" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardBlue}" Margin="0,8,0,0"
                                             Visibility="{Binding MfgHasLastRun, Converter={StaticResource BoolToVis}}">
                                         <TextBlock Text="{Binding MfgLastRun}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="#A8D4E8"/>
                                     </Border>
 
                                     <!-- por que esta maquina ou este jogo nao pode -->
-                                    <Border CornerRadius="7" Padding="9,7" Margin="0,8,0,0"
-                                            Background="#2E2438" BorderBrush="#5A4270" BorderThickness="1"
+                                    <Border Style="{StaticResource GlassCardPurple}" Margin="0,8,0,0"
                                             Visibility="{Binding MfgHasBlocker, Converter={StaticResource BoolToVis}}">
                                         <TextBlock Text="{Binding MfgBlocker}" FontSize="11"
                                                    TextWrapping="Wrap"

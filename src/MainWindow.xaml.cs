@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using RenoDXLauncher.ViewModels;
 
@@ -7,10 +8,46 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm = new();
 
+    /// <summary>
+    /// A barra de titulo da janela, escura, e o fundo Mica do Windows 11.
+    ///
+    /// A barra vinha do sistema em BRANCO por cima de um app inteiro escuro — a primeira coisa
+    /// que a pessoa ve ao abrir, e a unica parte da janela que nao era nossa. Sao dois atributos
+    /// do DWM, e nao ha versao gerenciada deles.
+    ///
+    /// O Mica pinta o fundo da janela com o papel de parede desfocado pelo proprio compositor.
+    /// Nao da para imita-lo em WPF (nao existe desfoque do que esta ATRAS da janela), e e ele
+    /// que faz a tonalidade do painel mudar conforme a area de trabalho por baixo. Onde nao
+    /// existe — Windows 10, ou build anterior a 22621 — a chamada devolve erro e o fundo fica o
+    /// gradiente que ja pintamos: nada quebra, so nao ha Mica.
+    /// </summary>
+    [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    private const int DwmUseImmersiveDarkMode = 20;
+    private const int DwmSystemBackdropType = 38;
+    private const int BackdropMica = 2;
+
+    private void AplicarVidroDaJanela()
+    {
+        try
+        {
+            var h = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (h == IntPtr.Zero) return;
+            var ligado = 1;
+            DwmSetWindowAttribute(h, DwmUseImmersiveDarkMode, ref ligado, sizeof(int));
+            var mica = BackdropMica;
+            DwmSetWindowAttribute(h, DwmSystemBackdropType, ref mica, sizeof(int));
+        }
+        catch (Exception ex) { Services.Log.Warn($"dwm: {ex.Message}"); }
+    }
+
     public MainWindow()
     {
         InitializeComponent();
         DataContext = _vm;
+        // Antes do primeiro quadro: aplicado depois, a barra pisca em branco.
+        SourceInitialized += (_, _) => AplicarVidroDaJanela();
         Loaded += async (_, _) =>
         {
             await _vm.LoadAsync();

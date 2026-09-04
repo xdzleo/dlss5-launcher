@@ -635,6 +635,14 @@
   <data name="Dialog_Mod_Desc" xml:space="preserve">
     <value>The game's HDR mod. Fine controls live in the game's own overlay — press Home while playing.</value>
   </data>
+  <data name="Dialog_Mod_Optional" xml:space="preserve">
+    <value>OPTIONAL</value>
+    <comment>pt: "OPCIONAL". Selo do cartao do RenoDX HDR.</comment>
+  </data>
+  <data name="Dialog_Mod_OptionalDesc" xml:space="preserve">
+    <value>Independent of DLSS 5 — each one has its own switch, and neither needs the other.</value>
+    <comment>pt: linha que separa o mod de HDR do DLSS 5, sem usar a palavra proibida.</comment>
+  </data>
   <data name="Dialog_Mod_Stable" xml:space="preserve">
     <value>Stable</value>
   </data>
