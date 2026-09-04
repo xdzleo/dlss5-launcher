@@ -4,7 +4,7 @@
         xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
         xmlns:local="clr-namespace:RenoDXLauncher"
         Title="{loc:Tr Settings_Title}" Height="760" Width="660"
-        Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
+        Background="Transparent" WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True">
     <Window.Resources>
         <!-- Um cartao por peca. Todas tem a mesma anatomia — icone, nome, estado, acao — porque
@@ -52,6 +52,9 @@
         </Style>
     </Window.Resources>
 
+    <!-- A janela em si e transparente, e quem pinta e este Border: com o fundo opaco da janela
+         por baixo, a translucidez do painel morria contra ele e o vidro nao aparecia. Agora o
+         que se ve atras dos ajustes e a grade de capas, que e o lugar de onde a pessoa veio. -->
     <Border Background="{StaticResource PanelBrush}" CornerRadius="12" BorderThickness="1"
             BorderBrush="{StaticResource BorderStrongBrush}" Margin="12">
         <Border.Effect>

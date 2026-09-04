@@ -591,9 +591,12 @@
                                         <ContentPresenter/>
                                     </Border>
                                     <ControlTemplate.Triggers>
+                                        <!-- Verde, e nao laranja: laranja e a cor de "atencao
+                                             aqui" no resto do app (atualizacao pendente, aviso).
+                                             O jogo aberto nao e um alerta. -->
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter TargetName="Bd" Property="BorderBrush"
-                                                    Value="{StaticResource AccentBrush}"/>
+                                                    Value="{StaticResource GreenBrush}"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>

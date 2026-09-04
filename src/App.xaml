@@ -16,10 +16,16 @@
                  Com ~90% de opacidade a cor de baixo atravessa o suficiente para o painel ter
                  tom proprio em cada canto da janela — que e o que a transparencia faz de util
                  aqui, e nao deixar ver o que ha atras. -->
-            <SolidColorBrush x:Key="PanelBrush" Color="#E616181D"/>
-            <SolidColorBrush x:Key="CardBrush" Color="#D91C1F26"/>
-            <SolidColorBrush x:Key="CardHoverBrush" Color="#252932"/>
-            <SolidColorBrush x:Key="ElevatedBrush" Color="#22262F"/>
+            <!-- Vidro de verdade, e nao cinza com nome de vidro.
+                 Estas superficies ja eram translucidas o suficiente para pegar o tom do halo de
+                 fundo, e nada mais. Com menos opacidade elas passam a mostrar o que ha ATRAS —
+                 a grade de capas por tras do modal, o painel por tras da janela de ajustes — que
+                 e o que faz a pilha ter profundidade em vez de ser uma tela por cima da outra.
+                 O piso e a legibilidade: abaixo de ~70% o texto comeca a disputar com a capa. -->
+            <SolidColorBrush x:Key="PanelBrush" Color="#CC141820"/>
+            <SolidColorBrush x:Key="CardBrush" Color="#B31C1F26"/>
+            <SolidColorBrush x:Key="CardHoverBrush" Color="#CC2A303C"/>
+            <SolidColorBrush x:Key="ElevatedBrush" Color="#B322262F"/>
             <SolidColorBrush x:Key="BorderBrush2" Color="#2C313B"/>
             <SolidColorBrush x:Key="BorderStrongBrush" Color="#3A4150"/>
             <SolidColorBrush x:Key="TextBrush" Color="#F2F4F8"/>
@@ -71,8 +77,8 @@
                 <Setter Property="Background">
                     <Setter.Value>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#1E222B" Offset="0"/>
-                            <GradientStop Color="#171A21" Offset="1"/>
+                            <GradientStop Color="#E61E222B" Offset="0"/>
+                            <GradientStop Color="#CC171A21" Offset="1"/>
                         </LinearGradientBrush>
                     </Setter.Value>
                 </Setter>
@@ -141,8 +147,8 @@
                 <Setter Property="Background">
                     <Setter.Value>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#2E2617" Offset="0"/>
-                            <GradientStop Color="#221D12" Offset="1"/>
+                            <GradientStop Color="#E62E2617" Offset="0"/>
+                            <GradientStop Color="#CC221D12" Offset="1"/>
                         </LinearGradientBrush>
                     </Setter.Value>
                 </Setter>
@@ -161,8 +167,8 @@
                 <Setter Property="Background">
                     <Setter.Value>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#1C2734" Offset="0"/>
-                            <GradientStop Color="#161E29" Offset="1"/>
+                            <GradientStop Color="#E61C2734" Offset="0"/>
+                            <GradientStop Color="#CC161E29" Offset="1"/>
                         </LinearGradientBrush>
                     </Setter.Value>
                 </Setter>
@@ -181,8 +187,8 @@
                 <Setter Property="Background">
                     <Setter.Value>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#1D2A22" Offset="0"/>
-                            <GradientStop Color="#161F19" Offset="1"/>
+                            <GradientStop Color="#E61D2A22" Offset="0"/>
+                            <GradientStop Color="#CC161F19" Offset="1"/>
                         </LinearGradientBrush>
                     </Setter.Value>
                 </Setter>
@@ -201,8 +207,8 @@
                 <Setter Property="Background">
                     <Setter.Value>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#26203A" Offset="0"/>
-                            <GradientStop Color="#1B172A" Offset="1"/>
+                            <GradientStop Color="#E626203A" Offset="0"/>
+                            <GradientStop Color="#CC1B172A" Offset="1"/>
                         </LinearGradientBrush>
                     </Setter.Value>
                 </Setter>
@@ -221,8 +227,8 @@
                 <Setter Property="Background">
                     <Setter.Value>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#2E1F2A" Offset="0"/>
-                            <GradientStop Color="#22161F" Offset="1"/>
+                            <GradientStop Color="#E62E1F2A" Offset="0"/>
+                            <GradientStop Color="#CC22161F" Offset="1"/>
                         </LinearGradientBrush>
                     </Setter.Value>
                 </Setter>
@@ -853,16 +859,15 @@
                                                                 Background="{StaticResource RampaDeLuz}"
                                                                 Width="{Binding ActualWidth,
                                                                         RelativeSource={RelativeSource AncestorType=Slider}}"/>
-                                                        <!-- O brilho: a mesma rampa, mais alta e
-                                                             quase transparente. Faz o vidro em
-                                                             volta parecer iluminado pela barra, sem
-                                                             custar um BlurEffect. -->
-                                                        <Border HorizontalAlignment="Left" Height="22"
-                                                                CornerRadius="11" VerticalAlignment="Center"
-                                                                Background="{StaticResource RampaDeLuz}"
-                                                                Opacity="0.22" IsHitTestVisible="False"
-                                                                Width="{Binding ActualWidth,
-                                                                        RelativeSource={RelativeSource AncestorType=Slider}}"/>
+                                                        <!-- Aqui havia um segundo retangulo, mais
+                                                             alto e translucido, para simular o
+                                                             brilho da barra. Ele era recortado no
+                                                             mesmo ponto que o preenchimento, mas
+                                                             sobrava acima e abaixo do polegar — e
+                                                             o corte reto virava um degrau visivel
+                                                             ao lado dele. O preenchimento sozinho
+                                                             termina onde o polegar esta, que e
+                                                             quem esconde a emenda. -->
                                                     </Grid>
                                                 </ControlTemplate>
                                             </RepeatButton.Template>

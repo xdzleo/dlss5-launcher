@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.91.0
+
+Vidro de verdade, moldura verde, e o degrau da barra de brilho.
+
+### As superfícies ficaram translúcidas
+
+Elas já eram um pouco, e só o suficiente para pegar o tom do halo de fundo. Agora mostram o que
+há **atrás**: a grade de capas por trás do cartão do jogo, o painel por trás da janela de ajustes.
+É isso que faz a pilha ter profundidade, em vez de ser uma tela colada em cima da outra.
+
+A janela de ajustes precisou de um passo a mais: ela tinha fundo opaco próprio, então a
+translucidez do painel morria contra ele. A janela agora é transparente e quem pinta é o painel.
+
+O piso é a legibilidade — abaixo de uns 70% o texto começa a disputar com a capa do jogo.
+
+### A moldura do jogo aberto virou verde
+
+Laranja é a cor de "atenção aqui" no resto do app: atualização pendente, aviso, alerta. O jogo
+que você abriu não é um alerta.
+
+### O degrau na barra de brilho
+
+Havia um segundo retângulo, mais alto e translúcido, para simular o brilho da barra. Ele era
+recortado no mesmo ponto que o preenchimento, mas sobrava acima e abaixo do polegar — e o corte
+reto virava um degrau visível ao lado dele. O preenchimento sozinho termina onde o polegar está,
+que é quem esconde a emenda.
+
 ## v1.90.0
 
 O selo laranja de **MOD DISPONÍVEL / SEM MOD** saiu do cabeçalho do jogo.
