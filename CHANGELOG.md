@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.85.0
+
+Quatro defeitos da rolagem que entrou na v1.84.0. Todos meus, e três deles só apareceram medindo.
+
+### Girar rápido perdia caminho
+
+O pior. Para saber de onde parte o próximo clique, o código comparava o último valor empurrado
+com o deslocamento atual — e essa comparação tem uma corrida: `ScrollToVerticalOffset` **não muda
+`VerticalOffset` na hora**, o valor só aparece depois do próximo arranjo. Uma roda girada nesse
+intervalo lia os dois diferentes, concluía "alguém mexeu por fora" e recomeçava do zero.
+
+O sintoma era exatamente o de girar rápido: parte do caminho sumia. Agora quem responde é um
+sinalizador explícito de "há uma animação nossa correndo". Medido: cinco cliques a cada 10 ms
+andam 50,63% da lista, exatamente cinco vezes um clique.
+
+### A animação brigava com a barra de rolagem
+
+Arrastar a barra enquanto a animação corria deixava os dois puxando o mesmo deslocamento para
+lados diferentes — na tela, a barra escapando da mão. O mesmo valia para as setas do teclado e
+para a lista rolando sozinha até o jogo selecionado.
+
+Agora, quando a rolagem muda por outro caminho, a animação é solta onde está. Medido: barra
+arrastada para 80% no meio de um movimento fica em 80%, e a roda seguinte parte de lá.
+
+### Passo grande demais dentro do cartão
+
+210 px são uma fileira na grade e quase um cartão inteiro dentro do modal, que é bem menor. O
+passo passou a ter teto de meia tela do que está rolando — ele pertence à área, não ao mouse.
+
+### E uma saída que sujava o estado
+
+Quando não havia para onde rolar (fim da lista), o código anotava o alvo novo e só então saía —
+deixando o alvo apontando para um lugar aonde nenhuma animação ia, e a animação em curso, ao
+terminar, não fazia a própria limpeza.
+
 ## v1.84.0
 
 A rolagem anda em vez de saltar, e as animações passaram a tiquear na taxa do seu monitor.

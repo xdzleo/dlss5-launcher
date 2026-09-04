@@ -74,6 +74,8 @@ public static class FluidScroll
         public double Alvo = double.NaN;
         public double UltimoEmpurrado = double.NaN;
         public long Quando;
+        /// <summary>Ha uma animacao NOSSA correndo agora. E o unico caso em que o alvo vale.</summary>
+        public bool Correndo;
     }
 
     private static readonly DependencyProperty EstadoProperty = DependencyProperty.RegisterAttached(
@@ -94,6 +96,33 @@ public static class FluidScroll
         if (sv is null) { Log.Warn("fluid scroll: nenhum ScrollViewer neste elemento"); return; }
         sv.PreviewMouseWheel -= AoGirar;
         sv.PreviewMouseWheel += AoGirar;
+        sv.ScrollChanged -= AoRolar;
+        sv.ScrollChanged += AoRolar;
+    }
+
+    /// <summary>
+    /// Alguem mexeu na rolagem que nao fomos nos: solta a animacao onde ela esta.
+    ///
+    /// A rolagem tem outros donos — a barra arrastada, as setas do teclado, e o ScrollIntoView
+    /// que a lista faz sozinha ao selecionar um jogo. Sem isto, a animacao continuava empurrando
+    /// para o alvo dela enquanto a pessoa arrastava a barra para outro lugar: os dois puxando o
+    /// mesmo deslocamento em direcoes diferentes, que na tela aparece como a barra "escapando"
+    /// da mao.
+    ///
+    /// Aqui a comparacao com o ultimo valor empurrado e segura, ao contrario de dentro do
+    /// tratamento da roda: este evento chega DEPOIS de o deslocamento ja ter mudado.
+    /// </summary>
+    private static void AoRolar(object sender, ScrollChangedEventArgs e)
+    {
+        if (sender is not ScrollViewer sv) return;
+        if (sv.GetValue(EstadoProperty) is not Estado st || !st.Correndo) return;
+        if (!double.IsNaN(st.UltimoEmpurrado)
+            && Math.Abs(e.VerticalOffset - st.UltimoEmpurrado) < 0.5) return;
+
+        sv.SetValue(DeslocamentoProperty, e.VerticalOffset);
+        sv.BeginAnimation(DeslocamentoProperty, null);
+        st.Correndo = false;
+        st.Alvo = double.NaN;
     }
 
     private static ScrollViewer? Achar(DependencyObject raiz)
@@ -118,26 +147,39 @@ public static class FluidScroll
             sv.SetValue(EstadoProperty, st);
         }
 
-        // De onde parte este clique. O alvo anterior so vale se o movimento AINDA esta indo para
-        // la: se passou tempo demais, ou se alguem mexeu na rolagem por fora (barra arrastada,
-        // teclado, a lista rolando sozinha ate o jogo selecionado), ele nao vale nada.
+        // De onde parte este clique: do alvo, quando ha uma animacao NOSSA a caminho dele; do
+        // deslocamento real, em qualquer outro caso.
+        //
+        // Antes isto era decidido comparando o ultimo valor empurrado com o deslocamento atual, e
+        // essa comparacao tinha uma corrida: ScrollToVerticalOffset nao muda VerticalOffset na
+        // hora — o valor so aparece depois do proximo arranjo. Uma roda girada no intervalo lia
+        // os dois diferentes, concluia "alguem mexeu por fora" e recomecava do zero. O sintoma e
+        // justamente o de girar rapido: parte do caminho some.
+        //
+        // O relogio continua no criterio para o caso de a animacao ter sido interrompida sem
+        // avisar (elemento removido da arvore no meio do movimento).
         var agora = Environment.TickCount64;
-        var meu = !double.IsNaN(st.UltimoEmpurrado)
-                  && Math.Abs(sv.VerticalOffset - st.UltimoEmpurrado) < 1.5;
-        var partida = !double.IsNaN(st.Alvo) && agora - st.Quando < 400 && meu
+        var partida = st.Correndo && !double.IsNaN(st.Alvo) && agora - st.Quando < 1000
                       ? st.Alvo : sv.VerticalOffset;
 
         // A distancia segue o TAMANHO do giro, e nao so o sentido. Roda de mouse manda 120 por
         // clique; touchpad de precisao manda dezenas de eventos de 8, 12, 20 — com o sinal
         // apenas, cada cocegas no touchpad andava uma fileira inteira.
+        //
+        // E nunca mais que meia tela: 210 px sao uma fileira na grade e quase um cartao inteiro
+        // dentro do modal, que e bem menor. O passo pertence a area que rola, nao ao mouse.
         var passo = PassoDaRoda * Math.Clamp(Math.Abs(e.Delta) / 120.0, 0.15, 3.0);
+        passo = Math.Min(passo, Math.Max(sv.ViewportHeight * 0.5, 60));
         var alvo = Math.Clamp(partida - Math.Sign(e.Delta) * passo, 0, sv.ScrollableHeight);
+
+        // Ja esta onde quer chegar (fim da lista, por exemplo): sai ANTES de mexer no estado.
+        // Mexer e sair deixava o alvo apontando para um lugar para onde nenhuma animacao ia — e
+        // a animacao em curso, ao terminar, via o alvo trocado e nao fazia a limpeza dela.
+        if (Math.Abs(alvo - sv.VerticalOffset) < 0.5) return;
+
         st.Alvo = alvo;
         st.Quando = agora;
-
-        // Ja esta onde quer chegar (fim da lista, por exemplo): nao ha o que animar, e devolver
-        // o evento deixa o ScrollViewer de fora reagir em vez de a roda morrer aqui.
-        if (Math.Abs(alvo - sv.VerticalOffset) < 0.5) return;
+        st.Correndo = true;
 
         // Desaceleracao no fim, e nao no comeco: o movimento tem de comecar no instante do
         // clique — comecar devagar e exatamente o que faz uma interface parecer com atraso.
@@ -155,6 +197,7 @@ public static class FluidScroll
             // este Completed, mas a que a substituiu dispara — e se as duas limpassem, a segunda
             // apagaria o alvo da terceira.
             if (st.Alvo != alvo) return;
+            st.Correndo = false;
             // A ordem evita salto: com a animacao ainda segurando o valor, escrever a base nao
             // muda nada na tela; so depois de solta-la e que a base passa a valer — e ela ja e o
             // alvo.
