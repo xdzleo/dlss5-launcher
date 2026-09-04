@@ -23,7 +23,37 @@ public static class AntiCheatScanner
 
     /// <summary>Name of the anti-cheat found, or null. Scans the install root (the
     /// EasyAntiCheat\ folder lives there, not next to the shipping exe) and the deploy dir.</summary>
+    /// <summary>
+    /// O que ja foi respondido para esta pasta.
+    ///
+    /// A varredura desce tres niveis na pasta do jogo e olha o NOME de cada entrada. Num jogo
+    /// pequeno isso e instantaneo; no Cyberpunk 2077, com dezenas de milhares de arquivos, foram
+    /// medidos ~400 ms — e ela rodava a cada clique no interruptor, no meio do caminho entre o
+    /// clique e a tela.
+    ///
+    /// A resposta nao muda enquanto o launcher esta aberto: ninguem instala um anti-cheat no jogo
+    /// entre abrir o cartao e clicar em instalar. E se instalasse, a proxima abertura pega.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string?> Lembrado = new();
+
+    /// <summary>Faz a varredura ANTES de ela ser necessaria, do lado de fora do caminho do
+    /// clique. Chamado quando o cartao do jogo abre, que e quando ha tempo de sobra.</summary>
+    public static void Preaquecer(string? installDir, string? targetDir)
+    {
+        try { Detect(installDir, targetDir); }
+        catch (Exception ex) { Log.Warn($"anti-cheat preaquecer: {ex.Message}"); }
+    }
+
     public static string? Detect(string? installDir, string? targetDir)
+    {
+        var chave = (installDir ?? "") + "|" + (targetDir ?? "");
+        if (Lembrado.TryGetValue(chave, out var lembrado)) return lembrado;
+        var achado = Varrer(installDir, targetDir);
+        Lembrado[chave] = achado;
+        return achado;
+    }
+
+    private static string? Varrer(string? installDir, string? targetDir)
     {
         foreach (var root in new[] { installDir, targetDir })
         {

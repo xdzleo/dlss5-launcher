@@ -498,12 +498,32 @@ public static class NeuralUpliftService
         // grava as duas em 1, a chave antiga continuava em 1 para sempre, e olhar so para ela
         // dizia "nada a corrigir" enquanto IsApplied lia a nova em 0: interruptor vermelho,
         // reafirmacao que nunca reafirmava.
-        var atual = ini.Get(CurrentSection, CurrentEnableKey, ignoreCase: true);
+        var comSufixo = ini.Get(CurrentSection, CurrentEnableKey, ignoreCase: true);
+        var curta = ini.Get(CurrentSection, CurrentEnableKeyCurto, ignoreCase: true);
+        var atual = comSufixo ?? curta;
         var antiga = ini.Get(GenericSection, GenericEnableKey, ignoreCase: true);
-        if (!Zerada(atual) && !Zerada(antiga)) return false;
+
+        // FALTAR tambem e motivo para reescrever, e nao so estar zerada.
+        //
+        // Cada build do addon leu uma chave diferente, e um jogo instalado por uma versao
+        // anterior do launcher fica com a chave daquela epoca e sem as outras. O build de
+        // setembro de 2026 le SO `DirectNeuralRendering`: num jogo com apenas `NeuralUplift=1`
+        // — instalado antes de o contrato mudar — o arquivo estava na pasta, o ini dizia 1, e
+        // nada acontecia dentro do jogo. Consertar exigiria reinstalar um por um.
+        //
+        // A regra: se o interruptor esta LIGADO por qualquer uma das chaves conhecidas e alguma
+        // outra esta ausente, escreve todas. Ausencia de TODAS continua sendo motivo para nao
+        // tocar: ai o ini nao e nosso.
+        var ligado = (comSufixo is not null && !Zerada(comSufixo))
+                     || (curta is not null && !Zerada(curta))
+                     || (antiga is not null && !Zerada(antiga));
+        var faltaAlguma = ligado && (comSufixo is null || curta is null || antiga is null);
+        if (!Zerada(atual) && !Zerada(antiga) && !faltaAlguma) return false;
         SetNeuralSwitch(ini, true);
         ini.Save();
-        Log.Info($"neural: interruptor estava '{(Zerada(atual) ? atual : antiga)}' em {iniPath}; devolvido para 1");
+        Log.Info($"neural: interruptor reafirmado em {iniPath}"
+                 + $" (com sufixo '{comSufixo ?? "ausente"}', curta '{curta ?? "ausente"}',"
+                 + $" antiga '{antiga ?? "ausente"}')");
         return true;
 
         // Ausente nao e zerado: um ini sem a chave nao e nosso para escrever. Presente e nao-1,
@@ -520,6 +540,7 @@ public static class NeuralUpliftService
     /// </summary>
     public static bool ReassertEnabledIn(string installDir)
     {
+        var algum = false;
         try
         {
             foreach (var ini in Directory.EnumerateFiles(installDir, "ReShade.ini", new EnumerationOptions
@@ -534,11 +555,14 @@ public static class NeuralUpliftService
                 // para reescrever.
                 var pasta = Path.GetDirectoryName(ini);
                 if (pasta is null || DeployedGenericAddon(pasta) is null) continue;
-                if (ReassertEnabled(ini)) return true;
+                // Segue ate o fim, e nao para no primeiro. Jogo de 32 bits tem DOIS inis que
+                // contam — o da raiz e o do host64 — e sair no primeiro deixava o outro como
+                // estava, com o addon la e desligado.
+                if (ReassertEnabled(ini)) algum = true;
             }
         }
         catch (Exception ex) { Log.Warn($"reassert em {installDir}: {ex.Message}"); }
-        return false;
+        return algum;
     }
 
     public static bool TemRuntimeLocal(string targetDir)
@@ -1005,6 +1029,21 @@ public static class NeuralUpliftService
     private const string CurrentSection = "RENODX-DLSS";
     private const string CurrentEnableKey = "DirectNeuralRenderingEnabled";
 
+    /// <summary>
+    /// A mesma chave sem o sufixo, que e a que os builds mais novos leem.
+    ///
+    /// Descoberto lendo a tabela de strings de um build de setembro de 2026 (2.520.576 bytes): ele
+    /// tem `DirectNeuralRendering`, `DirectNeuralRenderingStatus`, `...Intensity`, `...HookPoint` e
+    /// mais uma duzia — e NAO tem `DirectNeuralRenderingEnabled`. Escrever so a com sufixo deixava
+    /// aquele addon instalado e desligado, com a instalacao terminando limpa e nada acontecendo
+    /// dentro do jogo: exatamente a falha que a troca de contrato anterior ja tinha causado.
+    ///
+    /// Nao da para saber a versao do addon pelo arquivo (o campo de versao do PE vem lixo em
+    /// alguns builds), entao escrevem-se as duas. Uma chave a mais num ini que este build nao le
+    /// nao custa nada; uma chave a menos custa o recurso inteiro.
+    /// </summary>
+    private const string CurrentEnableKeyCurto = "DirectNeuralRendering";
+
     /// <summary>An older in-house build used its own section. Cleared on remove so a leftover
     /// enable flag cannot switch a future build back on behind the user's back.</summary>
     private const string LegacySection = "RENODX-NEURAL";
@@ -1019,6 +1058,7 @@ public static class NeuralUpliftService
     {
         var flag = on ? "1" : "0";
         ini.Set(CurrentSection, CurrentEnableKey, flag);
+        ini.Set(CurrentSection, CurrentEnableKeyCurto, flag);
         ini.Set(GenericSection, GenericEnableKey, flag);
     }
 
@@ -1356,6 +1396,7 @@ public static class NeuralUpliftService
         // key, found nothing, and reported "off" for a game whose ini plainly said NeuralUplift=1.
         // A UI that says off while the feature runs is worse than one that says nothing.
         var value = ini.Get(CurrentSection, CurrentEnableKey, ignoreCase: true)
+                    ?? ini.Get(CurrentSection, CurrentEnableKeyCurto, ignoreCase: true)
                     ?? ini.Get(GenericSection, GenericEnableKey, ignoreCase: true)
                     ?? ini.Get(SettingsService.PresetSection, EnableKey, ignoreCase: true)
                     ?? ini.Get(LegacySection, LegacyEnableKey, ignoreCase: true);

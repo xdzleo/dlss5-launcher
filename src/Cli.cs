@@ -91,6 +91,7 @@ public static class Cli
             "mfg" => await MfgAsync(rest),
             "instalado" or "installed" => await InstaladoAsync(rest.FirstOrDefault()),
             "auditoria" or "audit" => await AuditoriaAsync(rest),
+            "addon" => await AddonAsync(rest),
             "feeder" => await FeederAsync(rest),
             "doctor" => await DoctorAsync(),
             "help" or "h" or "?" => Help(),
@@ -444,6 +445,42 @@ public static class Cli
         return 0;
     }
 
+    /// <summary>
+    /// Poe um addon do DLSS 5 na biblioteca e o leva a todos os jogos que ja o tem.
+    ///
+    /// O mesmo caminho do botao "Atualizar…" da tela de Ajustes. Existe na linha de comando
+    /// porque os builds do addon circulam por fora, com nomes que mudam, e conferir qual deles
+    /// ficou instalado e uma pergunta que se faz depois — quando o jogo abre e nao acontece nada.
+    /// Aqui a resposta sai na hora, com a versao e a contagem de jogos.
+    /// </summary>
+    private static async Task<int> AddonAsync(string[] rest)
+    {
+        var arquivo = rest.FirstOrDefault(a => !a.StartsWith('-'));
+        if (arquivo is null || !File.Exists(arquivo))
+        {
+            Console.Error.WriteLine(L.T("Cli_Addon_SemArquivo"));
+            return 1;
+        }
+        var ctx = await LoadAsync();
+        NeuralUpliftService.ImportAddon(arquivo);
+        var pastas = ctx.Games.Select(g => g.InstallDir).Where(d => d is not null).Distinct()!.ToList();
+        var n = NeuralUpliftService.PropagateAddon(pastas!,
+            new Progress<string>(m => Console.WriteLine("  " + m)));
+
+        // O interruptor, e nao so o arquivo.
+        //
+        // Cada build do addon leu uma chave diferente no ini, e um jogo instalado por uma versao
+        // anterior do launcher fica com a chave de ontem. Trocar o binario sem reafirmar o
+        // interruptor entrega o pior resultado possivel: o addon novo na pasta, o ini dizendo 1
+        // numa chave que ele nao le, e nada acontecendo dentro do jogo.
+        var religados = pastas.Count(d => NeuralUpliftService.ReassertEnabledIn(d!));
+        Console.WriteLine(L.T("Cli_Addon_Guardado",
+            NeuralUpliftService.ReadAddonVersion(NeuralUpliftService.LibraryAddon) ?? "?",
+            new FileInfo(NeuralUpliftService.LibraryAddon).Length, n));
+        Console.WriteLine(L.T("Cli_Addon_Interruptor", religados));
+        return 0;
+    }
+
     private static string Curto(string s, int n) => s.Length <= n ? s : s[..(n - 1)] + "…";
 
     /// <summary>Width of the syntax column in the help table.</summary>
@@ -473,6 +510,7 @@ public static class Cli
         HelpRow($"mfg {game} [--x 2..6] [--off]", L.T("Cli_Help_Mfg"));
         HelpRow($"instalado {game}", L.T("Cli_Help_Instalado"));
         HelpRow("auditoria", L.T("Cli_Help_Auditoria"));
+        HelpRow("addon <arquivo>", L.T("Cli_Help_Addon"));
         HelpRow("feeder [--novo] [--versao <tag>] [--voltar]", L.T("Cli_Help_Feeder"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();

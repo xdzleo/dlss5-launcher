@@ -91,6 +91,16 @@
   <data name="Cli_Add_Registered" xml:space="preserve">
     <value>Folder registered: {0}</value>
   </data>
+  <data name="Cli_Addon_Guardado" xml:space="preserve">
+    <value>Addon v{0} ({1} bytes) is in the library, and went to {2} game(s).</value>
+  </data>
+  <data name="Cli_Addon_Interruptor" xml:space="preserve">
+    <value>Enable keys re-asserted in {0} game(s).</value>
+    <comment>pt: cada build do addon le uma chave diferente; reafirmar todas evita addon instalado e desligado.</comment>
+  </data>
+  <data name="Cli_Addon_SemArquivo" xml:space="preserve">
+    <value>Point at the .addon64 file: addon &lt;file&gt;</value>
+  </data>
   <data name="Cli_Arg_Folder" xml:space="preserve">
     <value>&lt;folder&gt;</value>
     <comment>Metavariavel.</comment>
@@ -232,6 +242,9 @@
   <data name="Cli_Help_Add" xml:space="preserve">
     <value>Register a game folder the stores do not know about</value>
     <comment>pt: "que as lojas não conhecem".</comment>
+  </data>
+  <data name="Cli_Help_Addon" xml:space="preserve">
+    <value>Put a DLSS 5 addon build in the library and send it to every game</value>
   </data>
   <data name="Cli_Help_Auditoria" xml:space="preserve">
     <value>Read the DLSS 5 chain of every game and say which ones are whole</value>

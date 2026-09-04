@@ -91,6 +91,16 @@
   <data name="Cli_Add_Registered" xml:space="preserve">
     <value>Pasta registrada: {0}</value>
   </data>
+  <data name="Cli_Addon_Guardado" xml:space="preserve">
+    <value>Addon v{0} ({1} bytes) está na biblioteca, e foi para {2} jogo(s).</value>
+  </data>
+  <data name="Cli_Addon_Interruptor" xml:space="preserve">
+    <value>Chaves de ligar reafirmadas em {0} jogo(s).</value>
+    <comment>pt: cada build do addon le uma chave diferente; reafirmar todas evita addon instalado e desligado.</comment>
+  </data>
+  <data name="Cli_Addon_SemArquivo" xml:space="preserve">
+    <value>Aponte para o arquivo .addon64: addon &lt;arquivo&gt;</value>
+  </data>
   <data name="Cli_Arg_Folder" xml:space="preserve">
     <value>&lt;pasta&gt;</value>
     <comment>Metavariavel.</comment>
@@ -232,6 +242,9 @@
   <data name="Cli_Help_Add" xml:space="preserve">
     <value>Registra uma pasta de jogo que as lojas não conhecem</value>
     <comment>pt: "que as lojas não conhecem".</comment>
+  </data>
+  <data name="Cli_Help_Addon" xml:space="preserve">
+    <value>Guarda um build do addon do DLSS 5 na biblioteca e leva a todos os jogos</value>
   </data>
   <data name="Cli_Help_Auditoria" xml:space="preserve">
     <value>Lê a cadeia do DLSS 5 de todos os jogos e diz quais estão inteiros</value>

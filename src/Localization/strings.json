@@ -222,6 +222,23 @@
     "note": "pt: \"...sem diferenciar maiúsculas. Exemplo:\". {0} = Cli_Arg_Game.",
     "pt-BR": "{0} casa com qualquer parte do nome, sem diferenciar maiusculas. Exemplo:"
   },
+  "Cli_Addon_Guardado": {
+    "en": "Addon v{0} ({1} bytes) is in the library, and went to {2} game(s).",
+    "pt-BR": "Addon v{0} ({1} bytes) está na biblioteca, e foi para {2} jogo(s)."
+  },
+  "Cli_Addon_Interruptor": {
+    "en": "Enable keys re-asserted in {0} game(s).",
+    "note": "pt: cada build do addon le uma chave diferente; reafirmar todas evita addon instalado e desligado.",
+    "pt-BR": "Chaves de ligar reafirmadas em {0} jogo(s)."
+  },
+  "Cli_Addon_SemArquivo": {
+    "en": "Point at the .addon64 file: addon <file>",
+    "pt-BR": "Aponte para o arquivo .addon64: addon <arquivo>"
+  },
+  "Cli_Help_Addon": {
+    "en": "Put a DLSS 5 addon build in the library and send it to every game",
+    "pt-BR": "Guarda um build do addon do DLSS 5 na biblioteca e leva a todos os jogos"
+  },
   "Cli_Help_Auditoria": {
     "en": "Read the DLSS 5 chain of every game and say which ones are whole",
     "note": "pt: \"Le a cadeia do DLSS 5 de todos os jogos e diz quais estao inteiros\".",

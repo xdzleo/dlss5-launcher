@@ -279,10 +279,27 @@ public class MainViewModel : ObservableObject
     }
 
     /// <summary>Re-run the view filter without losing the current selection.</summary>
+    /// <summary>
+    /// Verdadeiro enquanto a grade esta sendo refiltrada.
+    ///
+    /// Existe por causa de um piscar que aparecia a cada clique no interruptor: GamesView.Refresh()
+    /// reconstroi a view, a ListBox perde o SelectedItem e escreve NULO em Selected pelo binding.
+    /// O setter de Selected nao sabia distinguir isso de "o usuario fechou o jogo": limpava o
+    /// detalhe inteiro, DetalhePronto ia a falso, a coluna de cartoes sumia — e voltava um
+    /// instante depois, quando a linha seguinte devolvia a selecao e o detalhe era relido do zero.
+    ///
+    /// Instalar e desinstalar de fato mudam o que a grade deve mostrar (um filtro de "so
+    /// instalados" precisa ver a mudanca), entao o Refresh continua. O que sai e a conclusao
+    /// errada tirada do nulo que ele produz.
+    /// </summary>
+    private bool _refiltrando;
+
     private void RefreshViewKeepSelection()
     {
         var sel = Selected;
-        GamesView.Refresh();
+        _refiltrando = true;
+        try { GamesView.Refresh(); }
+        finally { _refiltrando = false; }
         if (sel != null && GamesView.Cast<object>().Contains(sel)) Selected = sel;
     }
 
@@ -294,6 +311,10 @@ public class MainViewModel : ObservableObject
         get => _selected;
         set
         {
+            // O nulo que vem de refiltrar a grade nao e um pedido para fechar o jogo: e a
+            // ListBox largando a selecao por um instante enquanto a view se reconstroi. Aceita-lo
+            // fazia a coluna de cartoes sumir e voltar a cada clique no interruptor.
+            if (value is null && _refiltrando) return;
             if (Set(ref _selected, value))
             {
                 OnPropertyChanged(nameof(HasSelection));
@@ -768,6 +789,10 @@ public class MainViewModel : ObservableObject
         var exe = item.ChosenExe;
         try
         {
+            // O anti-cheat entra junto: a resposta e exigida no meio do clique de instalar, e
+            // varrer a pasta do jogo la custava ~400 ms de espera com a tela parada. Aqui ela sai
+            // de graca, porque este pre-aquecimento ja roda fora do caminho de qualquer clique.
+            _ = Task.Run(() => AntiCheatScanner.Preaquecer(instalacao, dir), ct);
             var det = await LerPasta("neural", dir,
                 () => NeuralUpliftService.Detect(instalacao, dir, addon));
             var ini = item.State?.IniPath ?? Path.Combine(dir, "ReShade.ini");
@@ -2154,10 +2179,29 @@ public class MainViewModel : ObservableObject
     }
 
     /// <summary>Ver <see cref="ModCommand"/>: tres estados por baixo, um interruptor por cima.</summary>
+    /// <summary>
+    /// O relogio do interruptor, do clique ate a tela estar certa de novo.
+    ///
+    /// E um campo, e nao uma variavel local, porque ele precisa ser REINICIADO depois do dialogo
+    /// de confirmacao: o tempo em que a pergunta fica na tela e a pessoa pensando, e nao o
+    /// programa trabalhando. Medido com o dialogo dentro, "desinstalar" dava 3,4 s, dos quais
+    /// 2,4 s eram a caixa de dialogo aberta.
+    /// </summary>
+    private System.Diagnostics.Stopwatch? _relogioDoInterruptor;
+    private long _msAddon, _msAntiCheat, _msPerfil;
+
     private async Task ToggleModAsync()
     {
         var item = _detailItem;
         if (item is null) return;
+        // O relogio do interruptor.
+        //
+        // Ele mede o que a pessoa espera: do clique ate a tela estar certa de novo — o que inclui
+        // a releitura da pasta e a refiltragem da grade, e nao so a copia dos arquivos. Medir so
+        // a copia responderia a pergunta errada.
+        _relogioDoInterruptor = System.Diagnostics.Stopwatch.StartNew();
+        var relogio = _relogioDoInterruptor;
+        var oQue = item.IsInstalled ? "desinstalar" : "instalar";
         // Desligar REMOVE, nao renomeia para .disabled.
         //
         // Ter as duas coisas pedia que a pessoa escolhesse entre "desativar" e "remover" sem nada
@@ -2167,6 +2211,12 @@ public class MainViewModel : ObservableObject
         if (!item.IsInstalled) await InstallAsync();
         else await RemoveAsync();
         RaiseModState();
+        var trabalho = relogio.ElapsedMilliseconds;
+        Application.Current?.Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.ContextIdle,
+            new Action(() => Log.Info(
+                $"interruptor {oQue}: {trabalho} ms de trabalho, "
+                + $"{relogio.ElapsedMilliseconds} ms ate a tela ({item.Name})")));
     }
 
     /// <summary>
@@ -2586,7 +2636,9 @@ public class MainViewModel : ObservableObject
 
             // anti-cheat: o único dano IRREVERSÍVEL que o app pode causar (ban de conta).
             // Detecta pelos arquivos no disco — não depende da nota da wiki citar o assunto.
+            var msAntesAc = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             var ac = await Task.Run(() => AntiCheatScanner.Detect(item.Game.InstallDir, dir));
+            _msAntiCheat = (_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesAc;
             if (ac != null)
             {
                 var confirmed = DialogWindow.Confirm(
@@ -2613,7 +2665,9 @@ public class MainViewModel : ObservableObject
             // ESTA instalacao criou: o nome previsto, e que nao existia antes.
             var dllPrevisto = await Task.Run(() => ReShadeService.PickDllName(exe, api, dllOverride));
             var existiaAntes = File.Exists(Path.Combine(dir, dllPrevisto));
+            var msAntesDoReShade = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             var deploy = await Task.Run(() => _reshade.DeployAsync(dir, exe, api, dllOverride, progress));
+            var msReShade = (_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesDoReShade;
             if (!deploy.Success)
             {
                 DetailStatus = deploy.Message;
@@ -2621,7 +2675,9 @@ public class MainViewModel : ObservableObject
             }
             try
             {
+                var msAntesDoAddon = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
                 await Task.Run(() => AddonService.DownloadAddonAsync(mod, dir, progress));
+                _msAddon = (_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesDoAddon;
             }
             catch
             {
@@ -2650,7 +2706,9 @@ public class MainViewModel : ObservableObject
             {
                 try
                 {
+                    var msAntesPerfil = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
                     var applied = await Task.Run(() => SettingsService.ApplyDisplayProfile(state.IniPath, defs, Config));
+                    _msPerfil = (_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesPerfil;
                     // o espaco fica no codigo, e nao no recurso: separador de frase nao e texto
                     profileMsg = " " + (applied > 0
                         ? L.T("Install_ProfileApplied", Config.PeakNits)
@@ -2666,7 +2724,11 @@ public class MainViewModel : ObservableObject
             // o ReShade (e talvez o addon com NR) na pasta de onde a cadeia de DLSS 5 foi lida, e
             // um elo "ReShade" vermelho ficava como estava antes. E a mesma cauda que a troca de
             // exe refaz: o NeedsRepair e o veredito do log vivem nela, nao na cadeia.
+            var msAntesDaReleitura = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             if (item == _detailItem) await RefreshFolderAsync(_detailToken);
+            Log.Info($"interruptor instalar: anti-cheat {_msAntiCheat} ms, reshade {msReShade} ms, addon {_msAddon} ms, "
+                     + $"perfil {_msPerfil} ms, sobra {msAntesDaReleitura - msReShade - _msAddon - _msAntiCheat - _msPerfil} ms, "
+                     + $"releitura {(_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAntesDaReleitura} ms");
             DetailStatus = L.T("Install_Success", deploy.Message, profileMsg);
             RefreshViewKeepSelection();
         }
@@ -2711,10 +2773,14 @@ public class MainViewModel : ObservableObject
             L.T("Main_Remove_Body", item.Name),
             L.T("Main_Remove_All"), L.T("Main_Remove_ModOnly"));
         if (answer == MessageBoxResult.Cancel) return;
+        // A pergunta ja foi respondida: o cronometro do interruptor volta a zero para nao contar
+        // o tempo em que a pessoa estava decidindo.
+        _relogioDoInterruptor?.Restart();
         var state = item.State;
         try
         {
             await Task.Run(() => AddonService.Remove(state, alsoReShade: answer == MessageBoxResult.Yes));
+            var msAcao = _relogioDoInterruptor?.ElapsedMilliseconds ?? 0;
             item.RefreshState();
             Settings.Clear();
             // Reler a cadeia de DLSS 5 (#40): "remover tudo" acabou de apagar o addon e, sem
@@ -2723,6 +2789,8 @@ public class MainViewModel : ObservableObject
             // proximo clique nele desinstalava em vez de reinstalar. A cauda inteira da pasta,
             // para o veredito do ReShade.log de um addon que nao existe mais sair junto.
             if (item == _detailItem) await RefreshFolderAsync(_detailToken);
+            Log.Info($"interruptor desinstalar: {msAcao} ms apagando, "
+                     + $"{(_relogioDoInterruptor?.ElapsedMilliseconds ?? 0) - msAcao} ms relendo a pasta");
             DetailStatus = L.T("Main_Remove_Done");
             RefreshViewKeepSelection();
         }

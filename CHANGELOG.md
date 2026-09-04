@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.92.0
+
+O addon novo ficava instalado e desligado — em jogo antigo, que é justamente onde o Feeder
+trabalha.
+
+### A chave de ligar mudou de nome outra vez
+
+Lendo a tabela de strings de um build de setembro de 2026 (2.520.576 bytes), as chaves dele são
+`DirectNeuralRendering`, `DirectNeuralRenderingStatus`, `...Intensity`, `...HookPoint` e mais uma
+dúzia. **Não existe** `DirectNeuralRenderingEnabled` — que era a única que o launcher escrevia.
+
+O resultado é o pior possível: o arquivo na pasta, o `ReShade.ini` dizendo `=1` numa chave que o
+addon não lê, a instalação terminando limpa, e nada acontecendo dentro do jogo.
+
+Agora o launcher escreve as três: a curta, a com sufixo e a do esquema antigo. Não dá para saber
+a versão do addon pelo arquivo (o campo de versão do PE vem lixo em alguns builds), então
+escrevem-se todas — uma chave a mais num ini que aquele build não lê não custa nada; uma a menos
+custa o recurso inteiro.
+
+### E os jogos já instalados são consertados sozinhos
+
+Reafirmar o interruptor só olhava para chave **zerada**. Um jogo instalado por uma versão
+anterior fica com a chave daquela época e sem as outras: nada zerado, nada a corrigir, e o addon
+novo continuava sem ligar. A regra agora é — se o interruptor está ligado por qualquer chave
+conhecida e outra está ausente, escreve todas. Ausência de todas continua sendo motivo para não
+tocar: aí o ini não é nosso.
+
+Também: a varredura parava no primeiro `ReShade.ini` que consertava. Jogo de 32 bits tem **dois**
+que contam, o da raiz e o do `host64`, e o segundo ficava como estava.
+
+### `addon <arquivo>` na linha de comando
+
+O mesmo caminho do botão "Atualizar…" dos Ajustes: guarda o build na biblioteca, leva a todos os
+jogos que já têm o addon, e reafirma as chaves de ligar. Os builds circulam por fora com nomes
+que mudam, e "qual deles ficou instalado?" é uma pergunta que se faz tarde demais — quando o jogo
+abre e não acontece nada.
+
 ## v1.91.0
 
 Vidro de verdade, moldura verde, e o degrau da barra de brilho.
