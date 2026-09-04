@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.92.1
+
+O release da v1.92.0 não publicou, e o motivo não era o app.
+
+A bateria de verificação reprova quando o Windows Defender acusa algo. No runner do GitHub o
+serviço se declara ligado e o `MpCmdRun` mesmo assim devolve `CmdTool: Failed with hr =
+0x800106ba` — o serviço recusa o pedido. O teste lia qualquer saída diferente de zero como
+detecção e reprovava o release inteiro por um antivírus que nunca chegou a olhar o arquivo.
+
+"Não consegui varrer" não é "achei alguma coisa". Reprovar sem veredito é pior do que não ter o
+teste: ele deixa de significar "está limpo" e passa a significar "a infraestrutura funcionou
+hoje". Agora esse caso é registrado como não executado, com o motivo — e o VirusTotal, que cobre
+o Defender junto com outros 70 motores, continua sendo o portão que vale.
+
+Os outros dez testes passaram na v1.92.0: sem executável inesperado no payload, sem packer,
+manifest com `asInvoker`, instalação e desinstalação silenciosas verificadas, e a varredura do
+código-fonte sem nenhuma API de injeção ou persistência.
+
 ## v1.92.0
 
 O addon novo ficava instalado e desligado — em jogo antigo, que é justamente onde o Feeder

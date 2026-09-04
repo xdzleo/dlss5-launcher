@@ -406,20 +406,39 @@ VirusTotal (teste 9) cobre o Defender junto com os outros motores.
     $alvos = @($publishPath)
     if ($Installer) { $alvos += $Installer }
     $todosLimpos = $true
+    $naoRodou = $false
     $detalhe = @()
     foreach ($alvo in $alvos) {
         $out = & $mp -Scan -ScanType 3 -File $alvo -DisableRemediation 2>&1 | Out-String
         $rc  = $LASTEXITCODE
         $detalhe += "$alvo -> exit=$rc"
         if ($rc -ne 0) {
-            $todosLimpos = $false
             $detalhe += $out.Trim()
+            # "Nao consegui varrer" nao e "achei alguma coisa".
+            #
+            # No runner do GitHub o servico WinDefend se declara Running e o MpCmdRun mesmo assim
+            # devolve `CmdTool: Failed with hr = 0x800106ba` — o servico nao aceita o pedido. O
+            # teste anterior lia qualquer exit != 0 como deteccao e reprovava o release inteiro
+            # por um antivirus que nunca chegou a olhar o arquivo. Reprovar sem veredito e pior
+            # que nao ter o teste: ele para de significar "esta limpo" e passa a significar
+            # "a infraestrutura funcionou hoje".
+            if ($out -match 'Failed with hr\s*=\s*0x' -or $out -match 'CmdTool:\s*Failed') {
+                $naoRodou = $true
+            } else {
+                $todosLimpos = $false
+            }
         }
     }
-    if ($todosLimpos) {
-        Add-Result 'Varredura Windows Defender' 'PASS' (@('Nenhuma ameaca encontrada.') + $detalhe -join "`n")
-    } else {
+    if (-not $todosLimpos) {
         Add-Result 'Varredura Windows Defender' 'FAIL' ($detalhe -join "`n")
+    } elseif ($naoRodou) {
+        Add-Result 'Varredura Windows Defender' 'SKIP' ((@(
+            'O MpCmdRun nao conseguiu varrer: o servico recusou o pedido (hr 0x800106ba e o',
+            'sintoma classico no runner do GitHub, onde o Defender fica meio desligado).',
+            'Sem veredito, e nao veredito ruim — o VirusTotal (teste 9) cobre o Defender junto',
+            'com os outros motores.') + $detalhe) -join "`n")
+    } else {
+        Add-Result 'Varredura Windows Defender' 'PASS' (@('Nenhuma ameaca encontrada.') + $detalhe -join "`n")
     }
 }
 
