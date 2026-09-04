@@ -774,16 +774,25 @@ public static class Dlss5Installer
         // um addon inerte na pasta e, pior, o passo manual mandava "abra pelo executavel de
         // DirectX 11", que no DOOM Eternal nao existe.
         var ehVulkan = VulkanLayerService.Applies(exePath);
-        // A ponte segue a API do jogo, e NAO o fato de ele ter DLSS proprio.
+        // A ponte e para o jogo que tem DLSS PROPRIO e roda em DirectX 11. So para ele.
         //
-        // Ela existia so para jogo com DLSS nativo, pela ideia de que o que ela faz e espelhar o
-        // contrato de DLSS do jogo. Faz, mas essa e a consequencia; o que ela resolve e mais
-        // basico: dar ao pass neural um device D3D12 onde rodar, que num jogo de DirectX 11 nao
-        // existe. Um jogo DX11 SEM DLSS tambem precisa disso — ali quem produz o contrato e o
-        // Feeder, no device privado dele, e sem a ponte a criacao da feature 18 falha com
-        // 0xbad00002 e o device morre no ExecuteCommandLists seguinte. Foi o que aconteceu no
-        // Saints Row The Third quando o botao de consertar tirou a ponte de la.
-        var ponte = !alcancaD3d12 && !ehVulkan;
+        // A 1.78.0 tirou esse "tem DLSS proprio" da condicao, e a razao alegada nao resistiu a
+        // medicao. A tese era: o pass precisa de um device D3D12, um jogo DX11 nao tem, logo todo
+        // jogo DX11 precisa da ponte. A primeira metade esta certa e a conclusao nao, porque na
+        // rota do Feeder o device D3D12 ja existe — quem o cria e o proprio Feeder. Esta no log
+        // dele, em qualquer jogo dessa rota:
+        //
+        //     [feed] Color 2560x1440 R16G16B16A16_FLOAT via D3D12->D3D11
+        //     [feed] Output: D3D12->D3D11 path failed 0x80070057, trying the other direction
+        //
+        // Ele importa as texturas do D3D11 do jogo para o D3D12 dele. Nao ha o que a ponte
+        // acrescente ali, e o Saints Row The Third — DX11, sem DLSS — cria a feature 18 e entrega
+        // quadros SEM a ponte na pasta, medido em duas execucoes.
+        //
+        // A falha unica que motivou a mudanca (`0xbad00002` seguido de device removido) nao se
+        // reproduziu em nenhuma das execucoes seguintes, com ponte ou sem. Uma ocorrencia sem
+        // repeticao nao sustenta por si uma regra que poe um arquivo em toda pasta DX11.
+        var ponte = temDlssNativo && !alcancaD3d12 && !ehVulkan;
 
         // Jogo com FSR ou XeSS proprio e sem DLSS: o OptiScaler redireciona o upscaler que ele ja
         // tem. Vem ANTES do Feeder na decisao, e por um motivo de qualidade, nao de gosto — o

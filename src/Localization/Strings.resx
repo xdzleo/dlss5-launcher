@@ -537,7 +537,8 @@
     <value>Engancha os mesmos pontos de NGX que o pass neural usa. Duas coisas redirecionando o DLSS ao mesmo tempo não é configuração — o launcher instala o OptiScaler dele quando esse é o caminho certo.</value>
   </data>
   <data name="Conflito_Porque_PonteFeeder" xml:space="preserve">
-    <value>A Ponte e o Feeder estão os dois nesta pasta, e eles são mutuamente exclusivos. Reinstale o DLSS 5 para ficar só com o que este jogo precisa.</value>
+    <value>A Ponte está sobrando aqui: na rota do Feeder quem cria o device D3D12 é o próprio Feeder, então ela não tem o que fazer. Não atrapalha, e reinstalar o DLSS 5 tira ela.</value>
+    <comment>pt: era "mutuamente exclusivos" com grau de bloqueio. Medido no Saints Row The Third: o jogo roda com os dois na pasta e roda sem a ponte. Sobra, nao bloqueio.</comment>
   </data>
   <data name="Conflito_Porque_Proxy" xml:space="preserve">
     <value>O {1} ocupa o {0} — a vaga que o nosso ReShade precisa para carregar. Enquanto ele estiver aí, a cadeia do DLSS 5 não começa neste executável.</value>

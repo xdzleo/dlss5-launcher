@@ -175,20 +175,22 @@ public static class ConflictScanner
 
     private static void VarrerNossasDuplicidades(string dir, string? exePath, List<Conflito> achados)
     {
-        // Ponte + Feeder na mesma pasta DEIXOU de ser conflito, e a licao custou um jogo do
-        // usuario.
+        // Ponte + Feeder na mesma pasta: sobra, e nao bloqueio.
         //
-        // A regra dizia que os dois eram exclusivos, o botao de consertar tirava a ponte, e no
-        // Saints Row The Third — DirectX 11, sem DLSS proprio — o resultado foi o pass neural
-        // parar de existir: `feature 18 create failed with 0xbad00002` e, logo depois, o device
-        // D3D12 privado do Feeder removido no ExecuteCommandLists. O Hollow Knight, mesma rota e
-        // com a ponte intacta, cria a feature 18 sem uma falha sequer.
+        // Era Nivel.Bloqueio, com o texto dizendo que os dois se anulam. As duas coisas medidas
+        // no Saints Row The Third desmentem isso: o jogo roda com os dois na pasta (feature 18
+        // criada, 60 avaliacoes, nenhum device removido) e roda tambem sem a ponte. Chamar de
+        // bloqueio o que nao bloqueia manda a pessoa mexer numa instalacao que esta funcionando.
         //
-        // O motivo esta no que cada peca faz. O Feeder fabrica os dados (cor, profundidade,
-        // vetores) que o jogo nao entrega; a Ponte da ao pass neural um device D3D12 onde rodar,
-        // que num jogo de DirectX 11 nao existe. Sao respostas para perguntas diferentes, e um
-        // jogo DX11 sem DLSS precisa das DUAS. Ver Dlss5Installer.Rotear, que era onde a ponte
-        // estava presa a "o jogo tem DLSS proprio".
+        // Continua valendo dizer que ha algo sobrando: na rota do Feeder o device D3D12 e criado
+        // pelo proprio Feeder, entao a ponte ali nao tem o que fazer. Ela some sozinha na proxima
+        // instalacao, e ate la nao atrapalha ninguem — dai o aviso ser informativo.
+        if (!Dlss5Installer.MultiApiInstalado(dir)
+            && FeederService.IsDeployed(dir) && NeuralUpliftService.BridgeDeployed(dir))
+            achados.Add(new Conflito(dir, "DLSS 5 Launcher", L.T("Conflito_Porque_PonteFeeder"),
+                                     Nivel.Info, PodeAfastar: false,
+                                     Rotulo: $"{NeuralUpliftService.BridgeFile} + {FeederService.AddonFile}",
+                                     CorrigeReinstalando: true));
 
         // dgVoodoo e DXVK disputam o mesmo d3d9.dll — quem ficar por ultimo ganha, e o outro vira
         // um arquivo que nunca carrega. Na rota D3D10 do DXVK nao ha disputa de nome, mas o

@@ -981,8 +981,9 @@
     "pt-BR": "Há outra ferramenta instalada aqui. Não parece disputar espaço com o DLSS 5."
   },
   "Conflito_Porque_PonteFeeder": {
-    "en": "The Bridge and the Feeder are both deployed here, and they are mutually exclusive. Reinstall DLSS 5 to leave only the one this game needs.",
-    "pt-BR": "A Ponte e o Feeder estão os dois nesta pasta, e eles são mutuamente exclusivos. Reinstale o DLSS 5 para ficar só com o que este jogo precisa."
+    "en": "The Bridge is left over here: on the Feeder route the D3D12 device comes from the Feeder itself, so the Bridge has nothing to do. It does no harm, and reinstalling DLSS 5 clears it.",
+    "note": "pt: era \"mutuamente exclusivos\" com grau de bloqueio. Medido no Saints Row The Third: o jogo roda com os dois na pasta e roda sem a ponte. Sobra, nao bloqueio.",
+    "pt-BR": "A Ponte está sobrando aqui: na rota do Feeder quem cria o device D3D12 é o próprio Feeder, então ela não tem o que fazer. Não atrapalha, e reinstalar o DLSS 5 tira ela."
   },
   "Conflito_Porque_DxvkDgVoodoo": {
     "en": "DXVK and dgVoodoo2 both claim d3d9.dll. Only one can load; the other is a file that never runs. Reinstall and pick one translator.",

@@ -978,31 +978,32 @@ if (match != null)
     Check(!FeederService.IsDeployed(f32), "addon32 truncado continua reprovado");
 }
 
-// 14. A Ponte segue a API do jogo, e nao o DLSS proprio dele.
+// 14. Quem pede a Ponte, e com que grau os dois juntos sao reportados.
 //
-// Este teste existe porque a regra errada apagou o pass neural de um jogo do usuario: o
-// Saints Row The Third e DirectX 11 e nao tem DLSS, a Ponte foi tratada como conflito com o
-// Feeder e removida, e no jogo a feature 18 passou a falhar com 0xbad00002 antes de o device
-// D3D12 privado morrer. As duas pecas respondem perguntas diferentes — o Feeder fabrica os
-// dados, a Ponte da o device onde rodar — e um jogo DX11 sem DLSS precisa das duas.
+// Estes casos guardam uma conclusao que ja foi errada uma vez. A 1.78.0 passou a instalar a
+// ponte em TODO jogo DirectX 11, com o argumento de que o pass precisa de um device D3D12 e
+// um jogo DX11 nao tem. A premissa e certa e a conclusao nao: na rota do Feeder o device
+// existe, criado pelo proprio Feeder ("[feed] Color ... via D3D12->D3D11" no log dele). O
+// Saints Row The Third — DX11, sem DLSS — cria a feature 18 e entrega quadros sem a ponte na
+// pasta, e entrega tambem com ela: nao e exclusao, e sobra.
 {
     var dx11 = Path.Combine(fakeRoot, "JogoDX11");
     Directory.CreateDirectory(dx11);
     var exe11 = Path.Combine(dx11, "JogoDX11.exe");
     File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), exe11, overwrite: true);
 
-    // temDlssNativo: false (o jogo nao tem DLSS). alcancaD3d12: false (e um jogo de D3D11).
+    // Sem DLSS proprio: quem resolve e o Feeder, sozinho.
     var r = Dlss5Installer.Rotear(dx11, exe11, temDlssNativo: false, alcancaD3d12: false);
-    Check(r.Ponte && r.Feeder, $"jogo DX11 sem DLSS pede Ponte E Feeder (ponte={r.Ponte} feeder={r.Feeder})");
+    Check(!r.Ponte && r.Feeder, $"jogo DX11 sem DLSS pede so o Feeder (ponte={r.Ponte} feeder={r.Feeder})");
+
+    // Com DLSS proprio e sem D3D12: aqui nao ha Feeder para criar device nenhum, e a ponte e a
+    // unica coisa que da ao pass onde rodar.
+    var rDlss = Dlss5Installer.Rotear(dx11, exe11, temDlssNativo: true, alcancaD3d12: false);
+    Check(rDlss.Ponte, "jogo DX11 COM DLSS proprio pede a Ponte");
 
     // E o jogo que ja fala D3D12 nao precisa de ponte nenhuma: ali o pass tem device proprio.
-    var r12 = Dlss5Installer.Rotear(dx11, exe11, temDlssNativo: false, alcancaD3d12: true);
+    var r12 = Dlss5Installer.Rotear(dx11, exe11, temDlssNativo: true, alcancaD3d12: true);
     Check(!r12.Ponte, "jogo que ja alcanca D3D12 nao pede a Ponte");
-
-    // E os dois juntos deixaram de ser acusados como conflito bloqueante.
-    var conflitos = ConflictScanner.Scan(dx11, exe11);
-    Check(!conflitos.Any(c => c.Arquivo.Contains("bridge") && c.Arquivo.Contains("feed")),
-        "Ponte + Feeder na mesma pasta nao e mais reportado como conflito");
 }
 
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");
