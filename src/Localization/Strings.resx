@@ -758,6 +758,16 @@
   <data name="Dialog_Settings_Title" xml:space="preserve">
     <value>Configurações do mod</value>
   </data>
+  <data name="Dialog_Sobra_Delete" xml:space="preserve">
+    <value>Apagar a pasta</value>
+  </data>
+  <data name="Dialog_Sobra_Desc" xml:space="preserve">
+    <value>O jogo não está mais instalado, e ficaram {0} MB de arquivos que o launcher pôs aqui. A loja apaga o que é dela; o que é nosso não é, então fica — e a pasta nunca esvazia.</value>
+    <comment>pt: {0} = tamanho em MB.</comment>
+  </data>
+  <data name="Dialog_Sobra_Title" xml:space="preserve">
+    <value>Sobra de um jogo desinstalado</value>
+  </data>
   <data name="Dialog_Toggle_Disable_Tooltip" xml:space="preserve">
     <value>Desativa sem remover: renomeia o addon.</value>
   </data>
@@ -1893,6 +1903,12 @@ Só o mod: mantém o ReShade instalado.</value>
     <value>Manual</value>
     <comment>Fallback do StoreLabel: jogo adicionado a mao.</comment>
   </data>
+  <data name="Main_Tile_Sobra_Tooltip" xml:space="preserve">
+    <value>O jogo não está mais aqui; os arquivos que o launcher pôs ficaram. Abra para apagar.</value>
+  </data>
+  <data name="Main_Tile_SobraBadge" xml:space="preserve">
+    <value>SOBRA</value>
+  </data>
   <data name="Main_Tile_Update_Tooltip" xml:space="preserve">
     <value>Há uma build mais nova deste mod</value>
   </data>
@@ -2414,6 +2430,23 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   </data>
   <data name="Settings_Vignette_Label" xml:space="preserve">
     <value>Vinheta</value>
+  </data>
+  <data name="Sobra_Apagada" xml:space="preserve">
+    <value>{0} apagada — {1} MB liberados.</value>
+  </data>
+  <data name="Sobra_Confirm_Body" xml:space="preserve">
+    <value>Apagar esta pasta e tudo o que há nela?
+
+{0}
+
+{1} MB. Não há jogo aqui — nenhum executável — só arquivos que o launcher e outros mods deixaram. Isto não tem volta.</value>
+    <comment>pt: {0} caminho, {1} tamanho em MB.</comment>
+  </data>
+  <data name="Sobra_Confirm_Ok" xml:space="preserve">
+    <value>Apagar</value>
+  </data>
+  <data name="Sobra_Confirm_Title" xml:space="preserve">
+    <value>Apagar a pasta que sobrou</value>
   </data>
   <data name="Update_BadHost" xml:space="preserve">
     <value>a release apontou o download para fora do GitHub, então ele não foi seguido.</value>

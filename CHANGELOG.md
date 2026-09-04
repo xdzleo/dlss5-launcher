@@ -1,5 +1,52 @@
 # Changelog
 
+## v1.94.0
+
+O launcher agora mostra as pastas que **sobraram de jogos desinstalados** — e oferece apagá-las.
+
+### Por que elas existem
+
+Desinstalar um jogo pela loja apaga os arquivos **dela**. Tudo o que o launcher pôs ali — runtimes,
+add-ons, o proxy do ReShade, os backups — não é dela, então fica; e como a pasta não esvazia, a
+própria Steam a deixa de pé. O resultado é uma pasta com centenas de megabytes e nenhum jogo
+dentro, que ninguém vai procurar porque ninguém sabe que ela existe.
+
+Nesta máquina eram **7 pastas, 2,43 GB**:
+
+| pasta | ocupa |
+|---|---|
+| S.T.A.L.K.E.R. 2 Heart of Chornobyl | 636 MB |
+| Baldurs Gate 3 | 604 MB |
+| Call of Duty Modern Warfare III | 378 MB |
+| Gears5 | 227 MB |
+| SunsetOverdrive | 227 MB |
+| Yakuza Like a Dragon | 227 MB |
+| Lies of P | 193 MB |
+
+Quase tudo isso é o mesmo runtime neural de 159 MB, repetido uma vez por pasta.
+
+### Como aparece
+
+A pasta entra na grade como qualquer jogo, com a capa que ela tinha, e um selo vermelho **SOBRA**.
+Ao abrir, o cartão diz quantos MB ficaram e traz um botão **Apagar a pasta**, que pergunta e mostra
+o caminho inteiro antes de fazer qualquer coisa.
+
+O resto do painel sai: sem interruptor, sem recomendação, sem instruções, sem botão de jogar, e as
+duas bolinhas de estado apagam. Os arquivos até estão lá — foi o launcher que os pôs — mas dizer
+"DLSS 5 ligado" numa pasta sem jogo é afirmar que algo funciona quando não há o que rodar.
+
+### O critério é conservador de propósito
+
+O que está em jogo é apagar arquivo, então a pasta só é sobra quando tem marca **nossa** e
+**nenhum executável**, em nenhuma subpasta até quatro níveis. Um `.exe` qualquer já a salva — jogo
+que a loja esqueceu de registrar, port, repack. O pior erro possível aqui seria oferecer apagar a
+pasta de um jogo que você ainda joga.
+
+Só bibliotecas Steam por enquanto: é a única loja em que a pasta sobrevive à desinstalação com nome
+legível e num lugar previsível. As outras ou apagam a pasta inteira ou usam identificador no lugar
+do nome.
+
+
 ## v1.93.0
 
 O interruptor ficou **duas vezes mais rápido**, e parou de fazer a coluna de cartões piscar.

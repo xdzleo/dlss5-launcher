@@ -58,6 +58,8 @@ public class MainViewModel : ObservableObject
         // A guarda de download veio junto do banner que este interruptor substituiu. Sem ela, um
         // mod so-Nexus parecia operavel: o clique instalava o ReShade na pasta e SO ENTAO falhava
         // por nao ter download direto. Desinstalar ja instalado nao precisa de download.
+        ApagarSobraCommand = new AsyncRelayCommand(ApagarSobraAsync,
+            () => Selected?.EhSobra == true && !Busy);
         ModCommand = new AsyncRelayCommand(ToggleModAsync,
             () => !Busy && Selected?.HasMod == true
                   && (Selected?.IsInstalled == true || Selected?.HasDirectDownload == true));
@@ -1140,6 +1142,9 @@ public class MainViewModel : ObservableObject
     /// </summary>
     public AsyncRelayCommand ModCommand { get; }
 
+    /// <summary>Apaga a pasta de um jogo desinstalado onde so ficaram arquivos nossos.</summary>
+    public AsyncRelayCommand ApagarSobraCommand { get; }
+
     /// <summary>O mod esta instalado E ativo. E o que o interruptor reflete.</summary>
     public bool ModReady => Selected?.IsInstalled == true && Selected?.IsEnabled == true;
 
@@ -1283,6 +1288,31 @@ public class MainViewModel : ObservableObject
             // unidade) nao e um jogo: `C:\Users\Admin\Downloads` entrava na grade como um jogo
             // chamado "WinBox" — o ProductName de uma ferramenta de rede baixada la.
             games.AddRange(FolderGameResolver.ResolverPastasManuais(Config.ManualGameDirs, _catalogEntries));
+
+            // As sobras entram na grade, com aviso.
+            //
+            // Sao pastas de jogo desinstalado onde os NOSSOS arquivos ficaram — a loja apaga o
+            // que e dela, e como a pasta nao esvazia, ela fica de pe. Some-las seria coerente
+            // (nao ha jogo ali), e e justamente por ninguem olhar que centenas de megabytes
+            // ficam para sempre: nesta maquina eram tres pastas e 1,2 GB, das quais ~900 MB em
+            // tres copias do mesmo runtime de 159 MB.
+            //
+            // A lista dos jogos VIVOS vai junto: uma pasta que a varredura normal encontrou tem
+            // dono, e nao e sobra por mais arquivos nossos que tenha.
+            try
+            {
+                var vivas = games.Select(g => g.InstallDir).Where(d => d is not null).ToList();
+                foreach (var s in await Task.Run(() => SobraScanner.Procurar(vivas!)))
+                    games.Add(new GameInfo
+                    {
+                        Name = s.Nome,
+                        InstallDir = s.Pasta,
+                        Store = GameStore.Folder,
+                        EhSobra = true,
+                        SobraBytes = s.Bytes,
+                    });
+            }
+            catch (Exception ex) { Log.Warn($"varredura de sobras: {ex.Message}"); }
 
             // O modal, se estiver aberto, fecha ANTES de a lista ser trocada: esvaziar a grade
             // deixa a ListBox sem selecao, Selected vira null e o modal continuava aberto, em
@@ -1558,6 +1588,11 @@ public class MainViewModel : ObservableObject
         var item = Selected;
         _detailItem = item;
         if (item is null) return;
+
+        // Sobra para aqui: um jogo desinstalado nao tem recomendacao, instrucao nem nota de
+        // engine — tudo isso fala de configurar algo que nao existe mais na pasta. O unico
+        // cartao que aparece e o que oferece apagar, e ele nao depende de nada disto.
+        if (item.EhSobra) { DetalhePronto = true; return; }
 
         // structured recommendations (parsed from every note source) shown as prominent cards
         var rhiNote = _rhi.GameNote(item.Name);
@@ -1907,6 +1942,10 @@ public class MainViewModel : ObservableObject
         // com DLSS pode receber o neural render, mesmo sem mod RenoDX proprio. O addon generico
         // engancha os exports do NGX que o jogo ja chama e roda o pass inline.
         if (item?.TargetDir is null) return;
+        // Sobra nao ganha cartao de DLSS 5: nao ha executavel para rodar o pass. Os arquivos
+        // nossos que ainda estao la sao justamente o que o cartao de sobra oferece apagar, e
+        // dois cartoes discordando sobre a mesma pasta e pior do que um so.
+        if (item.EhSobra) return;
         // O indice curado marca os jogos onde mexer no DLSS quebra alguma coisa. Uma lista que
         // alguem mantem contra relato real vale mais do que qualquer heuristica daqui.
         if (_rhi.SkipsDlss(item.Game.Name)) return;
@@ -2221,6 +2260,41 @@ public class MainViewModel : ObservableObject
     /// </summary>
     private System.Diagnostics.Stopwatch? _relogioDoInterruptor;
     private long _msAddon, _msAntiCheat, _msPerfil, _msEstado, _msNome;
+
+    /// <summary>
+    /// Apaga a pasta inteira de um jogo que nao esta mais instalado.
+    ///
+    /// Pergunta antes, com o tamanho e o caminho na pergunta: apagar pasta e a acao mais
+    /// irreversivel que este programa faz, e quem confirma precisa ver exatamente o que vai
+    /// embora. O criterio que trouxe a pasta ate aqui ja e conservador (ver SobraScanner), mas
+    /// criterio nenhum substitui a pessoa lendo o caminho.
+    /// </summary>
+    private async Task ApagarSobraAsync()
+    {
+        if (Selected is not { EhSobra: true } item) return;
+        var pasta = item.Game.InstallDir;
+        if (!DialogWindow.Confirm(
+                Application.Current?.MainWindow,
+                L.T("Sobra_Confirm_Title"),
+                L.T("Sobra_Confirm_Body", pasta, item.SobraMb),
+                L.T("Sobra_Confirm_Ok"), DialogKind.Danger)) return;
+
+        ActionBusy = true;
+        try
+        {
+            await Task.Run(() => SobraScanner.Apagar(pasta));
+            IsDialogOpen = false;
+            Games.Remove(item);
+            RefreshViewKeepSelection();
+            StatusText = L.T("Sobra_Apagada", item.Name, item.SobraMb);
+        }
+        catch (Exception ex)
+        {
+            DetailStatus = ex.Message;
+            Log.Warn($"apagar sobra {pasta}: {ex.Message}");
+        }
+        finally { ActionBusy = false; RaiseCommands(); }
+    }
 
     private async Task ToggleModAsync()
     {

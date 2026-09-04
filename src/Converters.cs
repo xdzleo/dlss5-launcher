@@ -168,6 +168,21 @@ public class NivelColorConverter : IValueConverter
 /// A pastilha mostrava o nome cru do enum ("Bloqueio", "Aviso", "Info") em qualquer idioma,
 /// inclusive na interface em ingles, ao lado de textos traduzidos.
 /// </summary>
+/// <summary>
+/// "605 MB de arquivos nossos, num jogo que nao esta mais instalado."
+///
+/// O tamanho entra no texto porque e ele que faz a pergunta valer: "apagar arquivos" nao e uma
+/// decisao, "apagar 605 MB" e.
+/// </summary>
+public class SobraTextoConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        L.T("Dialog_Sobra_Desc", value as int? ?? 0);
+
+    public object ConvertBack(object? value, Type t, object? p, CultureInfo c) =>
+        throw new NotSupportedException();
+}
+
 public class NivelTextConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>

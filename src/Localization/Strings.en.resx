@@ -758,6 +758,16 @@
   <data name="Dialog_Settings_Title" xml:space="preserve">
     <value>Mod Settings</value>
   </data>
+  <data name="Dialog_Sobra_Delete" xml:space="preserve">
+    <value>Delete the folder</value>
+  </data>
+  <data name="Dialog_Sobra_Desc" xml:space="preserve">
+    <value>The game is not installed anymore, and {0} MB of files the launcher put here stayed behind. The store deletes what is hers; ours is not, so it stays — and the folder never empties.</value>
+    <comment>pt: {0} = tamanho em MB.</comment>
+  </data>
+  <data name="Dialog_Sobra_Title" xml:space="preserve">
+    <value>Leftovers from an uninstalled game</value>
+  </data>
   <data name="Dialog_Toggle_Disable_Tooltip" xml:space="preserve">
     <value>Disables without removing: renames the addon.</value>
   </data>
@@ -1893,6 +1903,12 @@ Mod only: keeps ReShade installed.</value>
     <value>Manual</value>
     <comment>Fallback do StoreLabel: jogo adicionado a mao.</comment>
   </data>
+  <data name="Main_Tile_Sobra_Tooltip" xml:space="preserve">
+    <value>The game is gone; files the launcher put here stayed. Open to delete them.</value>
+  </data>
+  <data name="Main_Tile_SobraBadge" xml:space="preserve">
+    <value>LEFTOVER</value>
+  </data>
   <data name="Main_Tile_Update_Tooltip" xml:space="preserve">
     <value>A newer build of this mod is available</value>
   </data>
@@ -2414,6 +2430,23 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   </data>
   <data name="Settings_Vignette_Label" xml:space="preserve">
     <value>Vignette</value>
+  </data>
+  <data name="Sobra_Apagada" xml:space="preserve">
+    <value>{0} deleted — {1} MB freed.</value>
+  </data>
+  <data name="Sobra_Confirm_Body" xml:space="preserve">
+    <value>Delete this folder and everything in it?
+
+{0}
+
+{1} MB. There is no game here anymore — no executable — only files the launcher and other mods left behind. This cannot be undone.</value>
+    <comment>pt: {0} caminho, {1} tamanho em MB.</comment>
+  </data>
+  <data name="Sobra_Confirm_Ok" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Sobra_Confirm_Title" xml:space="preserve">
+    <value>Delete the leftover folder</value>
   </data>
   <data name="Update_BadHost" xml:space="preserve">
     <value>the release pointed the download somewhere outside GitHub, so it was not followed.</value>

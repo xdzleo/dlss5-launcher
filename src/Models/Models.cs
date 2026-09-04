@@ -14,6 +14,18 @@ public class GameInfo
     /// <summary>Executable hint from store metadata (Epic LaunchExecutable, Xbox gamelaunchhelper).</summary>
     public string? ExeHint { get; init; }
     public string? LocalCoverPath { get; init; }
+
+    /// <summary>
+    /// Esta pasta e sobra de um jogo desinstalado: tem arquivos nossos e nenhum executavel.
+    ///
+    /// Ela aparece na grade de proposito, com aviso. Some-la seria coerente — nao ha jogo — mas
+    /// e justamente por ninguem olhar para ela que centenas de megabytes ficam ali para sempre.
+    /// Ver <see cref="SobraScanner"/>.
+    /// </summary>
+    public bool EhSobra { get; init; }
+
+    /// <summary>Quanto a sobra ocupa. Zero quando nao e sobra.</summary>
+    public long SobraBytes { get; init; }
 }
 
 public enum ModKind { Dedicated, UnrealEngine, UnityEngine }

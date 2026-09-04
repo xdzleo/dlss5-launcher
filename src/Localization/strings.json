@@ -827,6 +827,19 @@
     "note": "Vai num Setter dentro de Style; o estado desativado usa a chave abaixo.",
     "pt-BR": "Ativa o mod neste jogo."
   },
+  "Dialog_Sobra_Delete": {
+    "en": "Delete the folder",
+    "pt-BR": "Apagar a pasta"
+  },
+  "Dialog_Sobra_Desc": {
+    "en": "The game is not installed anymore, and {0} MB of files the launcher put here stayed behind. The store deletes what is hers; ours is not, so it stays — and the folder never empties.",
+    "note": "pt: {0} = tamanho em MB.",
+    "pt-BR": "O jogo não está mais instalado, e ficaram {0} MB de arquivos que o launcher pôs aqui. A loja apaga o que é dela; o que é nosso não é, então fica — e a pasta nunca esvazia."
+  },
+  "Dialog_Sobra_Title": {
+    "en": "Leftovers from an uninstalled game",
+    "pt-BR": "Sobra de um jogo desinstalado"
+  },
   "Dialog_Toggle_Name": {
     "en": "Enable or disable the mod",
     "pt-BR": "Ativar ou desativar o mod"
@@ -2387,6 +2400,14 @@
     "note": "Selo no canto da capa. Caixa alta de proposito, espaco de ~60px.",
     "pt-BR": "ATUALIZAR"
   },
+  "Main_Tile_SobraBadge": {
+    "en": "LEFTOVER",
+    "pt-BR": "SOBRA"
+  },
+  "Main_Tile_Sobra_Tooltip": {
+    "en": "The game is gone; files the launcher put here stayed. Open to delete them.",
+    "pt-BR": "O jogo não está mais aqui; os arquivos que o launcher pôs ficaram. Abra para apagar."
+  },
   "Main_Tile_Update_Tooltip": {
     "en": "A newer build of this mod is available",
     "pt-BR": "Há uma build mais nova deste mod"
@@ -2973,6 +2994,23 @@
   "Settings_Subtitle": {
     "en": "Everything that applies to every game and belongs to none.",
     "pt-BR": "Tudo o que vale para todos os jogos e não pertence a nenhum."
+  },
+  "Sobra_Apagada": {
+    "en": "{0} deleted — {1} MB freed.",
+    "pt-BR": "{0} apagada — {1} MB liberados."
+  },
+  "Sobra_Confirm_Body": {
+    "en": "Delete this folder and everything in it?\n\n{0}\n\n{1} MB. There is no game here anymore — no executable — only files the launcher and other mods left behind. This cannot be undone.",
+    "note": "pt: {0} caminho, {1} tamanho em MB.",
+    "pt-BR": "Apagar esta pasta e tudo o que há nela?\n\n{0}\n\n{1} MB. Não há jogo aqui — nenhum executável — só arquivos que o launcher e outros mods deixaram. Isto não tem volta."
+  },
+  "Sobra_Confirm_Ok": {
+    "en": "Delete",
+    "pt-BR": "Apagar"
+  },
+  "Sobra_Confirm_Title": {
+    "en": "Delete the leftover folder",
+    "pt-BR": "Apagar a pasta que sobrou"
   },
   "Settings_Title": {
     "en": "Settings",

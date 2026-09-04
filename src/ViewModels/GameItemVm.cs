@@ -24,6 +24,13 @@ public class GameItemVm : ObservableObject
     }
 
     public string Name => Game.Name;
+    /// <summary>Pasta de jogo desinstalado com arquivos nossos dentro. Ver SobraScanner.</summary>
+    public bool EhSobra => Game.EhSobra;
+
+    /// <summary>O tamanho da sobra em MB, para a pergunta ter peso: "apagar 605 MB" e uma
+    /// decisao; "apagar arquivos" nao e.</summary>
+    public int SobraMb => (int)(Game.SobraBytes / (1024 * 1024));
+
     public string StoreLabel => Game.Store switch
     {
         GameStore.Steam => "Steam",
@@ -40,7 +47,14 @@ public class GameItemVm : ObservableObject
 
     public string Key => $"{Game.Store}_{Game.AppId ?? Game.InstallDir}";
 
-    public bool HasMod => Mod != null;
+    /// <summary>
+    /// Ha mod do RenoDX para este jogo.
+    ///
+    /// Sobra nunca tem: a pasta casa com o catalogo pelo NOME, entao "Baldurs Gate 3" continuava
+    /// achando o mod dele mesmo com o jogo desinstalado — e o modal oferecia instalar HDR numa
+    /// pasta sem executavel. O cartao de sobra e a unica coisa que faz sentido ali.
+    /// </summary>
+    public bool HasMod => Mod != null && !EhSobra;
 
     /// <summary>Quem mantém o mod deste jogo (crédito em destaque no modal).</summary>
     public string MaintainerName => string.IsNullOrWhiteSpace(Mod?.Maintainer)
@@ -167,15 +181,18 @@ public class GameItemVm : ObservableObject
 
     /// <summary>DLSS 5 neste jogo. Nunca fica cinza: o Feeder atende jogo sem DLSS nenhum,
     /// então a opção existe em qualquer título que o launcher liste.</summary>
-    public Luz LuzDlss5 => Dlss5Ligado ? Luz.Verde : Luz.Vermelha;
+    public Luz LuzDlss5 => EhSobra ? Luz.Cinza : Dlss5Ligado ? Luz.Verde : Luz.Vermelha;
 
     /// <summary>
     /// O mod HDR do RenoDX. Cinza quando não há mod para este jogo — e é a maioria: o catálogo
     /// cobre uma lista específica de títulos, e prometer um interruptor que não existe é pior do
     /// que dizer que não existe.
     /// </summary>
+    // Na sobra as duas apagam. Os arquivos ate estao la — foi o launcher que os pos — mas dizer
+    // "DLSS 5 ligado" numa pasta sem jogo e afirmar que algo funciona quando nao ha o que rodar.
     public Luz LuzHdr =>
-        Mod is null && _state?.AddonPath is null ? Luz.Cinza
+        EhSobra ? Luz.Cinza
+        : Mod is null && _state?.AddonPath is null ? Luz.Cinza
         : _state?.AddonEnabled == true ? Luz.Verde
         : Luz.Vermelha;
 

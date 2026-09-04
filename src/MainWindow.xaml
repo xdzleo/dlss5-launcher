@@ -72,6 +72,7 @@
         <local:NoteColorConverter x:Key="NoteBorder" Border="True"/>
         <local:NivelColorConverter x:Key="NivelToBrush"/>
         <local:NivelTextConverter x:Key="NivelToText"/>
+        <local:SobraTextoConverter x:Key="SobraTexto"/>
 
         <!-- ===== one piece of guidance: where to do it, who said it, and the exact text ===== -->
         <DataTemplate x:Key="NoteCard">
@@ -223,6 +224,22 @@
                                       Width="11" Height="11" VerticalAlignment="Center"/>
                                 <TextBlock Text="{loc:Tr Main_Tile_UpdateBadge}" FontSize="9" FontWeight="Bold" Margin="4,0,0,0"
                                            Foreground="#231A05" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sobra: o jogo se foi e os nossos arquivos ficaram.
+                             O selo e o unico jeito de a pessoa descobrir que aquilo existe — a
+                             pasta nao aparece em lugar nenhum da loja, e ninguem procura por uma
+                             coisa que nao sabe que tem. -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="9"
+                                CornerRadius="7" Padding="7,4" Background="#8A3A2E"
+                                Visibility="{Binding EhSobra, Converter={StaticResource BoolToVis}}"
+                                ToolTip="{loc:Tr Main_Tile_Sobra_Tooltip}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconWarning}" Stroke="#FFE0D6" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform"
+                                      Width="11" Height="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="{loc:Tr Main_Tile_SobraBadge}" FontSize="9" FontWeight="Bold" Margin="4,0,0,0"
+                                           Foreground="#FFE0D6" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
 
@@ -687,7 +704,9 @@
                             </Grid>
                         </Border>
 
+                        <!-- Sem executavel nao ha o que jogar: numa sobra o botao so promete. -->
                         <Button Margin="0,12,0,0" Padding="12,10" Command="{Binding LaunchGameCommand}"
+                                Visibility="{Binding Selected.EhSobra, Converter={StaticResource NotToVis}}"
                                 AutomationProperties.Name="{loc:Tr Main_Play}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Path Data="{StaticResource IconPlay}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
@@ -715,7 +734,11 @@
                             <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
                                 <TextBlock Text="{Binding Selected.StoreLabel}" FontSize="11.5"
                                            Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
-                                <Border Width="1" Height="11" Background="{StaticResource BorderStrongBrush}" Margin="10,0"/>
+                                <!-- O separador acompanha a etiqueta que ele separa. Fixo, sobrava
+                                     um risco solto depois do nome da loja em toda pasta sem API
+                                     legivel — o caso das sobras, onde nao ha executavel para ler. -->
+                                <Border Width="1" Height="11" Background="{StaticResource BorderStrongBrush}" Margin="10,0"
+                                        Visibility="{Binding ApiDoJogo, Converter={StaticResource TextToVis}}"/>
                                 <!-- A API do jogo, no lugar onde antes se lia "SEM MOD".
                                      Dizer o que o jogo NAO tem nao e informacao — e o cartao do
                                      mod, logo abaixo, ja diz isso com um interruptor. A API o jogo
@@ -764,6 +787,39 @@
                              terminam em ordens diferentes: o painel pipocava a cada jogo aberto.
                              A espera ate estar tudo pronto e de alguns milissegundos. -->
                         <StackPanel Visibility="{Binding DetalhePronto, Converter={StaticResource BoolToVis}}">
+
+                            <!-- Sobra: o jogo foi desinstalado e os nossos arquivos ficaram.
+                                 Vem antes de tudo porque, aqui, nao ha nada mais a decidir: os
+                                 outros cartoes falam de instalar num jogo que nao existe. -->
+                            <Border Style="{StaticResource GlassCardAmber}" Margin="0,14,0,0"
+                                    Visibility="{Binding Selected.EhSobra, Converter={StaticResource BoolToVis}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Style="{StaticResource IconChip}">
+                                            <Path Data="{StaticResource IconWarning}" Stroke="#F0C266"
+                                                  StrokeThickness="2" StrokeLineJoin="Round"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  Stretch="Uniform" Width="15" Height="15"/>
+                                        </Border>
+                                        <TextBlock Text="{loc:Tr Dialog_Sobra_Title}"
+                                                   Style="{StaticResource CardTitle}" Foreground="#F0C266"/>
+                                    </StackPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Margin="40,4,0,0"
+                                               Text="{Binding Selected.SobraMb, Converter={StaticResource SobraTexto}}"/>
+                                    <Button HorizontalAlignment="Left" Margin="40,10,0,0" Padding="12,7"
+                                            Command="{Binding ApagarSobraCommand}"
+                                            AutomationProperties.Name="{loc:Tr Dialog_Sobra_Delete}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconTrash}" Stroke="{StaticResource TextBrush}"
+                                                  StrokeThickness="2" StrokeLineJoin="Round"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  Stretch="Uniform" Width="13" Height="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Tr Dialog_Sobra_Delete}" Margin="7,0,0,0"
+                                                       FontSize="12" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
 
                             <!-- UPDATE WARNING: the reason the user asked for this -->
                             <Border Style="{StaticResource GlassCardAmber}" Margin="0,14,0,0"
@@ -1453,7 +1509,8 @@
                                  O veredito e a excecao: quando ele traz problema ou build nova, e
                                  exibido inteiro la em cima, fora daqui. Erro atras de um clique e
                                  erro que ninguem le. -->
-                            <Expander Margin="0,16,0,0" Padding="0">
+                            <Expander Margin="0,16,0,0" Padding="0"
+                                      Visibility="{Binding Selected.EhSobra, Converter={StaticResource NotToVis}}">
                                 <Expander.Header>
                                     <TextBlock Text="{loc:Tr Dialog_Details_Label}" FontSize="10.5"
                                                FontWeight="SemiBold" Foreground="{StaticResource TextFaintBrush}"/>
@@ -1536,7 +1593,12 @@
                                     <Path Data="{StaticResource IconFolder}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Stretch="Uniform" Width="15" Height="15"/>
                                 </Button>
+                                <!-- Pagina do mod e interruptor somem na sobra: nao ha mod nem
+                                     jogo para ligar, e um interruptor que nao muda nada e pior do
+                                     que interruptor nenhum. A pasta continua abrivel, que e
+                                     justamente o que se quer conferir antes de apagar. -->
                                 <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding OpenNexusCommand}"
+                                        Visibility="{Binding Selected.EhSobra, Converter={StaticResource NotToVis}}"
                                         ToolTip="{loc:Tr Dialog_ModPage}" AutomationProperties.Name="{loc:Tr Dialog_ModPage}">
                                     <Path Data="{StaticResource IconGlobe}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Stretch="Uniform" Width="15" Height="15"/>
@@ -1545,6 +1607,7 @@
                                      addon para .disabled serve para comparar HDR ligado x desligado
                                      sem perder a instalacao — util, mas nao e a acao principal. -->
                                 <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding ToggleCommand}"
+                                        Visibility="{Binding Selected.EhSobra, Converter={StaticResource NotToVis}}"
                                         AutomationProperties.Name="{loc:Tr Dialog_Toggle_Name}">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
