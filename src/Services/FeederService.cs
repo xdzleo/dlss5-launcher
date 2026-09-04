@@ -294,17 +294,123 @@ public static class FeederService
     }
 
     /// <summary>
-    /// Baixa o pacote da ultima release e o abre numa pasta temporaria da biblioteca.
+    /// A versao do Feeder que este launcher instala por padrao.
     ///
-    /// O asset e resolvido pela pagina de release (sem cota de API) e por PADRAO de nome: o
-    /// projeto ja mudou de esquema uma vez, e fixar `DLSS5-Feeder-0.12.0.zip` seria repetir o
-    /// erro que trouxe a gente ate aqui. `releases/latest` exclui pre-release, entao um beta nao
-    /// entra sozinho.
+    /// Nao e "a mais nova estavel": e a que foi RODADA num jogo e entregou quadros sem derrubar
+    /// nada. A diferenca ficou cara. A 0.12.1-beta.2 desceu como estavel — o autor publicou sem
+    /// marcar pre-release, o GitHub a chamou de latest — e matava o device D3D12 do Saints Row
+    /// The Third dois segundos depois do primeiro quadro. A 0.12.0, no mesmo jogo e na mesma
+    /// noite, passou dos 80 segundos entregando quadros.
+    ///
+    /// Recusar beta pelo nome da tag (ver GitHubReleaseService.EhPreRelease) resolve o caso em
+    /// que o defeito vem rotulado. Nao resolve o outro: uma estavel pode quebrar igual, e o
+    /// launcher nao tem como saber antes de alguem jogar. Por isso a versao padrao e uma decisao
+    /// tomada aqui, e nao o que estiver no topo do repositorio no dia.
+    ///
+    /// Quem quiser a mais nova pede: `feeder --novo` na linha de comando. E se ela quebrar,
+    /// `feeder --voltar` devolve a anterior, que ficou guardada.
+    /// </summary>
+    public const string TagPadrao = "v0.12.0";
+
+    /// <summary>Onde a versao anterior espera, para o caso de a nova quebrar um jogo.</summary>
+    private static string AnteriorDir => Path.Combine(LibraryDir, "anterior");
+
+    /// <summary>A versao do Feeder que esta na biblioteca agora, lida do proprio binario.</summary>
+    public static string? VersaoNaBiblioteca()
+    {
+        try
+        {
+            if (!File.Exists(LibraryAddon)) return null;
+            var v = System.Diagnostics.FileVersionInfo.GetVersionInfo(LibraryAddon);
+            return string.IsNullOrWhiteSpace(v.FileVersion) ? null : v.FileVersion;
+        }
+        catch (Exception ex) { Log.Warn($"feeder: versao da biblioteca: {ex.Message}"); return null; }
+    }
+
+    /// <summary>A versao guardada, quando ha uma.</summary>
+    public static string? VersaoAnterior()
+    {
+        try
+        {
+            var f = Path.Combine(AnteriorDir, AddonFile);
+            if (!File.Exists(f)) return null;
+            var v = System.Diagnostics.FileVersionInfo.GetVersionInfo(f);
+            return string.IsNullOrWhiteSpace(v.FileVersion) ? "?" : v.FileVersion;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Guarda a biblioteca atual antes de sobrescreve-la.
+    ///
+    /// E o que faltava na noite do beta: para voltar, tive de descobrir qual era a versao de
+    /// antes, achar o release dela e baixar o zip a mao. O anterior custa 400 KB em disco.
+    /// </summary>
+    public static void GuardarAnterior()
+    {
+        try
+        {
+            if (!File.Exists(LibraryAddon)) return;
+            Directory.CreateDirectory(AnteriorDir);
+            foreach (var n in new[] { AddonFile, Addon32File, Host64Exe, FxFile })
+            {
+                var de = Path.Combine(LibraryDir, n);
+                if (File.Exists(de)) File.Copy(de, Path.Combine(AnteriorDir, n), overwrite: true);
+            }
+            Log.Info($"feeder: guardada a versao {VersaoNaBiblioteca()} em {AnteriorDir}");
+        }
+        catch (Exception ex) { Log.Warn($"feeder: guardar anterior: {ex.Message}"); }
+    }
+
+    /// <summary>Devolve a versao guardada para a biblioteca. Os jogos so mudam na proxima
+    /// instalacao — e o que o comando avisa.</summary>
+    public static bool VoltarParaAnterior()
+    {
+        if (VersaoAnterior() is null) return false;
+        try
+        {
+            // A que sai vira a "anterior" da vez seguinte: voltar tem de ter volta tambem.
+            var atual = Path.Combine(LibraryDir, "trocando");
+            Directory.CreateDirectory(atual);
+            foreach (var n in new[] { AddonFile, Addon32File, Host64Exe, FxFile })
+            {
+                var lib = Path.Combine(LibraryDir, n);
+                var ant = Path.Combine(AnteriorDir, n);
+                if (File.Exists(lib)) File.Copy(lib, Path.Combine(atual, n), overwrite: true);
+                if (File.Exists(ant)) File.Copy(ant, lib, overwrite: true);
+            }
+            foreach (var f in Directory.GetFiles(atual))
+                File.Copy(f, Path.Combine(AnteriorDir, Path.GetFileName(f)), overwrite: true);
+            Directory.Delete(atual, recursive: true);
+            Log.Info($"feeder: biblioteca voltou para {VersaoNaBiblioteca()}");
+            return true;
+        }
+        catch (Exception ex) { Log.Warn($"feeder: voltar: {ex.Message}"); return false; }
+    }
+
+    /// <summary>
+    /// Baixa o pacote e o abre numa pasta temporaria da biblioteca.
+    ///
+    /// Por padrao baixa a <see cref="TagPadrao"/> — a versao testada — e nao a mais nova. Com
+    /// `maisNova: true` pega a estavel do topo do repositorio, que e o que o `feeder --novo` faz.
+    ///
+    /// O asset e resolvido por PADRAO de nome dentro da tag, e nao por URL fixa: o projeto ja
+    /// mudou de esquema de nome uma vez, e as quatro URLs `releases/latest/download/&lt;arquivo&gt;`
+    /// que este servico usava passaram a responder 404 de um dia para o outro.
     /// </summary>
     private static async Task<string> AbrirPacoteAsync(HttpClient http, IProgress<string>? progress,
-                                                       CancellationToken ct)
+                                                       CancellationToken ct, bool maisNova = false)
     {
-        var url = await GitHubReleaseService.LatestAssetAsync(http, FeederRepo, FeederZipAsset, ct)
+        string? url = null;
+        if (!maisNova)
+        {
+            var assets = await GitHubReleaseService.AssetsAsync(http, FeederRepo, TagPadrao, ct);
+            url = assets.FirstOrDefault(u => FeederZipAsset.IsMatch(Path.GetFileName(u)));
+            // A tag fixada pode sumir (release apagado, repositorio renomeado). Ficar sem Feeder
+            // nenhum e pior do que pegar a estavel do topo, entao ha para onde cair.
+            if (url is null) Log.Warn($"feeder: {TagPadrao} nao respondeu; caindo para a estavel mais recente");
+        }
+        url ??= await GitHubReleaseService.LatestAssetAsync(http, FeederRepo, FeederZipAsset, ct)
                   ?? throw new InvalidOperationException(L.T("Feeder_BadDownload"));
         var zip = Path.Combine(LibraryDir, "pacote.zip");
         var pasta = Path.Combine(LibraryDir, "pacote");
@@ -513,16 +619,25 @@ public static class FeederService
     }
 
     /// <summary>Baixa o addon, o shader do Feed, os includes base e o provedor de motion vectors.</summary>
-    public static async Task FetchAsync(IProgress<string>? progress = null, CancellationToken ct = default)
+    /// <param name="maisNova">Pede a estavel mais recente em vez da <see cref="TagPadrao"/>.
+    /// So o usuario liga isto, pela linha de comando; a instalacao normal nunca liga.</param>
+    /// <param name="forcar">Rebaixa o pacote mesmo com a biblioteca completa — e o que faz
+    /// `--novo` valer alguma coisa numa maquina que ja tem o Feeder.</param>
+    public static async Task FetchAsync(IProgress<string>? progress = null, CancellationToken ct = default,
+                                        bool maisNova = false, bool forcar = false)
     {
-        if (InLibrary) return;
+        if (InLibrary && !forcar) return;
         Directory.CreateDirectory(LibraryDir);
         using var http = NewClient();
 
-        if (!File.Exists(LibraryAddon) || !File.Exists(LibraryFx))
+        if (!File.Exists(LibraryAddon) || !File.Exists(LibraryFx) || forcar)
         {
             progress?.Report(L.T("Feeder_Fetching"));
-            var pacote = await AbrirPacoteAsync(http, progress, ct);
+            // O que esta na biblioteca hoje vai para o lado ANTES de ser sobrescrito. Se a nova
+            // quebrar um jogo, `feeder --voltar` desfaz sem ninguem ter de descobrir qual era a
+            // versao de antes nem achar o release dela.
+            GuardarAnterior();
+            var pacote = await AbrirPacoteAsync(http, progress, ct, maisNova);
             try
             {
                 TirarDoPacote(pacote, AddonFile, LibraryAddon);

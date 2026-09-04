@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.81.0
+
+A versão do Feeder deixou de ser "a que estiver no topo do repositório no dia".
+
+### O padrão é a versão testada, e ela está escrita no código
+
+O launcher instala a **v0.12.0** — a que foi rodada num jogo e entregou quadros. Não é a mais
+nova estável; é a que se sabe que funciona.
+
+Recusar beta pelo nome da tag (v1.80.0) resolve o caso em que o defeito vem rotulado. Não
+resolve o outro: uma release estável pode quebrar igual, e o launcher não tem como saber antes
+de alguém jogar. Por isso a versão padrão passou a ser uma decisão tomada no código, com o
+motivo escrito ao lado dela, em vez de uma consequência da data.
+
+### E agora existe caminho de volta
+
+Antes de sobrescrever a biblioteca, a versão que está lá vai para o lado. Se a nova quebrar um
+jogo, uma linha desfaz:
+
+```bash
+RenoDXLauncher.exe feeder --voltar
+```
+
+Na noite em que a 0.12.1-beta.2 derrubou o Saints Row, voltar exigiu descobrir qual era a versão
+de antes, achar o release dela e baixar o zip à mão. Guardar a anterior custa 400 KB.
+
+O comando novo também mostra o estado, sem mexer em nada:
+
+```
+Feeder na biblioteca: 0.12.0.0
+Padrão que este launcher instala: v0.12.0 — a versão que foi rodada num jogo e entregou quadros.
+Guardada, para o caso de a nova quebrar um jogo: 0.12.0.0  (feeder --voltar)
+```
+
+E `feeder --novo` busca a estável mais recente para quem quiser, avisando que está saindo do
+padrão testado. Os jogos só mudam na instalação seguinte — o comando diz isso também.
+
 ## v1.80.0
 
 O launcher parou de instalar beta. Era ele que estava derrubando o jogo.

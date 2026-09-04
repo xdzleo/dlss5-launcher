@@ -91,6 +91,7 @@ public static class Cli
             "mfg" => await MfgAsync(rest),
             "instalado" or "installed" => await InstaladoAsync(rest.FirstOrDefault()),
             "auditoria" or "audit" => await AuditoriaAsync(rest),
+            "feeder" => await FeederAsync(rest),
             "doctor" => await DoctorAsync(),
             "help" or "h" or "?" => Help(),
             _ => Unknown(cmd),
@@ -382,6 +383,47 @@ public static class Cli
         return quebrados > 0 || comConflito > 0 ? 2 : 0;
     }
 
+    /// <summary>
+    /// Qual Feeder esta na biblioteca, e os dois caminhos para mudar isso.
+    ///
+    /// Existe porque uma versao do Feeder derrubou um jogo e nao havia como voltar: foi preciso
+    /// descobrir qual era a de antes, achar o release dela e baixar o zip a mao. Agora a anterior
+    /// fica guardada e `--voltar` a devolve.
+    /// </summary>
+    private static async Task<int> FeederAsync(string[] rest)
+    {
+        var novo = rest.Any(a => a is "--novo" or "--latest");
+        var voltar = rest.Any(a => a is "--voltar" or "--rollback");
+
+        if (voltar)
+        {
+            if (!FeederService.VoltarParaAnterior())
+            {
+                Console.Error.WriteLine(L.T("Cli_Feeder_SemAnterior"));
+                return 1;
+            }
+            Console.WriteLine(L.T("Cli_Feeder_Voltou", FeederService.VersaoNaBiblioteca() ?? "?"));
+            Console.WriteLine(L.T("Cli_Feeder_ReinstalarDepois"));
+            return 0;
+        }
+
+        if (novo)
+        {
+            Console.WriteLine(L.T("Cli_Feeder_Buscando"));
+            var p = new Progress<string>(m => Console.WriteLine("  " + m));
+            await FeederService.FetchAsync(p, maisNova: true, forcar: true);
+            Console.WriteLine(L.T("Cli_Feeder_Agora", FeederService.VersaoNaBiblioteca() ?? "?"));
+            Console.WriteLine(L.T("Cli_Feeder_ReinstalarDepois"));
+            return 0;
+        }
+
+        Console.WriteLine(L.T("Cli_Feeder_Agora", FeederService.VersaoNaBiblioteca() ?? "-"));
+        Console.WriteLine(L.T("Cli_Feeder_Padrao", FeederService.TagPadrao));
+        if (FeederService.VersaoAnterior() is { } ant)
+            Console.WriteLine(L.T("Cli_Feeder_Guardada", ant));
+        return 0;
+    }
+
     private static string Curto(string s, int n) => s.Length <= n ? s : s[..(n - 1)] + "…";
 
     /// <summary>Width of the syntax column in the help table.</summary>
@@ -411,6 +453,7 @@ public static class Cli
         HelpRow($"mfg {game} [--x 2..6] [--off]", L.T("Cli_Help_Mfg"));
         HelpRow($"instalado {game}", L.T("Cli_Help_Instalado"));
         HelpRow("auditoria", L.T("Cli_Help_Auditoria"));
+        HelpRow("feeder [--novo] [--voltar]", L.T("Cli_Help_Feeder"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Help_Match", game));

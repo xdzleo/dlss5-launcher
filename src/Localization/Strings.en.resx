@@ -199,6 +199,29 @@
   <data name="Cli_Exe_NoneFound" xml:space="preserve">
     <value>(no .exe found)</value>
   </data>
+  <data name="Cli_Feeder_Agora" xml:space="preserve">
+    <value>Feeder in the library: {0}</value>
+  </data>
+  <data name="Cli_Feeder_Buscando" xml:space="preserve">
+    <value>Fetching the newest stable release (not the tested default)...</value>
+    <comment>pt: aviso de que --novo sai do padrao testado.</comment>
+  </data>
+  <data name="Cli_Feeder_Guardada" xml:space="preserve">
+    <value>Kept in case the new one breaks a game: {0}  (feeder --voltar)</value>
+  </data>
+  <data name="Cli_Feeder_Padrao" xml:space="preserve">
+    <value>Default installed by this launcher: {0} — the version that was run in a game and delivered frames.</value>
+    <comment>pt: explica que o padrao e versao testada, nao a mais nova.</comment>
+  </data>
+  <data name="Cli_Feeder_ReinstalarDepois" xml:space="preserve">
+    <value>The games only change on the next install: run `dlss5 &lt;game&gt;` for each one.</value>
+  </data>
+  <data name="Cli_Feeder_SemAnterior" xml:space="preserve">
+    <value>There is no previous version kept — nothing to go back to.</value>
+  </data>
+  <data name="Cli_Feeder_Voltou" xml:space="preserve">
+    <value>Library is back on {0}.</value>
+  </data>
   <data name="Cli_Help_Add" xml:space="preserve">
     <value>Register a game folder the stores do not know about</value>
     <comment>pt: "que as lojas não conhecem".</comment>
@@ -226,6 +249,10 @@
   </data>
   <data name="Cli_Help_Exe" xml:space="preserve">
     <value>List candidate .exe files in pick order, with bitness and size</value>
+  </data>
+  <data name="Cli_Help_Feeder" xml:space="preserve">
+    <value>Show the Feeder version in the library; fetch the newest, or go back to the previous one</value>
+    <comment>pt: "Mostra a versao do Feeder na biblioteca; busca a mais nova, ou volta para a anterior".</comment>
   </data>
   <data name="Cli_Help_Header" xml:space="preserve">
     <value>{0} — command line mode</value>

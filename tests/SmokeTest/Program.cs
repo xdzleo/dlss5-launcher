@@ -1017,6 +1017,11 @@ if (match != null)
         Check(GitHubReleaseService.EhPreRelease(t), $"'{t}' e reconhecida como pre-release");
     foreach (var t in new[] { "v0.12.0", "v1.79.0", "3.2.1", "v2.0.0-1", "v1.4.8" })
         Check(!GitHubReleaseService.EhPreRelease(t), $"'{t}' passa como estavel");
+
+    // E a versao que o launcher fixa como padrao nao pode ser, ela mesma, um beta. Parece obvio;
+    // e exatamente o engano que custou a noite, so que cometido do outro lado.
+    Check(!GitHubReleaseService.EhPreRelease(FeederService.TagPadrao),
+        $"a versao padrao do Feeder ({FeederService.TagPadrao}) e estavel");
 }
 
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");

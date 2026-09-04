@@ -199,6 +199,29 @@
   <data name="Cli_Exe_NoneFound" xml:space="preserve">
     <value>(nenhum .exe encontrado)</value>
   </data>
+  <data name="Cli_Feeder_Agora" xml:space="preserve">
+    <value>Feeder na biblioteca: {0}</value>
+  </data>
+  <data name="Cli_Feeder_Buscando" xml:space="preserve">
+    <value>Buscando a estável mais recente (não é o padrão testado)...</value>
+    <comment>pt: aviso de que --novo sai do padrao testado.</comment>
+  </data>
+  <data name="Cli_Feeder_Guardada" xml:space="preserve">
+    <value>Guardada, para o caso de a nova quebrar um jogo: {0}  (feeder --voltar)</value>
+  </data>
+  <data name="Cli_Feeder_Padrao" xml:space="preserve">
+    <value>Padrão que este launcher instala: {0} — a versão que foi rodada num jogo e entregou quadros.</value>
+    <comment>pt: explica que o padrao e versao testada, nao a mais nova.</comment>
+  </data>
+  <data name="Cli_Feeder_ReinstalarDepois" xml:space="preserve">
+    <value>Os jogos só mudam na próxima instalação: rode `dlss5 &lt;jogo&gt;` em cada um.</value>
+  </data>
+  <data name="Cli_Feeder_SemAnterior" xml:space="preserve">
+    <value>Não há versão anterior guardada — não há para onde voltar.</value>
+  </data>
+  <data name="Cli_Feeder_Voltou" xml:space="preserve">
+    <value>A biblioteca voltou para {0}.</value>
+  </data>
   <data name="Cli_Help_Add" xml:space="preserve">
     <value>Registra uma pasta de jogo que as lojas não conhecem</value>
     <comment>pt: "que as lojas não conhecem".</comment>
@@ -226,6 +249,10 @@
   </data>
   <data name="Cli_Help_Exe" xml:space="preserve">
     <value>Lista os .exe candidatos na ordem de escolha, com bits e tamanho</value>
+  </data>
+  <data name="Cli_Help_Feeder" xml:space="preserve">
+    <value>Mostra a versão do Feeder na biblioteca; busca a mais nova, ou volta para a anterior</value>
+    <comment>pt: "Mostra a versao do Feeder na biblioteca; busca a mais nova, ou volta para a anterior".</comment>
   </data>
   <data name="Cli_Help_Header" xml:space="preserve">
     <value>{0} — modo linha de comando</value>

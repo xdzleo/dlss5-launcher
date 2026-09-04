@@ -227,6 +227,41 @@
     "note": "pt: \"Le a cadeia do DLSS 5 de todos os jogos e diz quais estao inteiros\".",
     "pt-BR": "Lê a cadeia do DLSS 5 de todos os jogos e diz quais estão inteiros"
   },
+  "Cli_Feeder_Agora": {
+    "en": "Feeder in the library: {0}",
+    "pt-BR": "Feeder na biblioteca: {0}"
+  },
+  "Cli_Feeder_Buscando": {
+    "en": "Fetching the newest stable release (not the tested default)...",
+    "note": "pt: aviso de que --novo sai do padrao testado.",
+    "pt-BR": "Buscando a estável mais recente (não é o padrão testado)..."
+  },
+  "Cli_Feeder_Guardada": {
+    "en": "Kept in case the new one breaks a game: {0}  (feeder --voltar)",
+    "pt-BR": "Guardada, para o caso de a nova quebrar um jogo: {0}  (feeder --voltar)"
+  },
+  "Cli_Feeder_Padrao": {
+    "en": "Default installed by this launcher: {0} — the version that was run in a game and delivered frames.",
+    "note": "pt: explica que o padrao e versao testada, nao a mais nova.",
+    "pt-BR": "Padrão que este launcher instala: {0} — a versão que foi rodada num jogo e entregou quadros."
+  },
+  "Cli_Feeder_ReinstalarDepois": {
+    "en": "The games only change on the next install: run `dlss5 <game>` for each one.",
+    "pt-BR": "Os jogos só mudam na próxima instalação: rode `dlss5 <jogo>` em cada um."
+  },
+  "Cli_Feeder_SemAnterior": {
+    "en": "There is no previous version kept — nothing to go back to.",
+    "pt-BR": "Não há versão anterior guardada — não há para onde voltar."
+  },
+  "Cli_Feeder_Voltou": {
+    "en": "Library is back on {0}.",
+    "pt-BR": "A biblioteca voltou para {0}."
+  },
+  "Cli_Help_Feeder": {
+    "en": "Show the Feeder version in the library; fetch the newest, or go back to the previous one",
+    "note": "pt: \"Mostra a versao do Feeder na biblioteca; busca a mais nova, ou volta para a anterior\".",
+    "pt-BR": "Mostra a versão do Feeder na biblioteca; busca a mais nova, ou volta para a anterior"
+  },
   "Cli_Help_Instalado": {
     "en": "List what the launcher put in a game's folder, and what it would give back",
     "note": "pt: \"Lista o que o launcher pos na pasta de um jogo, e o que devolveria\".",
