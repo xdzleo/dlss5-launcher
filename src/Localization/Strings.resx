@@ -1011,6 +1011,9 @@
   <data name="Dlss5_Step_Bridge" xml:space="preserve">
     <value>Ponte DX11 no lugar — o pass de D3D12 agora tem onde rodar.</value>
   </data>
+  <data name="Dlss5_Step_D3d10TranslatorRemoved" xml:space="preserve">
+    <value>Conjunto Direct3D 10 do DXVK removido: este jogo renderiza em Direct3D 11 nativo e não precisa ser traduzido. O proxy do ReShade que tinha saído do caminho voltou.</value>
+  </data>
   <data name="Dlss5_Step_DgVoodoo" xml:space="preserve">
     <value>DirectX 9 envolvido em DirectX 11 — sem isso nenhum shader de motion vectors sequer compila.</value>
   </data>

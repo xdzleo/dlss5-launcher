@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.94.1
+
+**Ryse: Son of Rome era lido como Direct3D 10, e não é.**
+
+O executável dele importa dois nomes: `d3d10.dll` — interop que a CryEngine ainda linka — e
+`d3dx11_42.dll`, a biblioteca auxiliar do Direct3D **11**. A checagem antiga procurava imports
+começados por `d3d11`, e `d3dx11_42.dll` não começa: o launcher via só o primeiro nome e concluía
+D3D10.
+
+A consequência não era o rótulo. Um jogo D3D10 recebe os cinco DLLs do DXVK 1.10.3 e passa a
+renderizar traduzido para Vulkan — e o Ryse renderiza em D3D11 nativo, sem precisar de nada disso.
+
+### O que mudou
+
+- Um import `d3dx11_*` prova D3D11, do mesmo jeito que `d3dx9_*` já provava D3D9.
+- Mencionar `d3d11.dll` ou `d3d12.dll` em qualquer lugar do binário derruba o caso D3D10, venha a
+  `d3d10` da tabela de imports ou do corpo do arquivo. Entre traduzir e não traduzir, a aposta
+  segura é a que não troca o renderizador do jogo.
+- **Reinstalar agora desfaz o tradutor que sobrou.** Corrigida a leitura, o instalador montava a
+  rota D3D11 por cima de um jogo que continuava traduzido: o `dxgi.dll` do ReShade nunca voltava
+  do `.pre-dxvk`, porque quem devolve o backup é quem tira o tradutor — e nessa direção ninguém
+  tirava. A simetria existia para o conjunto D3D9 e faltava para o de D3D10.
+
+Medido nos **162 executáveis das 62 pastas** desta máquina: só o Ryse muda de lado. GTA IV e Just
+Cause 2 continuam D3D10, que é o que eles são.
+
+
 ## v1.94.0
 
 O launcher agora mostra as pastas que **sobraram de jogos desinstalados** — e oferece apagá-las.

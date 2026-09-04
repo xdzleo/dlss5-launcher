@@ -133,6 +133,31 @@ public static class Dlss5Installer
         // para um jogo que voltou a ser D3D11 — nos dois casos, nada carrega.
         var trocaTradutor = (precisaDgVoodoo && ehJogo32Bits(exePath)) || precisaDxvkD3d10;
 
+        // O conjunto D3D10 que ficou de uma leitura ERRADA sai aqui, antes de qualquer decisao.
+        //
+        // Ate a 1.94.1 o Ryse: Son of Rome era lido como D3D10 (ver FeederService.EhD3d10) e
+        // recebia os cinco DLLs do DXVK 1.10.3. Corrigida a leitura, o instalador passava a
+        // montar a rota D3D11 por cima de um jogo que continuava renderizando traduzido: o
+        // dxgi.dll do ReShade nunca voltava do `.pre-dxvk`, porque quem devolve o backup e quem
+        // tira o tradutor — e nesta direcao ninguem tirava. A simetria existia para o conjunto
+        // D3D9 (o `else if` de "voltando ao dgVoodoo", logo abaixo) e faltava para o de D3D10.
+        //
+        // So o que FOMOS NOS que pusemos, pela mesma razao de sempre: um DXVK que o usuario
+        // trouxe nao e nosso para apagar.
+        if (!precisaDxvkD3d10 && DxvkService.IsDeployedD3d10(targetDir))
+        {
+            if (DxvkService.IsOursD3d10(targetDir))
+            {
+                DxvkService.RemoveD3d10(targetDir);
+                VulkanLayerService.Remove(targetDir);
+                Step(L.T("Dlss5_Step_D3d10TranslatorRemoved"));
+                // A pasta mudou de forma: `det` descrevia um disco que nao existe mais, e e ele
+                // que o passo do ReShade consulta para saber se ha proxy no lugar.
+                det = NeuralUpliftService.Detect(installDir, targetDir, addonPath);
+            }
+            else Log.Info($"dlss5: conjunto D3D10 do DXVK em {targetDir} nao e nosso; fica");
+        }
+
         // O download ANTES de mexer na pasta, como manda a regra 2 la em cima — e aqui ela tinha
         // sido esquecida, com custo: o dgVoodoo saia e o proxy dxgi.dll do ReShade era posto de
         // lado, e so entao o DXVK era baixado. Offline, ou com o GitHub devolvendo 403, o

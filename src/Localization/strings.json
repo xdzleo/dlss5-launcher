@@ -875,6 +875,10 @@
     "en": "--dgvoodoo ignored: dgVoodoo2 enters as D3D9.dll and never sees a Direct3D 10 device. DXVK is the only translator for D3D10.",
     "pt-BR": "--dgvoodoo ignorado: o dgVoodoo2 entra como D3D9.dll e nunca vê um device Direct3D 10. O DXVK é o único tradutor para D3D10."
   },
+  "Dlss5_Step_D3d10TranslatorRemoved": {
+    "en": "DXVK's Direct3D 10 set removed: this game renders in Direct3D 11 natively and does not need translating. The ReShade proxy that was set aside for it is back.",
+    "pt-BR": "Conjunto Direct3D 10 do DXVK removido: este jogo renderiza em Direct3D 11 nativo e não precisa ser traduzido. O proxy do ReShade que tinha saído do caminho voltou."
+  },
   "Dlss5_Step_DgVoodooRemovedD3d10": {
     "en": "dgVoodoo2 removed: this game renders in Direct3D 10, which a D3D9 wrapper never intercepts.",
     "pt-BR": "dgVoodoo2 removido: este jogo renderiza em Direct3D 10, que um wrapper de D3D9 nunca intercepta."

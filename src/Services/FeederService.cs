@@ -248,19 +248,28 @@ public static class FeederService
         // launcher recusava um jogo que a comunidade ja demonstrou funcionando por esta rota.
         if (pe.Imports.Any(i => i.StartsWith("d3dx9_", StringComparison.OrdinalIgnoreCase))) return false;
 
-        var d10 = pe.Imports.Any(i => i.StartsWith("d3d10", StringComparison.OrdinalIgnoreCase));
-        var d11ou12 = pe.Imports.Any(i => i.StartsWith("d3d11", StringComparison.OrdinalIgnoreCase)
-                                          || i.StartsWith("d3d12", StringComparison.OrdinalIgnoreCase));
-        if (d10 && !d11ou12) return true;
+        // A D3DX11 prova o contrario da D3DX9, e pela mesma logica: ela e a biblioteca auxiliar do
+        // Direct3D 11 e de mais nada. O nome dela nao comeca por "d3d11", e era por isso que
+        // escapava — o Ryse: Son of Rome importa d3d10.dll (interop que a CryEngine ainda linka) e
+        // d3dx11_42.dll, e o launcher lia o primeiro nome e ignorava o segundo. Um jogo D3D11
+        // nativo recebia o DXVK da rota D3D10 e passava a renderizar traduzido sem precisar.
+        if (pe.Imports.Any(i => i.StartsWith("d3dx11_", StringComparison.OrdinalIgnoreCase))) return false;
 
-        // Carregado por LoadLibrary nao aparece na tabela: o Just Cause 2 chama d3d10_1.dll assim.
-        // So decide quando D3D10 esta no binario e nenhuma API mais nova esta.
         // Os quatro numa passada so: eram ate quatro varreduras do arquivo inteiro, e a resposta
         // de cada uma vinha do mesmo binario.
         var textos = PeUtils.ProcurarTextos(exePath,
             "d3d10.dll", "d3d10_1.dll", "d3d11.dll", "d3d12.dll");
-        if (!textos.Contains("d3d10.dll") && !textos.Contains("d3d10_1.dll")) return false;
-        return !textos.Contains("d3d11.dll") && !textos.Contains("d3d12.dll");
+
+        // Mencionar uma API mais nova derruba o caso, venha a d3d10 da tabela de imports ou do
+        // corpo do arquivo. Um binario que carrega os dois nomes escolhe o renderizador em tempo
+        // de execucao, e entre traduzir e nao traduzir a aposta segura e a que nao traduz: errar
+        // para D3D11 deixa o jogo como estava, errar para D3D10 troca o renderizador dele.
+        if (textos.Contains("d3d11.dll") || textos.Contains("d3d12.dll")) return false;
+
+        if (pe.Imports.Any(i => i.StartsWith("d3d10", StringComparison.OrdinalIgnoreCase))) return true;
+
+        // Carregado por LoadLibrary nao aparece na tabela: o Just Cause 2 chama d3d10_1.dll assim.
+        return textos.Contains("d3d10.dll") || textos.Contains("d3d10_1.dll");
     }
 
     private static bool ContemTexto(string path, string alvo) =>

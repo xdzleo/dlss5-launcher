@@ -1011,6 +1011,9 @@
   <data name="Dlss5_Step_Bridge" xml:space="preserve">
     <value>DX11 bridge in place — the D3D12 pass now has somewhere to run.</value>
   </data>
+  <data name="Dlss5_Step_D3d10TranslatorRemoved" xml:space="preserve">
+    <value>DXVK's Direct3D 10 set removed: this game renders in Direct3D 11 natively and does not need translating. The ReShade proxy that was set aside for it is back.</value>
+  </data>
   <data name="Dlss5_Step_DgVoodoo" xml:space="preserve">
     <value>DirectX 9 wrapped to DirectX 11 — without this no motion-vector shader can even compile.</value>
   </data>

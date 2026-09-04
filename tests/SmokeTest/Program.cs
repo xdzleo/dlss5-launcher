@@ -1024,5 +1024,26 @@ if (match != null)
         $"a versao padrao do Feeder ({FeederService.TagPadrao}) e estavel");
 }
 
+// 16. O Ryse: Son of Rome era lido como D3D10, e nao e.
+//
+// Ele importa d3d10.dll — interop que a CryEngine ainda linka — e d3dx11_42.dll, a biblioteca
+// auxiliar do Direct3D 11. Como "d3dx11_42.dll" nao comeca por "d3d11", a checagem antiga via so
+// o primeiro nome: um jogo D3D11 nativo recebia o DXVK da rota D3D10 e passava a renderizar
+// traduzido sem precisar. Medido nos 162 executaveis das 62 pastas desta maquina, a correcao move
+// o Ryse e mais nada — GTA IV e Just Cause 2 continuam D3D10.
+{
+    var apiRoot = Path.Combine(fakeRoot, "api");
+
+    // So d3d10: continua D3D10. Sem esta metade, a correcao teria custado a rota inteira.
+    var soD10 = MakeExe(Path.Combine(apiRoot, "so-d3d10.exe"), true, true, apiDll: "d3d10.dll");
+    Check(FeederService.RenderizaEmD3d10(soD10), "exe que so menciona d3d10 continua sendo D3D10");
+
+    // O mesmo exe com o nome da API mais nova em qualquer lugar do arquivo ja nao e D3D10: quem
+    // carrega os dois nomes escolhe em tempo de execucao, e a aposta segura e a que nao traduz.
+    var comD11 = MakeExe(Path.Combine(apiRoot, "d3d10-e-d3d11.exe"), true, true, apiDll: "d3d10.dll");
+    File.AppendAllText(comD11, "\0d3d11.dll\0");
+    Check(!FeederService.RenderizaEmD3d10(comD11), "d3d10 na tabela + d3d11 no corpo nao e D3D10");
+}
+
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");
 return failures;
