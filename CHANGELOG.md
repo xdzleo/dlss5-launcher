@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.79.0
+
+Desfaz a regra que a 1.78.0 trouxe. Ela foi escrita a partir de uma falha que aconteceu uma vez
+e não voltou a acontecer, e a medição depois mostrou que a conclusão estava errada.
+
+### A Ponte volta a ser só para jogo DirectX 11 com DLSS próprio
+
+O argumento da 1.78.0 era: o pass neural precisa de um device D3D12, um jogo de DirectX 11 não
+tem, logo todo jogo DX11 precisa da Ponte. A primeira metade está certa. A conclusão não —
+porque na rota do Feeder esse device **já existe**, e quem o cria é o próprio Feeder. Está no
+log dele, em qualquer jogo dessa rota:
+
+```
+[feed] Color 2560x1440 R16G16B16A16_FLOAT via D3D12->D3D11
+[feed] Output: D3D12->D3D11 path failed 0x80070057, trying the other direction
+```
+
+Ele importa as texturas do D3D11 do jogo para o D3D12 dele. A Ponte ali não acrescenta nada.
+
+Medido no Saints Row The Third — DirectX 11, sem DLSS, o jogo que motivou a mudança: **sem a
+Ponte na pasta** ele cria a feature 18 e entrega quadros, em duas execuções seguidas; com a
+Ponte, também. A falha que serviu de prova (`0xbad00002` e o device removido logo depois) não
+voltou a aparecer em nenhuma execução, com Ponte ou sem ela. Uma ocorrência sem repetição não
+sustenta uma regra que põe um arquivo em toda pasta DirectX 11.
+
+A Ponte serve ao caso oposto: jogo que tem DLSS **próprio** e roda em DirectX 11, onde não há
+Feeder nenhum criando device.
+
+### Ponte + Feeder volta ao aviso, agora dizendo a verdade
+
+Voltou a ser reportado, mas como informação e não como bloqueio, porque está medido que os dois
+convivem: o jogo roda com ambos na pasta. O que há ali é sobra — a Ponte não tem função na rota
+do Feeder — e a próxima instalação a remove. O texto diz isso, em vez de mandar reinstalar algo
+que está funcionando.
+
+Chamar de bloqueio o que não bloqueia é pior do que não avisar: manda a pessoa mexer no que
+está certo.
+
 ## v1.78.0
 
 Uma correção que devolve o DLSS 5 a dez jogos de DirectX 11, e a interface refeita como sistema
