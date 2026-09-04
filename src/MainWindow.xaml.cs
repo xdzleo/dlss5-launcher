@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Media.Animation;
 using RenoDXLauncher.ViewModels;
 
 namespace RenoDXLauncher;
@@ -62,6 +63,55 @@ public partial class MainWindow : Window
             {
                 _vm.IsDialogOpen = false;
                 e.Handled = true;
+            }
+        };
+
+        // Onde o clique caiu, para o painel crescer DALI.
+        //
+        // A escala sozinha, sempre a partir do meio, mostra um painel que vem "da tela". Movendo
+        // a origem para o lado do clique, ele vem do cartao — que e a ligacao que a Apple faz e
+        // que explica, sem texto nenhum, de onde aquilo saiu.
+        //
+        // A fracao e medida na JANELA, e nao dentro do painel: o painel tem largura maxima e fica
+        // centralizado, entao a maioria dos cartoes cai fora dele e uma fracao interna grudaria
+        // em 0 ou 1. Os limites de 0,15 e 0,85 existem porque origem no canto exato le como o
+        // painel deslizando de fora, e nao crescendo.
+        PreviewMouseLeftButtonDown += (_, e) =>
+        {
+            if (_vm.IsDialogOpen) return;
+            var p = e.GetPosition(this);
+            if (ActualWidth <= 0 || ActualHeight <= 0) return;
+            Painel.RenderTransformOrigin = new Point(
+                Math.Clamp(p.X / ActualWidth, 0.15, 0.85),
+                Math.Clamp(p.Y / ActualHeight, 0.15, 0.85));
+        };
+
+        // A entrada e a saida do modal.
+        //
+        // Conduzidas daqui, e nao por um DataTrigger no XAML, porque Storyboard.TargetName so
+        // resolve no namescope de quem chama Begin — dentro de um Style ele nem compila.
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(MainViewModel.IsDialogOpen)) return;
+            if (_vm.IsDialogOpen)
+            {
+                // Visivel ANTES de comecar: a animacao anima opacidade e escala, e um elemento
+                // recolhido nao tem o que animar.
+                Modal.Visibility = Visibility.Visible;
+                ((Storyboard)FindResource("AbrirModal")).Begin(this, true);
+            }
+            else if (Modal.Visibility == Visibility.Visible)
+            {
+                var sb = (Storyboard)FindResource("FecharModal");
+                void Fim(object? s, EventArgs _)
+                {
+                    sb.Completed -= Fim;
+                    // So recolhe se ninguem reabriu no meio da saida — clicar noutro jogo com o
+                    // modal ainda saindo e comum, e recolher depois disso deixaria a tela vazia.
+                    if (!_vm.IsDialogOpen) Modal.Visibility = Visibility.Collapsed;
+                }
+                sb.Completed += Fim;
+                sb.Begin(this, true);
             }
         };
     }

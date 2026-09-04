@@ -11,6 +11,56 @@
         UseLayoutRounding="True"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
+        <!-- ===== a entrada e a saida do modal do jogo =====
+
+             Ficam aqui, e nao num Style do proprio Grid, porque Storyboard.TargetName so resolve
+             no namescope de quem chama Begin — de dentro de um Style ele nem compila.
+
+             Visibility nao interpola: ela troca de valor de uma vez. Quem entra e sai e a
+             OPACIDADE com uma escala pequena, e a Visibility so marca o comeco da entrada e o fim
+             da saida, para o painel escondido nao continuar recebendo clique.
+
+             Nada disto atrasa a interacao: a leitura de disco do detalhe ja corre em paralelo
+             (ver DetalhePronto no MainViewModel), e os cartoes de dentro continuam entrando todos
+             de uma vez. -->
+        <Storyboard x:Key="AbrirModal">
+            <!-- O fundo escurece um pouco mais devagar do que o painel aparece: o painel chega
+                 primeiro e o resto da tela recua atras dele, em vez de tudo piscar junto. -->
+            <DoubleAnimation Storyboard.TargetName="Escurecimento" Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.17">
+                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <!-- From explicito em tudo: a saida segura o valor final (HoldEnd), entao sem o From a
+                 entrada seguinte comecaria do que ficou segurado. -->
+            <DoubleAnimation Storyboard.TargetName="Painel" Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.13">
+                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <!-- Comeca em 0,965 e nao em zero: superficie que nasce de um ponto le como truque, e
+                 superficie que ja esta quase no lugar le como material chegando. O BackEase passa
+                 de 1 por um triz e volta — e o assentamento, nao um salto. -->
+            <DoubleAnimation Storyboard.TargetName="PainelEscala" Storyboard.TargetProperty="ScaleX"
+                             From="0.965" To="1" Duration="0:0:0.24">
+                <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.22"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="PainelEscala" Storyboard.TargetProperty="ScaleY"
+                             From="0.965" To="1" Duration="0:0:0.24">
+                <DoubleAnimation.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.22"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Sair nao e a entrada ao contrario: e mais curto, sem overshoot e sem crescer de lugar
+             nenhum. Quem fecha ja decidiu, e esperar pela saida e esperar por nada. -->
+        <Storyboard x:Key="FecharModal">
+            <DoubleAnimation Storyboard.TargetName="Painel" Storyboard.TargetProperty="Opacity"
+                             To="0" Duration="0:0:0.11"/>
+            <DoubleAnimation Storyboard.TargetName="Escurecimento" Storyboard.TargetProperty="Opacity"
+                             To="0" Duration="0:0:0.11"/>
+            <DoubleAnimation Storyboard.TargetName="PainelEscala" Storyboard.TargetProperty="ScaleX"
+                             To="0.985" Duration="0:0:0.11"/>
+            <DoubleAnimation Storyboard.TargetName="PainelEscala" Storyboard.TargetProperty="ScaleY"
+                             To="0.985" Duration="0:0:0.11"/>
+        </Storyboard>
         <local:CoverImageConverter x:Key="CoverImage"/>
         <local:AdviceColorConverter x:Key="AdviceBg"/>
         <local:AdviceColorConverter x:Key="AdviceFg" Foreground="True"/>
@@ -565,18 +615,35 @@
         </Grid>
     </DockPanel>
 
-        <!-- ===== modal do jogo: capa + opcoes do RenoDX ===== -->
-        <Grid Panel.ZIndex="10" Visibility="{Binding IsDialogOpen, Converter={StaticResource BoolToVis}}">
-            <Border Background="#B3070810">
+        <!-- ===== modal do jogo: capa + opcoes do RenoDX =====
+
+             A Visibility saiu do binding e passou a ser conduzida pelos dois storyboards abaixo.
+             Ligada direto ao IsDialogOpen, o painel aparecia pronto no primeiro quadro: correto,
+             e sem nenhuma dica de que ele veio do cartao em que a pessoa clicou.
+
+             Visibility nao interpola — ela troca de valor de uma vez. Entao quem entra e sai e a
+             OPACIDADE junto com uma escala pequena; a Visibility so marca o comeco da entrada e o
+             fim da saida, para o painel escondido nao continuar recebendo clique.
+
+             Nada aqui atrasa a interacao: a leitura de disco do detalhe ja acontece em paralelo
+             (ver DetalhePronto), e os cartoes de dentro continuam entrando todos de uma vez. -->
+        <Grid x:Name="Modal" Panel.ZIndex="10" Visibility="Collapsed">
+            <Border x:Name="Escurecimento" Background="#B3070810">
                 <Border.InputBindings>
                     <MouseBinding MouseAction="LeftClick" Command="{Binding CloseDialogCommand}"/>
                 </Border.InputBindings>
             </Border>
 
-            <Border MaxWidth="1020" MaxHeight="820" Margin="40" CornerRadius="16"
+            <Border x:Name="Painel" MaxWidth="1020" MaxHeight="820" Margin="40" CornerRadius="16"
                     Background="{StaticResource PanelBrush}" BorderThickness="1"
                     BorderBrush="{StaticResource BorderStrongBrush}"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    RenderTransformOrigin="0.5,0.5">
+                <!-- A origem da escala e movida no code-behind para o lado em que o clique caiu: o
+                     painel cresce de la, e nao sempre do meio da tela. -->
+                <Border.RenderTransform>
+                    <ScaleTransform x:Name="PainelEscala" ScaleX="1" ScaleY="1"/>
+                </Border.RenderTransform>
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="40" ShadowDepth="10" Opacity="0.65" Color="Black"/>
                 </Border.Effect>

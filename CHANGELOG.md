@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.88.0
+
+O cartão do jogo passou a **vir** em vez de aparecer pronto.
+
+### Ele cresce de onde você clicou
+
+Uma superfície que aparece inteira no primeiro quadro é correta e não diz nada. Movendo a origem
+da escala para o lado em que o clique caiu, o painel vem **do cartão** — que é a ligação que a
+Apple faz e que explica, sem uma palavra, de onde aquilo saiu.
+
+A fração é medida na janela, e não dentro do painel: o painel tem largura máxima e fica
+centralizado, então a maioria dos cartões cai fora dele e uma fração interna grudaria em 0 ou 1.
+Os limites de 0,15 e 0,85 existem porque origem no canto exato lê como painel deslizando de fora,
+e não crescendo.
+
+### E assenta em vez de saltar
+
+Escala de 0,965 a 1, não de zero: superfície que nasce de um ponto lê como truque; superfície que
+já está quase no lugar lê como material chegando. A curva passa de 1 por um triz e volta — é o
+assentamento.
+
+O fundo escurece um pouco mais devagar (170 ms) do que o painel aparece (130 ms), então o painel
+chega primeiro e o resto da tela recua atrás dele, em vez de tudo piscar junto.
+
+Sair não é a entrada ao contrário: 110 ms, sem overshoot e sem crescer de lugar nenhum. Quem
+fecha já decidiu, e esperar pela saída é esperar por nada.
+
+### O que continua igual
+
+Os cartões de dentro entram todos de uma vez, como antes — a entrada anima o painel, não o
+conteúdo. E nada disso atrasa a interação: a leitura de disco do detalhe já corria em paralelo.
+
+Um detalhe que quase passou: quem clica noutro jogo com o modal ainda saindo reabre o painel no
+meio da saída. Recolher ao fim da animação sem checar isso deixaria a tela vazia com o modal
+"aberto".
+
 ## v1.87.0
 
 A roda passou a empurrar em vez de mandar. E uma correção do que a v1.84.0 anunciou.
