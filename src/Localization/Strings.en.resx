@@ -661,6 +661,10 @@
     <value>INSTALL FOLDER</value>
     <comment>Corrige o "PASTA DE INSTALACAO" sem cedilha nem til citado no briefing. Caixa alta e do estilo SectionLabel.</comment>
   </data>
+  <data name="Dialog_Maintainer_Inline" xml:space="preserve">
+    <value>Created by</value>
+    <comment>pt: "Criado por". Uma linha dentro do cartao do mod, no lugar do cartao proprio com foto.</comment>
+  </data>
   <data name="Dialog_Maintainer_Label" xml:space="preserve">
     <value>CREATED BY</value>
   </data>

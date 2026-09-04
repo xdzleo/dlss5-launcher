@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.89.0
+
+Faxina no cartão do jogo, e a barra de brilho deixou de ser uma barra laranja.
+
+### As instruções foram para trás do clique que já existia
+
+O cartão "ANTES DE INSTALAR" era o primeiro que aparecia ao abrir um jogo — antes do
+interruptor, e muitas vezes dizendo apenas "leia a página do NexusMods". Instrução de leitura não
+disputa espaço com o controle que decide o que acontece na pasta. Ele mora agora dentro de
+**INSTRUÇÕES RENODX HDR**, junto do resto.
+
+### O crédito virou uma linha, e a foto saiu
+
+Quem fez o mod tinha um cartão próprio no topo, com foto do GitHub e um círculo com a inicial —
+do tamanho do cartão que decide se o mod entra, e acima dele. O crédito importa; o retrato não.
+Agora é uma linha dentro do próprio cartão do mod: *Criado por Fulano*, com o histórico ao lado.
+
+### A API do jogo, no lugar do "SEM MOD"
+
+Dizer o que o jogo **não** tem não é informação — o cartão logo abaixo já diz isso com um
+interruptor. A API o jogo tem sempre, e é ela que explica por que a rota escolhida foi aquela.
+Sai do mesmo lugar que já inspecionou o executável, então não custa uma segunda leitura do PE.
+
+### A barra de brilho virou uma rampa de luz
+
+Uma faixa laranja de tamanho variável não diz nada sobre luz. O que diz é a cor mudando ao longo
+do caminho: azul frio no escuro, ciano no meio, ouro depois, branco estourado no fim — a rampa de
+um corpo aquecido, que é como o olho já aprendeu a ler brilho.
+
+Ela é pintada **uma vez ao longo de toda a barra**, e o preenchido apenas revela até onde você
+chegou. A cor num ponto é sempre a mesma, então arrastar é ver o campo se abrir, e não uma barra
+crescendo. O caminho todo fica visível, apagado: dá para ver aonde se pode chegar antes de
+chegar.
+
+Pintar a rampa dentro do preenchimento seria o erro óbvio — a cor mudaria sozinha conforme ele
+cresce, e o azul viraria ouro no mesmo ponto da tela.
+
 ## v1.88.0
 
 O cartão do jogo passou a **vir** em vez de aparecer pronto.

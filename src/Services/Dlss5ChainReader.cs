@@ -30,9 +30,24 @@ public static class Dlss5ChainReader
     /// coisas moravam no mesmo metodo, o disco inteiro acontecia na thread da interface -- e o
     /// clique no jogo travava a janela pelo tempo da leitura.
     /// </summary>
+    /// <param name="Api">Em que API o jogo desenha, no nome que ele usa na propria caixa de
+    /// opcoes. Sai daqui porque este e o lugar que ja inspecionou o executavel — perguntar de
+    /// novo do lado da tela seria abrir o mesmo PE duas vezes para saber a mesma coisa.</param>
     public record LeituraDaCadeia(List<ChainLink> Elos, bool FeederAtivo, bool PonteAtiva,
                                    bool AvisoSemDlss,
-                                   IReadOnlyList<ConflictScanner.Conflito> Conflitos);
+                                   IReadOnlyList<ConflictScanner.Conflito> Conflitos,
+                                   string Api = "");
+
+    /// <summary>O nome da API para quem le, e nao para quem programa.</summary>
+    public static string NomeDaApi(Dlss5Installer.GraficosApi api) => api switch
+    {
+        Dlss5Installer.GraficosApi.D3D12 => "DirectX 12",
+        Dlss5Installer.GraficosApi.D3D11 => "DirectX 11",
+        Dlss5Installer.GraficosApi.D3D10 => "DirectX 10",
+        Dlss5Installer.GraficosApi.D3D9 => "DirectX 9",
+        Dlss5Installer.GraficosApi.Vulkan => "Vulkan",
+        _ => "",
+    };
 
     /// <summary>Le a pasta e devolve os fatos. Nada aqui toca na interface — pode (e deve) rodar
     /// fora da thread dela.</summary>
@@ -171,6 +186,7 @@ public static class Dlss5ChainReader
 
         // A leitura que explica o que a cadeia sozinha nao explica: o que MAIS esta na pasta.
         return new LeituraDaCadeia(elos, feederAtivo, ponteAtiva, avisoSemDlss,
-                                   ConflictScanner.Scan(targetDir, exePath));
+                                   ConflictScanner.Scan(targetDir, exePath),
+                                   NomeDaApi(Dlss5Installer.ApiDoExe(exePath)));
     }
 }

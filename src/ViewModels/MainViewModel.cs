@@ -794,8 +794,19 @@ public class MainViewModel : ObservableObject
     /// De uma vez importa: os cartoes acendiam um a um, na ordem em que cada leitura terminava, e
     /// trocar de jogo virava uma cascata. Com os fatos ja em maos, a tela muda num quadro so.
     /// </summary>
+    /// <summary>
+    /// Em que API este jogo desenha.
+    ///
+    /// Ocupa o lugar onde antes se lia "SEM MOD", que dizia o que o jogo NAO tem — informacao
+    /// nenhuma, ja que o cartao do mod logo abaixo diz o mesmo com um interruptor. A API o jogo
+    /// tem sempre, e e ela que explica por que a rota escolhida foi aquela.
+    /// </summary>
+    public string ApiDoJogo { get => _apiDoJogo; private set => Set(ref _apiDoJogo, value); }
+    private string _apiDoJogo = "";
+
     private void AplicarCadeia(Dlss5ChainReader.LeituraDaCadeia r)
     {
+        ApiDoJogo = r.Api;
         Dlss5Chain.Clear();
         foreach (var elo in r.Elos) Dlss5Chain.Add(elo);
         FeederActive = r.FeederAtivo;

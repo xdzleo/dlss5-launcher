@@ -252,8 +252,9 @@
                     </DockPanel>
                     <TextBlock Style="{StaticResource Caption}" Margin="0,3,0,0" TextWrapping="Wrap"
                                Text="{loc:Tr Profile_PeakNits_Hint}"/>
-                    <Slider x:Name="PeakSlider" Minimum="48" Maximum="4000" TickFrequency="10"
-                            IsSnapToTickEnabled="True" ValueChanged="OnAnyValueChanged" Margin="0,8,0,6"/>
+                    <Slider x:Name="PeakSlider" Style="{StaticResource HdrSlider}"
+                            Minimum="48" Maximum="4000" TickFrequency="10"
+                            IsSnapToTickEnabled="True" ValueChanged="OnAnyValueChanged" Margin="0,10,0,2"/>
                     <UniformGrid Columns="7">
                         <Button Content="400" Click="OnPeakPreset" Margin="0,0,3,0" Padding="0,5" FontSize="11.5"/>
                         <Button Content="600" Click="OnPeakPreset" Margin="3,0" Padding="0,5" FontSize="11.5"/>

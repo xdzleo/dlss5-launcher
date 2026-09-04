@@ -692,6 +692,11 @@
     "note": "Uma chave para o titulo do botao e para o AutomationProperties.Name, que antes divergiam (\"Instalar mod HDR\" x \"Instalar mod\").",
     "pt-BR": "Instalar mod HDR"
   },
+  "Dialog_Maintainer_Inline": {
+    "en": "Created by",
+    "note": "pt: \"Criado por\". Uma linha dentro do cartao do mod, no lugar do cartao proprio com foto.",
+    "pt-BR": "Criado por"
+  },
   "Dialog_Maintainer_Label": {
     "en": "CREATED BY",
     "pt-BR": "CRIADO POR"

@@ -797,6 +797,119 @@
             </Style>
 
             <!-- ========== slider ========== -->
+            <!-- ========== a barra de brilho ==========
+
+                 Um estilo proprio, e nao o Slider comum: aqui a barra nao mede "quanto de um
+                 ajuste", ela mede LUZ. Uma faixa laranja de tamanho variavel nao diz nada sobre
+                 luz; o que diz e a propria cor mudando ao longo do caminho.
+
+                 A rampa e a de um corpo aquecido, que e como o olho ja aprendeu a ler brilho:
+                 azul frio no escuro, ciano ao cruzar o limiar de HDR, ouro depois, e branco
+                 estourado no fim. Ela e pintada UMA vez ao longo de toda a barra, e o preenchido
+                 apenas revela ate onde voce chegou — entao a cor num ponto e sempre a mesma, e
+                 arrastar e ver o campo se abrir, nao uma barra crescendo.
+ -->
+            <LinearGradientBrush x:Key="RampaDeLuz" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#1B3566" Offset="0"/>
+                <GradientStop Color="#2B6BA6" Offset="0.13"/>
+                <GradientStop Color="#2FA6C4" Offset="0.24"/>
+                <GradientStop Color="#5FD2BE" Offset="0.38"/>
+                <GradientStop Color="#C8D77E" Offset="0.55"/>
+                <GradientStop Color="#F0C266" Offset="0.72"/>
+                <GradientStop Color="#FFD9A0" Offset="0.88"/>
+                <GradientStop Color="#FFF6E6" Offset="1"/>
+            </LinearGradientBrush>
+
+            <Style x:Key="HdrSlider" TargetType="Slider">
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Slider">
+                            <Grid VerticalAlignment="Center">
+                                <!-- O caminho inteiro, apagado: da para ver aonde se pode chegar
+                                     antes de chegar. Barra que some no escuro esconde metade da
+                                     informacao que ela existe para dar. -->
+                                <Border Height="10" CornerRadius="5" VerticalAlignment="Center"
+                                        Background="{StaticResource RampaDeLuz}" Opacity="0.16"/>
+                                <Border Height="10" CornerRadius="5" VerticalAlignment="Center"
+                                        BorderThickness="1" BorderBrush="#1AFFFFFF"/>
+
+                                <Track x:Name="PART_Track">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <!-- O truque do preenchimento: a rampa e
+                                                         desenhada com a largura da BARRA INTEIRA e
+                                                         recortada pelo botao, que e do tamanho do
+                                                         que ja foi percorrido. Pintar a rampa
+                                                         dentro do botao faria a cor mudar sozinha
+                                                         conforme ele cresce — o azul viraria ouro
+                                                         no mesmo ponto da tela. -->
+                                                    <Grid ClipToBounds="True">
+                                                        <Border HorizontalAlignment="Left" Height="10"
+                                                                CornerRadius="5" VerticalAlignment="Center"
+                                                                Background="{StaticResource RampaDeLuz}"
+                                                                Width="{Binding ActualWidth,
+                                                                        RelativeSource={RelativeSource AncestorType=Slider}}"/>
+                                                        <!-- O brilho: a mesma rampa, mais alta e
+                                                             quase transparente. Faz o vidro em
+                                                             volta parecer iluminado pela barra, sem
+                                                             custar um BlurEffect. -->
+                                                        <Border HorizontalAlignment="Left" Height="22"
+                                                                CornerRadius="11" VerticalAlignment="Center"
+                                                                Background="{StaticResource RampaDeLuz}"
+                                                                Opacity="0.22" IsHitTestVisible="False"
+                                                                Width="{Binding ActualWidth,
+                                                                        RelativeSource={RelativeSource AncestorType=Slider}}"/>
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Background="Transparent"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <!-- Branco, e nao da cor da rampa: e o ponto de
+                                                         luz que empurra o resto. Se ele tomasse a
+                                                         cor do lugar onde esta, sumiria dentro dela
+                                                         exatamente onde precisa ser agarrado. -->
+                                                    <Grid>
+                                                        <Ellipse x:Name="Halo" Width="30" Height="30"
+                                                                 Fill="#26FFFFFF" Opacity="0"/>
+                                                        <Ellipse Width="18" Height="18" Fill="#14FFFFFF"/>
+                                                        <Ellipse Width="14" Height="14" Fill="White"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Halo" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsDragging" Value="True">
+                                                            <Setter TargetName="Halo" Property="Opacity" Value="1"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style TargetType="Slider">
                 <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="Height" Value="22"/>
