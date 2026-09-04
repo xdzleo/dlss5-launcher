@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.83.0
+
+Escolher uma release passou a valer nos **jogos**, e a escolha passou a durar.
+
+### Instalar chega até o jogo
+
+O que carrega dentro do jogo é o arquivo que está na pasta dele, não o da biblioteca. Escolher
+uma release e ver a versão mudar só no cartão seria a tela dizendo uma coisa e o jogo fazendo
+outra — e é assim que se descobre, tarde, que a versão que quebrou continua rodando.
+
+Instalar uma release agora leva a versão a todos os jogos que já têm o Feeder (28 nesta máquina),
+e **Voltar** também: é justamente quando um jogo quebrou que se aperta esse botão.
+
+### E a escolha não é mais desfeita sozinha
+
+Instalar a v0.11.0-beta.2 pela lista funcionava, e quarenta segundos depois a checagem automática
+reinstalava a versão padrão por cima. Uma escolha que o próprio programa desfaz é pior do que não
+ter a lista.
+
+A release escolhida fica guardada na configuração, e a busca passou a respeitar a ordem: a
+release pedida agora, a que você escolheu antes, e só então o padrão fixado.
+
+Junto do binário anterior vai a **tag** que estava valendo. Sem ela, voltar devolveria os
+arquivos certos e deixaria a configuração apontando para a release nova — e a próxima checagem
+traria de volta exatamente a versão de que se acabou de fugir.
+
 ## v1.82.0
 
 As Configurações passaram a dizer **qual versão** de cada peça está instalada, e a deixar você

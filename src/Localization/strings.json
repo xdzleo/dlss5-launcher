@@ -236,6 +236,15 @@
     "note": "pt: aviso de que --novo sai do padrao testado.",
     "pt-BR": "Buscando a estável mais recente (não é o padrão testado)..."
   },
+  "Cli_Feeder_EmJogos": {
+    "en": "Updated in {0} game(s).",
+    "pt-BR": "Atualizado em {0} jogo(s)."
+  },
+  "Cli_Feeder_JaEra": {
+    "en": "That is already the one in the library and in the games.",
+    "note": "pt: {0} nao e usado; a chave recebe o mesmo argumento das irmas para simplificar a chamada.",
+    "pt-BR": "Essa já é a que está na biblioteca e nos jogos."
+  },
   "Cli_Feeder_Guardada": {
     "en": "Kept in case the new one breaks a game: {0}  (feeder --voltar)",
     "pt-BR": "Guardada, para o caso de a nova quebrar um jogo: {0}  (feeder --voltar)"
@@ -2862,8 +2871,9 @@
     "pt-BR": "faltando"
   },
   "Settings_Feeder_Installed": {
-    "en": "Now on {0}. The games only change on the next install.",
-    "pt-BR": "Agora na {0}. Os jogos só mudam na próxima instalação."
+    "en": "Now on {0}, and updated in {1} game(s).",
+    "note": "pt: {0} versao, {1} quantos jogos receberam.",
+    "pt-BR": "Agora na {0}, e atualizado em {1} jogo(s)."
   },
   "Settings_Feeder_NoRollback": {
     "en": "No previous version kept yet — there will be one after the first update.",

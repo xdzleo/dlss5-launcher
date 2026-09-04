@@ -206,8 +206,15 @@
     <value>Fetching the newest stable release (not the tested default)...</value>
     <comment>pt: aviso de que --novo sai do padrao testado.</comment>
   </data>
+  <data name="Cli_Feeder_EmJogos" xml:space="preserve">
+    <value>Updated in {0} game(s).</value>
+  </data>
   <data name="Cli_Feeder_Guardada" xml:space="preserve">
     <value>Kept in case the new one breaks a game: {0}  (feeder --voltar)</value>
+  </data>
+  <data name="Cli_Feeder_JaEra" xml:space="preserve">
+    <value>That is already the one in the library and in the games.</value>
+    <comment>pt: {0} nao e usado; a chave recebe o mesmo argumento das irmas para simplificar a chamada.</comment>
   </data>
   <data name="Cli_Feeder_Padrao" xml:space="preserve">
     <value>Default installed by this launcher: {0} — the version that was run in a game and delivered frames.</value>
@@ -2251,7 +2258,8 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
     <value>Exposure</value>
   </data>
   <data name="Settings_Feeder_Installed" xml:space="preserve">
-    <value>Now on {0}. The games only change on the next install.</value>
+    <value>Now on {0}, and updated in {1} game(s).</value>
+    <comment>pt: {0} versao, {1} quantos jogos receberam.</comment>
   </data>
   <data name="Settings_Feeder_NoRollback" xml:space="preserve">
     <value>No previous version kept yet — there will be one after the first update.</value>

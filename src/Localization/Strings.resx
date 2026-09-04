@@ -206,8 +206,15 @@
     <value>Buscando a estável mais recente (não é o padrão testado)...</value>
     <comment>pt: aviso de que --novo sai do padrao testado.</comment>
   </data>
+  <data name="Cli_Feeder_EmJogos" xml:space="preserve">
+    <value>Atualizado em {0} jogo(s).</value>
+  </data>
   <data name="Cli_Feeder_Guardada" xml:space="preserve">
     <value>Guardada, para o caso de a nova quebrar um jogo: {0}  (feeder --voltar)</value>
+  </data>
+  <data name="Cli_Feeder_JaEra" xml:space="preserve">
+    <value>Essa já é a que está na biblioteca e nos jogos.</value>
+    <comment>pt: {0} nao e usado; a chave recebe o mesmo argumento das irmas para simplificar a chamada.</comment>
   </data>
   <data name="Cli_Feeder_Padrao" xml:space="preserve">
     <value>Padrão que este launcher instala: {0} — a versão que foi rodada num jogo e entregou quadros.</value>
@@ -2251,7 +2258,8 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
     <value>Exposição</value>
   </data>
   <data name="Settings_Feeder_Installed" xml:space="preserve">
-    <value>Agora na {0}. Os jogos só mudam na próxima instalação.</value>
+    <value>Agora na {0}, e atualizado em {1} jogo(s).</value>
+    <comment>pt: {0} versao, {1} quantos jogos receberam.</comment>
   </data>
   <data name="Settings_Feeder_NoRollback" xml:space="preserve">
     <value>Nenhuma versão anterior guardada ainda — vai existir uma depois da primeira atualização.</value>

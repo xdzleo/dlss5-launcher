@@ -167,8 +167,17 @@ public partial class SettingsWindow : Window
         FeederInstall.IsEnabled = false;
         try
         {
-            await FeederService.FetchAsync(null, default, forcar: true, tag: tag);
-            FeederText.Text = L.T("Settings_Feeder_Installed", FeederService.VersaoNaBiblioteca() ?? tag);
+            // UpdateAsync, e nao FetchAsync: alem de trocar a biblioteca ele leva a versao a
+            // todo jogo que ja tem o Feeder. Trocar so a biblioteca faria a tela mostrar uma
+            // versao e o jogo carregar outra.
+            // A escolha e gravada DEPOIS do update, e a ordem importa: o backup que o update faz
+            // guarda a tag que estava valendo, e gravar antes fazia o "anterior" nascer com a
+            // tag nova — voltar devolvia os arquivos certos e a configuracao errada.
+            var n = await FeederService.UpdateAsync(InstallDirs(), null, default, tag);
+            FeederService.LembrarEscolha(tag);
+            FeederText.Text = n >= 0
+                ? L.T("Settings_Feeder_Installed", FeederService.VersaoNaBiblioteca() ?? tag, n)
+                : L.T("Settings_Releases_Same");
         }
         catch (Exception ex) { FeederText.Text = ex.Message; }
         finally { FeederInstall.IsEnabled = true; Refresh(); }
@@ -177,9 +186,15 @@ public partial class SettingsWindow : Window
     private void OnFeederRollback(object sender, RoutedEventArgs e)
     {
         var antes = FeederService.VersaoAnterior();
-        FeederText.Text = FeederService.VoltarParaAnterior()
-            ? L.T("Settings_Feeder_Installed", antes ?? "?")
-            : L.T("Settings_Feeder_NoRollback");
+        if (FeederService.VoltarParaAnterior() is null)
+        {
+            FeederText.Text = L.T("Settings_Feeder_NoRollback");
+            return;
+        }
+        // Voltar tambem tem de chegar aos jogos: e justamente quando um deles quebrou que se
+        // aperta este botao.
+        var n = FeederService.EspalharDaBiblioteca(InstallDirs());
+        FeederText.Text = L.T("Settings_Feeder_Installed", antes ?? "?", n);
         Refresh();
     }
 

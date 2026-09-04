@@ -360,6 +360,11 @@ public static class FeederService
                 var de = Path.Combine(LibraryDir, n);
                 if (File.Exists(de)) File.Copy(de, Path.Combine(AnteriorDir, n), overwrite: true);
             }
+            // Junto do binario vai a TAG que estava valendo. Sem ela, voltar restauraria os
+            // arquivos e deixaria a configuracao apontando para a release nova — e a proxima
+            // checagem automatica traria de volta exatamente a versao de que se acabou de fugir.
+            File.WriteAllText(Path.Combine(AnteriorDir, "tag.txt"),
+                              LauncherConfig.Load().FeederTag ?? TagPadrao);
             Log.Info($"feeder: guardada a versao {VersaoNaBiblioteca()} em {AnteriorDir}");
         }
         catch (Exception ex) { Log.Warn($"feeder: guardar anterior: {ex.Message}"); }
@@ -367,11 +372,14 @@ public static class FeederService
 
     /// <summary>Devolve a versao guardada para a biblioteca. Os jogos so mudam na proxima
     /// instalacao — e o que o comando avisa.</summary>
-    public static bool VoltarParaAnterior()
+    /// <returns>A tag que voltou a valer, ja gravada na configuracao — ou nulo se nao deu.</returns>
+    public static string? VoltarParaAnterior()
     {
-        if (VersaoAnterior() is null) return false;
+        if (VersaoAnterior() is null) return null;
         try
         {
+            var tagVolta = LerTag(Path.Combine(AnteriorDir, "tag.txt")) ?? TagPadrao;
+            var tagSai = LauncherConfig.Load().FeederTag ?? TagPadrao;
             // A que sai vira a "anterior" da vez seguinte: voltar tem de ter volta tambem.
             var atual = Path.Combine(LibraryDir, "trocando");
             Directory.CreateDirectory(atual);
@@ -385,10 +393,29 @@ public static class FeederService
             foreach (var f in Directory.GetFiles(atual))
                 File.Copy(f, Path.Combine(AnteriorDir, Path.GetFileName(f)), overwrite: true);
             Directory.Delete(atual, recursive: true);
-            Log.Info($"feeder: biblioteca voltou para {VersaoNaBiblioteca()}");
-            return true;
+            // As tags trocam de lado junto com os binarios: voltar tem de ter volta.
+            File.WriteAllText(Path.Combine(AnteriorDir, "tag.txt"), tagSai);
+            var cfg = LauncherConfig.Load();
+            cfg.FeederTag = tagVolta;
+            cfg.Save();
+            Log.Info($"feeder: biblioteca voltou para {VersaoNaBiblioteca()} ({tagVolta})");
+            return tagVolta;
         }
-        catch (Exception ex) { Log.Warn($"feeder: voltar: {ex.Message}"); return false; }
+        catch (Exception ex) { Log.Warn($"feeder: voltar: {ex.Message}"); return null; }
+    }
+
+    private static string? LerTag(string path)
+    {
+        try { return File.Exists(path) ? File.ReadAllText(path).Trim() : null; }
+        catch { return null; }
+    }
+
+    /// <summary>Grava a release escolhida, para que a checagem automatica nao a desfaça.</summary>
+    public static void LembrarEscolha(string tag)
+    {
+        var cfg = LauncherConfig.Load();
+        cfg.FeederTag = tag;
+        cfg.Save();
     }
 
     /// <summary>
@@ -408,11 +435,15 @@ public static class FeederService
         string? url = null;
         if (!maisNova)
         {
-            var assets = await GitHubReleaseService.AssetsAsync(http, FeederRepo, tag ?? TagPadrao, ct);
+            // A ordem manda: a release pedida agora, a que a pessoa escolheu antes e ficou
+            // guardada, e so entao o padrao. Sem o termo do meio, toda checagem automatica
+            // desfazia a escolha da tela.
+            var escolhida = tag ?? LauncherConfig.Load().FeederTag ?? TagPadrao;
+            var assets = await GitHubReleaseService.AssetsAsync(http, FeederRepo, escolhida, ct);
             url = assets.FirstOrDefault(u => FeederZipAsset.IsMatch(Path.GetFileName(u)));
             // A tag fixada pode sumir (release apagado, repositorio renomeado). Ficar sem Feeder
             // nenhum e pior do que pegar a estavel do topo, entao ha para onde cair.
-            if (url is null) Log.Warn($"feeder: {TagPadrao} nao respondeu; caindo para a estavel mais recente");
+            if (url is null) Log.Warn($"feeder: a release {escolhida} nao respondeu; caindo para a estavel mais recente");
         }
         url ??= await GitHubReleaseService.LatestAssetAsync(http, FeederRepo, FeederZipAsset, ct)
                   ?? throw new InvalidOperationException(L.T("Feeder_BadDownload"));
@@ -724,16 +755,18 @@ public static class FeederService
     /// vectors trocado no meio do caminho. Esperar que alguem repare e reinstale a mao e o mesmo
     /// que ficar parado.
     /// </summary>
+    /// <param name="tag">A release escolhida na tela. Sem ela, a <see cref="TagPadrao"/>.</param>
     public static async Task<int> UpdateAsync(IEnumerable<string> installDirs,
                                               IProgress<string>? progress = null,
-                                              CancellationToken ct = default)
+                                              CancellationToken ct = default,
+                                              string? tag = null)
     {
         if (!File.Exists(LibraryAddon)) return -1;
         using var http = NewClient();
 
         // Do mesmo pacote que o FetchAsync usa: as pecas do Feeder tem de vir todas da mesma
         // release (ver o comentario de FeederRepo).
-        var pacote = await AbrirPacoteAsync(http, progress, ct);
+        var pacote = await AbrirPacoteAsync(http, progress, ct, tag: tag);
         byte[] addon, fx;
         try
         {
@@ -754,13 +787,33 @@ public static class FeederService
         var atual = File.ReadAllBytes(LibraryAddon);
         if (addon.Length == atual.Length && addon.SequenceEqual(atual)) return -1;
 
+        GuardarAnterior();
         await File.WriteAllBytesAsync(LibraryAddon, addon, ct);
         await File.WriteAllBytesAsync(LibraryFx, fx, ct);
         Log.Info($"feeder atualizado na biblioteca ({addon.Length} bytes)");
 
-        // Reimplantar por inteiro, e nao so trocar o .addon64: uma versao nova pode mudar o
-        // contrato entre o shader e o addon — foi o que aconteceu da 0.1 para a 0.5 — e deixar
-        // os dois em versoes diferentes e a mesma falha silenciosa de sempre.
+        var n = EspalharDaBiblioteca(installDirs);
+        progress?.Report(L.T("Feeder_Updated", n));
+        return n;
+    }
+
+    /// <summary>
+    /// Leva o que esta na biblioteca para TODO jogo que ja tem o Feeder.
+    ///
+    /// Trocar so a biblioteca nao troca nada para quem joga: o arquivo que carrega e o que esta
+    /// na pasta do jogo. Escolher uma release na tela e ver a versao mudar so no cartao seria a
+    /// tela dizendo uma coisa e o jogo fazendo outra — e e assim que se descobre, tarde, que a
+    /// versao que quebrou continua rodando.
+    ///
+    /// Reimplanta por inteiro, e nao so o .addon64: uma versao nova pode mudar o contrato entre
+    /// o shader e o addon — foi o que aconteceu da 0.1 para a 0.5 — e deixar os dois em versoes
+    /// diferentes e a mesma falha silenciosa de sempre.
+    ///
+    /// Jogo aberto fica de fora: nao da para substituir arquivo carregado, e ele pega a versao
+    /// na proxima passada.
+    /// </summary>
+    public static int EspalharDaBiblioteca(IEnumerable<string> installDirs)
+    {
         var n = 0;
         foreach (var dir in installDirs.Where(d => d is not null && Directory.Exists(d)))
         {
@@ -778,7 +831,6 @@ public static class FeederService
                 catch (Exception ex) { Log.Warn($"atualizar feeder em {alvo}: {ex.Message}"); }
             }
         }
-        progress?.Report(L.T("Feeder_Updated", n));
         return n;
     }
 

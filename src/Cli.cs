@@ -398,35 +398,42 @@ public static class Cli
         // codigo, para o que se testa aqui valer para o que a tela faz.
         var i = Array.FindIndex(rest, a => a is "--versao" or "--version");
         var tag = i >= 0 && i + 1 < rest.Length ? rest[i + 1] : null;
-        if (tag is not null)
+        // As tres acoes abaixo mexem nos JOGOS, e nao so na biblioteca: o arquivo que carrega e
+        // o que esta na pasta do jogo, entao trocar a biblioteca sozinha nao troca nada para
+        // quem joga.
+        if (tag is not null || novo || voltar)
         {
-            Console.WriteLine(L.T("Cli_Feeder_Buscando"));
-            await FeederService.FetchAsync(new Progress<string>(m => Console.WriteLine("  " + m)),
-                                           forcar: true, tag: tag);
-            Console.WriteLine(L.T("Cli_Feeder_Agora", FeederService.VersaoNaBiblioteca() ?? "?"));
-            Console.WriteLine(L.T("Cli_Feeder_ReinstalarDepois"));
-            return 0;
-        }
-
-        if (voltar)
-        {
-            if (!FeederService.VoltarParaAnterior())
-            {
-                Console.Error.WriteLine(L.T("Cli_Feeder_SemAnterior"));
-                return 1;
-            }
-            Console.WriteLine(L.T("Cli_Feeder_Voltou", FeederService.VersaoNaBiblioteca() ?? "?"));
-            Console.WriteLine(L.T("Cli_Feeder_ReinstalarDepois"));
-            return 0;
-        }
-
-        if (novo)
-        {
-            Console.WriteLine(L.T("Cli_Feeder_Buscando"));
+            var pastas = (await LoadAsync()).Games.Select(g => g.InstallDir)
+                         .Where(d => d is not null).Distinct()!;
             var p = new Progress<string>(m => Console.WriteLine("  " + m));
-            await FeederService.FetchAsync(p, maisNova: true, forcar: true);
+
+            if (voltar)
+            {
+                if (FeederService.VoltarParaAnterior() is null)
+                {
+                    Console.Error.WriteLine(L.T("Cli_Feeder_SemAnterior"));
+                    return 1;
+                }
+                var quantos = FeederService.EspalharDaBiblioteca(pastas!);
+                Console.WriteLine(L.T("Cli_Feeder_Voltou", FeederService.VersaoNaBiblioteca() ?? "?"));
+                Console.WriteLine(L.T("Cli_Feeder_EmJogos", quantos));
+                return 0;
+            }
+
+            Console.WriteLine(L.T("Cli_Feeder_Buscando"));
+            if (novo && tag is null)
+            {
+                await FeederService.FetchAsync(p, maisNova: true, forcar: true);
+                Console.WriteLine(L.T("Cli_Feeder_EmJogos", FeederService.EspalharDaBiblioteca(pastas!)));
+            }
+            else
+            {
+                var n = await FeederService.UpdateAsync(pastas!, p, default, tag);
+                if (tag is not null) FeederService.LembrarEscolha(tag);
+                Console.WriteLine(L.T(n >= 0 ? "Cli_Feeder_EmJogos" : "Cli_Feeder_JaEra",
+                                      n >= 0 ? n : 0));
+            }
             Console.WriteLine(L.T("Cli_Feeder_Agora", FeederService.VersaoNaBiblioteca() ?? "?"));
-            Console.WriteLine(L.T("Cli_Feeder_ReinstalarDepois"));
             return 0;
         }
 
