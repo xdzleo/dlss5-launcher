@@ -875,6 +875,14 @@
     "en": "--dgvoodoo ignored: dgVoodoo2 enters as D3D9.dll and never sees a Direct3D 10 device. DXVK is the only translator for D3D10.",
     "pt-BR": "--dgvoodoo ignorado: o dgVoodoo2 entra como D3D9.dll e nunca vê um device Direct3D 10. O DXVK é o único tradutor para D3D10."
   },
+  "Neural_RuntimeTestadoAdotado": {
+    "en": "Neural runtime swapped for the build that was measured running. Two binaries share the same size and version, and only one of them survives past the first frame in some games.",
+    "pt-BR": "Runtime neural trocado pelo build que foi medido rodando. Dois binários têm o mesmo tamanho e a mesma versão, e só um deles passa do primeiro quadro em alguns jogos."
+  },
+  "Neural_RuntimeNaoTestado": {
+    "en": "the build in the library is not the one that was measured running",
+    "pt-BR": "o build na biblioteca não é o que foi medido rodando"
+  },
   "Dlss5_Step_D3d10TranslatorRemoved": {
     "en": "DXVK's Direct3D 10 set removed: this game renders in Direct3D 11 natively and does not need translating. The ReShade proxy that was set aside for it is back.",
     "pt-BR": "Conjunto Direct3D 10 do DXVK removido: este jogo renderiza em Direct3D 11 nativo e não precisa ser traduzido. O proxy do ReShade que tinha saído do caminho voltou."

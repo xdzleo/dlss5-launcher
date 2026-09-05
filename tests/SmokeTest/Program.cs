@@ -1045,5 +1045,38 @@ if (match != null)
     Check(!FeederService.RenderizaEmD3d10(comD11), "d3d10 na tabela + d3d11 no corpo nao e D3D10");
 }
 
+// 17. Dois runtimes neurais de mesmo tamanho nao sao o mesmo arquivo.
+//
+// Existem dois binarios de nvngx_dlssnr.dll em circulacao com 165.840.496 bytes e versao
+// 310.8.0.0 nos dois. No Shadow of the Tomb Raider, com o resto da pasta identico, um roda e o
+// outro faz o device D3D12 sair com DXGI_ERROR_INVALID_CALL no primeiro quadro. A comparacao de
+// implantacao olhava so o TAMANHO — entao o build errado nunca era substituido, e "reinstalar"
+// nao trocava byte nenhum. Era esse o "reinstalar nao resolve" relatado.
+{
+    var rtDir = Path.Combine(fakeRoot, "runtime");
+    Directory.CreateDirectory(rtDir);
+    var a = Path.Combine(rtDir, "a.dll");
+    var b = Path.Combine(rtDir, "b.dll");
+    var c = Path.Combine(rtDir, "c.dll");
+    var bytes = new byte[1 << 20];
+    new Random(7).NextBytes(bytes);
+    File.WriteAllBytes(a, bytes);
+    File.WriteAllBytes(c, bytes);
+    bytes[bytes.Length / 2] ^= 0xFF;      // um bit; o tamanho nao muda
+    File.WriteAllBytes(b, bytes);
+
+    Check(new FileInfo(a).Length == new FileInfo(b).Length,
+        "os dois fixtures tem o mesmo tamanho (e o que enganava a comparacao antiga)");
+    Check(!NeuralUpliftService.MesmoRuntime(a, b),
+        "mesmo tamanho e conteudo diferente NAO passa por 'ja esta la'");
+    Check(NeuralUpliftService.MesmoRuntime(a, c), "conteudo igual continua sendo o mesmo runtime");
+
+    // E o hash guardado tem de acompanhar a reescrita do arquivo, senao a memoria responde pelo
+    // build de ontem e a troca volta a ser pulada.
+    File.WriteAllBytes(c, File.ReadAllBytes(b));
+    File.SetLastWriteTimeUtc(c, DateTime.UtcNow.AddSeconds(1));
+    Check(!NeuralUpliftService.MesmoRuntime(a, c), "reescrever o arquivo invalida o hash guardado");
+}
+
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");
 return failures;

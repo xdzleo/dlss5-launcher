@@ -2135,6 +2135,12 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Neural_ReShadeInstalled" xml:space="preserve">
     <value>ReShade installed.</value>
   </data>
+  <data name="Neural_RuntimeNaoTestado" xml:space="preserve">
+    <value>the build in the library is not the one that was measured running</value>
+  </data>
+  <data name="Neural_RuntimeTestadoAdotado" xml:space="preserve">
+    <value>Neural runtime swapped for the build that was measured running. Two binaries share the same size and version, and only one of them survives past the first frame in some games.</value>
+  </data>
   <data name="Neural_Searching" xml:space="preserve">
     <value>Looking for the neural runtime in {0}...</value>
     <comment>{0} = nome da pasta sendo varrida.</comment>

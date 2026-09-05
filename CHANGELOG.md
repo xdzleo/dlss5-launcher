@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.95.0
+
+**Existem dois `nvngx_dlssnr.dll` diferentes com o mesmo tamanho e a mesma versão.** O launcher
+comparava os dois pelo tamanho, concluía que já estava tudo certo, e não trocava byte nenhum — era
+por isso que reinstalar não resolvia nada.
+
+### O que foi medido
+
+No Shadow of the Tomb Raider, com o resto da pasta **idêntico**, só trocando o runtime neural:
+
+| build | o que o add-on faz | resultado |
+|---|---|---|
+| `8270B350…` | `feature 18 created via the **signed snippet**` | roda; passe neural avaliando a cada quadro |
+| `E16BCF15…` | `feature 18 created via the **NGX core**` | `DXGI_ERROR_INVALID_CALL`, device removido no primeiro quadro |
+
+Os dois têm **165.840.496 bytes** e dizem **310.8.0.0**. O add-on chama o segundo de "reference
+match", o que convida a achar que ele é o certo. A medição diz o contrário, e a medição ganha.
+
+### O que mudou
+
+- **A comparação é por conteúdo, não por tamanho.** Era uma linha:
+  `new FileInfo(deployed).Length != new FileInfo(LibraryRuntime).Length`. Com dois builds do mesmo
+  tamanho, ela nunca era verdadeira. O SHA-256 fica em cache por (caminho, tamanho, data), porque
+  quem chama é o interruptor e são 158 MB por leitura.
+- **O build medido está fixado** em `RuntimeTestadoSha256`. Antes de copiar 158 MB, o launcher
+  confere *qual* 158 MB — e, se a biblioteca estiver com o outro, adota o testado a partir do
+  payload de outra ferramenta que já esteja no disco. O build que sai fica guardado ao lado.
+- `neural <jogo>` avisa quando a biblioteca está com um build que não é o medido.
+
+### Verificado no jogo
+
+Instalação completa pelo nosso launcher, por cima da pasta: **147 s de pé**, `RenoDX` e
+`DLSS 5 Neural Rendering` registrados juntos, zero `Device was lost`. Desligar o mod, ligar de
+volta e reinstalar devolve a pasta **byte a byte idêntica** — e o jogo continua rodando.
+
+
 ## v1.94.1
 
 **Ryse: Son of Rome era lido como Direct3D 10, e não é.**

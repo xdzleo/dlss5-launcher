@@ -861,7 +861,9 @@ public static class Cli
                              ? " (ok)" : $" — precisa de {NeuralUpliftService.MinDriverBranch}+"));
         if (host.RuntimeInLibrary)
         {
-            Console.WriteLine($"  runtime        : {NeuralUpliftService.LibraryRuntime}");
+            Console.WriteLine($"  runtime        : {NeuralUpliftService.LibraryRuntime}"
+                + (NeuralUpliftService.RuntimeDaBibliotecaEhOTestado()
+                    ? "" : $"  [{L.T("Neural_RuntimeNaoTestado")}]"));
         }
         else
         {

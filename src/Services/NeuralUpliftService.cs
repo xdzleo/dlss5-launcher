@@ -289,6 +289,66 @@ public static class NeuralUpliftService
 
     private static bool RuntimeIsOurs(string targetDir) => File.Exists(RuntimeMark(targetDir));
 
+    /// <summary>
+    /// O SHA-256 do runtime neural que foi MEDIDO rodando.
+    ///
+    /// Existem dois binarios de `nvngx_dlssnr.dll` circulando com o MESMO tamanho (165.840.496
+    /// bytes) e a MESMA versao (310.8.0.0), e eles nao sao intercambiaveis. Medido no Shadow of
+    /// the Tomb Raider, com todo o resto da pasta identico:
+    ///
+    ///   8270B350...  o addon diz "custom runtime accepted" e cria a feature 18 "via the signed
+    ///                snippet" — o jogo roda, avaliando o passe neural a cada quadro.
+    ///   E16BCF15...  o addon diz "reference match" e cria a feature 18 "via the NGX core" — e o
+    ///                device D3D12 e removido com DXGI_ERROR_INVALID_CALL no primeiro quadro,
+    ///                dezenove segundos depois de abrir.
+    ///
+    /// O nome "reference match" convida a achar que o segundo e o certo. Nao e o que a medicao
+    /// diz, e a medicao ganha.
+    /// </summary>
+    public const string RuntimeTestadoSha256 =
+        "8270B350CD82DE5CE89806872CDD6B6A9249B80836B91BBEB3573470744CC206";
+
+    /// <summary>O build do runtime na biblioteca e o que foi medido rodando?</summary>
+    public static bool RuntimeDaBibliotecaEhOTestado() =>
+        File.Exists(LibraryRuntime)
+        && string.Equals(HashDoRuntime(LibraryRuntime), RuntimeTestadoSha256, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Dois runtimes neurais sao o mesmo arquivo?
+    ///
+    /// Por conteudo, e nao por tamanho — que era como esta comparacao decidia, e por isso um
+    /// build nunca substituia o outro: os dois tem exatamente 165.840.496 bytes. O sintoma era
+    /// "reinstalar nao resolve", porque de fato nao resolvia nada; a copia era pulada.
+    /// </summary>
+    public static bool MesmoRuntime(string a, string b) =>
+        string.Equals(HashDoRuntime(a), HashDoRuntime(b), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// SHA-256 com memoria.
+    ///
+    /// Sao 158 MB por leitura, e quem chama e o interruptor: sem o cache, ligar e desligar
+    /// pagava meio segundo de disco a cada clique. A chave inclui tamanho e data de escrita,
+    /// entao trocar o arquivo invalida a entrada sozinho.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<
+        (string Caminho, long Tamanho, long Escrito), string> HashesDeRuntime = new();
+
+    private static string HashDoRuntime(string caminho)
+    {
+        try
+        {
+            var fi = new FileInfo(caminho);
+            if (!fi.Exists) return "";
+            var chave = (caminho, fi.Length, fi.LastWriteTimeUtc.Ticks);
+            if (HashesDeRuntime.TryGetValue(chave, out var guardado)) return guardado;
+            using var fs = File.OpenRead(caminho);
+            var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+            if (HashesDeRuntime.Count < 64) HashesDeRuntime[chave] = hash;
+            return hash;
+        }
+        catch (Exception ex) { Log.Warn($"neural hash {caminho}: {ex.Message}"); return ""; }
+    }
+
     private static void ClearRuntimeMark(string targetDir)
     {
         try { if (File.Exists(RuntimeMark(targetDir))) File.Delete(RuntimeMark(targetDir)); }
@@ -1415,6 +1475,10 @@ public static class NeuralUpliftService
     {
         if (AddonService.IsGameRunning(targetDir))
             throw new InvalidOperationException(L.T("Error_GameRunning"));
+        // Antes de copiar 158 MB, conferir QUAL 158 MB. Um build errado aqui nao falha a
+        // instalacao: ele instala inteiro, a cadeia fica verde, e o jogo morre no primeiro
+        // quadro (ver RuntimeTestadoSha256). Sai barato porque so age quando esta errado.
+        AdotarRuntimeTestado(progress);
         if (!File.Exists(LibraryRuntime))
             throw new InvalidOperationException(L.T("Neural_Blocked_Runtime", RuntimeFile));
         if (useGenericAddon && !File.Exists(LibraryAddon))
@@ -1433,7 +1497,7 @@ public static class NeuralUpliftService
             File.Copy(LibraryRuntime, deployed, overwrite: true);
             MarkRuntimeOurs(targetDir);
         }
-        else if (new FileInfo(deployed).Length != new FileInfo(LibraryRuntime).Length)
+        else if (!MesmoRuntime(deployed, LibraryRuntime))
         {
             progress?.Report(L.T("Neural_Deploying"));
             var backup = deployed + BackupSuffix;
@@ -1693,6 +1757,51 @@ public static class NeuralUpliftService
                 if (Directory.Exists(p)) yield return p;
             }
         }
+    }
+
+    /// <summary>
+    /// Troca o runtime da biblioteca pelo build que foi medido rodando, se ele estiver no disco.
+    ///
+    /// Ter o arquivo certo nao e questao de versao nem de tamanho — os dois builds mentem nos
+    /// dois campos (ver <see cref="RuntimeTestadoSha256"/>). Entao a busca e por hash, e o
+    /// unico lugar onde procurar sao as pastas das outras ferramentas, que embarcam o binario.
+    ///
+    /// O build que sai fica guardado ao lado: se um dia ele for o certo para algum jogo, esta a
+    /// um rename de distancia.
+    /// </summary>
+    /// <returns>De onde veio, ou nulo se a biblioteca ja estava certa ou nada foi achado.</returns>
+    public static string? AdotarRuntimeTestado(IProgress<string>? progress = null)
+    {
+        if (RuntimeDaBibliotecaEhOTestado()) return null;
+
+        var options = new EnumerationOptions
+        {
+            IgnoreInaccessible = true, RecurseSubdirectories = true,
+            MaxRecursionDepth = 6, AttributesToSkip = FileAttributes.ReparsePoint,
+        };
+        foreach (var root in RaizesDeOutrasFerramentas())
+        {
+            try
+            {
+                foreach (var f in Directory.EnumerateFiles(root, RuntimeFile, options))
+                {
+                    if (!string.Equals(HashDoRuntime(f), RuntimeTestadoSha256, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    Directory.CreateDirectory(LibraryDir);
+                    if (File.Exists(LibraryRuntime))
+                    {
+                        var guardado = LibraryRuntime + "." + HashDoRuntime(LibraryRuntime)[..8];
+                        if (!File.Exists(guardado)) File.Copy(LibraryRuntime, guardado);
+                    }
+                    File.Copy(f, LibraryRuntime, overwrite: true);
+                    progress?.Report(L.T("Neural_RuntimeTestadoAdotado"));
+                    Log.Info($"neural: runtime testado adotado de {f}");
+                    return f;
+                }
+            }
+            catch (Exception ex) { Log.Warn($"neural runtime testado em {root}: {ex.Message}"); }
+        }
+        return null;
     }
 
     public static string? AutoDiscoverRuntime(IEnumerable<string> gameDirs, IProgress<string>? progress = null)
