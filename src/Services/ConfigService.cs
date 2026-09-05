@@ -53,6 +53,15 @@ public class LauncherConfig
     /// </summary>
     public string? FeederTag { get; set; }
 
+    /// <summary>
+    /// O SHA-256 do addon generico que o USUARIO escolheu com `addon &lt;arquivo&gt;`.
+    ///
+    /// Existe para o padrao medido nao passar por cima de uma escolha deliberada. Sem isto,
+    /// experimentar um build novo era impossivel: a proxima instalacao trocava de volta, e a
+    /// pessoa concluia que o launcher ignorou o pedido dela.
+    /// </summary>
+    public string? AddonEscolhidoSha { get; set; }
+
     /// <summary>Idioma da interface, como tag BCP-47 ("pt-BR", "en"). Vazio ou ausente
     /// significa "seguir o Windows", que e o padrao e o que quase todo mundo quer.</summary>
     public string? Language { get; set; }

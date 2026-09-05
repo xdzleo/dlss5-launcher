@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.98.0
+
+**O pacote do Feeder traz o add-on dele, e o launcher nunca extraía esse arquivo.**
+
+O DLSS 5 Swapper embarca **dois builds diferentes** do `renodx-dlss5.addon64`:
+
+| onde | tamanho | sha | usado quando |
+|---|---|---|---|
+| `payload\renodx-dlss5.addon64` | 1.703.424 | `245c0613…` | o jogo tem **DLSS próprio** |
+| `payload\feeder\host64\renodx-dlss5.addon64` | 1.694.720 | `9150097c…` | o jogo vai pelo **Feeder** |
+
+Os dois dizem `v0.2026.0828.0517`. São binários compilados junto com o Feeder, e o Swapper escolhe
+um para cada rota. Este launcher usava **um só para as duas**, então em todo jogo sem DLSS nativo o
+par ficava trocado — metades de duas versões.
+
+Agora o pacote do Feeder é aberto atrás do add-on dele, e a troca é **por conteúdo**: uma pasta que
+já estava montada errada é corrigida na próxima instalação, mesmo sem haver nada para renomear.
+Pacote antigo sem esse arquivo continua funcionando como antes.
+
+**Medido no Sekiro:** com o par trocado, morria entre 10 s e 35 s. Com o par certo, **90 s de pé**,
+zero crashes, `RenoDX` + `DLSS 5 Neural Rendering` + `DLSS 5 Feed` carregados juntos e o Feeder
+entregando lotes de 600 quadros a ~60 fps. 16 pastas foram corrigidas nesta máquina.
+
+### Botões mortos
+
+**"Restaurar original" e "Apagar a pasta" nunca funcionaram** — nasciam desabilitados. O
+`CanExecute` deles é avaliado uma vez, na construção, quando nenhum jogo está selecionado; quem
+nunca chama `RaiseCanExecuteChanged` fica desabilitado **para sempre**. A lista de comandos a
+reavaliar era escrita à mão, e os dois não estavam nela.
+
+A lista virou **reflexão** — todo comando público da tela entra, sem ninguém ter de lembrar. E há
+um teste que falha se algum comando ficar de fora.
+
+### E mais
+
+- **Sobra não pede mais atualização.** Uma pasta sem jogo tem *resto* de mod, não instalação: ler
+  "add-on presente" ali fazia o cartão pedir atualização de um mod para um jogo que não existe.
+- **Restaurar desliga os interruptores.** O launcher tem uma segunda memória do que instalou, em
+  `installed.json`, fora da pasta do jogo. Apagar o arquivo sem apagar o registro deixava a tela
+  achando que o mod continuava instalado. Agora o registro sai junto, e a pasta é relida.
+- **Escolha manual de add-on manda mais que o padrão.** `addon <arquivo>` fica lembrado, e a
+  instalação seguinte não desfaz — sem isso, experimentar um build era impossível.
+
+
 ## v1.97.0
 
 **O par add-on + runtime é que decide se o passe neural roda — e os dois enganam quem olha versão e

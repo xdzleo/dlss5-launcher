@@ -139,8 +139,13 @@ public class GameItemVm : ObservableObject
         }
     }
 
-    public bool IsInstalled => _state?.AddonPath != null;
-    public bool IsEnabled => _state?.AddonEnabled == true;
+    // A sobra nao tem mod instalado — tem RESTO de mod.
+    //
+    // O jogo foi desinstalado e os arquivos ficaram; ler "addon presente" ali e dizer que ha uma
+    // instalacao viva numa pasta sem executavel. O sintoma era o cartao pedindo atualizacao de um
+    // mod para um jogo que nao existe mais, todo dia, sem jeito de calar.
+    public bool IsInstalled => !EhSobra && _state?.AddonPath != null;
+    public bool IsEnabled => !EhSobra && _state?.AddonEnabled == true;
 
     private bool _hasUpdate;
     /// <summary>Uma build mais nova deste mod está disponível no servidor.</summary>
@@ -157,6 +162,7 @@ public class GameItemVm : ObservableObject
     }
 
     public ModBadge Badge =>
+        EhSobra ? ModBadge.None :
         _hasUpdate && _state?.AddonPath != null ? ModBadge.UpdateAvailable :
         _state?.AddonPath != null
             ? (_state.AddonEnabled ? ModBadge.Enabled : ModBadge.Disabled)

@@ -39,6 +39,29 @@ public static class FeederService
     /// runtimes. E uma instalacao inteira dentro de host64\.
     /// </summary>
     public const string Addon32File = "dlss5-feed.addon32";
+
+    /// <summary>
+    /// O addon de NR que vem DENTRO do pacote do Feeder.
+    ///
+    /// O pacote traz o seu proprio `renodx-dlss5.addon64`, e ele NAO e o mesmo binario do addon
+    /// que a rota nativa usa: 1.694.720 bytes contra 1.703.424, e SHA diferente, com a mesma
+    /// string de versao nos dois. O DLSS 5 Swapper escolhe um para cada rota — o de dentro do
+    /// pacote quando o jogo vai pelo Feeder, o outro quando o jogo tem DLSS proprio.
+    ///
+    /// Este launcher usava um so para as duas rotas, e o par ficava trocado em todo jogo sem
+    /// DLSS nativo. Sao dois binarios compilados juntos com o Feeder; nao ha razao para supor que
+    /// o de outra rota atenda o mesmo contrato.
+    /// </summary>
+    public const string HostAddonFile = "renodx-dlss5.addon64";
+
+    /// <summary>A copia do pacote do Feeder, na biblioteca. Nome proprio para nao se misturar
+    /// com o addon da rota nativa, que mora em outra pasta com outro nome.</summary>
+    /// Calculada, e nao inicializada: um `{ get; } =` aqui roda ANTES de LibraryDir, que e
+    /// declarado mais abaixo, e o inicializador estatico da classe inteira estourava.
+    public static string LibraryHostAddon => Path.Combine(LibraryDir, "renodx-dlss5-do-feeder.addon64");
+
+    /// <summary>O pacote trouxe o addon dele?</summary>
+    public static bool HostAddonInLibrary => File.Exists(LibraryHostAddon);
     public const string Host64Exe = "dlss5-feed-host64.exe";
     public const string Host64Dir = "host64";
 
@@ -688,6 +711,10 @@ public static class FeederService
             {
                 TirarDoPacote(pacote, AddonFile, LibraryAddon);
                 TirarDoPacote(pacote, FxFile, LibraryFx);
+                // O addon que veio COM o Feeder. Opcional porque pacotes antigos nao o trazem —
+                // e nesses o launcher continua usando o da rota nativa, como sempre fez.
+                try { TirarDoPacote(pacote, HostAddonFile, LibraryHostAddon); }
+                catch (Exception ex) { Log.Info($"feeder: pacote sem {HostAddonFile}: {ex.Message}"); }
             }
             finally { ApagarPacote(pacote); }
             // O addon e um PE; o .fx e texto. Um pacote com o arquivo errado dentro passaria

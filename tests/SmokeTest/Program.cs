@@ -1152,5 +1152,34 @@ if (match != null)
         "depois de instalar e restaurar duas vezes, o dxgi.dll ainda e o do jogo");
 }
 
+// 19. Nenhum comando da tela pode ficar de fora da reavaliacao.
+//
+// Um comando cujo RaiseCanExecuteChanged nunca e chamado tem o CanExecute avaliado UMA vez, na
+// construcao — com Selected nulo. Se ele exige jogo selecionado, o botao nasce desabilitado e
+// fica assim para sempre. Aconteceu tres vezes, sempre por esquecer uma lista escrita a mao;
+// "Restaurar original" e "Apagar a pasta" foram as duas ultimas. Agora a lista e por reflexao,
+// e este teste e o que garante que ela alcanca todo mundo.
+{
+    var comandos = typeof(RenoDXLauncher.ViewModels.MainViewModel)
+        .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+        .Where(p => typeof(System.Windows.Input.ICommand).IsAssignableFrom(p.PropertyType))
+        .ToList();
+    var reavaliaveis = comandos
+        .Where(p => p.PropertyType.GetMethod("RaiseCanExecuteChanged", Type.EmptyTypes) is not null)
+        .ToList();
+
+    Check(comandos.Count > 20, $"a tela expoe {comandos.Count} comandos");
+    var sem = comandos.Except(reavaliaveis).Select(p => p.Name).ToList();
+    Check(sem.Count == 0,
+        sem.Count == 0
+            ? "todo comando da tela sabe se reavaliar (RaiseCanExecuteChanged)"
+            : $"comando sem RaiseCanExecuteChanged: {string.Join(", ", sem)}");
+
+    // E os dois que quebraram tem de estar entre eles, pelo nome — se alguem os renomear, o
+    // teste cai junto e a pessoa lembra de olhar aqui.
+    foreach (var n in new[] { "RestaurarOriginalCommand", "ApagarSobraCommand" })
+        Check(reavaliaveis.Any(p => p.Name == n), $"{n} entra na reavaliacao");
+}
+
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");
 return failures;

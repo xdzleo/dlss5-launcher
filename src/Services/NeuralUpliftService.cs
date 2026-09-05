@@ -107,8 +107,35 @@ public static class NeuralUpliftService
             if (Directory.Exists(Path.Combine(targetDir, FeederService.Host64Dir))) return;
 
             var nosso = Path.Combine(targetDir, GenericAddonFile);
-            if (!File.Exists(nosso)) return;
             var esperado = Path.Combine(targetDir, FeederEsperaAddon);
+
+            // O par certo primeiro, e independente de haver algo para renomear.
+            //
+            // Uma instalacao antiga ja deixou o nome ocupado pelo addon da rota NATIVA, e ali nao
+            // ha `renodx-neural.addon64` nenhum para renomear — a funcao saia pela porta de cima e
+            // o par errado ficava para sempre. Trocar por conteudo resolve os dois casos: a pasta
+            // nova e a que ja estava montada errada.
+            if (FeederService.HostAddonInLibrary
+                && (!File.Exists(esperado) || !MesmoRuntime(esperado, FeederService.LibraryHostAddon)))
+            {
+                if (File.Exists(esperado))
+                {
+                    var bak = esperado + BackupSuffix;
+                    if (!File.Exists(bak)) File.Copy(esperado, bak);
+                }
+                BackupService.Copiar(targetDir, FeederService.LibraryHostAddon, esperado, "feeder-addon");
+                if (File.Exists(nosso)) BackupService.Apagar(targetDir, nosso, "feeder-addon");
+                File.WriteAllText(esperado + OursSuffix, "addon do proprio pacote do Feeder");
+                var iniPar = new IniFile(iniPath);
+                RemoveFromEarlyLoad(iniPar, GenericAddonFile);
+                AddToEarlyLoad(iniPar, FeederEsperaAddon);
+                iniPar.Save();
+                Log.Info($"neural: {FeederEsperaAddon} veio do pacote do Feeder (par certo para esta rota)");
+                progress?.Report(L.T("Neural_AddonFeederName"));
+                return;
+            }
+
+            if (!File.Exists(nosso)) return;
             if (File.Exists(esperado)
                 && new FileInfo(esperado).Length == new FileInfo(nosso).Length) return;
 
@@ -130,7 +157,21 @@ public static class NeuralUpliftService
                 var backup = esperado + BackupSuffix;
                 if (!File.Exists(backup)) File.Copy(esperado, backup);
             }
-            File.Move(nosso, esperado, overwrite: true);
+
+            // O build que fica com esse nome e o que veio DENTRO do pacote do Feeder, quando ele
+            // existe — e nao o da rota nativa.
+            //
+            // Sao dois binarios diferentes com a mesma string de versao (ver
+            // FeederService.HostAddonFile). O Feeder e o addon dele sao compilados juntos; usar o
+            // da outra rota era parear metades de duas versoes. Sem o arquivo no pacote, o
+            // comportamento antigo continua valendo — que e melhor do que nao ter addon nenhum.
+            if (FeederService.HostAddonInLibrary)
+            {
+                BackupService.Copiar(targetDir, FeederService.LibraryHostAddon, esperado, "feeder-addon");
+                BackupService.Apagar(targetDir, nosso, "feeder-addon");
+                Log.Info($"neural: {FeederEsperaAddon} veio do pacote do Feeder (par certo para esta rota)");
+            }
+            else File.Move(nosso, esperado, overwrite: true);
             File.WriteAllText(esperado + OursSuffix, "renomeado para o nome que o Feeder procura");
 
             // O early-load ja foi escrito com o nome antigo pelo Apply; apontar para um arquivo
@@ -1809,9 +1850,27 @@ public static class NeuralUpliftService
     /// Simetrico do <see cref="AdotarRuntimeTestado"/> e pela mesma razao: o par addon+runtime e
     /// que decide se o passe neural roda, e os dois enganam quem olha versao e tamanho.
     /// </summary>
+    /// <summary>Guarda que este build foi escolhido a dedo, para o padrao nao desfazer.</summary>
+    public static void LembrarAddonEscolhido(string caminho)
+    {
+        try
+        {
+            var cfg = LauncherConfig.Load();
+            cfg.AddonEscolhidoSha = HashDoRuntime(caminho);
+            cfg.Save();
+            Log.Info($"neural: addon escolhido a dedo ({cfg.AddonEscolhidoSha?[..8]}); o padrao nao vai trocar");
+        }
+        catch (Exception ex) { Log.Warn($"neural lembrar addon: {ex.Message}"); }
+    }
+
     public static string? AdotarAddonTestado(IProgress<string>? progress = null)
     {
         if (AddonDaBibliotecaEhOTestado()) return null;
+        // Escolha a dedo manda mais que o padrao. O padrao existe para quem nao escolheu.
+        var escolhido = LauncherConfig.Load().AddonEscolhidoSha;
+        if (!string.IsNullOrEmpty(escolhido)
+            && string.Equals(HashDoRuntime(LibraryAddon), escolhido, StringComparison.OrdinalIgnoreCase))
+            return null;
         var options = new EnumerationOptions
         {
             IgnoreInaccessible = true, RecurseSubdirectories = true,

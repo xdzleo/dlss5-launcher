@@ -1251,40 +1251,39 @@ public class MainViewModel : ObservableObject
         // no mesmo painel. Aqui a regra e uma so: mexeu no estado, os comandos sao reavaliados;
         // logo o interruptor tambem.
         RaiseModState();
-        RefreshCommand.RaiseCanExecuteChanged();
-        AddManualGameCommand.RaiseCanExecuteChanged();
-        CheckUpdatesCommand.RaiseCanExecuteChanged();
-        UpdateLauncherCommand.RaiseCanExecuteChanged();
-        UpdateAllCommand.RaiseCanExecuteChanged();
-        InstallCommand.RaiseCanExecuteChanged();
-        ToggleCommand.RaiseCanExecuteChanged();
-        RemoveCommand.RaiseCanExecuteChanged();
-        SaveSettingsCommand.RaiseCanExecuteChanged();
-        ApplyProfileCommand.RaiseCanExecuteChanged();
-        ResetSettingsCommand.RaiseCanExecuteChanged();
-        OpenFolderCommand.RaiseCanExecuteChanged();
-        LaunchGameCommand.RaiseCanExecuteChanged();
-        DlssFixCommand.RaiseCanExecuteChanged();
-        NeuralCommand.RaiseCanExecuteChanged();
-        RepairReShadeCommand.RaiseCanExecuteChanged();
-        // Faltar aqui nao deixa o botao "as vezes" desabilitado: o CanExecute e avaliado uma vez,
-        // na construcao, quando Selected ainda e nulo — e nunca mais. O ModCommand exige
-        // Selected.HasMod, entao ficava morto para sempre.
-        Dlss5Command.RaiseCanExecuteChanged();
-        ModCommand.RaiseCanExecuteChanged();
-        ImportNeuralRuntimeCommand.RaiseCanExecuteChanged();
-        AfastarConflitosCommand.RaiseCanExecuteChanged();
-        CorrigirConflitosCommand.RaiseCanExecuteChanged();
-        // Sem isto os dois botoes do tradutor ficam mortos apos a primeira troca: o CanExecute
-        // olha Busy, e Busy so volta ao normal no finally de quem fez a troca.
-        EscolherTradutorCommand.RaiseCanExecuteChanged();
-        MfgCommand.RaiseCanExecuteChanged();
-        MfgMultiplierCommand.RaiseCanExecuteChanged();
-
-        RestoreAllDlssCommand.RaiseCanExecuteChanged();
-        OpenMaintainerCommand.RaiseCanExecuteChanged();
-        OpenNexusCommand.RaiseCanExecuteChanged();
+        // Todos os comandos, por reflexao — e nao uma lista escrita a mao.
+        //
+        // A lista a mao ja custou tres botoes mortos, e sempre pelo mesmo motivo: quem escreve um
+        // comando novo nao sabe que existe um segundo lugar para editar. Faltar ali nao deixa o
+        // botao "as vezes" desabilitado — deixa PARA SEMPRE, porque o CanExecute e avaliado uma
+        // vez na construcao, quando Selected ainda e nulo, e nunca mais.
+        //
+        // Foi o que aconteceu com "Restaurar original" e "Apagar a pasta": nasceram desabilitados
+        // e ninguem clicava neles de verdade. Agora nao ha lista para esquecer.
+        foreach (var raise in ComandosDaTela) raise(this);
     }
+
+    /// <summary>
+    /// Os RaiseCanExecuteChanged de todo comando publico desta classe, resolvidos uma vez.
+    ///
+    /// Uma vez porque a reflexao custa, e a lista nao muda em tempo de execucao: as propriedades
+    /// da classe sao as mesmas do primeiro ao ultimo clique.
+    /// </summary>
+    private static readonly Action<MainViewModel>[] ComandosDaTela =
+        typeof(MainViewModel)
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(p => p.GetMethod is not null
+                        && p.PropertyType.GetMethod("RaiseCanExecuteChanged", System.Type.EmptyTypes) is not null)
+            .Select(p =>
+            {
+                var metodo = p.PropertyType.GetMethod("RaiseCanExecuteChanged", System.Type.EmptyTypes)!;
+                return new Action<MainViewModel>(vm =>
+                {
+                    try { if (p.GetValue(vm) is { } cmd) metodo.Invoke(cmd, null); }
+                    catch (Exception ex) { Log.Warn($"raise {p.Name}: {ex.Message}"); }
+                });
+            })
+            .ToArray();
 
     // ---------- load pipeline ----------
 
@@ -2351,6 +2350,19 @@ public class MainViewModel : ObservableObject
             StatusText = L.T("Backup_Restaurado", r.Devolvidos, r.Apagados)
                 + (r.Divergentes.Count > 0 ? "  " + L.T("Backup_Divergentes", r.Divergentes.Count) : "")
                 + (r.Faltando.Count > 0 ? "  " + L.T("Backup_Faltando", r.Faltando.Count) : "");
+            // A tela tem de reler a PASTA, e nao so a lista.
+            //
+            // Fechar o painel e recarregar a biblioteca nao apagava o estado que o cartao ja
+            // tinha lido: os interruptores continuavam LIGADOS sobre uma pasta de onde os
+            // arquivos acabaram de sair. E o mesmo caminho que a desinstalacao usa — releitura do
+            // estado do item, depois da pasta, depois da grade.
+            if (Selected is { } item)
+            {
+                item.RefreshState();
+                if (item == _detailItem) await RefreshFolderAsync(_detailToken);
+            }
+            RefreshViewKeepSelection();
+            RaiseCommands();
             IsDialogOpen = false;
             await LoadAsync(forceRefresh: true);
         }

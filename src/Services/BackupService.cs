@@ -251,6 +251,9 @@ public static class BackupService
             var guardado = Path.Combine(RaizDoBackup(pastaDoJogo), s.Rel);
             var alvo = Path.Combine(pastaDoJogo, s.Rel);
             if (!File.Exists(guardado)) { faltando.Add(s.Rel); Anotar(pastaDoJogo, "restaurar", "SEM BACKUP", s.Rel); continue; }
+            // O arquivo volta ao conteudo de antes; o registro de mod instalado que apontava para
+            // ele tem de sair pelo mesmo motivo do caso acima.
+            InstalledModRegistry.Remove(alvo);
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(alvo)!);
@@ -277,6 +280,11 @@ public static class BackupService
             try
             {
                 if (File.Exists(alvo)) { File.Delete(alvo); apagados++; Anotar(pastaDoJogo, "restaurar", "apagou o nosso", a.Rel); }
+                // O launcher tem uma segunda memoria do que instalou, em installed.json, e ela
+                // nao mora na pasta do jogo. Apagar o arquivo sem apagar o registro deixava a
+                // tela achando que o mod continua instalado — o interruptor seguia LIGADO sobre
+                // uma pasta de onde o addon acabou de sair.
+                InstalledModRegistry.Remove(alvo);
             }
             catch (Exception ex) { Log.Warn($"backup apagar {a.Rel}: {ex.Message}"); }
         }

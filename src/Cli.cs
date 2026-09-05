@@ -465,6 +465,7 @@ public static class Cli
         }
         var ctx = await LoadAsync();
         NeuralUpliftService.ImportAddon(arquivo);
+        NeuralUpliftService.LembrarAddonEscolhido(arquivo);
         var pastas = ctx.Games.Select(g => g.InstallDir).Where(d => d is not null).Distinct()!.ToList();
         var n = NeuralUpliftService.PropagateAddon(pastas!,
             new Progress<string>(m => Console.WriteLine("  " + m)));
