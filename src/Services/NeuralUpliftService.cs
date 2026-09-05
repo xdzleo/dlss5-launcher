@@ -283,7 +283,7 @@ public static class NeuralUpliftService
 
     private static void MarkRuntimeOurs(string targetDir)
     {
-        try { File.WriteAllText(RuntimeMark(targetDir), DateTime.UtcNow.ToString("o")); }
+        try { BackupService.Escrever(targetDir, RuntimeMark(targetDir), DateTime.UtcNow.ToString("o"), "marca"); }
         catch (Exception ex) { Log.Warn($"neural mark: {ex.Message}"); }
     }
 
@@ -407,7 +407,7 @@ public static class NeuralUpliftService
             var novo = !File.Exists(dest);
             var backup = dest + BackupSuffix;
             if (!novo && !File.Exists(backup)) File.Copy(dest, backup);
-            File.Copy(source, dest, overwrite: true);
+            BackupService.Copiar(targetDir, source, dest, "neural-rr");
             // Marca so quando o arquivo nao existia: desligar o recurso devolve a pasta ao que
             // era, sem apagar um RR que o jogo ja trazia.
             if (novo) MarkOurs(targetDir, RayReconstructionFile);
@@ -445,7 +445,7 @@ public static class NeuralUpliftService
 
             var backup = alvo + BackupSuffix;
             if (!File.Exists(backup)) File.Copy(alvo, backup);
-            File.Delete(alvo);
+            BackupService.Apagar(targetDir, alvo, "neural-rr");
             progress?.Report(L.T("Neural_OrphanRrRemoved"));
             Log.Info($"neural: {RayReconstructionFile} orfao removido de {targetDir}");
         }
@@ -647,7 +647,13 @@ public static class NeuralUpliftService
 
     private static void MarkOurs(string targetDir, string fileName)
     {
-        try { File.WriteAllText(Path.Combine(targetDir, fileName + OursSuffix), DateTime.UtcNow.ToString("o")); }
+        try
+        {
+            // O marcador tambem e um arquivo que a pasta nao tinha: sem passar pelo registro,
+            // ele sobrevivia ao restaurar e ficava contando uma historia que nao e mais verdade.
+            BackupService.Escrever(targetDir, Path.Combine(targetDir, fileName + OursSuffix),
+                                   DateTime.UtcNow.ToString("o"), "marca");
+        }
         catch (Exception ex) { Log.Warn($"neural mark {fileName}: {ex.Message}"); }
     }
 
@@ -940,7 +946,7 @@ public static class NeuralUpliftService
         if (!File.Exists(LibraryBridge)) return;
         var dest = Path.Combine(targetDir, BridgeFile);
         if (File.Exists(dest) && new FileInfo(dest).Length == new FileInfo(LibraryBridge).Length) return;
-        File.Copy(LibraryBridge, dest, overwrite: true);
+        BackupService.Copiar(targetDir, LibraryBridge, dest, "ponte-dx11");
         progress?.Report(L.T("Dlss5_Bridge_Deployed"));
         Log.Info($"dlss5 bridge deployed to {targetDir}");
     }
@@ -1494,7 +1500,7 @@ public static class NeuralUpliftService
         if (!File.Exists(deployed))
         {
             progress?.Report(L.T("Neural_Deploying"));
-            File.Copy(LibraryRuntime, deployed, overwrite: true);
+            BackupService.Copiar(targetDir, LibraryRuntime, deployed, "neural");
             MarkRuntimeOurs(targetDir);
         }
         else if (!MesmoRuntime(deployed, LibraryRuntime))
@@ -1502,7 +1508,7 @@ public static class NeuralUpliftService
             progress?.Report(L.T("Neural_Deploying"));
             var backup = deployed + BackupSuffix;
             if (!File.Exists(backup)) File.Copy(deployed, backup);
-            File.Copy(LibraryRuntime, deployed, overwrite: true);
+            BackupService.Copiar(targetDir, LibraryRuntime, deployed, "neural");
         }
 
         DeployRayReconstruction(targetDir, progress);
@@ -1521,7 +1527,8 @@ public static class NeuralUpliftService
             if (DeployedGenericAddon(targetDir) is null)
             {
                 progress?.Report(L.T("Neural_DeployingAddon"));
-                File.Copy(LibraryAddon, Path.Combine(targetDir, GenericAddonFile), overwrite: true);
+                BackupService.Copiar(targetDir, LibraryAddon,
+                                     Path.Combine(targetDir, GenericAddonFile), "neural");
             }
             SetNeuralSwitch(ini, true);
         }
@@ -1690,7 +1697,7 @@ public static class NeuralUpliftService
         foreach (var name in files)
         {
             var deployed = Path.Combine(targetDir, name);
-            try { if (File.Exists(deployed)) File.Delete(deployed); }
+            try { BackupService.Apagar(targetDir, deployed, "neural"); }
             catch (Exception ex)
             {
                 Log.Warn($"neural remove {deployed}: {ex.Message}");
@@ -2293,13 +2300,19 @@ public static class NeuralUpliftService
         // procura esse nome ao lado dele — a linha
         //     [feed] DLSS 5 add-on: renodx-dlss5.addon64 not found next to this add-on
         // aparecia em todo log e eu a tinha lido como cosmetica.
+        // Registrado na pasta do JOGO, e nao na do host: `host64\` e uma subpasta dela, e quem
+        // clica em restaurar quer a pasta do jogo inteira de volta — sem saber que existe um
+        // host auxiliar ali dentro.
+        var jogo = Path.GetDirectoryName(hostDir.TrimEnd(Path.DirectorySeparatorChar)) ?? hostDir;
         if (File.Exists(LibraryAddon))
-            File.Copy(LibraryAddon, Path.Combine(hostDir, "renodx-dlss5.addon64"), overwrite: true);
+            BackupService.Copiar(jogo, LibraryAddon,
+                                 Path.Combine(hostDir, "renodx-dlss5.addon64"), "host64");
         if (File.Exists(LibraryRuntime))
-            File.Copy(LibraryRuntime, Path.Combine(hostDir, RuntimeFile), overwrite: true);
+            BackupService.Copiar(jogo, LibraryRuntime, Path.Combine(hostDir, RuntimeFile), "host64");
 
         var sr = Path.Combine(DlssRuntimeService.LibraryDir, "nvngx_dlss.dll");
-        if (File.Exists(sr)) File.Copy(sr, Path.Combine(hostDir, "nvngx_dlss.dll"), overwrite: true);
+        if (File.Exists(sr))
+            BackupService.Copiar(jogo, sr, Path.Combine(hostDir, "nvngx_dlss.dll"), "host64");
 
         // O host carrega o addon pelo ReShade dele, e vale a mesma regra de sempre: o SDK de DLSS
         // sobe antes do device, entao a carga antecipada precisa estar la tambem.

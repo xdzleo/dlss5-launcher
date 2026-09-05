@@ -60,6 +60,8 @@ public class MainViewModel : ObservableObject
         // por nao ter download direto. Desinstalar ja instalado nao precisa de download.
         ApagarSobraCommand = new AsyncRelayCommand(ApagarSobraAsync,
             () => Selected?.EhSobra == true && !Busy);
+        RestaurarOriginalCommand = new AsyncRelayCommand(RestaurarOriginalAsync,
+            () => TemBackup && !Busy);
         ModCommand = new AsyncRelayCommand(ToggleModAsync,
             () => !Busy && Selected?.HasMod == true
                   && (Selected?.IsInstalled == true || Selected?.HasDirectDownload == true));
@@ -1145,6 +1147,30 @@ public class MainViewModel : ObservableObject
     /// <summary>Apaga a pasta de um jogo desinstalado onde so ficaram arquivos nossos.</summary>
     public AsyncRelayCommand ApagarSobraCommand { get; }
 
+    /// <summary>Devolve a pasta ao que era antes de o launcher escrever nela.</summary>
+    public AsyncRelayCommand RestaurarOriginalCommand { get; }
+
+    /// <summary>Ha um manifesto de backup nesta pasta — ou seja, ha o que devolver.</summary>
+    public bool TemBackup => BackupService.TemBackup(PastaDoSelecionado);
+
+    /// <summary>Quantos arquivos originais estao guardados. E o numero que o botao promete
+    /// devolver, e dizer "3 arquivos" e mais honesto do que dizer "tudo".</summary>
+    public int OriginaisGuardados
+    {
+        get
+        {
+            try
+            {
+                return PastaDoSelecionado is { } p && BackupService.TemBackup(p)
+                    ? BackupService.Ler(p).Substituidos.Count + BackupService.Ler(p).Acrescentados.Count
+                    : 0;
+            }
+            catch { return 0; }
+        }
+    }
+
+    private string? PastaDoSelecionado => Selected?.State?.TargetDir ?? Selected?.Game.InstallDir;
+
     /// <summary>O mod esta instalado E ativo. E o que o interruptor reflete.</summary>
     public bool ModReady => Selected?.IsInstalled == true && Selected?.IsEnabled == true;
 
@@ -1172,6 +1198,10 @@ public class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ModReady));
         OnPropertyChanged(nameof(ModStateText));
+        // Instalar cria o manifesto de backup, e e o que faz o botao de restaurar nascer. Sem
+        // avisar aqui, ele so apareceria na proxima vez que o jogo fosse aberto no painel.
+        OnPropertyChanged(nameof(TemBackup));
+        OnPropertyChanged(nameof(OriginaisGuardados));
     }
     public AsyncRelayCommand ImportNeuralRuntimeCommand { get; }
     public RelayCommand AfastarConflitosCommand { get; }
@@ -1585,6 +1615,7 @@ public class MainViewModel : ObservableObject
         EngineNotes.Clear();
         DetailStatus = "";
         LimparCartoes();
+        RaiseModState();   // inclui o botao de restaurar, que depende da pasta selecionada
         var item = Selected;
         _detailItem = item;
         if (item is null) return;
@@ -2294,6 +2325,41 @@ public class MainViewModel : ObservableObject
             Log.Warn($"apagar sobra {pasta}: {ex.Message}");
         }
         finally { ActionBusy = false; RaiseCommands(); }
+    }
+
+    /// <summary>
+    /// O botao "restaurar original".
+    ///
+    /// Nao e o mesmo que desinstalar: desinstalar tira o que o launcher instalou, e restaurar
+    /// devolve o que a pasta era — inclusive as DLLs do proprio jogo que foram substituidas por
+    /// versoes mais novas, e o ReShade.ini que ja estava ali antes de nos.
+    /// </summary>
+    private async Task RestaurarOriginalAsync()
+    {
+        if (PastaDoSelecionado is not { } pasta || !BackupService.TemBackup(pasta)) return;
+        var quantos = OriginaisGuardados;
+        if (!DialogWindow.Confirm(
+                Application.Current?.MainWindow,
+                L.T("Backup_Confirm_Title"),
+                L.T("Backup_Confirm_Body", pasta, quantos),
+                L.T("Backup_Restaurar"), DialogKind.Danger)) return;
+
+        ActionBusy = true;
+        try
+        {
+            var r = await Task.Run(() => BackupService.Restaurar(pasta));
+            StatusText = L.T("Backup_Restaurado", r.Devolvidos, r.Apagados)
+                + (r.Divergentes.Count > 0 ? "  " + L.T("Backup_Divergentes", r.Divergentes.Count) : "")
+                + (r.Faltando.Count > 0 ? "  " + L.T("Backup_Faltando", r.Faltando.Count) : "");
+            IsDialogOpen = false;
+            await LoadAsync(forceRefresh: true);
+        }
+        catch (Exception ex)
+        {
+            DetailStatus = ex.Message;
+            Log.Warn($"restaurar {pasta}: {ex.Message}");
+        }
+        finally { ActionBusy = false; OnPropertyChanged(nameof(TemBackup)); RaiseCommands(); }
     }
 
     private async Task ToggleModAsync()

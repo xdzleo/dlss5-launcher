@@ -323,7 +323,7 @@ public class AddonService
             File.Delete(disabled);
             InstalledModRegistry.Remove(disabled);
         }
-        File.Copy(cached, target, overwrite: true);
+        BackupService.Copiar(Path.GetDirectoryName(target), cached, target, "mod");
         InstalledModRegistry.Set(target, new InstalledModRecord
         {
             Slug = entry.Slug,

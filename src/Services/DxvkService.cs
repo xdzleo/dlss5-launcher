@@ -314,7 +314,7 @@ public static class DxvkService
             if (File.Exists(p)) { try { File.Move(p, p + ".pre-dxvk", overwrite: true); } catch { } }
         }
 
-        File.Copy(LibraryD3d9_32, Path.Combine(targetDir, D3d9File), overwrite: true);
+        BackupService.Copiar(targetDir, LibraryD3d9_32, Path.Combine(targetDir, D3d9File), "dxvk");
         // A marca e o que autoriza o Remove a apagar este arquivo depois — ver IsOurs.
         Marcar(Path.Combine(targetDir, D3d9File));
         progress?.Report(L.T("Dxvk_Deployed"));
@@ -395,7 +395,8 @@ public static class DxvkService
         if (guardou) progress?.Report(L.T("Dxvk_ReplacedD3d10"));
 
         foreach (var n in D3d10Files)
-            File.Copy(LibraryD3d10(jogo64Bits, n), Path.Combine(targetDir, n), overwrite: true);
+            BackupService.Copiar(targetDir, LibraryD3d10(jogo64Bits, n),
+                                 Path.Combine(targetDir, n), "dxvk-d3d10");
 
         // A marca e o que autoriza o RemoveD3d10 a ser chamado depois — ver IsOursD3d10.
         Marcar(Path.Combine(targetDir, D3d10MarkFile));
@@ -459,7 +460,11 @@ public static class DxvkService
 
     private static void Marcar(string caminho)
     {
-        try { File.WriteAllText(caminho + OursSuffix, DateTime.UtcNow.ToString("o")); }
+        try
+        {
+            BackupService.Escrever(Path.GetDirectoryName(caminho), caminho + OursSuffix,
+                                   DateTime.UtcNow.ToString("o"), "marca");
+        }
         catch (Exception ex) { Log.Warn($"dxvk mark {Path.GetFileName(caminho)}: {ex.Message}"); }
     }
 

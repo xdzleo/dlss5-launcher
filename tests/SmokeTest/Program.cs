@@ -1078,5 +1078,72 @@ if (match != null)
     Check(!NeuralUpliftService.MesmoRuntime(a, c), "reescrever o arquivo invalida o hash guardado");
 }
 
+// 18. Restaurar devolve a pasta bit a bit.
+//
+// A promessa do botao e forte — "como estava antes de o launcher mexer" — e uma promessa dessas
+// so vale conferida por hash. O teste monta uma pasta, deixa o launcher substituir um arquivo,
+// acrescentar outro, criar uma subpasta e apagar um terceiro; restaura; e compara o SHA-256 de
+// tudo com o de antes.
+{
+    string HashDe(string p)
+    {
+        using var fs = File.OpenRead(p);
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+    }
+    Dictionary<string, string> Retrato(string raiz) =>
+        Directory.EnumerateFiles(raiz, "*", SearchOption.AllDirectories)
+                 .Where(f => !f.Contains(BackupService.PastaDeBackup, StringComparison.OrdinalIgnoreCase))
+                 .ToDictionary(f => Path.GetRelativePath(raiz, f), HashDe, StringComparer.OrdinalIgnoreCase);
+
+    var jogo = Path.Combine(fakeRoot, "PastaDeJogo");
+    Directory.CreateDirectory(jogo);
+    File.WriteAllText(Path.Combine(jogo, "jogo.exe"), "binario original do jogo");
+    File.WriteAllText(Path.Combine(jogo, "dxgi.dll"), "a dll que o jogo trazia");
+    File.WriteAllText(Path.Combine(jogo, "config.ini"), "[jogo]\nvalor=1\n");
+    File.WriteAllText(Path.Combine(jogo, "manual.txt"), "arquivo que ninguem toca");
+
+    var antes = Retrato(jogo);
+    Check(antes.Count == 4, $"a pasta comeca com 4 arquivos (tem {antes.Count})");
+
+    // O launcher trabalha: substitui uma DLL, acrescenta duas coisas (uma em subpasta nova),
+    // reescreve o ini e apaga um arquivo do jogo.
+    var origem = Path.Combine(fakeRoot, "biblioteca-fake.bin");
+    File.WriteAllText(origem, "a dll que o launcher instala");
+    BackupService.Copiar(jogo, origem, Path.Combine(jogo, "dxgi.dll"), "reshade");
+    BackupService.Copiar(jogo, origem, Path.Combine(jogo, "renodx-neural.addon64"), "neural");
+    BackupService.Copiar(jogo, origem, Path.Combine(jogo, "reshade-shaders", "Shaders", "x.fx"), "feeder");
+    BackupService.Escrever(jogo, Path.Combine(jogo, "config.ini"), "[jogo]\nvalor=2\n", "ini");
+    BackupService.Apagar(jogo, Path.Combine(jogo, "manual.txt"), "neural");
+
+    var depois = Retrato(jogo);
+    Check(depois["dxgi.dll"] != antes["dxgi.dll"], "a dll do jogo foi mesmo substituida");
+    Check(!depois.ContainsKey("manual.txt"), "o arquivo apagado sumiu mesmo");
+    Check(depois.ContainsKey("renodx-neural.addon64"), "o addon foi acrescentado");
+
+    // E o diario registrou o caminho todo, com quem fez o que.
+    var diario = BackupService.LerDiario(jogo);
+    Check(diario.Any(l => l.Contains("reshade") && l.Contains("guardou o original")),
+        "o diario diz quem guardou o original do dxgi.dll");
+    Check(diario.Any(l => l.Contains("apagou")), "o diario registra o que foi apagado");
+
+    var r = BackupService.Restaurar(jogo);
+    var voltou = Retrato(jogo);
+
+    Check(r.Divergentes.Count == 0, $"nenhum arquivo voltou com hash errado ({r.Divergentes.Count})");
+    Check(r.Faltando.Count == 0, $"nenhum original ficou sem backup ({r.Faltando.Count})");
+    Check(voltou.Count == antes.Count, $"a pasta voltou a ter {antes.Count} arquivos (tem {voltou.Count})");
+    Check(antes.All(kv => voltou.TryGetValue(kv.Key, out var h) && h == kv.Value),
+        "todo arquivo voltou com o SHA-256 original — a pasta esta bit a bit como estava");
+    Check(!Directory.Exists(Path.Combine(jogo, "reshade-shaders")),
+        "a subpasta que nos criamos saiu junto");
+
+    // Instalar de novo e restaurar de novo nao pode transformar o NOSSO arquivo em "original":
+    // e a regra que faz o segundo restaurar valer tanto quanto o primeiro.
+    BackupService.Copiar(jogo, origem, Path.Combine(jogo, "dxgi.dll"), "reshade");
+    BackupService.Restaurar(jogo);
+    Check(HashDe(Path.Combine(jogo, "dxgi.dll")) == antes["dxgi.dll"],
+        "depois de instalar e restaurar duas vezes, o dxgi.dll ainda e o do jogo");
+}
+
 Console.WriteLine($"\n{(failures == 0 ? "TODOS OS TESTES PASSARAM" : failures + " FALHAS")}");
 return failures;

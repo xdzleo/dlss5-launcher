@@ -264,7 +264,7 @@ public static class DgVoodooService
         // uma instalacao anterior. Uma reinstalacao guardava o proprio wrapper como "original",
         // e a remocao o devolvia sem o conf: um dgVoodoo rodando nos padroes que derrubam o jogo.
         Guardar(destino, ehNosso: EhNossoD3d9(targetDir));
-        File.Copy(origem, destino, overwrite: true);
+        BackupService.Copiar(Path.GetDirectoryName(destino), origem, destino, "dgvoodoo");
         Marcar(destino);
 
         EscreverConf(targetDir);

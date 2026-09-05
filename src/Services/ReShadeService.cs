@@ -272,7 +272,7 @@ public partial class ReShadeService
             return new DeployResult(false, L.T("Error_ReShade_DllMissing", "ReShade64.dll"));
 
         Directory.CreateDirectory(targetDir);
-        File.Copy(source, Path.Combine(targetDir, dllName), overwrite: true);
+        BackupService.Copiar(targetDir, source, Path.Combine(targetDir, dllName), "reshade");
         return new DeployResult(true, "", dllName);
     }
 
@@ -292,7 +292,7 @@ public partial class ReShadeService
             return new DeployResult(false, L.T("Error_ReShade_DllMissing", Path.GetFileName(source)));
 
         Directory.CreateDirectory(targetDir);
-        File.Copy(source, Path.Combine(targetDir, dllName), overwrite: true);
+        BackupService.Copiar(targetDir, source, Path.Combine(targetDir, dllName), "reshade");
         return new DeployResult(true, "", dllName);
     }
 
@@ -356,7 +356,7 @@ public partial class ReShadeService
         }
 
         progress?.Report(L.T("Install_ReShade_Deploying", dllName));
-        File.Copy(source, target, overwrite: true);
+        BackupService.Copiar(targetDir, source, target, "reshade");
 
         // minimal ReShade.ini (RHI template): disable built-in addons that cost perf, esp. DX12
         var ini = new IniFile(Path.Combine(targetDir, "ReShade.ini"));

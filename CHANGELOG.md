@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.96.0
+
+**Toda pasta de jogo agora tem backup, diário e um botão de voltar atrás.**
+
+Antes disto cada serviço guardava o que substituía do seu jeito e ao lado do arquivo: `.renodx-bak`,
+`.pre-dxvk`, `.renodx-ours`, o `anterior/` do Feeder. Funcionava por arquivo e não respondia à
+pergunta que importa — *devolve esta pasta ao que ela era* — porque ninguém tinha a lista inteira.
+
+### O que aparece na pasta do jogo
+
+```
+_DLSS5_Backup\
+  manifesto.json   o que substituímos e o que acrescentamos, com o SHA-256 de cada original
+  diario.log       toda operação, em ordem, com hora, tamanho e hash
+  <caminho>        o arquivo ORIGINAL, bit a bit
+```
+
+Dentro da pasta do jogo de propósito: o backup viaja com o jogo se ele mudar de biblioteca,
+sobrevive a uma reinstalação do launcher, e some junto se você apagar o jogo.
+
+### O botão
+
+**Restaurar original**, ao lado de abrir a pasta, e só aparece quando há o que devolver. Não é o
+mesmo que desinstalar: desinstalar tira o que o launcher instalou; restaurar devolve **o que a
+pasta era** — inclusive as DLLs do próprio jogo que foram substituídas por versões mais novas, e o
+`ReShade.ini` que já estava ali antes de nós. Cada devolução é conferida pelo hash guardado.
+
+Na linha de comando: `restaurar <jogo>`, `restaurar --todos`, e `diario <jogo>` para ler o
+histórico da pasta.
+
+### Duas regras que fazem o restaurar valer alguma coisa
+
+1. **O original é gravado uma vez só.** A segunda instalação já encontra a entrada e não mexe nela
+   — senão o "original" viraria o arquivo que nós mesmos pusemos na primeira, e restaurar
+   devolveria a nossa versão com cara de original.
+2. **Quem foi acrescentado nunca vira substituído.** Um arquivo não pode ser as duas coisas.
+
+### Medido
+
+No Goat Simulator, **1564 arquivos**: instalação completa da cadeia (ReShade, DXVK, Feeder, addon,
+runtimes, caminho de 32 bits com `host64\`, camada Vulkan) e depois restaurar — a pasta voltou
+**bit a bit idêntica**, comparando o SHA-256 de cada um dos 1564. 15 originais devolvidos, 1 arquivo
+nosso removido, zero divergências.
+
+O `manifesto.json` daquela instalação: 10 originais guardados (`d3d9.dll`, `ReShade.ini`, seis
+shaders, o addon de 32 bits, o host auxiliar) e 4 acrescentados, cada um com quem o escreveu.
+
+
 ## v1.95.0
 
 **Existem dois `nvngx_dlssnr.dll` diferentes com o mesmo tamanho e a mesma versão.** O launcher

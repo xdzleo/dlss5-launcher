@@ -66,6 +66,35 @@
     <value>DLSS 5 Launcher</value>
     <comment>Nome do produto: nao traduzir.</comment>
   </data>
+  <data name="Backup_Confirm_Body" xml:space="preserve">
+    <value>{0}
+
+Every file the launcher replaced goes back to the build the game shipped, and the {1} file(s) it added are removed. This is not the same as uninstalling: DLLs the launcher upgraded come back at their old version too.</value>
+  </data>
+  <data name="Backup_Confirm_Title" xml:space="preserve">
+    <value>Restore this folder to the original?</value>
+  </data>
+  <data name="Backup_Divergentes" xml:space="preserve">
+    <value>{0} file(s) came back with a different hash than recorded: the backup folder was changed from outside.</value>
+  </data>
+  <data name="Backup_Faltando" xml:space="preserve">
+    <value>{0} original(s) are missing from the backup and could not be restored.</value>
+  </data>
+  <data name="Backup_ManifestoIlegivel" xml:space="preserve">
+    <value>The backup manifest in this folder cannot be read. Restoring or backing up again would treat the launcher's own files as the originals, so both are refused until the file is fixed or removed.</value>
+  </data>
+  <data name="Backup_Restaurado" xml:space="preserve">
+    <value>Folder restored: {0} original file(s) back, {1} of ours removed.</value>
+  </data>
+  <data name="Backup_Restaurar" xml:space="preserve">
+    <value>Restore original</value>
+  </data>
+  <data name="Backup_Restaurar_Tooltip" xml:space="preserve">
+    <value>Puts every file back the way it was before the launcher first wrote to this folder, and removes everything it added.</value>
+  </data>
+  <data name="Backup_SemBackup" xml:space="preserve">
+    <value>There is no backup for this folder — the launcher has not written anything here.</value>
+  </data>
   <data name="Cli_Add_AlreadyRegistered" xml:space="preserve">
     <value>Folder was already registered: {0}</value>
     <comment>pt: "Pasta já estava registrada: {0}".</comment>
@@ -254,6 +283,9 @@
     <value>Check for updates to installed mods</value>
     <comment>pt com acento no resx: "Verifica atualização dos mods instalados".</comment>
   </data>
+  <data name="Cli_Help_Diario" xml:space="preserve">
+    <value>Shows every change the launcher made in a game's folder, in order</value>
+  </data>
   <data name="Cli_Help_Disable" xml:space="preserve">
     <value>Disable the mod</value>
   </data>
@@ -303,6 +335,9 @@
   <data name="Cli_Help_Profile" xml:space="preserve">
     <value>Show or set the monitor nits profile</value>
     <comment>nits e termo tecnico, mantido.</comment>
+  </data>
+  <data name="Cli_Help_Restaurar" xml:space="preserve">
+    <value>Puts the folder back the way it was before the launcher first wrote to it</value>
   </data>
   <data name="Cli_Help_Set" xml:space="preserve">
     <value>Write settings; close the game first</value>

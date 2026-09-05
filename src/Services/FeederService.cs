@@ -561,13 +561,13 @@ public static class FeederService
 
         // No jogo: o addon de 32 bits, e NAO o de 64 — o processo é 32 bits e o ReShade dali só
         // carrega .addon32.
-        File.Copy(LibraryAddon32, Path.Combine(targetDir, Addon32File), overwrite: true);
+        BackupService.Copiar(targetDir, LibraryAddon32, Path.Combine(targetDir, Addon32File), "feeder32");
         var addon64Solto = Path.Combine(targetDir, AddonFile);
         if (File.Exists(addon64Solto)) File.Delete(addon64Solto);
 
         var host = Path.Combine(targetDir, Host64Dir);
         Directory.CreateDirectory(host);
-        File.Copy(LibraryHost64, Path.Combine(host, Host64Exe), overwrite: true);
+        BackupService.Copiar(targetDir, LibraryHost64, Path.Combine(host, Host64Exe), "feeder32");
 
         var r = await reshade.Deploy64BitAsync(host, "dxgi.dll", progress);
         if (!r.Success) throw new InvalidOperationException(r.Message);
@@ -917,8 +917,8 @@ public static class FeederService
         var shaders = Path.Combine(targetDir, "reshade-shaders", "Shaders");
         Directory.CreateDirectory(shaders);
 
-        File.Copy(LibraryAddon, Path.Combine(targetDir, AddonFile), overwrite: true);
-        File.Copy(LibraryFx, Path.Combine(shaders, FxFile), overwrite: true);
+        BackupService.Copiar(targetDir, LibraryAddon, Path.Combine(targetDir, AddonFile), "feeder");
+        BackupService.Copiar(targetDir, LibraryFx, Path.Combine(shaders, FxFile), "feeder");
 
         // O provedor de motion vectors e seus includes. Sempre sobrescritos: se ficarem de uma
         // versao antiga, o Feed le uma textura com layout diferente e o defeito e silencioso.
@@ -926,7 +926,7 @@ public static class FeederService
         {
             var destino = Caminho(shaders, nome);
             Directory.CreateDirectory(Path.GetDirectoryName(destino)!);
-            File.Copy(Caminho(LibraryDir, nome), destino, overwrite: true);
+            BackupService.Copiar(targetDir, Caminho(LibraryDir, nome), destino, "feeder");
         }
 
         // Os includes base so entram se ainda nao existirem: uma instalacao completa do ReShade
@@ -934,7 +934,8 @@ public static class FeederService
         foreach (var nome in BaseIncludes)
         {
             var destino = Path.Combine(shaders, nome);
-            if (!File.Exists(destino)) File.Copy(Path.Combine(LibraryDir, nome), destino);
+            if (!File.Exists(destino))
+                BackupService.Copiar(targetDir, Path.Combine(LibraryDir, nome), destino, "feeder");
         }
 
         // As texturas vao para reshade-shaders\Textures, que e onde TextureSearchPaths aponta.
@@ -1020,12 +1021,12 @@ public static class FeederService
         var novo = !File.Exists(destino);
         var backup = destino + ".renodx-bak";
         if (!novo && !File.Exists(backup)) File.Copy(destino, backup);
-        File.Copy(origem, destino, overwrite: true);
+        BackupService.Copiar(targetDir, origem, destino, "feeder");
         // Marca so quando fomos nos que trouxemos o arquivo. Sem isso, desligar o recurso apagaria
         // uma copia que ja estava na pasta — o mesmo erro que o runtime neural ja cometeu uma vez.
         if (novo)
         {
-            try { File.WriteAllText(SrMark(targetDir), DateTime.UtcNow.ToString("o")); }
+            try { BackupService.Escrever(targetDir, SrMark(targetDir), DateTime.UtcNow.ToString("o"), "marca"); }
             catch (Exception ex) { Log.Warn($"feeder mark: {ex.Message}"); }
         }
         progress?.Report(L.T("Feeder_DeployingSr"));

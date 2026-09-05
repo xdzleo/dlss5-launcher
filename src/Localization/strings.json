@@ -875,6 +875,50 @@
     "en": "--dgvoodoo ignored: dgVoodoo2 enters as D3D9.dll and never sees a Direct3D 10 device. DXVK is the only translator for D3D10.",
     "pt-BR": "--dgvoodoo ignorado: o dgVoodoo2 entra como D3D9.dll e nunca vê um device Direct3D 10. O DXVK é o único tradutor para D3D10."
   },
+  "Cli_Help_Restaurar": {
+    "en": "Puts the folder back the way it was before the launcher first wrote to it",
+    "pt-BR": "Devolve a pasta ao que era antes de o launcher escrever nela"
+  },
+  "Cli_Help_Diario": {
+    "en": "Shows every change the launcher made in a game's folder, in order",
+    "pt-BR": "Mostra toda alteração que o launcher fez na pasta de um jogo, em ordem"
+  },
+  "Backup_ManifestoIlegivel": {
+    "en": "The backup manifest in this folder cannot be read. Restoring or backing up again would treat the launcher's own files as the originals, so both are refused until the file is fixed or removed.",
+    "pt-BR": "O manifesto de backup desta pasta não pode ser lido. Restaurar ou fazer backup de novo trataria os arquivos do launcher como se fossem os originais, então os dois ficam recusados até o arquivo ser corrigido ou removido."
+  },
+  "Backup_Restaurado": {
+    "en": "Folder restored: {0} original file(s) back, {1} of ours removed.",
+    "pt-BR": "Pasta restaurada: {0} arquivo(s) original(is) de volta, {1} nosso(s) removido(s)."
+  },
+  "Backup_SemBackup": {
+    "en": "There is no backup for this folder — the launcher has not written anything here.",
+    "pt-BR": "Não há backup desta pasta — o launcher não escreveu nada aqui."
+  },
+  "Backup_Divergentes": {
+    "en": "{0} file(s) came back with a different hash than recorded: the backup folder was changed from outside.",
+    "pt-BR": "{0} arquivo(s) voltaram com hash diferente do anotado: a pasta de backup foi mexida por fora."
+  },
+  "Backup_Faltando": {
+    "en": "{0} original(s) are missing from the backup and could not be restored.",
+    "pt-BR": "{0} original(is) não estão no backup e não puderam ser restaurados."
+  },
+  "Backup_Confirm_Title": {
+    "en": "Restore this folder to the original?",
+    "pt-BR": "Restaurar esta pasta ao original?"
+  },
+  "Backup_Confirm_Body": {
+    "en": "{0}\n\nEvery file the launcher replaced goes back to the build the game shipped, and the {1} file(s) it added are removed. This is not the same as uninstalling: DLLs the launcher upgraded come back at their old version too.",
+    "pt-BR": "{0}\n\nCada arquivo que o launcher substituiu volta ao build que veio com o jogo, e os {1} arquivo(s) que ele acrescentou são removidos. Não é o mesmo que desinstalar: as DLLs que o launcher atualizou também voltam à versão antiga."
+  },
+  "Backup_Restaurar": {
+    "en": "Restore original",
+    "pt-BR": "Restaurar original"
+  },
+  "Backup_Restaurar_Tooltip": {
+    "en": "Puts every file back the way it was before the launcher first wrote to this folder, and removes everything it added.",
+    "pt-BR": "Devolve cada arquivo ao que era antes de o launcher escrever nesta pasta pela primeira vez, e remove tudo o que ele acrescentou."
+  },
   "Neural_RuntimeTestadoAdotado": {
     "en": "Neural runtime swapped for the build that was measured running. Two binaries share the same size and version, and only one of them survives past the first frame in some games.",
     "pt-BR": "Runtime neural trocado pelo build que foi medido rodando. Dois binários têm o mesmo tamanho e a mesma versão, e só um deles passa do primeiro quadro em alguns jogos."

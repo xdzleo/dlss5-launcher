@@ -93,6 +93,8 @@ public static class Cli
             "auditoria" or "audit" => await AuditoriaAsync(rest),
             "addon" => await AddonAsync(rest),
             "feeder" => await FeederAsync(rest),
+            "restaurar" or "restore" => await RestaurarAsync(rest),
+            "diario" or "journal" => await DiarioAsync(rest.FirstOrDefault()),
             "doctor" => await DoctorAsync(),
             "help" or "h" or "?" => Help(),
             _ => Unknown(cmd),
@@ -481,6 +483,71 @@ public static class Cli
         return 0;
     }
 
+    /// <summary>
+    /// Devolve a pasta de um jogo ao que ela era antes de o launcher escrever nela.
+    ///
+    /// Existe na linha de comando pelo mesmo motivo dos outros: quem tem trinta jogos nao vai
+    /// clicar trinta vezes. `--todos` percorre a biblioteca inteira.
+    /// </summary>
+    private static async Task<int> RestaurarAsync(string[] rest)
+    {
+        var todos = rest.Any(a => a is "--todos" or "--all");
+        var query = rest.FirstOrDefault(a => !a.StartsWith('-'));
+        if (!todos && string.IsNullOrWhiteSpace(query))
+        {
+            Console.Error.WriteLine("uso: restaurar <jogo> | restaurar --todos");
+            return 1;
+        }
+
+        var ctx = await LoadAsync();
+        var alvos = new List<GameInfo>();
+        if (todos) alvos.AddRange(ctx.Games);
+        else
+        {
+            var g = Resolve(ctx, query, out var err);
+            if (g is null) { Console.Error.WriteLine(err); return 1; }
+            alvos.Add(g);
+        }
+
+        var mexidos = 0;
+        foreach (var g in alvos)
+        {
+            var (_, state) = StateOf(ctx, g);
+            var pasta = state?.TargetDir ?? g.InstallDir;
+            if (pasta is null || !BackupService.TemBackup(pasta)) continue;
+            mexidos++;
+            Console.WriteLine(g.Name);
+            var r = BackupService.Restaurar(pasta);
+            Console.WriteLine("  " + L.T("Backup_Restaurado", r.Devolvidos, r.Apagados));
+            if (r.Faltando.Count > 0) Console.WriteLine("  " + L.T("Backup_Faltando", r.Faltando.Count));
+            if (r.Divergentes.Count > 0) Console.WriteLine("  " + L.T("Backup_Divergentes", r.Divergentes.Count));
+        }
+        if (mexidos == 0) Console.WriteLine(L.T("Backup_SemBackup"));
+        return 0;
+    }
+
+    /// <summary>O diario da pasta: toda alteracao que o launcher fez ali, em ordem.</summary>
+    private static async Task<int> DiarioAsync(string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) { Console.Error.WriteLine("uso: diario <jogo>"); return 1; }
+        var ctx = await LoadAsync();
+        var g = Resolve(ctx, query, out var err);
+        if (g is null) { Console.Error.WriteLine(err); return 1; }
+        var (_, state) = StateOf(ctx, g);
+        var pasta = state?.TargetDir ?? g.InstallDir;
+        if (pasta is null) { Console.Error.WriteLine(L.T("Backup_SemBackup")); return 1; }
+
+        var linhas = BackupService.LerDiario(pasta);
+        if (linhas.Count == 0) { Console.WriteLine(L.T("Backup_SemBackup")); return 0; }
+        Console.WriteLine($"{g.Name} — {pasta}");
+        foreach (var l in linhas) Console.WriteLine("  " + l);
+
+        var m = BackupService.Ler(pasta);
+        Console.WriteLine();
+        Console.WriteLine($"  originais guardados: {m.Substituidos.Count}   acrescentados por nos: {m.Acrescentados.Count}");
+        return 0;
+    }
+
     private static string Curto(string s, int n) => s.Length <= n ? s : s[..(n - 1)] + "…";
 
     /// <summary>Width of the syntax column in the help table.</summary>
@@ -512,6 +579,8 @@ public static class Cli
         HelpRow("auditoria", L.T("Cli_Help_Auditoria"));
         HelpRow("addon <arquivo>", L.T("Cli_Help_Addon"));
         HelpRow("feeder [--novo] [--versao <tag>] [--voltar]", L.T("Cli_Help_Feeder"));
+        HelpRow("restaurar <jogo> | --todos", L.T("Cli_Help_Restaurar"));
+        HelpRow("diario <jogo>", L.T("Cli_Help_Diario"));
         HelpRow("doctor", L.T("Cli_Help_Doctor"));
         Console.WriteLine();
         Console.WriteLine(L.T("Cli_Help_Match", game));

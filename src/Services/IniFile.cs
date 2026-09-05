@@ -122,6 +122,12 @@ public class IniFile
 
     public void Save()
     {
+        // O ini e o arquivo mais reescrito da pasta e o mais facil de esquecer no backup: nao e
+        // uma DLL, e sozinho ele decide o que o ReShade carrega. Guardar o original UMA vez, aqui
+        // dentro, cobre todos os pontos do launcher que mexem no ini sem cada um ter de lembrar.
+        // A pasta do jogo e a do proprio ini em todos eles.
+        BackupService.AntesDeEscrever(System.IO.Path.GetDirectoryName(Path), Path, "ini");
+
         // ReShade writes plain UTF-8 without BOM. Write to a temp file and swap so a
         // crash mid-write can never leave a truncated ReShade.ini behind.
         var content = string.Join(Environment.NewLine, _lines) + Environment.NewLine;

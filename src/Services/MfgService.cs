@@ -371,7 +371,7 @@ public static class MfgService
         progress?.Report(L.T("Mfg_Applying"));
         Directory.CreateDirectory(targetDir);
         var destino = Path.Combine(targetDir, AddonFile);
-        File.Copy(LibraryAddon, destino, overwrite: true);
+        BackupService.Copiar(targetDir, LibraryAddon, destino, "mfg");
         File.WriteAllText(destino + OursSuffix, DateTime.UtcNow.ToString("o"));
         WriteConfig(targetDir, config);
 

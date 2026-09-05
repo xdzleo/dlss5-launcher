@@ -312,7 +312,7 @@ public static class DlssRuntimeService
                 // not turn our previous copy into "the original".
                 if (!File.Exists(backup)) File.Copy(game.Path, backup);
                 progress?.Report(L.T("Dlss_Updating", game.Feature, game.Version, lib.Version));
-                File.Copy(lib.Path, game.Path, overwrite: true);
+                BackupService.Copiar(installDir, lib.Path, game.Path, "dlss-runtime");
                 updated++;
                 notes.Add($"{game.Feature}: {game.Version} -> {lib.Version}");
                 // Registrado por arquivo: sem isso, depois de um jogo comecar a travar nao ha como
@@ -444,7 +444,7 @@ public static class DlssRuntimeService
                     var before = File.Exists(dest) ? ReadVersion(dest) : null;
                     var backup = dest + BackupSuffix;
                     if (File.Exists(dest) && !File.Exists(backup)) File.Copy(dest, backup);
-                    File.Copy(src, dest, overwrite: true);
+                    BackupService.Copiar(installDir, src, dest, "dlss-conjunto");
                     updated++;
                     Log.Info($"dlss fg: {dest} {(before is null ? "(ausente)" : before.ToString())}"
                              + $" -> {ReadVersion(dest)}");

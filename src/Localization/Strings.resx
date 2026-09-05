@@ -66,6 +66,35 @@
     <value>DLSS 5 Launcher</value>
     <comment>Nome do produto: nao traduzir.</comment>
   </data>
+  <data name="Backup_Confirm_Body" xml:space="preserve">
+    <value>{0}
+
+Cada arquivo que o launcher substituiu volta ao build que veio com o jogo, e os {1} arquivo(s) que ele acrescentou são removidos. Não é o mesmo que desinstalar: as DLLs que o launcher atualizou também voltam à versão antiga.</value>
+  </data>
+  <data name="Backup_Confirm_Title" xml:space="preserve">
+    <value>Restaurar esta pasta ao original?</value>
+  </data>
+  <data name="Backup_Divergentes" xml:space="preserve">
+    <value>{0} arquivo(s) voltaram com hash diferente do anotado: a pasta de backup foi mexida por fora.</value>
+  </data>
+  <data name="Backup_Faltando" xml:space="preserve">
+    <value>{0} original(is) não estão no backup e não puderam ser restaurados.</value>
+  </data>
+  <data name="Backup_ManifestoIlegivel" xml:space="preserve">
+    <value>O manifesto de backup desta pasta não pode ser lido. Restaurar ou fazer backup de novo trataria os arquivos do launcher como se fossem os originais, então os dois ficam recusados até o arquivo ser corrigido ou removido.</value>
+  </data>
+  <data name="Backup_Restaurado" xml:space="preserve">
+    <value>Pasta restaurada: {0} arquivo(s) original(is) de volta, {1} nosso(s) removido(s).</value>
+  </data>
+  <data name="Backup_Restaurar" xml:space="preserve">
+    <value>Restaurar original</value>
+  </data>
+  <data name="Backup_Restaurar_Tooltip" xml:space="preserve">
+    <value>Devolve cada arquivo ao que era antes de o launcher escrever nesta pasta pela primeira vez, e remove tudo o que ele acrescentou.</value>
+  </data>
+  <data name="Backup_SemBackup" xml:space="preserve">
+    <value>Não há backup desta pasta — o launcher não escreveu nada aqui.</value>
+  </data>
   <data name="Cli_Add_AlreadyRegistered" xml:space="preserve">
     <value>Pasta já estava registrada: {0}</value>
     <comment>pt: "Pasta já estava registrada: {0}".</comment>
@@ -254,6 +283,9 @@
     <value>Verifica atualização dos mods instalados</value>
     <comment>pt com acento no resx: "Verifica atualização dos mods instalados".</comment>
   </data>
+  <data name="Cli_Help_Diario" xml:space="preserve">
+    <value>Mostra toda alteração que o launcher fez na pasta de um jogo, em ordem</value>
+  </data>
   <data name="Cli_Help_Disable" xml:space="preserve">
     <value>Desativa o mod</value>
   </data>
@@ -303,6 +335,9 @@
   <data name="Cli_Help_Profile" xml:space="preserve">
     <value>Mostra ou define o perfil de nits do monitor</value>
     <comment>nits e termo tecnico, mantido.</comment>
+  </data>
+  <data name="Cli_Help_Restaurar" xml:space="preserve">
+    <value>Devolve a pasta ao que era antes de o launcher escrever nela</value>
   </data>
   <data name="Cli_Help_Set" xml:space="preserve">
     <value>Grava configurações; feche o jogo antes</value>

@@ -1593,6 +1593,25 @@
                                     <Path Data="{StaticResource IconFolder}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Stretch="Uniform" Width="15" Height="15"/>
                                 </Button>
+                                <!-- Restaurar o original.
+                                     So aparece quando ha o que devolver: sem manifesto de backup
+                                     nesta pasta, o botao prometeria desfazer algo que nunca foi
+                                     feito. Fica ao lado de abrir a pasta, e nao junto do
+                                     interruptor, porque nao e o contrario de instalar — e o
+                                     contrario de TER MEXIDO. -->
+                                <Button Margin="0,0,8,0" Padding="11,8" Command="{Binding RestaurarOriginalCommand}"
+                                        Visibility="{Binding TemBackup, Converter={StaticResource BoolToVis}}"
+                                        ToolTip="{loc:Tr Backup_Restaurar_Tooltip}"
+                                        AutomationProperties.Name="{loc:Tr Backup_Restaurar}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconRestaurar}" Stroke="{StaticResource TextDimBrush}"
+                                              StrokeThickness="2" StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Tr Backup_Restaurar}" Margin="7,0,0,0" FontSize="11.5"
+                                                   VerticalAlignment="Center" Foreground="{StaticResource TextDimBrush}"/>
+                                    </StackPanel>
+                                </Button>
                                 <!-- Pagina do mod e interruptor somem na sobra: nao ha mod nem
                                      jogo para ligar, e um interruptor que nao muda nada e pior do
                                      que interruptor nenhum. A pasta continua abrivel, que e
