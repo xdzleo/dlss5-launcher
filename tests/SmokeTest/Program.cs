@@ -1137,6 +1137,13 @@ if (match != null)
     Check(!Directory.Exists(Path.Combine(jogo, "reshade-shaders")),
         "a subpasta que nos criamos saiu junto");
 
+    // E o proprio backup tambem: ele e uma pasta que o jogo nao tinha, e "bit a bit como estava"
+    // nao admite uma subpasta nossa de sobra. So sai quando o restaurar fecha limpo.
+    Check(!Directory.Exists(Path.Combine(jogo, BackupService.PastaDeBackup)),
+        "a pasta de backup saiu junto — nao sobra nada nosso");
+    Check(Directory.EnumerateFileSystemEntries(jogo).Count() == antes.Count,
+        "a pasta nao tem nem um arquivo nem uma subpasta a mais do que tinha");
+
     // Instalar de novo e restaurar de novo nao pode transformar o NOSSO arquivo em "original":
     // e a regra que faz o segundo restaurar valer tanto quanto o primeiro.
     BackupService.Copiar(jogo, origem, Path.Combine(jogo, "dxgi.dll"), "reshade");

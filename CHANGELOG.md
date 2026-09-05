@@ -1,5 +1,55 @@
 # Changelog
 
+## v1.97.0
+
+**O par add-on + runtime é que decide se o passe neural roda — e os dois enganam quem olha versão e
+tamanho.** A 1.95.0 fixou o runtime; esta fixa o add-on, medido no mesmo jogo.
+
+### Medido no Shadow of the Tomb Raider
+
+Com DLSS em Quality e HDR ligado (as opções do próprio usuário), o runtime bom, e o resto da pasta
+**idêntico** — só trocando o add-on genérico:
+
+| build | o que acontece |
+|---|---|
+| **v0.2026.0828.0517** (1.703.424 bytes) | `feature 18 created via the signed snippet`, `evaluation succeeded (count=60)` — **148 s de pé**, passe avaliando a cada quadro |
+| v1788524715 (2.520.576 bytes), a rota `DLSS-NR direct` | o jogo morre em **30 s**, sem sequer chegar a criar a feature |
+
+O build de setembro não está proibido — `addon <arquivo>` continua trocando. O que ele não é mais é
+o **padrão**, porque o padrão tem de ser o que foi visto rodando.
+
+### Restaurar: os buracos que só o DX9 expôs
+
+O Hitman: Codename 47 (DXVK + `host64\` + camada Vulkan + Feeder) mostrou três coisas que ficavam
+para trás, e todas foram fechadas:
+
+- `ReShadePreset.ini` e o `.renodx-bak` dele;
+- `reshade-shaders\Textures\lumenite_bluenoise256.png`;
+- **os renames do DXVK** (`d3d9.dll` → `.pre-dxvk`) — renomear também é mexer: para quem carrega
+  DLL pelo nome, sair do nome é o mesmo que sumir. O original vai para o registro antes disso.
+
+E mais duas, que a promessa do botão exigia:
+
+- **A própria pasta `_DLSS5_Backup` sai depois de restaurar.** Ela também é algo que a pasta não
+  tinha. Só quando a restauração fecha limpa: se faltou um original ou algum hash não bateu, as
+  cópias são a única chance de acertar depois. O diário vai antes para
+  `AppData\RenoDXLauncher\historico-de-pastas\`.
+- **A camada Vulkan não é um arquivo** — é uma chave em `HKLM`. Restaurar agora a tira do registro
+  do Windows: sujeira fora da pasta não estava coberta.
+
+### Varredura
+
+Instalar a cadeia e restaurar em **todos os 64 jogos** da biblioteca: **zero diferenças**,
+comparando o conteúdo byte a byte de tudo que o launcher pode escrever (`.dll`, `.ini`, `.fx`,
+`.png`, `.exe`, `.addon*`, marcadores) e nome + tamanho do resto. 58 segundos no total.
+
+Ressalva honesta: em 50 desses jogos a cadeia já estava completa, então a instalação não escreveu
+nada e a restauração não teve o que desfazer — ali o "bit a bit" é trivial. Os **14** que fizeram
+trabalho de verdade (A Plague Tale, Alan Wake, Bayonetta, Bully, CoJ Gunslinger, Control, Cuphead,
+Hitman: Codename 47, Shadow of the Tomb Raider e as subpastas `host64\`/`Win32\`/`Win64\` deles)
+voltaram com **0 originais faltando e 0 hashes divergentes**.
+
+
 ## v1.96.0
 
 **Toda pasta de jogo agora tem backup, diário e um botão de voltar atrás.**

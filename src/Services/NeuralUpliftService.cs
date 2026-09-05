@@ -308,6 +308,26 @@ public static class NeuralUpliftService
     public const string RuntimeTestadoSha256 =
         "8270B350CD82DE5CE89806872CDD6B6A9249B80836B91BBEB3573470744CC206";
 
+    /// <summary>
+    /// O SHA-256 do ADDON generico que foi medido rodando.
+    ///
+    /// Mesma historia do runtime, e medida no mesmo jogo. Com o runtime bom e o resto da pasta
+    /// identico, so trocando o addon, no Shadow of the Tomb Raider com DLSS em Quality e HDR
+    /// ligado:
+    ///
+    ///   245C0613...  (v0.2026.0828.0517, 1.703.424 bytes) — "DLSS 5 Neural Rendering":
+    ///                `feature 18 created via the signed snippet`, `evaluation succeeded
+    ///                (count=60)`, 148 s de pe com o passe avaliando a cada quadro.
+    ///   FBA32716...  (v1788524715, 2.520.576 bytes) — "RenoDX DLSS", o build de set/2026 com a
+    ///                rota `DLSS-NR direct`: o jogo morre em 30 s, sem sequer chegar a criar a
+    ///                feature.
+    ///
+    /// O build novo nao esta proibido — quem quiser troca com `addon &lt;arquivo&gt;`. O que ele
+    /// nao e mais e o PADRAO, porque o padrao tem de ser o que foi visto rodando.
+    /// </summary>
+    public const string AddonTestadoSha256 =
+        "245C06137AD13B1CA03AFAAD5100C1E8F0DCE8C11FE50A9272EA562F33CEA601";
+
     /// <summary>O build do runtime na biblioteca e o que foi medido rodando?</summary>
     public static bool RuntimeDaBibliotecaEhOTestado() =>
         File.Exists(LibraryRuntime)
@@ -1485,6 +1505,7 @@ public static class NeuralUpliftService
         // instalacao: ele instala inteiro, a cadeia fica verde, e o jogo morre no primeiro
         // quadro (ver RuntimeTestadoSha256). Sai barato porque so age quando esta errado.
         AdotarRuntimeTestado(progress);
+        AdotarAddonTestado(progress);
         if (!File.Exists(LibraryRuntime))
             throw new InvalidOperationException(L.T("Neural_Blocked_Runtime", RuntimeFile));
         if (useGenericAddon && !File.Exists(LibraryAddon))
@@ -1777,6 +1798,50 @@ public static class NeuralUpliftService
     /// um rename de distancia.
     /// </summary>
     /// <returns>De onde veio, ou nulo se a biblioteca ja estava certa ou nada foi achado.</returns>
+    /// <summary>O addon generico da biblioteca e o build que foi medido rodando?</summary>
+    public static bool AddonDaBibliotecaEhOTestado() =>
+        File.Exists(LibraryAddon)
+        && string.Equals(HashDoRuntime(LibraryAddon), AddonTestadoSha256, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Troca o addon generico da biblioteca pelo build medido, se ele estiver no disco.
+    ///
+    /// Simetrico do <see cref="AdotarRuntimeTestado"/> e pela mesma razao: o par addon+runtime e
+    /// que decide se o passe neural roda, e os dois enganam quem olha versao e tamanho.
+    /// </summary>
+    public static string? AdotarAddonTestado(IProgress<string>? progress = null)
+    {
+        if (AddonDaBibliotecaEhOTestado()) return null;
+        var options = new EnumerationOptions
+        {
+            IgnoreInaccessible = true, RecurseSubdirectories = true,
+            MaxRecursionDepth = 6, AttributesToSkip = FileAttributes.ReparsePoint,
+        };
+        foreach (var root in RaizesDeOutrasFerramentas())
+        {
+            try
+            {
+                foreach (var f in Directory.EnumerateFiles(root, "*.addon64", options))
+                {
+                    if (!string.Equals(HashDoRuntime(f), AddonTestadoSha256, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    Directory.CreateDirectory(LibraryDir);
+                    if (File.Exists(LibraryAddon))
+                    {
+                        var guardado = LibraryAddon + "." + HashDoRuntime(LibraryAddon)[..8];
+                        if (!File.Exists(guardado)) File.Copy(LibraryAddon, guardado);
+                    }
+                    File.Copy(f, LibraryAddon, overwrite: true);
+                    progress?.Report(L.T("Neural_AddonTestadoAdotado"));
+                    Log.Info($"neural: addon testado adotado de {f}");
+                    return f;
+                }
+            }
+            catch (Exception ex) { Log.Warn($"neural addon testado em {root}: {ex.Message}"); }
+        }
+        return null;
+    }
+
     public static string? AdotarRuntimeTestado(IProgress<string>? progress = null)
     {
         if (RuntimeDaBibliotecaEhOTestado()) return null;

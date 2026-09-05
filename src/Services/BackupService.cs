@@ -300,13 +300,46 @@ public static class BackupService
         Anotar(pastaDoJogo, "restaurar", "terminou",
                $"{devolvidos} devolvidos, {apagados} apagados, {faltando.Count} sem backup, {divergentes.Count} divergentes");
 
-        // O manifesto e aposentado, nao apagado: o diario continua ali, e a proxima instalacao
-        // comeca de uma pasta que voltou a ser a original — que e exatamente o que ela e agora.
+        // A camada Vulkan nao e um arquivo: e uma chave em HKLM apontando para o manifesto que
+        // pusemos na pasta. Restaurar sem tira-la deixaria o sistema registrando uma camada cujo
+        // json acabou de ser apagado — e "a pasta esta como estava" nao cobre uma sujeira que
+        // ficou FORA dela. Remove e no-op quando nao ha nada registrado.
+        try
+        {
+            VulkanLayerService.Remove(pastaDoJogo);
+            Anotar(pastaDoJogo, "restaurar", "tirou a camada Vulkan do registro do Windows");
+        }
+        catch (Exception ex) { Log.Warn($"backup camada vulkan {pastaDoJogo}: {ex.Message}"); }
+
+        // E por fim o proprio backup sai da pasta do jogo.
+        //
+        // Ele tambem e uma coisa que a pasta nao tinha. Deixa-lo ali seria entregar uma pasta
+        // "restaurada" com uma subpasta nossa dentro e centenas de MB de copias — e a promessa
+        // do botao e que a pasta fique como estava, sem asterisco.
+        //
+        // So quando o restaurar fechou LIMPO. Se faltou original ou algum hash nao bateu, as
+        // copias sao a unica chance de acertar a mao depois, e apaga-las seria trocar um
+        // problema pequeno por um irreversivel.
+        //
+        // O diario nao se perde: ele vai para a pasta do launcher antes, porque a historia de
+        // quem mexeu no que continua valendo depois de a pasta voltar ao normal.
         try
         {
             var p = CaminhoDoManifesto(pastaDoJogo);
             if (File.Exists(p))
                 File.Move(p, p + $".restaurado-{DateTime.Now:yyyyMMdd-HHmmss}", overwrite: true);
+
+            if (faltando.Count == 0 && divergentes.Count == 0)
+            {
+                GuardarDiarioNoLauncher(pastaDoJogo);
+                Directory.Delete(RaizDoBackup(pastaDoJogo), recursive: true);
+                Log.Info($"backup: {PastaDeBackup} removido de {pastaDoJogo} (restauracao limpa)");
+            }
+            else
+            {
+                Log.Info($"backup: {PastaDeBackup} mantido em {pastaDoJogo}: "
+                         + $"{faltando.Count} sem backup, {divergentes.Count} divergentes");
+            }
         }
         catch (Exception ex) { Log.Warn($"backup aposentar manifesto: {ex.Message}"); }
 
@@ -376,6 +409,28 @@ public static class BackupService
         Directory.CreateDirectory(Path.GetDirectoryName(destino)!);
         File.Move(origem, destino, overwrite: true);
         DepoisDeEscrever(pastaDoJogo, destino, quem);
+    }
+
+    /// <summary>
+    /// Leva o diario para a pasta do launcher antes de o backup ser apagado.
+    ///
+    /// A pasta do jogo volta a ser do jogo, mas o registro de quem mexeu no que nao e do jogo —
+    /// e nosso, e e o que responde "o que voce fez ali?" seis meses depois.
+    /// </summary>
+    private static void GuardarDiarioNoLauncher(string pastaDoJogo)
+    {
+        try
+        {
+            var origem = CaminhoDoDiario(pastaDoJogo);
+            if (!File.Exists(origem)) return;
+            var destinoDir = Path.Combine(AppPaths.DataDir, "historico-de-pastas");
+            Directory.CreateDirectory(destinoDir);
+            var nome = new string(Path.GetFileName(pastaDoJogo.TrimEnd(Path.DirectorySeparatorChar))
+                                      .Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)
+                                      .ToArray());
+            File.Copy(origem, Path.Combine(destinoDir, $"{nome}-{DateTime.Now:yyyyMMdd-HHmmss}.log"), overwrite: true);
+        }
+        catch (Exception ex) { Log.Warn($"backup guardar diario: {ex.Message}"); }
     }
 
     private static string? Relativo(string pastaDoJogo, string caminho)

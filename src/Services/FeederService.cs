@@ -942,7 +942,8 @@ public static class FeederService
         var pastaTex = Path.Combine(targetDir, "reshade-shaders", "Textures");
         Directory.CreateDirectory(pastaTex);
         foreach (var tex in MvTextures)
-            File.Copy(Path.Combine(LibraryDir, "Textures", tex), Path.Combine(pastaTex, tex), overwrite: true);
+            BackupService.Copiar(targetDir, Path.Combine(LibraryDir, "Textures", tex),
+                                 Path.Combine(pastaTex, tex), "feeder");
 
         // O DRME nao compila no ReShade 6.8 e so gera erro no log de quem tem a instalacao
         // antiga. Sai junto, senao fica poluindo o diagnostico para sempre.
@@ -1187,8 +1188,13 @@ public static class FeederService
         // exatamente o que estava — o ReShade reescreve o arquivo sozinho ao fechar o jogo, e a
         // partir dai nao ha de onde tirar a lista original.
         var backup = presetPath + ".renodx-bak";
+        // O registro tem de saber dos DOIS: do preset, que pode ja existir e ser do usuario, e do
+        // .renodx-bak, que e um arquivo nosso e nao pode ficar para tras no restaurar.
+        var pastaDoPreset = Path.GetDirectoryName(presetPath);
+        BackupService.AntesDeEscrever(pastaDoPreset, presetPath, "preset");
         if (File.Exists(presetPath) && !File.Exists(backup))
         {
+            BackupService.AntesDeEscrever(pastaDoPreset, backup, "preset");
             try { File.Copy(presetPath, backup); }
             catch (Exception ex) { Log.Warn($"feeder preset backup: {ex.Message}"); }
         }

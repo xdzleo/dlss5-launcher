@@ -301,9 +301,13 @@ public static class DxvkService
             var p = Path.Combine(targetDir, n);
             if (File.Exists(p) && !IsDeployed(targetDir))
             {
+                // Renomear tambem e mexer: para quem carrega DLL pelo nome, sair do nome e o
+                // mesmo que sumir. O original vai para o registro antes de perder o nome.
+                BackupService.AntesDeEscrever(targetDir, p, "dxvk");
                 var bak = p + ".pre-dxvk";
                 if (!File.Exists(bak)) File.Move(p, bak);
                 else File.Delete(p);
+                BackupService.Anotar(targetDir, "dxvk", "tirou do nome", Path.GetFileName(p));
                 progress?.Report(L.T("Dxvk_ReplacedD3d9"));
                 break;
             }
@@ -311,7 +315,11 @@ public static class DxvkService
         foreach (var n in new[] { "dgVoodoo.conf", "dgVoodooCpl.exe" })
         {
             var p = Path.Combine(targetDir, n);
-            if (File.Exists(p)) { try { File.Move(p, p + ".pre-dxvk", overwrite: true); } catch { } }
+            if (File.Exists(p))
+            {
+                BackupService.AntesDeEscrever(targetDir, p, "dxvk");
+                try { File.Move(p, p + ".pre-dxvk", overwrite: true); } catch { }
+            }
         }
 
         BackupService.Copiar(targetDir, LibraryD3d9_32, Path.Combine(targetDir, D3d9File), "dxvk");
@@ -387,9 +395,11 @@ public static class DxvkService
             // para um nome numerado ao lado, de onde da para resgata-lo a mao. E numerado sem
             // reaproveitar numero: um segundo intruso sobrescrevendo o `.2` do primeiro era a
             // mesma perda sem copia, so uma casa adiante.
+            BackupService.AntesDeEscrever(targetDir, p, "dxvk-d3d10");
             var bak = p + BackupSuffix;
             if (!File.Exists(bak)) File.Move(p, bak);
             else File.Move(p, ProximoBackupLivre(bak));
+            BackupService.Anotar(targetDir, "dxvk-d3d10", "tirou do nome", Path.GetFileName(p));
             guardou = true;
         }
         if (guardou) progress?.Report(L.T("Dxvk_ReplacedD3d10"));

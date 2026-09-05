@@ -2076,6 +2076,9 @@ Your settings (nits, tone mapper) are preserved: only the mod file is replaced.<
   <data name="Neural_AddonFeederName" xml:space="preserve">
     <value>Neural addon also copied under the name the Feeder looks for.</value>
   </data>
+  <data name="Neural_AddonTestadoAdotado" xml:space="preserve">
+    <value>Generic add-on swapped for the build that was measured running. The newer build stops the neural pass from engaging in some games.</value>
+  </data>
   <data name="Neural_Applied" xml:space="preserve">
     <value>Neural Uplift on.</value>
   </data>

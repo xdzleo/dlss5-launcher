@@ -2076,6 +2076,9 @@ Suas configurações (nits, tone mapper) são preservadas: só o arquivo do mod 
   <data name="Neural_AddonFeederName" xml:space="preserve">
     <value>Addon neural copiado também com o nome que o Feeder procura.</value>
   </data>
+  <data name="Neural_AddonTestadoAdotado" xml:space="preserve">
+    <value>Add-on genérico trocado pelo build que foi medido rodando. O build mais novo impede o passe neural de entrar em alguns jogos.</value>
+  </data>
   <data name="Neural_Applied" xml:space="preserve">
     <value>Neural Uplift ligado.</value>
   </data>

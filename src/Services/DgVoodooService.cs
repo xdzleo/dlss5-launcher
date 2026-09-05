@@ -381,13 +381,19 @@ public static class DgVoodooService
     /// nao houver copia. A primeira copia e a que vale: e o estado de antes de nos.</summary>
     private static void Guardar(string caminho, bool ehNosso)
     {
+        BackupService.AntesDeEscrever(Path.GetDirectoryName(caminho), caminho, "dgvoodoo");
         var backup = caminho + BackupSuffix;
         if (File.Exists(caminho) && !File.Exists(backup) && !ehNosso) File.Copy(caminho, backup);
     }
 
     private static void Marcar(string caminho)
     {
-        try { File.WriteAllText(caminho + OursSuffix, DateTime.UtcNow.ToString("o")); }
+        try
+        {
+            BackupService.Escrever(Path.GetDirectoryName(caminho), caminho + OursSuffix,
+                                   DateTime.UtcNow.ToString("o"), "marca");
+            return;
+        }
         catch (Exception ex) { Log.Warn($"dgvoodoo mark {Path.GetFileName(caminho)}: {ex.Message}"); }
     }
 

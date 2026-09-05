@@ -919,6 +919,10 @@
     "en": "Puts every file back the way it was before the launcher first wrote to this folder, and removes everything it added.",
     "pt-BR": "Devolve cada arquivo ao que era antes de o launcher escrever nesta pasta pela primeira vez, e remove tudo o que ele acrescentou."
   },
+  "Neural_AddonTestadoAdotado": {
+    "en": "Generic add-on swapped for the build that was measured running. The newer build stops the neural pass from engaging in some games.",
+    "pt-BR": "Add-on genérico trocado pelo build que foi medido rodando. O build mais novo impede o passe neural de entrar em alguns jogos."
+  },
   "Neural_RuntimeTestadoAdotado": {
     "en": "Neural runtime swapped for the build that was measured running. Two binaries share the same size and version, and only one of them survives past the first frame in some games.",
     "pt-BR": "Runtime neural trocado pelo build que foi medido rodando. Dois binários têm o mesmo tamanho e a mesma versão, e só um deles passa do primeiro quadro em alguns jogos."
