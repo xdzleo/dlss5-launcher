@@ -1,6 +1,8 @@
 <div align="center">
 
-<img src="docs/icon.png" width="112" alt="">
+<img src="docs/icon.png" width="88" alt="">
+
+<p><img src="docs/logo-banner.svg" width="350" alt="DLSS 5 Launcher"></p>
 
 # DLSS 5 Launcher
 

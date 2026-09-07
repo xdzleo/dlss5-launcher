@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.99.0
+
+### Nova identidade visual
+
+- Novo símbolo geométrico do DLSS 5, com recorte angular e verde elétrico.
+- Logo vetorial com letras inclinadas e assinatura LAUNCHER com espaçamento próprio.
+- Cabeçalho com a nova marca, mantendo nitidez em diferentes escalas de tela.
+- Ícone do executável e das janelas em dez resoluções, de 16 a 256 pixels.
+- Arquivos SVG e PNG da identidade visual e um gerador único para manter os recursos consistentes.
+
+Esta versão atualiza a identidade visual; o funcionamento de instalação dos mods permanece igual ao da v1.98.0.
+
 ## v1.98.0
 
 **O pacote do Feeder traz o add-on dele, e o launcher nunca extraía esse arquivo.**

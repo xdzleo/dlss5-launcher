@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:RenoDXLauncher.ViewModels"
         xmlns:local="clr-namespace:RenoDXLauncher"
         xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
-        Icon="Assets/app.png"
+        Icon="Assets/app.ico"
         Title="{loc:Tr App_Name}" Height="920" Width="1560" MinWidth="1240" MinHeight="660"
         Background="#D40C0E12"
         TextOptions.TextFormattingMode="Ideal"
@@ -420,24 +420,12 @@
             </Border.Background>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <!-- Mesma identidade do icone: fundo escuro, o "5" em verde-lima -> ciano.
-                         O laranja com "R" era do RenoDX, que e uma das coisas que o launcher
-                         instala, nao o que ele e. -->
-                    <Border Width="30" Height="30" CornerRadius="8" Margin="0,0,11,0"
-                            Background="#0E1116" BorderBrush="#2A3340" BorderThickness="1">
-                        <TextBlock Text="5" FontSize="18" FontWeight="Bold"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock.Foreground>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#BEFF78" Offset="0"/>
-                                    <GradientStop Color="#3CD2FF" Offset="1"/>
-                                </LinearGradientBrush>
-                            </TextBlock.Foreground>
-                        </TextBlock>
-                    </Border>
-                    <TextBlock Text="DLSS 5" FontSize="19" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <TextBlock Text="Launcher" FontSize="19" FontWeight="Light" Margin="7,0,0,0"
-                               Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                    <Image Source="{StaticResource BrandMark}" Width="42" Height="42"
+                           Margin="0,0,14,0" AutomationProperties.Name="DLSS 5"
+                           VerticalAlignment="Center"/>
+                    <Image Source="{StaticResource BrandWordmark}" Width="170" Height="45"
+                           Stretch="Uniform" VerticalAlignment="Center"
+                           AutomationProperties.Name="DLSS 5 Launcher"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right"

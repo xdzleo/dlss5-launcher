@@ -6,6 +6,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Assets/Icons.xaml"/>
+                <ResourceDictionary Source="Assets/Branding.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ========== palette ========== -->

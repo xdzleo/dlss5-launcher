@@ -905,7 +905,7 @@
   },
   "Backup_Confirm_Title": {
     "en": "Restore this folder to the original?",
-    "pt-BR": "Restaurar esta pasta ao original?"
+    "pt-BR": "Restaurar essa pasta ao original?"
   },
   "Backup_Confirm_Body": {
     "en": "{0}\n\nEvery file the launcher replaced goes back to the build the game shipped, and the {1} file(s) it added are removed. This is not the same as uninstalling: DLLs the launcher upgraded come back at their old version too.",
@@ -3062,7 +3062,7 @@
   "Sobra_Confirm_Body": {
     "en": "Delete this folder and everything in it?\n\n{0}\n\n{1} MB. There is no game here anymore — no executable — only files the launcher and other mods left behind. This cannot be undone.",
     "note": "pt: {0} caminho, {1} tamanho em MB.",
-    "pt-BR": "Apagar esta pasta e tudo o que há nela?\n\n{0}\n\n{1} MB. Não há jogo aqui — nenhum executável — só arquivos que o launcher e outros mods deixaram. Isto não tem volta."
+    "pt-BR": "Apagar essa pasta e tudo o que há nela?\n\n{0}\n\n{1} MB. Não há jogo aqui — nenhum executável — só arquivos que o launcher e outros mods deixaram. Isto não tem volta."
   },
   "Sobra_Confirm_Ok": {
     "en": "Delete",

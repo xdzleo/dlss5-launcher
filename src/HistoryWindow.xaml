@@ -5,7 +5,7 @@
         xmlns:loc="clr-namespace:RenoDXLauncher.Localization"
         Title="{loc:Tr History_Title}" Height="640" Width="720" MinWidth="520" MinHeight="420"
         Background="{StaticResource BgBrush}" WindowStartupLocation="CenterOwner"
-        Icon="Assets/app.png">
+        Icon="Assets/app.ico">
     <DockPanel>
         <Border DockPanel.Dock="Top" Background="{StaticResource PanelBrush}" Padding="22,16"
                 BorderBrush="{StaticResource BorderBrush2}" BorderThickness="0,0,0,1">
